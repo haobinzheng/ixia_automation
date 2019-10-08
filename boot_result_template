@@ -1,0 +1,5 @@
+********* Measure packet loss due to DUT does down after reboot----------
+2019-08-23 10:31:25 :: Flow ID:2, TX_Port:1/1/2, RX_Port:1/1/1, TX packet rate:122549.0, Total_TX_pkts:4808351,Total_RX_pkts:4808343,Pkt Loss:8, Pkt Loss time:6.528001044480167e-05 seconds
+2019-08-23 10:31:25 :: --------------------------------
+2019-08-23 10:31:25 :: Flow ID:1, TX_Port:1/1/1, RX_Port:1/1/2, TX packet rate:122549.0, Total_TX_pkts:4808351,Total_RX_pkts:4677269,Pkt Loss:131082, Pkt Loss time:1.0696292911406866 seconds
+2019-08-23 10:31:25 :: --------------------------------
