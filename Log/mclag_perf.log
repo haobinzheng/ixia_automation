@@ -384,3 +384,109 @@ FortiGate-3960E #
  
 2019-10-07 17:06:04 :: configuring:         set ip 10.105.50.60 255.255.255.0
  
+2019-10-07 17:06:15 :: configuring:         set allowaccess ping https ssh telnet 
+ 
+2019-10-07 17:06:25 :: configuring:     next
+ 
+2019-10-07 17:06:36 :: configuring:     
+ 
+2019-10-07 17:06:46 :: configuring:     edit "internal"
+ 
+2019-10-07 17:06:57 :: configuring:        unset defaultgw   
+ 
+2019-10-07 17:07:07 :: configuring:     end
+ 
+2019-10-07 17:07:18 :: configuring: 
+ 
+2019-10-07 17:07:29 :: configuring: config router static
+ 
+2019-10-07 17:07:39 :: configuring:     edit 1
+ 
+2019-10-07 17:07:50 :: configuring:         set device "mgmt"
+ 
+2019-10-07 17:08:00 :: configuring:         set dst 0.0.0.0 0.0.0.0
+ 
+2019-10-07 17:08:11 :: configuring:         set gateway 10.105.50.254
+ 
+2019-10-07 17:08:21 :: configuring:     next
+ 
+2019-10-07 17:08:32 :: configuring: end
+ 
+2019-10-07 17:08:42 :: *****************Configure device on comserver = 10.105.50.1,port=2075 
+2019-10-07 17:08:44 :: Debug: out_list in switch_show_cmd = [b'Login incorrect', b'', b'', b'S548DF4K16000653 login: ', b'', b'S548DF4K16000653 login: get system status', b'Password: '] 
+2019-10-07 17:08:44 :: Login incorrect 
+2019-10-07 17:08:44 ::  
+2019-10-07 17:08:44 ::  
+2019-10-07 17:08:44 :: S548DF4K16000653 login: 
+2019-10-07 17:08:44 ::  
+2019-10-07 17:08:44 :: S548DF4K16000653 login: get system status 
+2019-10-07 17:08:44 :: Password: 
+2019-10-07 17:08:44 :: configuring: config system interface
+ 
+2019-10-07 17:08:55 :: configuring:     edit "mgmt"
+ 
+2019-10-07 17:09:05 :: configuring: 	set mode static
+ 
+2019-10-07 17:09:16 :: configuring: 	end
+ 
+2019-10-07 17:09:26 :: configuring: config system interface
+ 
+2019-10-07 17:09:37 :: configuring:     edit "mgmt"
+ 
+2019-10-07 17:09:47 :: configuring: 	set mode static
+ 
+2019-10-07 17:09:58 :: configuring:         set ip 10.105.50.62 255.255.255.0
+ 
+2019-10-07 17:10:08 :: configuring:         set allowaccess ping https ssh telnet 
+ 
+2019-10-07 17:10:19 :: configuring:     next
+ 
+2019-10-07 17:10:29 :: configuring:     
+ 
+2019-10-07 17:10:40 :: configuring:     edit "internal"
+ 
+2019-10-07 17:10:50 :: configuring:        unset defaultgw   
+ 
+2019-10-07 17:11:01 :: configuring:     end
+ 
+2019-10-07 17:11:11 :: configuring:     
+ 
+2019-10-07 17:11:22 :: configuring: config router static
+ 
+2019-10-07 17:11:32 :: configuring:     edit 1
+ 
+2019-10-07 17:11:43 :: configuring:         set device "mgmt"
+ 
+2019-10-07 17:11:53 :: configuring:         set dst 0.0.0.0 0.0.0.0
+ 
+2019-10-07 17:12:04 :: configuring:         set gateway 10.105.50.254
+ 
+2019-10-07 17:12:14 :: configuring:     next
+ 
+2019-10-07 17:12:25 :: configuring: end
+ 
+2019-10-07 17:12:35 :: *****************Configure device on comserver = 10.105.50.1,port=2078 
+2019-10-07 17:12:37 :: Debug: out_list in switch_show_cmd = [b'Login incorrect', b'', b'', b'S548DN4K17000133 login: ', b'', b'S548DN4K17000133 login: get system status', b'Password: '] 
+2019-10-07 17:12:37 :: Login incorrect 
+2019-10-07 17:12:37 ::  
+2019-10-07 17:12:37 ::  
+2019-10-07 17:12:37 :: S548DN4K17000133 login: 
+2019-10-07 17:12:37 ::  
+2019-10-07 17:12:37 :: S548DN4K17000133 login: get system status 
+2019-10-07 17:12:37 :: Password: 
+2019-10-07 17:12:37 :: configuring: config system interface
+ 
+2019-10-07 17:12:48 :: configuring:     edit "mgmt"
+ 
+2019-10-07 17:12:58 :: configuring: 	set mode static
+ 
+2019-10-07 17:13:09 :: configuring: 	end
+ 
+2019-10-07 17:13:19 :: configuring: 
+ 
+2019-10-07 17:13:30 :: configuring: config system interface
+ 
+2019-10-07 17:13:40 :: configuring:     edit "mgmt"
+ 
+2019-10-07 17:13:51 :: configuring: 	set mode static
+ 
