@@ -325,6 +325,11 @@ def create_console_connection(ip_address, console_port, username, password,timeo
         except Exception as e:
                 logging.debug(e)
 
+def threads_exit(stop_threads,threads_list):
+	stop_threads = True
+	for t in threads_list:
+		t.join()
+
 def convert_cmd_ascii(cmd):
 	return cmd.encode('ascii')
 
@@ -335,6 +340,8 @@ def convert_cmd_ascii_n(cmd):
 def relogin_dut_all(dut_list):
 	for dut in dut_list:
 		relogin_if_needed(dut)
+
+	config_admin_timeout(dut_list)
 
 def relogin_after_reboot(dut):
 	time.sleep(200)
@@ -806,6 +813,12 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	tprint("Login sucessful,return from telnet function\n")
 	return tn
 
+def config_admin_timeout(dut_list):
+	for dut in dut_list:
+		switch_configure_cmd(dut,'config system global')
+		switch_configure_cmd(dut,'set admintimeout 480')
+		switch_configure_cmd(dut,'end')
+
 def console_timer(seconds,**kwargs):
 	if 'msg' in kwargs:
 		notice = kwargs['msg']
@@ -972,6 +985,8 @@ def switch_find_login_prompt_new(tn):
 		match = re.match(pattern,prompt)
 		if match:
 			result = match.group()
+		else:
+			result = None
 		return ("shell",result)
 	elif "New Password:"in prompt:
 		debug("it is a new switch that needs to change password, change password to *admin* ")

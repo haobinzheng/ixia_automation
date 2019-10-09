@@ -905,10 +905,14 @@ def ixia_start_protcols(ipv4_1_handle,ipv4_2_handle):
         tprint("IPv4 protocol session is DOWN: {}, check your test setup!!".format(list(ipv4_proto_info_2.keys())[0]))
         return False
 
-def ixia_start_protcols_verify(handle_list):
+def ixia_start_protcols_verify(handle_list, **kwargs):
     ####################################################
     # Start protocols
     ####################################################
+    if 'timeout' in kwargs:
+        timeout = int(kwargs['timeout'])
+    else:
+        timeout = 60
     debug ("Start to running ixia_start_protocols")
     tprint("Startting protocols....")
 
@@ -917,7 +921,7 @@ def ixia_start_protcols_verify(handle_list):
         ErrorHandler('test_control', status)
 
     tprint("After starting protocols, wait for 30 seconds for protocols to come up")
-    time.sleep(30)
+    time.sleep(timeout)
     tprint("Verify sessions status after protocol is started")
     for handle in handle_list:
         proto_info = ixia_protocal_info(handle)

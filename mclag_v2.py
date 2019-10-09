@@ -475,14 +475,14 @@ if dev_mode == False:
 		fgt1_dir = {}
 		fgt2_dir = {}
 		fgt_dir_list = []
-		fgt1 = get_switch_telnet_connection(fgt1_com,fgt1_port,password='admin')
+		fgt1 = get_switch_telnet_connection_new(fgt1_com,fgt1_port,password='admin')
 		fgt1_dir['name'] = fgt1_name
 		fgt1_dir['location'] = fgt1_location
 		fgt1_dir['telnet'] = fgt1
 		fgt1_dir['cfg'] = fgt1_cfg
 		fgt_dir_list.append(fgt1_dir)
 
-		fgt2 = get_switch_telnet_connection(fgt2_com,fgt2_port,password='admin')
+		fgt2 = get_switch_telnet_connection_new(fgt2_com,fgt2_port,password='admin')
 		fgt2_dir['name'] = fgt2_name
 		fgt2_dir['location'] = fgt2_location
 		fgt2_dir['telnet'] = fgt2
@@ -508,18 +508,18 @@ if dev_mode == False:
 		for dut in dut_list:
 			relogin_if_needed(dut)
 
-	if factory == True:
-		print("------------------------------------- Factory resetting FSWs ------------------")
-		for d in dut_dir_list:
-			dut = d['telnet']
-			dut_name = d['name']
-			location = d['location']
-			tprint("Factory reseting {} at {}......".format(dut_name,location))
-			switch_interactive_exec(dut,"execute factoryresetfull","Do you want to continue? (y/n)")
+	# if factory == True:
+	# 	print("------------------- Factory resetting FSWs ------------------")
+	# 	for d in dut_dir_list:
+	# 		dut = d['telnet']
+	# 		dut_name = d['name']
+	# 		location = d['location']
+	# 		tprint("Factory reseting {} at {}......".format(dut_name,location))
+	# 		switch_interactive_exec(dut,"execute factoryresetfull","Do you want to continue? (y/n)")
 
-		sleep(200)
-		for dut in dut_list:
-			relogin_if_needed(dut)
+	# 	sleep(200)
+	# 	for dut in dut_list:
+	# 		relogin_if_needed(dut)
 
 	for dut_dir in dut_dir_list:
 		dut = dut_dir['telnet']
@@ -690,27 +690,45 @@ if testcase == 3:
 	fgt2_dir = {}
 	fgt_dir_list = []
 	
-	fgt1 = get_switch_telnet_connection(fgt1_com,fgt1_port,password='admin')
+	fgt1 = get_switch_telnet_connection_new(fgt1_com,fgt1_port,password='admin')
 	fgt1_dir['name'] = fgt1_name
 	fgt1_dir['location'] = fgt1_location
 	fgt1_dir['telnet'] = fgt1
 	fgt1_dir['cfg'] = fgt1_cfg
 	fgt_dir_list.append(fgt1_dir)
 
-	fgt2 = get_switch_telnet_connection(fgt2_com,fgt2_port,password='admin')
+	fgt2 = get_switch_telnet_connection_new(fgt2_com,fgt2_port,password='admin')
 	fgt2_dir['name'] = fgt2_name
 	fgt2_dir['location'] = fgt2_location
 	fgt2_dir['telnet'] = fgt2
 	fgt2_dir['cfg'] = fgt2_cfg
 	fgt_dir_list.append(fgt1_dir)
+
+	config_local_access = """
+	config switch-controller security-policy local-access
+    	edit "default"
+        	set mgmt-allowaccess https ping ssh telnet
+    	next
+	end
+	"""
+	config_block_cmds(fgt1_dir, config_local_access)
 	
+	fgt_list = []
+	for fgt_dir in fgt_dir_list:
+		fgt = fgt_dir['telnet'] 
+		fgt_list.append(fgt)
+		switch_exec_reboot(fgt)
+	sleep(300)
+
+	relogin_dut_all(fgt_list)
+
 	if upgrade_fgt and test_setup.lower() == "fg-548d" and not setup:
 		tprint(f" ===================== upgrading managed FSW to build {settings.build_548d} ===============")
 		fgt_upgrade_548d(fgt1,fgt1_dir)
 		console_timer(200,msg = "After software upgrade, wait for 200 seconds") 
 
 	if setup == True:
-		if settings.FACTORY:
+		if settings.FACTORY or factory:
 			tprint("=============== resetting all switches to factory ===========")
 			for dut in dut_list:
 				switch_interactive_exec(dut,"execute factoryresetfull","Do you want to continue? (y/n)")
@@ -719,7 +737,7 @@ if testcase == 3:
 			print("after sleep, relogin, should change password ")
 		
 
-			tprint('------------------------------ end of login Fortigate devices -----------------------')
+			tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
 			dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
 			dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
 			dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
@@ -730,10 +748,15 @@ if testcase == 3:
 			dut3_dir['telnet'] = dut3
 			dut4_dir['telnet'] = dut4
 
-		
-		for d in dut_dir_list:
-			configure_switch_file(d['telnet'],d['cfg_b'])
-		tprint(" -------------- After factory reset, find out FSW images are reset as well -------------------")
+		stop_threads = False
+		lock = threading.Lock()
+		threads_list = []
+		thread2 = Thread(target = period_login,args = (dut_list,lambda: stop_threads))
+		thread2.start()
+		threads_list.append(thread2)
+
+		 
+		tprint(" -------------- After factory reset, find out FSW images ------------------------")
 		for dut_dir in dut_dir_list:
 			dut = dut_dir['telnet']
 			dut_name = dut_dir['name']
@@ -747,9 +770,10 @@ if testcase == 3:
 				switch_configure_cmd_name(dut_dir,"set lldp-profile default-auto-isl")
 				switch_configure_cmd_name(dut_dir,"next")
 			switch_configure_cmd_name(dut_dir,"end")	
-		tprint("------------  After configuring lldp profile to auto-isl, wait for 5 min  --------------------")
-		console_timer(300)
+		tprint("------------  After configuring lldp profile to auto-isl, wait for 400 seconds  --------------------")
+		console_timer(400)
 		relogin_dut_all(dut_list)
+
 		for dut_dir in dut_dir_list:
 			image = find_dut_image(dut)
 			tprint(f"============================ {dut_name} software image = {image}================")
@@ -758,7 +782,7 @@ if testcase == 3:
 			dut_name = dut_dir['name']
 			switch_show_cmd_name(dut_dir,"get system status")
 			dut = dut_dir['telnet']
-			trunk_dict_list = dut_switch_trunk(dut)
+			trunk_dict_list = dut_switch_trunk(dut) 
 			for trunk in trunk_dict_list:
 				if set(trunk['mem'] ) == set(icl_ports):
 					switch_configure_cmd_name(dut_dir,"config switch trunk")
@@ -772,14 +796,13 @@ if testcase == 3:
 						switch_configure_cmd_name(dut_dir,f"set members {core_ports[0]} {core_ports[1]} {core_ports[2]} {core_ports[3]}")
 						switch_configure_cmd_name(dut_dir,'end')
 					break
+			console_timer(10,msg="wait for 10 sec in between after mclag related config is done on one DUT")
 		console_timer(300,msg="after configure auto-isl-port-group wait for 300s")
 		
-		relogin_dut_all(dut_list)
+		#relogin_dut_all(dut_list)
 		for d in dut_dir_list:
 			configure_switch_file(d['telnet'],d['cfg_b'])
  
-		tprint("++++Wait for 120 seconds before configuring fortigate for FSW edge trunk")
-		console_timer(120)
 		tprint("------------  start configuring fortigate  --------------------")
 		trunk_config = """
 		config switch-controller managed-switch
@@ -807,19 +830,22 @@ if testcase == 3:
 		end
 		"""
 		config_block_cmds(fgt1_dir, trunk_config)
-		console_timer(200,msg="after configuring everything, wait for 200 sec")
+		console_timer(20,msg="after configuring everything, wait for 20 sec")
 
 		if upgrade_fgt and test_setup.lower() == "fg-548d":
+			debug("Start to upgrade fsw")
 			fgt_upgrade_548d(fgt1,fgt1_dir)
 			console_timer(200,msg ="After software upgrade, wait for 200 seconds") 
-		relogin_dut_all(dut_list)
-		# dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
-		# dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
-		# dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
-		# dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+		else: 
+			for dut in dut_list:
+				switch_exec_reboot(dut)
+			sleep(200)
+			relogin_dut_all(dut_list)
+
 		tprint("------------  end of configuring fortigate  --------------------")
 		tprint("After configuring all devices wait for 300s, then verify everything")
 		console_timer(300)
+		relogin_dut_all(dut_list)
 		pre_test_verification(dut_list)
 	# Enable or disable log-mac-event on all trunk interface
 	if log_mac_event:
@@ -991,7 +1017,6 @@ if testcase == 3:
 				for t in threads_list:
 					t.join()
 			else:  # mix of threading and process
-				stop_threads = True
 				event.set()
 				for t in threads_list:
 					t.join()
@@ -1003,6 +1028,7 @@ if testcase == 3:
 			ixia_diconnect()
 			for dut in dut_list:
 				relogin_if_needed(dut)
+	threads_exit(stop_threads,threads_list)
 	filename = f"Log/{cpu_log}"
 	scp_file(file=filename)
 

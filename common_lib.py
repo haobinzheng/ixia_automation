@@ -97,7 +97,7 @@ def dut_process_cpu(ip,dut_name,filename,proc_name,event,**kwargs):
 		if top[0]:
 			tprint("!!!!!!!!!!!!!!!!! The following processes' CPU utilization is high!!!!!!!!!!")
 			print_cmd_output(top[1],dut_name,cmd)
-			print_file(top[1], filename,dut_name)
+			print_file(top[1], filename,dut_name = dut_name)
 		cpu_dict = top[2]
 
 		debug(cpu_dict)
@@ -1714,10 +1714,12 @@ def dut_switch_trunk(dut):
 	result = collect_show_cmd(dut,'show switch trunk')
 	config = parse_config_output(result)
 	trunk_dict_list = parse_config_trunk(config)
+	debug(trunk_dict_list)
 	return trunk_dict_list
-	print(trunk_dict_list)
+	
 
 def fgt_upgrade_548d(fgt1,fgt1_dir):
+	tprint("================ Upgrading FSWs via Fortigate =============")
 	build = settings.build_548d
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D_FPOE-v6-build0{build}-FORTINET.out 10.105.19.19"
 	switch_exec_cmd(fgt1, cmd)
