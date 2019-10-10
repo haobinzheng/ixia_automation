@@ -413,7 +413,7 @@ def ixia_apply():
     if traffic_control_status['status'] != '1':
         ErrorHandler('traffic_control -action apply', traffic_control_status)
     else:
-        ixia_print('Send apply done')
+        ixia_print('Ixia traffic config is applied')
 
     return(traffic_control_status)
 
@@ -892,7 +892,7 @@ def ixia_start_protcols(ipv4_1_handle,ipv4_2_handle):
     #tprint('protocol_info', ipv4_proto_info_1)
     ipv4_proto_info_1.pop('status') 
     if ixia_protocal_status(ipv4_proto_info_1) == "UP":
-        tprint("IPv4 protocol session is UP: {}".format(ipv4_proto_info_1.keys()))
+        tprint("IPv4 protocol session is UP: {}".format(''.join('%s  ' % i for i in ipv4_proto_info_1.keys())))
     elif ixia_protocal_status(ipv4_proto_info_1) == "DOWN":
         tprint("IPv4 protocol session is DOWN: {}, check your test setup!!".format(list(ipv4_proto_info_1.keys())[0]))
         return False
@@ -900,7 +900,7 @@ def ixia_start_protcols(ipv4_1_handle,ipv4_2_handle):
     #tprint('protocol_info', ipv4_proto_info_1)
     ipv4_proto_info_2.pop('status') 
     if ixia_protocal_status(ipv4_proto_info_2) == "UP":
-        tprint("IPv4 protocol session is UP: {}".format(ipv4_proto_info_2.keys()))
+        tprint("IPv4 protocol session is UP: {}".format(''.join('%s  ' % i for i in ipv4_proto_info_2.keys())))
     elif ixia_protocal_status(ipv4_proto_info_2) == "DOWN":
         tprint("IPv4 protocol session is DOWN: {}, check your test setup!!".format(list(ipv4_proto_info_2.keys())[0]))
         return False
@@ -1017,7 +1017,7 @@ def ixia_start_traffic():
     ################################################################################
     # Apply And Start traffic                                                                #
     ################################################################################
-    tprint("Starting Traffic.....")
+    tprint("IXIA Starting Traffic.....")
     kwargs={}
     tkwargs = {}
     kwargs = {

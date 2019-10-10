@@ -214,14 +214,15 @@ class Test_Monitor_Process(multiprocessing.Process):
 
 # This section should contain the connect procedure values (device ip, port list etc) and, of course, the connect procedure		
 def period_login(dut_list,lock,stop):
-	tprint("Staring period_login thread")
+	tprint("Staring period_login thread at background\n")
 	while not stop():
 		sleep(300)
-		tprint("*****Login thread: relogin after 300 seconds ")
-		with lock:
-			for dut in dut_list:
+		debug("******Login thread: relogin after 300 seconds ")
+		for dut in dut_list:
+			with lock:
 				relogin_if_needed(dut)
-	tprint("*** Login thread: Main thread is done....Existing background DUT login activities")
+			sleep(20)
+	debug("*** Login thread: Main thread is done....Existing background DUT login activities")
 			
 
 def mac_log_stress(topology_handle_dict_list, dut_list, mac_table, stop, **kwargs):
@@ -1647,24 +1648,24 @@ def parse_config_trunk(result):
 	for item in result:
 		for line in item:
 			if 'edit' in line:
-				print(line)
+				debug(line)
 				#regex = r'\s?edit\s+\"([0-9a-z0-9A-Z0-9.]+)\"'
 				regex = r'\s?edit\s+\"(.+)\"'
 				match = re.match(regex, line)
 				trunk = match.group(1)
-				print(trunk)
+				debug(trunk)
 				trunk_dict = {}
 				trunk_dict['name'] = trunk
 				
 			elif 'member' in line:
-				print(f"parse_config_trunk: parsing set member line... line ={line}")
+				debug(f"parse_config_trunk: parsing set member line... line ={line}")
 				regex = r'.?\s?set members\s+(.+)'
 				match = re.match(regex, line)
 				port_list = match.group(1)
-				print(f'port_list = {port_list}')
+				debug(f'port_list = {port_list}')
 				regex = r'\"(port[0-9]+)\"'
 				ports = re.findall(regex,port_list)
-				print(ports)
+				debug(ports)
 				trunk_dict['mem'] = ports
 				trunk_dict_list.append(trunk_dict)
 	debug(trunk_dict_list)

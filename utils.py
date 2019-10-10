@@ -197,6 +197,14 @@ def tprint(*args, **kwargs):
     temp = tempa + ' ' + tempk # puts a space between the two for clean output
     print(str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + " :: " + temp)
 
+def Info(*args, **kwargs):
+    tempa = ' '.join(str(a) for a in args)
+    tempk = ' '.join([str(kwargs[k]) for k in kwargs])
+    temp = tempa + ' ' + tempk # puts a space between the two for clean output
+    print(str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + " :: " + "Info: " + temp)
+
+
+
 def print_flow_stats_3rd_log(flow_list,file):
 	with open(file,'a+') as f:
 		for flow in flow_list:
@@ -449,7 +457,7 @@ def collect_show_cmd_fast(tn,cmd,**kwargs):
 def get_mac_table_size(dut):
 	cmd = "diagnose switch mac-address list | grep MAC | wc -c"
 	result = switch_show_cmd(dut,cmd,t=3)
-	print(result)
+	debug(result)
 	r = ''
 	for r in result:
 		if "CLI" in r:
@@ -598,8 +606,16 @@ def switch_configure_cmd_name(dut_dir,cmd):
 	time.sleep(0.5)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
 
-def switch_configure_cmd(tn,cmd):
-	tprint("configuring: {}".format(cmd))
+def switch_configure_cmd(tn,cmd,**kwargs):
+	if 'mode' in kwargs:
+		mode = kwargs['mode']
+	else:
+		mode = None
+
+	if mode == "silent":
+		pass
+	else:
+		tprint("configuring: {}".format(cmd))
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
 	time.sleep(0.5)
@@ -623,7 +639,12 @@ def switch_interactive_exec(tn,exec_cmd,prompt):
 	tn.write(answer)
 	time.sleep(1)
 
-def switch_login(tn):
+def switch_login(tn,*args,**kwargs):
+	if 'mode' in kwargs:
+		login_mode = kwargs['mode']
+	else:
+		login_mode = None
+
 	tn.write(('' + '\n').encode('ascii'))
 	#time.sleep(2)
 	tn.write(('' + '\n').encode('ascii'))
@@ -666,10 +687,14 @@ def switch_login(tn):
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 	# tn.write(('get system status\n').encode('ascii'))
 	# tn.read_until(("# ").encode('ascii'),timeout=2)
-	tprint("Login sucessful,return from telnet function\n")
+	if login_mode != 'silent':
+		tprint("switch_login: Login sucessful!\n")
+	switch_configure_cmd(tn,'config system global',mode="silent")
+	switch_configure_cmd(tn,'set admintimeout 480',mode="silent")
+	switch_configure_cmd(tn,'end',mode="silent")
 	return tn
 
-def reliable_telnet(ip_address,**kwargs):
+def reliable_telnet(ip_address,*args,**kwargs):
 	if 'sig' in kwargs:
 		event = kwargs['sig']
 		end = event.is_set()
@@ -758,9 +783,8 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	# time.sleep(2)
 
 	#tprint("successful login\n")
-	# tn.write(('\x03').encode('ascii'))
-	# time.sleep(2)
-
+	tn.write(('\x03').encode('ascii'))
+	tn.write(('\x03').encode('ascii'))
 	#tprint("successful login\n")
 	# tn.write(('\x03').encode('ascii'))
 	# time.sleep(2)
@@ -783,9 +807,9 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 
 	prompt = switch_find_login_prompt_new(tn)
 	p = prompt[0]
-	print(prompt)
+	debug(prompt)
 	if p == 'login':
-		print("This is new software image, login back with passord admin")
+		Info("This is new software image, login back with passord admin")
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
@@ -797,11 +821,11 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		sleep(1)
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 	elif p == 'shell':
-		print("Login without password, this is old switch image or have logined  previously")
+		Info("Login without password")
 	elif p == 'new':
-		print("This is new software image and first time login, password has been changed to admin")
+		Info("This first time login to image not allowing blank password, password has been changed to <admin>")
 	elif p == None:
-		print("Dont know what prompt it is")
+		Info("Not in login prompt, hit enter a couple times to show login prompt")
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
@@ -816,7 +840,7 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	switch_configure_cmd(tn,'config system global')
 	switch_configure_cmd(tn,'set admintimeout 480')
 	switch_configure_cmd(tn,'end')
-	tprint("Login sucessful,return from telnet function\n")
+	tprint("get_switch_telnet_connection_new: Login sucessful!\n")
 	return tn
 
 def config_admin_timeout(dut_list):
@@ -834,6 +858,7 @@ def console_timer(seconds,**kwargs):
 		sys.stdout.write("============================ Timer:{:2d} seconds remaining =======================".format(remaining))
 		sys.stdout.flush()
 		time.sleep(1)
+	sys.stdout.write("\n")
 
 def get_switch_telnet_connection(ip_address, console_port,**kwargs):
 	tprint("console server ip ="+str(ip_address))
@@ -926,7 +951,7 @@ def get_switch_telnet_connection(ip_address, console_port,**kwargs):
 	switch_configure_cmd(tn,'config system global')
 	switch_configure_cmd(tn,'set admintimeout 480')
 	switch_configure_cmd(tn,'end')
-	tprint("Login sucessful,return from telnet function\n")
+	tprint("get_switch_telnet_connection: Login sucessful!\n")
 	return tn
 
 
@@ -938,8 +963,12 @@ def relogin_if_needed(tn):
 			return False
 
 	if switch_find_login_prompt(tn) == True:
-		switch_login(tn)
+		switch_login(tn,mode='silent')
 		return True
+	else:
+		switch_configure_cmd(tn,'config system global',mode='silent')
+		switch_configure_cmd(tn,'set admintimeout 480',mode='silent')
+		switch_configure_cmd(tn,'end',mode='silent')
 		
 def switch_need_change_password(tn):
 	TIMEOUT = 2
@@ -1601,7 +1630,7 @@ def find_active_trunk_port(dut):
 	for p in core_ports:
 		if p in linerate:
 			if linerate[p]["TX_Rate"] > TEST_RATE or linerate[p]["RX_Rate"] > TEST_RATE:
-				print("On this switch, {} is active".format(p))
+				Info("On this switch, {} is active".format(p))
 				return p
 	return None
 
@@ -1645,7 +1674,7 @@ def find_inactive_trunk_port(dut):
 	for p in core_ports:
 		if p in linerate:
 			if linerate[p]["TX_Rate"] < TEST_RATE and linerate[p]["RX_Rate"] < TEST_RATE:
-				print("On this switch, {} is INactive".format(p))
+				Info("On this switch, {} is INactive".format(p))
 				inactive_ports.append(p)
 
 	return inactive_ports

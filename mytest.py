@@ -17,6 +17,19 @@ from settings import *
 from test_process import * 
 from common_lib import *
 
+def print_keys():
+	d = {}
+	d['name'] = 'mike'
+	d['age'] = 49
+	k = d.keys()
+	print(k)
+	print(str(k))
+	t = ''.join('%s  ' % i for i in d.keys())
+	print('The keys are = {}'.format(''.join('%s  ' % i for i in d.keys())))
+
+	print(f"The keys are = {''.join('%s  ' % i for i in d.keys())}")
+	print(t)
+
 def dut_process_cpu(ip,dut_name,filename,proc_name,event):
 	
 	counter = 0

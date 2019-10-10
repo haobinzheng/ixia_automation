@@ -487,7 +487,7 @@ if dev_mode == False:
 		fgt2_dir['location'] = fgt2_location
 		fgt2_dir['telnet'] = fgt2
 		fgt2_dir['cfg'] = fgt2_cfg
-		fgt_dir_list.append(fgt1_dir)
+		fgt_dir_list.append(fgt2_dir)
 
 		if test_setup == "448D":
 			pass
@@ -742,11 +742,11 @@ if testcase == 3:
 
 	if setup == True:
 		if settings.FACTORY or factory:
-			tprint("=============== resetting all switches to factory ===========")
+			tprint("=============== resetting all switches to factory default ===========")
 			for dut in dut_list:
 				switch_interactive_exec(dut,"execute factoryresetfull","Do you want to continue? (y/n)")
 			print("after reset sleep 5 min")
-			console_timer(300)
+			console_timer(300,msg="Wait for 5 min after reset factory default")
 			print("after sleep, relogin, should change password ")
 		
 
@@ -761,6 +761,9 @@ if testcase == 3:
 			dut3_dir['telnet'] = dut3
 			dut4_dir['telnet'] = dut4
 
+		###################################################################
+		#   Start a background login thread to periodically activate prompt
+		###################################################################
 		stop_threads = False
 		lock = threading.Lock()
 		threads_list = []
@@ -775,6 +778,7 @@ if testcase == 3:
 			dut_name = dut_dir['name']
 			image = find_dut_image(dut)
 			tprint(f"============================ {dut_name} software image = {image}================")
+
 		tprint("------------ configure port lldp profile to auto-isl --------------------")
 		for dut_dir in dut_dir_list:
 			switch_configure_cmd_name(dut_dir,"config switch physical-port")
@@ -783,8 +787,8 @@ if testcase == 3:
 				switch_configure_cmd_name(dut_dir,"set lldp-profile default-auto-isl")
 				switch_configure_cmd_name(dut_dir,"next")
 			switch_configure_cmd_name(dut_dir,"end")	
-		tprint("------------  After configuring lldp profile to auto-isl, wait for 60 seconds  --------------------")
-		console_timer(60)
+		tprint("------------  After configuring lldp profile to auto-isl, wait for 180 seconds  --------------------")
+		console_timer(180)
 		relogin_dut_all(dut_list)
 
 		for dut_dir in dut_dir_list:
@@ -809,8 +813,8 @@ if testcase == 3:
 						switch_configure_cmd_name(dut_dir,f"set members {core_ports[0]} {core_ports[1]} {core_ports[2]} {core_ports[3]}")
 						switch_configure_cmd_name(dut_dir,'end')
 					break
-			console_timer(10,msg="wait for 10 sec in between after mclag related config is done on one DUT")
-		console_timer(300,msg="after configure auto-isl-port-group wait for 300s")
+			console_timer(10,msg="wait for 10 sec after mclag related config is done on one FSW")
+		console_timer(120,msg="after configure auto-isl-port-group wait for 120 s")
 		
 		#relogin_dut_all(dut_list)
 		for d in dut_dir_list:
@@ -851,10 +855,11 @@ if testcase == 3:
 				fgt_upgrade_548d(fgt1,fgt1_dir)
 			console_timer(300,msg ="After software upgrade, wait for 300 seconds") 
 		else: 
+			tprint(" Not FSW software upgrade. After finished configuring, reboot all FSWs")
 			for dut in dut_list:
 				with lock:
 					switch_exec_reboot(dut)
-			console_timer(300,msg ="After software upgrade, wait for 300 seconds")
+			console_timer(300,msg ="After reboot,wait for 300 seconds")
 		relogin_dut_all(dut_list)
 
 		tprint("------------  end of configuring fortigate  --------------------")
@@ -920,8 +925,8 @@ if testcase == 3:
 
 		console_timer(20,msg="Wait for 20 sec after traffics are created")
 		ixia_start_traffic()
-		console_timer(20,msg="Measure traffic for 20 sec and print out stats")
-		tprint("Collect statistics after running traffic for 15 seconds, Please take a look at printed traffic stats to make sure no packet loss..")
+		console_timer(30,msg="Measure traffic for 30 sec and show stats")
+		tprint("Collecting statistics, Please take a look at traffic stats to make sure no packet loss..")
 	 
 		traffic_stats = ixiangpf.traffic_stats(
 		    mode = 'flow'
