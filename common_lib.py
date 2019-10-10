@@ -1652,17 +1652,25 @@ def parse_config_trunk(result):
 				#regex = r'\s?edit\s+\"([0-9a-z0-9A-Z0-9.]+)\"'
 				regex = r'\s?edit\s+\"(.+)\"'
 				match = re.match(regex, line)
-				trunk = match.group(1)
-				debug(trunk)
-				trunk_dict = {}
-				trunk_dict['name'] = trunk
+				if match:
+					trunk = match.group(1)
+					debug(trunk)
+					trunk_dict = {}
+					trunk_dict['name'] = trunk
+				else:
+					Info("parse_config_trunk: not able to parse edit line, exit")
+					exit()
 				
 			elif 'member' in line:
 				debug(f"parse_config_trunk: parsing set member line... line ={line}")
 				regex = r'.?\s?set members\s+(.+)'
 				match = re.match(regex, line)
-				port_list = match.group(1)
-				debug(f'port_list = {port_list}')
+				if match:
+					port_list = match.group(1)
+					debug(f'port_list = {port_list}')
+				else:
+					Info("parse_config_trunk: error passing member line")
+					exit()
 				regex = r'\"(port[0-9]+)\"'
 				ports = re.findall(regex,port_list)
 				debug(ports)
