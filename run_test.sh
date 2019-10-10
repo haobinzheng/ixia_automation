@@ -6,8 +6,8 @@
 #python mclag_v2.py -t 548D -e -test 2 -n 1 
 #python mclag_v2.py -t fg-548d -test 4
 #echo "python mclag_v2.py -t fg-548d -f -sw -c -mac 1000-5000-1000 -lm -test 3 -v "
-echo "python mclag_v2.py -t fg-548d -mac 1000-5000-1000 -lm -test 3 -v "
-python mclag_v2.py -t fg-548d -mac 1000-5000-1000 -lm -test 3 -v 
+echo "python mclag_v2.py -t fg-548d -f -c -sw -mac 1000-5000-1000 -lm -test 3 -v "
+python mclag_v2.py -t fg-548d -f -c -sw -mac 1000-5000-1000 -lm -test 3 -v 
 #python mclag_v2.py -t 448D -mac 1000-10000-1000 -test 1 -lm  
 
 #python mclag_v2.py -t 448D -mac 1000-10000-1000 -test 1 

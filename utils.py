@@ -583,6 +583,12 @@ def config_switch_port_cmd(dut,port,cmd):
 		switch_configure_cmd(dut,cmd)
 		switch_configure_cmd(dut,"end")
 
+def config_system_interface(dut,port,cmd):
+		switch_configure_cmd(dut,"config system interface")
+		switch_configure_cmd(dut,"edit {}".format(port))
+		switch_configure_cmd(dut,cmd)
+		switch_configure_cmd(dut,"end")
+
 def switch_configure_cmd_name(dut_dir,cmd):
 	tn = dut_dir['telnet']
 	dut_name = dut_dir['name']

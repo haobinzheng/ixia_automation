@@ -213,13 +213,14 @@ class Test_Monitor_Process(multiprocessing.Process):
 
 
 # This section should contain the connect procedure values (device ip, port list etc) and, of course, the connect procedure		
-def period_login(dut_list,stop):
+def period_login(dut_list,lock,stop):
 	tprint("Staring period_login thread")
 	while not stop():
 		sleep(300)
 		tprint("*****Login thread: relogin after 300 seconds ")
-		for dut in dut_list:
-			relogin_if_needed(dut)
+		with lock:
+			for dut in dut_list:
+				relogin_if_needed(dut)
 	tprint("*** Login thread: Main thread is done....Existing background DUT login activities")
 			
 
@@ -1731,15 +1732,15 @@ def fgt_upgrade_548d(fgt1,fgt1_dir):
 
 	cmd = "execute switch-controller switch-software upgrade S548DN4K17000133 S548DN-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
-	console_timer(300)
+	console_timer(10,msg="upgrading S548DN4K17000133 S548DN-IMG.swtp")
 	cmd = "execute switch-controller switch-software upgrade S548DF4K16000653 S548DF-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
-	console_timer(300)
+	console_timer(10,msg="upgrading S548DF4K16000653 S548DF-IMG.swtp")
 	cmd = "execute switch-controller switch-software upgrade S548DF4K17000028 S548DF-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
-	console_timer(300)
+	console_timer(10,msg="upgrading S548DF4K17000028 S548DF-IMG.swtp")
 	cmd = "execute switch-controller switch-software upgrade S548DF4K17000014 S548DF-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
-	console_timer(300)
+	console_timer(10,msg="upgrading S548DF4K17000014 S548DF-IMG.swtp")
 	cmd = "execute switch-controller get-upgrade-status"
 	switch_show_cmd_name(fgt1_dir,cmd)

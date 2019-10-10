@@ -130,9 +130,9 @@ def ixia_protocal_status(info):
     #'sessions_up': '/topology:1/deviceGroup:1/ethernet:1/ipv4:1/item:1'}}} 
 
     key = list(info.keys())[0]
-    print(key)
+    debug(key)
     handles = info[key]['handles']
-    print(info[key]['handles'])
+    debug(info[key]['handles'])
     if 'sessions_up' in handles:
         return "UP"
     elif 'sessions_down' in handles:
@@ -920,8 +920,8 @@ def ixia_start_protcols_verify(handle_list, **kwargs):
     if status['status'] != IxiaHlt.SUCCESS:
         ErrorHandler('test_control', status)
 
-    tprint("After starting protocols, wait for 30 seconds for protocols to come up")
-    time.sleep(timeout)
+    tprint(f"After starting protocols, wait for {timeout} seconds for protocols to come up")
+    console_timer(timeout)
     tprint("Verify sessions status after protocol is started")
     for handle in handle_list:
         proto_info = ixia_protocal_info(handle)

@@ -702,7 +702,7 @@ if testcase == 3:
 	fgt2_dir['location'] = fgt2_location
 	fgt2_dir['telnet'] = fgt2
 	fgt2_dir['cfg'] = fgt2_cfg
-	fgt_dir_list.append(fgt1_dir)
+	fgt_dir_list.append(fgt2_dir)
 
 	config_local_access = """
 	config switch-controller security-policy local-access
@@ -717,10 +717,23 @@ if testcase == 3:
 	for fgt_dir in fgt_dir_list:
 		fgt = fgt_dir['telnet'] 
 		fgt_list.append(fgt)
-		switch_exec_reboot(fgt)
-	sleep(300)
+		if settings.FGT_REBOOT: 
+			switch_exec_reboot(fgt)
+	
 
-	relogin_dut_all(fgt_list)
+
+	#This is a workaround for a problem: when the both fgt are booted together, normal agg interface didn't go up and need toggling
+
+	if settings.FGT_REBOOT:
+		console_timer(300,msg="After rebooting FGTs, wait for 300 sec")
+		relogin_dut_all(fgt_list)
+		config_system_interface(fgt1,"Agg-424D-1","set status down")
+		sleep(2)
+		config_system_interface(fgt1,"Agg-424D-1","set status up")
+		sleep(2)
+
+
+	
 
 	if upgrade_fgt and test_setup.lower() == "fg-548d" and not setup:
 		tprint(f" ===================== upgrading managed FSW to build {settings.build_548d} ===============")
@@ -751,7 +764,7 @@ if testcase == 3:
 		stop_threads = False
 		lock = threading.Lock()
 		threads_list = []
-		thread2 = Thread(target = period_login,args = (dut_list,lambda: stop_threads))
+		thread2 = Thread(target = period_login,args = (dut_list,lock,lambda: stop_threads))
 		thread2.start()
 		threads_list.append(thread2)
 
@@ -770,8 +783,8 @@ if testcase == 3:
 				switch_configure_cmd_name(dut_dir,"set lldp-profile default-auto-isl")
 				switch_configure_cmd_name(dut_dir,"next")
 			switch_configure_cmd_name(dut_dir,"end")	
-		tprint("------------  After configuring lldp profile to auto-isl, wait for 400 seconds  --------------------")
-		console_timer(400)
+		tprint("------------  After configuring lldp profile to auto-isl, wait for 60 seconds  --------------------")
+		console_timer(60)
 		relogin_dut_all(dut_list)
 
 		for dut_dir in dut_dir_list:
@@ -834,18 +847,17 @@ if testcase == 3:
 
 		if upgrade_fgt and test_setup.lower() == "fg-548d":
 			debug("Start to upgrade fsw")
-			fgt_upgrade_548d(fgt1,fgt1_dir)
-			console_timer(200,msg ="After software upgrade, wait for 200 seconds") 
+			with lock:
+				fgt_upgrade_548d(fgt1,fgt1_dir)
+			console_timer(300,msg ="After software upgrade, wait for 300 seconds") 
 		else: 
 			for dut in dut_list:
-				switch_exec_reboot(dut)
-			sleep(200)
-			relogin_dut_all(dut_list)
+				with lock:
+					switch_exec_reboot(dut)
+			console_timer(300,msg ="After software upgrade, wait for 300 seconds")
+		relogin_dut_all(dut_list)
 
 		tprint("------------  end of configuring fortigate  --------------------")
-		tprint("After configuring all devices wait for 300s, then verify everything")
-		console_timer(300)
-		relogin_dut_all(dut_list)
 		pre_test_verification(dut_list)
 	# Enable or disable log-mac-event on all trunk interface
 	if log_mac_event:
@@ -891,12 +903,12 @@ if testcase == 3:
 			dhcp_handle_list.append(dhcp_client_handle)
 			counter +=1 
 
-		console_timer(400,msg="Wait for 400 sec after dhcp clients are created")
+		console_timer(10,msg="Wait for 10 sec after dhcp clients are created")
 		topo_h1 = topo_list[0]
 		topo_h2 = topo_list[1]
 		topo_h3 = topo_list[2]
 		topo_h4 = topo_list[3]
-		ixia_start_protcols_verify(dhcp_handle_list)
+		ixia_start_protcols_verify(dhcp_handle_list,timeout=300)
 		tprint("Creating traffic item I....")
 		ixia_create_ipv4_traffic(topo_h1,topo_h2,rate=10)
 		tprint("Creating traffic item II....")
