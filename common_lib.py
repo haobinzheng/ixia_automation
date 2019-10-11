@@ -1722,8 +1722,20 @@ def parse_config_output(result):
 	debug(config)
 	return config
 
-def dut_switch_trunk(dut):
+def check_mclag_peer(dut):
+	msg = "ICL is not configured!"
 
+def check_icl_config(dut):
+	result = collect_show_cmd(dut,'show switch trunk')
+	config = parse_config_output(result)
+	for block in config:
+		for line in block:
+			if "set mclag-icl enable" in line:
+				return True
+
+	return False
+
+def dut_switch_trunk(dut):
 	result = collect_show_cmd(dut,'show switch trunk')
 	config = parse_config_output(result)
 	print(f"!!!!!!!!! show switch trunk output: {config}")
@@ -1748,7 +1760,8 @@ def fgt_upgrade_548d(fgt1,fgt1_dir):
 	console_timer(10,msg="upgrading S548DN4K17000133 S548DN-IMG.swtp")
 	cmd = "execute switch-controller switch-software upgrade S548DF4K16000653 S548DF-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
-	console_timer(10,msg="upgrading S548DF4K16000653 S548DF-IMG.swtp")
+	console_timer(200,msg="upgrading S548DF4K16000653 S548DF-IMG.swtp, wait for 200 secs for tier-2 switches to download image")
+
 	cmd = "execute switch-controller switch-software upgrade S548DF4K17000028 S548DF-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
 	console_timer(10,msg="upgrading S548DF4K17000028 S548DF-IMG.swtp")
