@@ -1738,7 +1738,7 @@ def check_icl_config(dut):
 def dut_switch_trunk(dut):
 	result = collect_show_cmd(dut,'show switch trunk')
 	config = parse_config_output(result)
-	print(f"!!!!!!!!! show switch trunk output: {config}")
+	#print(f"!!!!!!!!! show switch trunk output: {config}")
 	trunk_dict_list = parse_config_trunk(config)
 	debug(trunk_dict_list)
 	return trunk_dict_list
