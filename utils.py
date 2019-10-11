@@ -19,6 +19,19 @@ from threading import Thread
 import subprocess
 import spur
 
+def init_tracking_loop(loop_count):
+	loop_count = 0
+
+def tracking_loop(loop_count):
+	loop_count +=1
+	if loop_count == len(mac_list):
+		Tracking = "End"
+	elif loop_count == len(mac_list) - 1:
+		Tracking = "Penultimate"
+	else:
+		Tracking = "Start"
+	return Tracking
+
 def touch(fname):
     if os.path.exists(fname):
         os.utime(fname, None)

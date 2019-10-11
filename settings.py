@@ -18,7 +18,7 @@ THREADING  = False
 TELNET = False
 FACTORY = False
 build_548d = 192
-FGT_REBOOT = False
+FGT_REBOOT = True
 # def init():
 # 	global DEBUG
 # 	DEBUG = False

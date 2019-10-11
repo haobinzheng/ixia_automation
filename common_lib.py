@@ -140,6 +140,16 @@ def dut_process_cpu(ip,dut_name,filename,proc_name,event,**kwargs):
 	debug("Exit event is set by parent process, exiting")
 	tprint("===============================Exiting dut_proc_cpu process ===================")
 
+def sw_display_log(dut,*args, **kwargs):
+	switch_exec_cmd(dut,"execute log filter start-line 1")
+	switch_exec_cmd(dut,"execute log filter view-lines 1000")
+	result = collect_show_cmd(dut,'execute log display',t=3)
+	print_collect_show(result)
+
+def sw_delete_log(dut,*args,**kwargs):
+	switch_interactive_exec(dut,'execute log delete-all',"Do you want to continue? (y/n)")
+	
+
 def dut_process_log(ip,dut_name,filename,intf_name,event_config,event_done,**kwargs):
 	
 	if "cmds" in kwargs:

@@ -693,13 +693,13 @@ if testcase == 3:
 7. Configure log-mac-event
 8. Close consoles for FGT and FSW
 9. Start test loops
-	for each mac_size:
-		-setup ixia and ensure initial traffic flow is ok 
-		-setup log files for process
-		-start cpu monitoring process 
-		-start background delete-mac process
-		-Main process loop: 
-			-measure traffic loss 
+for each mac_size:
+	-setup ixia and ensure initial traffic flow is ok 
+	-setup log files for process
+	-start cpu monitoring process 
+	-start background delete-mac process
+	-Main process loop: 
+		-measure traffic loss 
 	"""
 	print(test_steps)
 	icl_ports = ['port47','port48']
@@ -816,6 +816,7 @@ if testcase == 3:
 			dut = dut_dir['telnet']
 			relogin_if_needed(dut)
 			ICL_CONFIG = False
+			sw_delete_log(dut)
 			while not ICL_CONFIG: 
 				sleep(10)
 				tprint("Configuring MCLAG-ICL, if icl trunk is not found, maybe auto-discovery is not done yet")
@@ -841,6 +842,7 @@ if testcase == 3:
 					else:
 						ErrorNotify(f"mclag-icl is not configured properly at {dut_name} and need to re-do")
 						ICL_CONFIG = False
+						sw_display_log(dut)
 
 			if 'dut1' in dut_name or 'dut2' in dut_name:
 				switch_configure_cmd_name(dut_dir,"config switch auto-isl-port-group")
@@ -942,7 +944,15 @@ if testcase == 3:
 	for dut in dut_list:
 		dut.close()
 
+	init_tracking_loop(loop_count)
 	for mac_table in mac_list:
+		"""
+		loop_position = 
+		"End"
+		"Penultimate"
+		"Start"
+		"""
+		loop_position = tracking_loop(loop_count) 
 		portsList_v4 = ['1/1','1/2','1/7','1/8']
 		debug("Setup IXIA with ports running as dhcp client mode")
 		ports = ixia_connect_ports(chassis_ip,portsList_v4,ixnetwork_tcl_server,tcl_server)
@@ -1091,8 +1101,9 @@ if testcase == 3:
 					p.join()
 				for p in proc_list2:
 					p.join()
-			 
-			ixia_diconnect()
+
+			if loop_position != 'Penultimate':
+				ixia_diconnect()
 	filename = f"Log/{cpu_log}"
 	scp_file(file=filename)
 
