@@ -764,9 +764,9 @@ if testcase == 3:
 		stop_threads = False
 		lock = threading.Lock()
 		threads_list = []
-		thread2 = Thread(target = period_login,args = (dut_list,lock,lambda: stop_threads))
-		thread2.start()
-		threads_list.append(thread2)
+		# thread2 = Thread(target = period_login,args = (dut_list,lock,lambda: stop_threads))
+		# thread2.start()
+		# threads_list.append(thread2)
 
 		 
 		tprint(" -------------- After factory reset, find out FSW images ------------------------")
@@ -905,10 +905,10 @@ if testcase == 3:
 	monitor_file = "Log/"+test_setup+ '_'+log_mac_flag+'_'+'monitor.txt'
 
 	system_verification_log(dut_list,cpu_log)
-	top_threads = True
-	threads_exit(stop_threads,threads_list)
+	# top_threads = True
+	# threads_exit(stop_threads,threads_list)
 	for dut in dut_list:
-			dut.close()
+		dut.close()
 
 	for mac_table in mac_list:
 		portsList_v4 = ['1/1','1/2','1/7','1/8']
@@ -1063,7 +1063,6 @@ if testcase == 3:
 			ixia_diconnect()
 			for dut in dut_list:
 				relogin_if_needed(dut)
-	threads_exit(stop_threads,threads_list)
 	filename = f"Log/{cpu_log}"
 	scp_file(file=filename)
 
