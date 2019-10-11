@@ -963,7 +963,7 @@ if testcase == 3:
 		topo_h2 = topo_list[1]
 		topo_h3 = topo_list[2]
 		topo_h4 = topo_list[3]
-		ixia_start_protcols_verify(dhcp_handle_list,timeout=300)
+		ixia_start_protcols_verify(dhcp_handle_list,timeout=150)
 		tprint("Creating traffic item I....")
 		ixia_create_ipv4_traffic(topo_h1,topo_h2,rate=10)
 		tprint("Creating traffic item II....")
