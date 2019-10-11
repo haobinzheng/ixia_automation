@@ -97,7 +97,7 @@ def dut_process_cpu(ip,dut_name,filename,proc_name,event,**kwargs):
 		if top[0]:
 			tprint("!!!!!!!!!!!!!!!!! The following processes' CPU utilization is high!!!!!!!!!!")
 			print_cmd_output(top[1],dut_name,cmd)
-			print_file(top[1], filename,dut_name = dut_name)
+			print_file(top[1], filename, dut_name=dut_name)
 		cpu_dict = top[2]
 
 		debug(cpu_dict)
@@ -130,7 +130,7 @@ def dut_process_cpu(ip,dut_name,filename,proc_name,event,**kwargs):
 			if idle < 5 and not showed:
 				switch_show_cmd_log(dut,"diagnose switch mclag peer-consistency-check",filename)
 				switch_show_cmd_log(dut,"diagnose stp vlan list ",filename)
-				print_file(result, filename,dut_name)
+				print_file(result,filename,dut_name = dut_name)
 				showed = True
 
 		#sleep(2)

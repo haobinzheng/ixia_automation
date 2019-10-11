@@ -1,4 +1,4 @@
- 
+
 from pprint import pprint
 import os
 import sys
@@ -683,6 +683,25 @@ if testcase == 4:
 		keyin = input("::::::::After delete quarantine, check DUT3 log and port status. When done, press any key\n")
 
 if testcase == 3:
+	test_steps = """
+	1. Reboot FGTs
+	2. Factory reset all switches
+	3. Configure physical ports to ldp-profile default-auto-isl
+	4. Configure mclag-isl and auto-isl-port-group
+	5. Configure switch trunk port via FGT
+	6. Upgrade switches 
+	7. Configure log-mac-event
+	8. Close consoles for FGT and FSW
+	9. Start test loops
+		for each mac_size:
+			-setup ixia and ensure initial traffic flow is ok 
+			-setup log files for process
+			-start cpu monitoring process 
+			-start background delete-mac process
+			-Main process loop: 
+				-measure traffic loss 
+	"""
+	print(test_steps)
 	icl_ports = ['port47','port48']
 	core_ports = ["port1","port2","port3","port4"]
 	tprint('------------------------------ login Fortigate devices -----------------------')
@@ -715,12 +734,11 @@ if testcase == 3:
 	
 	fgt_list = []
 	for fgt_dir in fgt_dir_list:
-		fgt = fgt_dir['telnet'] 
+		fgt = fgt_dir['telnet']
+		name = fgt_dir['name']
 		fgt_list.append(fgt)
 		if settings.FGT_REBOOT: 
-			switch_exec_reboot(fgt)
-	
-
+			switch_exec_reboot(fgt,device=name)
 
 	#This is a workaround for a problem: when the both fgt are booted together, normal agg interface didn't go up and need toggling
 
@@ -1061,8 +1079,6 @@ if testcase == 3:
 					p.join()
 			 
 			ixia_diconnect()
-			for dut in dut_list:
-				relogin_if_needed(dut)
 	filename = f"Log/{cpu_log}"
 	scp_file(file=filename)
 
@@ -1071,7 +1087,7 @@ if testcase == 3:
 #########################################################################################
 if testcase == 1:
 	description = """
-	============================================================================================
+============================================================================================
 Purpose: Measure CPU usage for ctrld process when log-mac-event is enabled and disabled. 
 Command:	Edit run_test.sh to run this script with -lm (log enabled) and no -lm (log disabled)
 			python mclag_v2.py -t 448D -mac 1000-10000-1000 -test 1 -lm      (log-mac enabled)

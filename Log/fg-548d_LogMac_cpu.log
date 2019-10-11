@@ -1,514 +1,667 @@
-2019-10-10 17:48:54 :: get system status
-2019-10-10 17:48:54 :: Version: FortiSwitch-548D-FPOE v6.2.0,build0192,191005 (Interim)
-2019-10-10 17:48:54 :: Serial-Number: S548DF4K17000014
-2019-10-10 17:48:54 :: BIOS version: 04000016
-2019-10-10 17:48:54 :: System Part-Number: P18049-05
-2019-10-10 17:48:54 :: Burn in MAC: 70:4c:a5:82:96:72
-2019-10-10 17:48:54 :: Hostname: S548DF4K17000014
-2019-10-10 17:48:54 :: Distribution: International
-2019-10-10 17:48:54 :: Branch point: 192
-2019-10-10 17:48:54 :: System time: Thu Oct 10 17:48:52 2019
-2019-10-10 17:48:54 :: 
-2019-10-10 17:48:54 :: S548DF4K17000014 #
-2019-10-10 17:48:58 :: show switch trunk
-2019-10-10 17:48:58 :: config switch trunk
-2019-10-10 17:48:58 ::     edit "8DF4K17000028-0"
-2019-10-10 17:48:58 ::         set mode lacp-active
-2019-10-10 17:48:58 ::         set auto-isl 1
-2019-10-10 17:48:58 ::             set members "port47" "port48"
-2019-10-10 17:48:58 ::     next
-2019-10-10 17:48:58 ::     edit "704CA5CBC3DC-0"
-2019-10-10 17:48:58 ::         set mode lacp-active
-2019-10-10 17:48:58 ::         set auto-isl 1
-2019-10-10 17:48:58 ::         set isl-fortilink 1
-2019-10-10 17:48:58 ::             set members "port50"
-2019-10-10 17:48:58 ::     next
-2019-10-10 17:48:58 ::     edit "704CA5A8FCFA-0"
-2019-10-10 17:48:58 ::         set mode lacp-active
-2019-10-10 17:48:58 ::         set auto-isl 1
-2019-10-10 17:48:58 ::         set isl-fortilink 1
-2019-10-10 17:48:58 ::             set members "port49"
-2019-10-10 17:48:58 ::     next
-2019-10-10 17:48:58 ::     edit "sw1-trunk"
-2019-10-10 17:48:58 ::         set mode lacp-active
-2019-10-10 17:48:58 ::         set mclag enable
-2019-10-10 17:48:58 ::             set members "port13"
-2019-10-10 17:48:58 ::     next
-2019-10-10 17:48:58 ::     edit "core1"
-2019-10-10 17:48:58 :: --More--                  set mode lacp-active
-2019-10-10 17:48:58 ::         set auto-isl 1
-2019-10-10 17:48:58 ::             set members "port1" "port2" "port3" "port4"
-2019-10-10 17:48:58 ::     next
-2019-10-10 17:48:58 :: end
-2019-10-10 17:48:58 :: 
-2019-10-10 17:48:58 :: S548DF4K17000014 #
-2019-10-10 17:49:02 :: diagnose switch mclag peer-consistency-check
-2019-10-10 17:49:02 :: 
-2019-10-10 17:49:02 ::     ICL is not configured!
-2019-10-10 17:49:02 :: 
-2019-10-10 17:49:02 :: S548DF4K17000014 #
-2019-10-10 17:49:06 :: get switch lldp neighbors-summary
-2019-10-10 17:49:06 :: 
-2019-10-10 17:49:06 :: Capability codes:
-2019-10-10 17:49:06 :: 	R:Router, B:Bridge, T:Telephone, C:DOCSIS Cable Device
-2019-10-10 17:49:06 :: 	W:WLAN Access Point, P:Repeater, S:Station, O:Other
-2019-10-10 17:49:06 :: MED type codes:
-2019-10-10 17:49:06 :: 	Generic:Generic Endpoint (Class 1), Media:Media Endpoint (Class 2)
-2019-10-10 17:49:06 :: 	Comms:Communications Endpoint (Class 3), Network:Network Connectivity Device
-2019-10-10 17:49:06 :: 
-2019-10-10 17:49:06 ::   Portname    Status   Device-name                 TTL   Capability  MED-type  Port-ID
-2019-10-10 17:49:06 ::   __________  _______  __________________________  ____  __________  ________  _______
-2019-10-10 17:49:06 ::   port1       Up       S548DF4K16000653            120   BR          -         port1
-2019-10-10 17:49:06 ::   port2       Up       S548DF4K16000653            120   BR          -         port2
-2019-10-10 17:49:06 ::   port3       Up       S548DN4K17000133            120   BR          -         port3
-2019-10-10 17:49:06 ::   port4       Up       S548DN4K17000133            120   BR          -         port4
-2019-10-10 17:49:06 ::   port5       Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port6       Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port7       Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port8       Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port9       Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port10      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port11      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port12      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port13      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port14      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port15      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port16      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port17      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port18      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port19      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port20      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port21      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port22      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port23      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port24      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port25      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port26      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port27      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port28      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port29      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port30      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port31      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port32      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port33      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port34      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port35      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port36      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port37      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port38      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port39      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port40      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port41      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port42      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port43      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port44      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port45      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port46      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port47      Up       S548DF4K17000028            120   BR          -         port47
-2019-10-10 17:49:06 ::   port48      Up       S548DF4K17000028            120   BR          -         port48
-2019-10-10 17:49:06 ::   port49      Up       FortiGate-3960E             120   BR          -         70:4c:a5:a8:fc:c6
-2019-10-10 17:49:06 ::   port50      Up       FortiGate-3960E             120   BR          -         70:4c:a5:cb:c3:a8
-2019-10-10 17:49:06 ::   port51      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port52      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port53      Down     -                           -     -           -         -
-2019-10-10 17:49:06 ::   port54      Down     -                           -     -           -         -
-2019-10-10 17:49:06 :: 
-2019-10-10 17:49:06 :: S548DF4K17000014 #
-2019-10-10 17:49:10 :: show switch interface port39
-2019-10-10 17:49:10 :: config switch interface
-2019-10-10 17:49:10 ::     edit "port39"
-2019-10-10 17:49:10 ::         set allowed-vlans 4093
-2019-10-10 17:49:10 ::         set untagged-vlans 4093
-2019-10-10 17:49:10 ::         set snmp-index 39
-2019-10-10 17:49:10 ::     next
-2019-10-10 17:49:10 :: end
-2019-10-10 17:49:10 :: 
-2019-10-10 17:49:10 :: S548DF4K17000014 #
-2019-10-10 17:49:14 :: get system status
-2019-10-10 17:49:14 :: Version: FortiSwitch-548D-FPOE v6.2.0,build0190,191001 (Interim)
-2019-10-10 17:49:14 :: Serial-Number: S548DF4K17000028
-2019-10-10 17:49:14 :: BIOS version: 04000016
-2019-10-10 17:49:14 :: System Part-Number: P18049-05
-2019-10-10 17:49:14 :: Burn in MAC: 70:4c:a5:82:99:82
-2019-10-10 17:49:14 :: Hostname: S548DF4K17000028
-2019-10-10 17:49:14 :: Distribution: International
-2019-10-10 17:49:14 :: Branch point: 190
-2019-10-10 17:49:14 :: System time: Thu Oct 10 17:49:12 2019
-2019-10-10 17:49:14 :: 
-2019-10-10 17:49:14 :: S548DF4K17000028 #
-2019-10-10 17:49:18 :: show switch trunk
-2019-10-10 17:49:18 :: config switch trunk
-2019-10-10 17:49:18 ::     edit "8DF4K17000014-0"
-2019-10-10 17:49:18 ::         set mode lacp-active
-2019-10-10 17:49:18 ::         set auto-isl 1
-2019-10-10 17:49:18 ::             set members "port47" "port48"
-2019-10-10 17:49:18 ::     next
-2019-10-10 17:49:18 ::     edit "704CA5CBC3DC-0"
-2019-10-10 17:49:18 ::         set mode lacp-active
-2019-10-10 17:49:18 ::         set auto-isl 1
-2019-10-10 17:49:18 ::         set isl-fortilink 1
-2019-10-10 17:49:18 ::             set members "port50"
-2019-10-10 17:49:18 ::     next
-2019-10-10 17:49:18 ::     edit "704CA5A8FCFA-0"
-2019-10-10 17:49:18 ::         set mode lacp-active
-2019-10-10 17:49:18 ::         set auto-isl 1
-2019-10-10 17:49:18 ::         set isl-fortilink 1
-2019-10-10 17:49:18 ::             set members "port49"
-2019-10-10 17:49:18 ::     next
-2019-10-10 17:49:18 ::     edit "sw1-trunk"
-2019-10-10 17:49:18 ::         set mode lacp-active
-2019-10-10 17:49:18 ::         set mclag enable
-2019-10-10 17:49:18 ::             set members "port13"
-2019-10-10 17:49:18 ::     next
-2019-10-10 17:49:18 ::     edit "core1"
-2019-10-10 17:49:18 :: --More--                  set mode lacp-active
-2019-10-10 17:49:18 ::         set auto-isl 1
-2019-10-10 17:49:18 ::             set members "port1" "port2" "port3" "port4"
-2019-10-10 17:49:18 ::     next
-2019-10-10 17:49:18 :: end
-2019-10-10 17:49:18 :: 
-2019-10-10 17:49:18 :: S548DF4K17000028 #
-2019-10-10 17:49:22 :: diagnose switch mclag peer-consistency-check
-2019-10-10 17:49:22 :: 
-2019-10-10 17:49:22 ::     ICL is not configured!
-2019-10-10 17:49:22 :: 
-2019-10-10 17:49:22 :: S548DF4K17000028 #
-2019-10-10 17:49:26 :: get switch lldp neighbors-summary
-2019-10-10 17:49:26 :: 
-2019-10-10 17:49:26 :: Capability codes:
-2019-10-10 17:49:26 :: 	R:Router, B:Bridge, T:Telephone, C:DOCSIS Cable Device
-2019-10-10 17:49:26 :: 	W:WLAN Access Point, P:Repeater, S:Station, O:Other
-2019-10-10 17:49:26 :: MED type codes:
-2019-10-10 17:49:26 :: 	Generic:Generic Endpoint (Class 1), Media:Media Endpoint (Class 2)
-2019-10-10 17:49:26 :: 	Comms:Communications Endpoint (Class 3), Network:Network Connectivity Device
-2019-10-10 17:49:26 :: 
-2019-10-10 17:49:26 ::   Portname    Status   Device-name                 TTL   Capability  MED-type  Port-ID
-2019-10-10 17:49:26 ::   __________  _______  __________________________  ____  __________  ________  _______
-2019-10-10 17:49:26 ::   port1       Up       S548DN4K17000133            120   BR          -         port1
-2019-10-10 17:49:26 ::   port2       Up       S548DN4K17000133            120   BR          -         port2
-2019-10-10 17:49:26 ::   port3       Up       S548DF4K16000653            120   BR          -         port3
-2019-10-10 17:49:26 ::   port4       Up       S548DF4K16000653            120   BR          -         port4
-2019-10-10 17:49:26 ::   port5       Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port6       Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port7       Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port8       Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port9       Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port10      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port11      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port12      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port13      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port14      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port15      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port16      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port17      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port18      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port19      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port20      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port21      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port22      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port23      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port24      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port25      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port26      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port27      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port28      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port29      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port30      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port31      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port32      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port33      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port34      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port35      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port36      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port37      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port38      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port39      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port40      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port41      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port42      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port43      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port44      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port45      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port46      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port47      Up       S548DF4K17000014            120   BR          -         port47
-2019-10-10 17:49:26 ::   port48      Up       S548DF4K17000014            120   BR          -         port48
-2019-10-10 17:49:26 ::   port49      Up       FortiGate-3960E             120   BR          -         70:4c:a5:a8:fc:c7
-2019-10-10 17:49:26 ::   port50      Up       FortiGate-3960E             120   BR          -         70:4c:a5:cb:c3:a9
-2019-10-10 17:49:26 ::   port51      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port52      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port53      Down     -                           -     -           -         -
-2019-10-10 17:49:26 ::   port54      Down     -                           -     -           -         -
-2019-10-10 17:49:26 :: 
-2019-10-10 17:49:26 :: S548DF4K17000028 #
-2019-10-10 17:49:30 :: show switch interface port39
-2019-10-10 17:49:30 :: config switch interface
-2019-10-10 17:49:30 ::     edit "port39"
-2019-10-10 17:49:30 ::         set allowed-vlans 4093
-2019-10-10 17:49:30 ::         set untagged-vlans 4093
-2019-10-10 17:49:30 ::         set snmp-index 39
-2019-10-10 17:49:30 ::     next
-2019-10-10 17:49:30 :: end
-2019-10-10 17:49:30 :: 
-2019-10-10 17:49:30 :: S548DF4K17000028 #
-2019-10-10 17:49:34 :: get system status
-2019-10-10 17:49:34 :: Version: FortiSwitch-548D-FPOE v6.2.0,build0192,191005 (Interim)
-2019-10-10 17:49:34 :: Serial-Number: S548DF4K16000653
-2019-10-10 17:49:34 :: BIOS version: 04000013
-2019-10-10 17:49:34 :: System Part-Number: P18049-04
-2019-10-10 17:49:34 :: Burn in MAC: 90:6c:ac:62:14:3e
-2019-10-10 17:49:34 :: Hostname: S548DF4K16000653
-2019-10-10 17:49:34 :: Distribution: International
-2019-10-10 17:49:34 :: Branch point: 192
-2019-10-10 17:49:34 :: System time: Thu Oct 10 17:49:32 2019
-2019-10-10 17:49:34 :: 
-2019-10-10 17:49:34 :: S548DF4K16000653 #
-2019-10-10 17:49:38 :: show switch trunk
-2019-10-10 17:49:38 :: config switch trunk
-2019-10-10 17:49:38 ::     edit "8DF4K17000014-0"
-2019-10-10 17:49:38 ::         set mode lacp-active
-2019-10-10 17:49:38 ::         set auto-isl 1
-2019-10-10 17:49:38 ::         set mclag enable
-2019-10-10 17:49:38 ::             set members "port1" "port2"
-2019-10-10 17:49:38 ::     next
-2019-10-10 17:49:38 ::     edit "8DF4K17000028-0"
-2019-10-10 17:49:38 ::         set mode lacp-active
-2019-10-10 17:49:38 ::         set auto-isl 1
-2019-10-10 17:49:38 ::         set mclag enable
-2019-10-10 17:49:38 ::             set members "port3" "port4"
-2019-10-10 17:49:38 ::     next
-2019-10-10 17:49:38 ::     edit "8DN4K17000133-0"
-2019-10-10 17:49:38 ::         set mode lacp-active
-2019-10-10 17:49:38 ::         set auto-isl 1
-2019-10-10 17:49:38 ::         set mclag-icl enable
-2019-10-10 17:49:38 ::             set members "port47" "port48"
-2019-10-10 17:49:38 ::     next
-2019-10-10 17:49:38 ::     edit "trunk1"
-2019-10-10 17:49:38 ::         set mode lacp-active
-2019-10-10 17:49:38 ::         set mclag enable
-2019-10-10 17:49:38 ::             set members "port13"
-2019-10-10 17:49:38 ::     next
-2019-10-10 17:49:38 :: --More--          end
-2019-10-10 17:49:38 :: 
-2019-10-10 17:49:38 :: S548DF4K16000653 #
-2019-10-10 17:49:42 :: diagnose switch mclag peer-consistency-check
-2019-10-10 17:49:42 :: 
-2019-10-10 17:49:42 ::     Running diagnostic, it may take sometime...
-2019-10-10 17:49:42 :: 
-2019-10-10 17:49:42 ::     mclag-trunk-name    peer-config lacp-state   stp-state   local-ports            remote-ports
-2019-10-10 17:49:42 ::     __________________  ___________ __________   _________   _____________          _____________
-2019-10-10 17:49:42 :: 
-2019-10-10 17:49:42 ::     8DF4K17000014-0     OK         UP           OK           port1     port2         port3     port4
-2019-10-10 17:49:42 ::     8DF4K17000028-0     OK         UP           OK           port3     port4         port1     port2
-2019-10-10 17:49:42 ::     8DN4K17000133-0*    OK         UP           OK           port47    port48        port47    port48
-2019-10-10 17:49:42 ::     trunk1              OK         UP           OK           port13                  port13
-2019-10-10 17:49:42 :: 
-2019-10-10 17:49:42 :: S548DF4K16000653 #
-2019-10-10 17:49:46 :: get switch lldp neighbors-summary
-2019-10-10 17:49:46 :: 
-2019-10-10 17:49:46 :: Capability codes:
-2019-10-10 17:49:46 :: 	R:Router, B:Bridge, T:Telephone, C:DOCSIS Cable Device
-2019-10-10 17:49:46 :: 	W:WLAN Access Point, P:Repeater, S:Station, O:Other
-2019-10-10 17:49:46 :: MED type codes:
-2019-10-10 17:49:46 :: 	Generic:Generic Endpoint (Class 1), Media:Media Endpoint (Class 2)
-2019-10-10 17:49:46 :: 	Comms:Communications Endpoint (Class 3), Network:Network Connectivity Device
-2019-10-10 17:49:46 :: 
-2019-10-10 17:49:46 ::   Portname    Status   Device-name                 TTL   Capability  MED-type  Port-ID
-2019-10-10 17:49:46 ::   __________  _______  __________________________  ____  __________  ________  _______
-2019-10-10 17:49:46 ::   port1       Up       S548DF4K17000014            120   BR          -         port1
-2019-10-10 17:49:46 ::   port2       Up       S548DF4K17000014            120   BR          -         port2
-2019-10-10 17:49:46 ::   port3       Up       S548DF4K17000028            120   BR          -         port3
-2019-10-10 17:49:46 ::   port4       Up       S548DF4K17000028            120   BR          -         port4
-2019-10-10 17:49:46 ::   port5       Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port6       Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port7       Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port8       Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port9       Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port10      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port11      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port12      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port13      Up       SW2                         120   BR          Network   port13
-2019-10-10 17:49:46 ::   port14      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port15      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port16      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port17      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port18      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port19      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port20      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port21      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port22      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port23      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port24      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port25      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port26      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port27      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port28      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port29      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port30      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port31      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port32      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port33      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port34      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port35      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port36      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port37      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port38      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port39      Up       -                           -     -           -         -
-2019-10-10 17:49:46 ::   port40      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port41      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port42      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port43      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port44      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port45      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port46      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port47      Up       S548DN4K17000133            120   BR          -         port47
-2019-10-10 17:49:46 ::   port48      Up       S548DN4K17000133            120   BR          -         port48
-2019-10-10 17:49:46 ::   port49      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port50      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port51      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port52      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port53      Down     -                           -     -           -         -
-2019-10-10 17:49:46 ::   port54      Down     -                           -     -           -         -
-2019-10-10 17:49:46 :: 
-2019-10-10 17:49:46 :: S548DF4K16000653 #
-2019-10-10 17:49:50 :: show switch interface port39
-2019-10-10 17:49:50 :: config switch interface
-2019-10-10 17:49:50 ::     edit "port39"
-2019-10-10 17:49:50 ::         set allowed-vlans 4093
-2019-10-10 17:49:50 ::         set untagged-vlans 4093
-2019-10-10 17:49:50 ::         set snmp-index 39
-2019-10-10 17:49:50 ::         set log-mac-event enable
-2019-10-10 17:49:50 ::     next
-2019-10-10 17:49:50 :: end
-2019-10-10 17:49:50 :: 
-2019-10-10 17:49:50 :: S548DF4K16000653 #
-2019-10-10 17:49:54 :: get system status
-2019-10-10 17:49:54 :: Version: FortiSwitch-548D v6.2.0,build0192,191005 (Interim)
-2019-10-10 17:49:54 :: Serial-Number: S548DN4K17000133
-2019-10-10 17:49:54 :: BIOS version: 04000013
-2019-10-10 17:49:54 :: System Part-Number: P18057-06
-2019-10-10 17:49:54 :: Burn in MAC: 70:4c:a5:79:22:5a
-2019-10-10 17:49:54 :: Hostname: S548DN4K17000133
-2019-10-10 17:49:54 :: Distribution: International
-2019-10-10 17:49:54 :: Branch point: 192
-2019-10-10 17:49:54 :: System time: Thu Oct 10 17:49:52 2019
-2019-10-10 17:49:54 :: 
-2019-10-10 17:49:54 :: S548DN4K17000133 #
-2019-10-10 17:49:58 :: show switch trunk
-2019-10-10 17:49:58 :: config switch trunk
-2019-10-10 17:49:58 ::     edit "8DF4K17000028-0"
-2019-10-10 17:49:58 ::         set mode lacp-active
-2019-10-10 17:49:58 ::         set auto-isl 1
-2019-10-10 17:49:58 ::         set mclag enable
-2019-10-10 17:49:58 ::             set members "port1" "port2"
-2019-10-10 17:49:58 ::     next
-2019-10-10 17:49:58 ::     edit "8DF4K17000014-0"
-2019-10-10 17:49:58 ::         set mode lacp-active
-2019-10-10 17:49:58 ::         set auto-isl 1
-2019-10-10 17:49:58 ::         set mclag enable
-2019-10-10 17:49:58 ::             set members "port3" "port4"
-2019-10-10 17:49:58 ::     next
-2019-10-10 17:49:58 ::     edit "8DF4K16000653-0"
-2019-10-10 17:49:58 ::         set mode lacp-active
-2019-10-10 17:49:58 ::         set auto-isl 1
-2019-10-10 17:49:58 ::         set mclag-icl enable
-2019-10-10 17:49:58 ::             set members "port47" "port48"
-2019-10-10 17:49:58 ::     next
-2019-10-10 17:49:58 ::     edit "trunk1"
-2019-10-10 17:49:58 ::         set mode lacp-active
-2019-10-10 17:49:58 ::         set mclag enable
-2019-10-10 17:49:58 ::             set members "port13"
-2019-10-10 17:49:58 ::     next
-2019-10-10 17:49:58 :: --More--          end
-2019-10-10 17:49:58 :: 
-2019-10-10 17:49:58 :: S548DN4K17000133 #
-2019-10-10 17:50:02 :: diagnose switch mclag peer-consistency-check
-2019-10-10 17:50:02 :: 
-2019-10-10 17:50:02 ::     Running diagnostic, it may take sometime...
-2019-10-10 17:50:02 :: 
-2019-10-10 17:50:02 ::     mclag-trunk-name    peer-config lacp-state   stp-state   local-ports            remote-ports
-2019-10-10 17:50:02 ::     __________________  ___________ __________   _________   _____________          _____________
-2019-10-10 17:50:02 :: 
-2019-10-10 17:50:02 ::     8DF4K16000653-0*    OK         UP           OK           port47    port48        port47    port48
-2019-10-10 17:50:02 ::     8DF4K17000014-0     OK         UP           OK           port3     port4         port1     port2
-2019-10-10 17:50:02 ::     8DF4K17000028-0     OK         UP           OK           port1     port2         port3     port4
-2019-10-10 17:50:02 ::     trunk1              OK         UP           OK           port13                  port13
-2019-10-10 17:50:02 :: 
-2019-10-10 17:50:02 :: S548DN4K17000133 #
-2019-10-10 17:50:06 :: get switch lldp neighbors-summary
-2019-10-10 17:50:06 :: 
-2019-10-10 17:50:06 :: Capability codes:
-2019-10-10 17:50:06 :: 	R:Router, B:Bridge, T:Telephone, C:DOCSIS Cable Device
-2019-10-10 17:50:06 :: 	W:WLAN Access Point, P:Repeater, S:Station, O:Other
-2019-10-10 17:50:06 :: MED type codes:
-2019-10-10 17:50:06 :: 	Generic:Generic Endpoint (Class 1), Media:Media Endpoint (Class 2)
-2019-10-10 17:50:06 :: 	Comms:Communications Endpoint (Class 3), Network:Network Connectivity Device
-2019-10-10 17:50:06 :: 
-2019-10-10 17:50:06 ::   Portname    Status   Device-name                 TTL   Capability  MED-type  Port-ID
-2019-10-10 17:50:06 ::   __________  _______  __________________________  ____  __________  ________  _______
-2019-10-10 17:50:06 ::   port1       Up       S548DF4K17000028            120   BR          -         port1
-2019-10-10 17:50:06 ::   port2       Up       S548DF4K17000028            120   BR          -         port2
-2019-10-10 17:50:06 ::   port3       Up       S548DF4K17000014            120   BR          -         port3
-2019-10-10 17:50:06 ::   port4       Up       S548DF4K17000014            120   BR          -         port4
-2019-10-10 17:50:06 ::   port5       Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port6       Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port7       Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port8       Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port9       Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port10      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port11      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port12      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port13      Up       SW2                         120   BR          Network   port14
-2019-10-10 17:50:06 ::   port14      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port15      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port16      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port17      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port18      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port19      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port20      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port21      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port22      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port23      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port24      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port25      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port26      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port27      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port28      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port29      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port30      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port31      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port32      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port33      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port34      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port35      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port36      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port37      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port38      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port39      Up       -                           -     -           -         -
-2019-10-10 17:50:06 ::   port40      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port41      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port42      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port43      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port44      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port45      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port46      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port47      Up       S548DF4K16000653            120   BR          -         port47
-2019-10-10 17:50:06 ::   port48      Up       S548DF4K16000653            120   BR          -         port48
-2019-10-10 17:50:06 ::   port49      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port50      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port51      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port52      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port53      Down     -                           -     -           -         -
-2019-10-10 17:50:06 ::   port54      Down     -                           -     -           -         -
-2019-10-10 17:50:06 :: 
-2019-10-10 17:50:06 :: S548DN4K17000133 #
-2019-10-10 17:50:10 :: show switch interface port39
-2019-10-10 17:50:10 :: config switch interface
-2019-10-10 17:50:10 ::     edit "port39"
-2019-10-10 17:50:10 ::         set allowed-vlans 4093
-2019-10-10 17:50:10 ::         set untagged-vlans 4093
-2019-10-10 17:50:10 ::         set snmp-index 39
-2019-10-10 17:50:10 ::         set log-mac-event enable
-2019-10-10 17:50:10 ::     next
-2019-10-10 17:50:10 :: end
-2019-10-10 17:50:10 :: 
-2019-10-10 17:50:10 :: S548DN4K17000133 #
+2019-10-10 20:17:17 :: get system status
+2019-10-10 20:17:17 :: Version: FortiSwitch-548D-FPOE v6.2.0,build0190,191001 (Interim)
+2019-10-10 20:17:17 :: Serial-Number: S548DF4K17000014
+2019-10-10 20:17:17 :: BIOS version: 04000016
+2019-10-10 20:17:17 :: System Part-Number: P18049-05
+2019-10-10 20:17:17 :: Burn in MAC: 70:4c:a5:82:96:72
+2019-10-10 20:17:17 :: Hostname: S548DF4K17000014
+2019-10-10 20:17:17 :: Distribution: International
+2019-10-10 20:17:17 :: Branch point: 190
+2019-10-10 20:17:17 :: System time: Thu Oct 10 20:17:15 2019
+2019-10-10 20:17:17 :: 
+2019-10-10 20:17:17 :: S548DF4K17000014 #
+2019-10-10 20:17:21 :: show switch trunk
+2019-10-10 20:17:21 :: config switch trunk
+2019-10-10 20:17:21 ::     edit "8DF4K17000028-0"
+2019-10-10 20:17:21 ::         set mode lacp-active
+2019-10-10 20:17:21 ::         set auto-isl 1
+2019-10-10 20:17:21 ::             set members "port47" "port48"
+2019-10-10 20:17:21 ::     next
+2019-10-10 20:17:21 ::     edit "704CA5CBC3DC-0"
+2019-10-10 20:17:21 ::         set mode lacp-active
+2019-10-10 20:17:21 ::         set auto-isl 1
+2019-10-10 20:17:21 ::         set isl-fortilink 1
+2019-10-10 20:17:21 ::             set members "port50"
+2019-10-10 20:17:21 ::     next
+2019-10-10 20:17:21 ::     edit "704CA5A8FCFA-0"
+2019-10-10 20:17:21 ::         set mode lacp-active
+2019-10-10 20:17:21 ::         set auto-isl 1
+2019-10-10 20:17:21 ::         set isl-fortilink 1
+2019-10-10 20:17:21 ::             set members "port49"
+2019-10-10 20:17:21 ::     next
+2019-10-10 20:17:21 ::     edit "sw1-trunk"
+2019-10-10 20:17:21 ::         set mode lacp-active
+2019-10-10 20:17:21 ::         set mclag enable
+2019-10-10 20:17:21 ::             set members "port13"
+2019-10-10 20:17:21 ::     next
+2019-10-10 20:17:21 ::     edit "core1"
+2019-10-10 20:17:21 :: --More--                  set mode lacp-active
+2019-10-10 20:17:21 ::         set auto-isl 1
+2019-10-10 20:17:21 ::             set members "port1" "port2" "port3" "port4"
+2019-10-10 20:17:21 ::     next
+2019-10-10 20:17:21 :: end
+2019-10-10 20:17:21 :: 
+2019-10-10 20:17:21 :: S548DF4K17000014 #
+2019-10-10 20:17:25 :: diagnose switch mclag peer-consistency-check
+2019-10-10 20:17:25 :: 
+2019-10-10 20:17:25 ::     ICL is not configured!
+2019-10-10 20:17:25 :: 
+2019-10-10 20:17:25 :: S548DF4K17000014 #
+2019-10-10 20:17:29 :: get switch lldp neighbors-summary
+2019-10-10 20:17:29 :: 
+2019-10-10 20:17:29 :: Capability codes:
+2019-10-10 20:17:29 :: 	R:Router, B:Bridge, T:Telephone, C:DOCSIS Cable Device
+2019-10-10 20:17:29 :: 	W:WLAN Access Point, P:Repeater, S:Station, O:Other
+2019-10-10 20:17:29 :: MED type codes:
+2019-10-10 20:17:29 :: 	Generic:Generic Endpoint (Class 1), Media:Media Endpoint (Class 2)
+2019-10-10 20:17:29 :: 	Comms:Communications Endpoint (Class 3), Network:Network Connectivity Device
+2019-10-10 20:17:29 :: 
+2019-10-10 20:17:29 ::   Portname    Status   Device-name                 TTL   Capability  MED-type  Port-ID
+2019-10-10 20:17:29 ::   __________  _______  __________________________  ____  __________  ________  _______
+2019-10-10 20:17:29 ::   port1       Up       S548DF4K16000653            120   BR          -         port1
+2019-10-10 20:17:29 ::   port2       Up       S548DF4K16000653            120   BR          -         port2
+2019-10-10 20:17:29 ::   port3       Up       S548DN4K17000133            120   BR          -         port3
+2019-10-10 20:17:29 ::   port4       Up       S548DN4K17000133            120   BR          -         port4
+2019-10-10 20:17:29 ::   port5       Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port6       Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port7       Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port8       Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port9       Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port10      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port11      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port12      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port13      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port14      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port15      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port16      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port17      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port18      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port19      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port20      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port21      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port22      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port23      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port24      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port25      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port26      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port27      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port28      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port29      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port30      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port31      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port32      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port33      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port34      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port35      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port36      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port37      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port38      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port39      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port40      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port41      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port42      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port43      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port44      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port45      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port46      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port47      Up       S548DF4K17000028            120   BR          -         port47
+2019-10-10 20:17:29 ::   port48      Up       S548DF4K17000028            120   BR          -         port48
+2019-10-10 20:17:29 ::   port49      Up       FortiGate-3960E             120   BR          -         70:4c:a5:a8:fc:c6
+2019-10-10 20:17:29 ::   port50      Up       FortiGate-3960E             120   BR          -         70:4c:a5:cb:c3:a8
+2019-10-10 20:17:29 ::   port51      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port52      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port53      Down     -                           -     -           -         -
+2019-10-10 20:17:29 ::   port54      Down     -                           -     -           -         -
+2019-10-10 20:17:29 :: 
+2019-10-10 20:17:29 :: S548DF4K17000014 #
+2019-10-10 20:17:33 :: show switch interface port39
+2019-10-10 20:17:33 :: config switch interface
+2019-10-10 20:17:33 ::     edit "port39"
+2019-10-10 20:17:33 ::         set allowed-vlans 4093
+2019-10-10 20:17:33 ::         set untagged-vlans 4093
+2019-10-10 20:17:33 ::         set snmp-index 39
+2019-10-10 20:17:33 ::     next
+2019-10-10 20:17:33 :: end
+2019-10-10 20:17:33 :: 
+2019-10-10 20:17:33 :: S548DF4K17000014 #
+2019-10-10 20:17:37 :: get system status
+2019-10-10 20:17:37 :: Version: FortiSwitch-548D-FPOE v6.2.0,build0192,191005 (Interim)
+2019-10-10 20:17:37 :: Serial-Number: S548DF4K17000028
+2019-10-10 20:17:37 :: BIOS version: 04000016
+2019-10-10 20:17:37 :: System Part-Number: P18049-05
+2019-10-10 20:17:37 :: Burn in MAC: 70:4c:a5:82:99:82
+2019-10-10 20:17:37 :: Hostname: S548DF4K17000028
+2019-10-10 20:17:37 :: Distribution: International
+2019-10-10 20:17:37 :: Branch point: 192
+2019-10-10 20:17:37 :: System time: Thu Oct 10 20:17:35 2019
+2019-10-10 20:17:37 :: 
+2019-10-10 20:17:37 :: S548DF4K17000028 #
+2019-10-10 20:17:41 :: show switch trunk
+2019-10-10 20:17:41 :: config switch trunk
+2019-10-10 20:17:41 ::     edit "704CA5CBC3DC-0"
+2019-10-10 20:17:41 ::         set mode lacp-active
+2019-10-10 20:17:41 ::         set auto-isl 1
+2019-10-10 20:17:41 ::         set isl-fortilink 1
+2019-10-10 20:17:41 ::             set members "port50"
+2019-10-10 20:17:41 ::     next
+2019-10-10 20:17:41 ::     edit "8DF4K17000014-0"
+2019-10-10 20:17:41 ::         set mode lacp-active
+2019-10-10 20:17:41 ::         set auto-isl 1
+2019-10-10 20:17:41 ::             set members "port47" "port48"
+2019-10-10 20:17:41 ::     next
+2019-10-10 20:17:41 ::     edit "704CA5A8FCFA-0"
+2019-10-10 20:17:41 ::         set mode lacp-active
+2019-10-10 20:17:41 ::         set auto-isl 1
+2019-10-10 20:17:41 ::         set isl-fortilink 1
+2019-10-10 20:17:41 ::             set members "port49"
+2019-10-10 20:17:41 ::     next
+2019-10-10 20:17:41 ::     edit "sw1-trunk"
+2019-10-10 20:17:41 ::         set mode lacp-active
+2019-10-10 20:17:41 ::         set mclag enable
+2019-10-10 20:17:41 ::             set members "port13"
+2019-10-10 20:17:41 ::     next
+2019-10-10 20:17:41 ::     edit "core1"
+2019-10-10 20:17:41 :: --More--                  set mode lacp-active
+2019-10-10 20:17:41 ::         set auto-isl 1
+2019-10-10 20:17:41 ::             set members "port1" "port2" "port3" "port4"
+2019-10-10 20:17:41 ::     next
+2019-10-10 20:17:41 :: end
+2019-10-10 20:17:41 :: 
+2019-10-10 20:17:41 :: S548DF4K17000028 #
+2019-10-10 20:17:45 :: diagnose switch mclag peer-consistency-check
+2019-10-10 20:17:45 :: 
+2019-10-10 20:17:45 ::     ICL is not configured!
+2019-10-10 20:17:45 :: 
+2019-10-10 20:17:45 :: S548DF4K17000028 #
+2019-10-10 20:17:49 :: get switch lldp neighbors-summary
+2019-10-10 20:17:49 :: 
+2019-10-10 20:17:49 :: Capability codes:
+2019-10-10 20:17:49 :: 	R:Router, B:Bridge, T:Telephone, C:DOCSIS Cable Device
+2019-10-10 20:17:49 :: 	W:WLAN Access Point, P:Repeater, S:Station, O:Other
+2019-10-10 20:17:49 :: MED type codes:
+2019-10-10 20:17:49 :: 	Generic:Generic Endpoint (Class 1), Media:Media Endpoint (Class 2)
+2019-10-10 20:17:49 :: 	Comms:Communications Endpoint (Class 3), Network:Network Connectivity Device
+2019-10-10 20:17:49 :: 
+2019-10-10 20:17:49 ::   Portname    Status   Device-name                 TTL   Capability  MED-type  Port-ID
+2019-10-10 20:17:49 ::   __________  _______  __________________________  ____  __________  ________  _______
+2019-10-10 20:17:49 ::   port1       Up       S548DN4K17000133            120   BR          -         port1
+2019-10-10 20:17:49 ::   port2       Up       S548DN4K17000133            120   BR          -         port2
+2019-10-10 20:17:49 ::   port3       Up       S548DF4K16000653            120   BR          -         port3
+2019-10-10 20:17:49 ::   port4       Up       S548DF4K16000653            120   BR          -         port4
+2019-10-10 20:17:49 ::   port5       Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port6       Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port7       Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port8       Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port9       Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port10      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port11      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port12      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port13      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port14      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port15      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port16      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port17      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port18      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port19      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port20      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port21      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port22      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port23      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port24      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port25      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port26      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port27      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port28      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port29      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port30      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port31      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port32      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port33      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port34      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port35      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port36      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port37      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port38      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port39      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port40      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port41      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port42      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port43      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port44      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port45      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port46      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port47      Up       S548DF4K17000014            120   BR          -         port47
+2019-10-10 20:17:49 ::   port48      Up       S548DF4K17000014            120   BR          -         port48
+2019-10-10 20:17:49 ::   port49      Up       FortiGate-3960E             120   BR          -         70:4c:a5:a8:fc:c7
+2019-10-10 20:17:49 ::   port50      Up       FortiGate-3960E             120   BR          -         70:4c:a5:cb:c3:a9
+2019-10-10 20:17:49 ::   port51      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port52      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port53      Down     -                           -     -           -         -
+2019-10-10 20:17:49 ::   port54      Down     -                           -     -           -         -
+2019-10-10 20:17:49 :: 
+2019-10-10 20:17:49 :: S548DF4K17000028 #
+2019-10-10 20:17:53 :: show switch interface port39
+2019-10-10 20:17:53 :: config switch interface
+2019-10-10 20:17:53 ::     edit "port39"
+2019-10-10 20:17:53 ::         set allowed-vlans 4093
+2019-10-10 20:17:53 ::         set untagged-vlans 4093
+2019-10-10 20:17:53 ::         set snmp-index 39
+2019-10-10 20:17:53 ::     next
+2019-10-10 20:17:53 :: end
+2019-10-10 20:17:53 :: 
+2019-10-10 20:17:53 :: S548DF4K17000028 #
+2019-10-10 20:17:57 :: get system status
+2019-10-10 20:17:57 :: Version: FortiSwitch-548D-FPOE v6.2.0,build0192,191005 (Interim)
+2019-10-10 20:17:57 :: Serial-Number: S548DF4K16000653
+2019-10-10 20:17:57 :: BIOS version: 04000013
+2019-10-10 20:17:57 :: System Part-Number: P18049-04
+2019-10-10 20:17:57 :: Burn in MAC: 90:6c:ac:62:14:3e
+2019-10-10 20:17:57 :: Hostname: S548DF4K16000653
+2019-10-10 20:17:57 :: Distribution: International
+2019-10-10 20:17:57 :: Branch point: 192
+2019-10-10 20:17:57 :: System time: Thu Oct 10 20:17:55 2019
+2019-10-10 20:17:57 :: 
+2019-10-10 20:17:57 :: S548DF4K16000653 #
+2019-10-10 20:18:01 :: show switch trunk
+2019-10-10 20:18:01 :: config switch trunk
+2019-10-10 20:18:01 ::     edit "8DF4K17000014-0"
+2019-10-10 20:18:01 ::         set mode lacp-active
+2019-10-10 20:18:01 ::         set auto-isl 1
+2019-10-10 20:18:01 ::         set mclag enable
+2019-10-10 20:18:01 ::             set members "port1" "port2"
+2019-10-10 20:18:01 ::     next
+2019-10-10 20:18:01 ::     edit "8DF4K17000028-0"
+2019-10-10 20:18:01 ::         set mode lacp-active
+2019-10-10 20:18:01 ::         set auto-isl 1
+2019-10-10 20:18:01 ::         set mclag enable
+2019-10-10 20:18:01 ::             set members "port3" "port4"
+2019-10-10 20:18:01 ::     next
+2019-10-10 20:18:01 ::     edit "8DN4K17000133-0"
+2019-10-10 20:18:01 ::         set mode lacp-active
+2019-10-10 20:18:01 ::         set auto-isl 1
+2019-10-10 20:18:01 ::         set mclag-icl enable
+2019-10-10 20:18:01 ::             set members "port47" "port48"
+2019-10-10 20:18:01 ::     next
+2019-10-10 20:18:01 ::     edit "trunk1"
+2019-10-10 20:18:01 ::         set mode lacp-active
+2019-10-10 20:18:01 ::         set mclag enable
+2019-10-10 20:18:01 ::             set members "port13"
+2019-10-10 20:18:01 ::     next
+2019-10-10 20:18:01 :: --More--          end
+2019-10-10 20:18:01 :: 
+2019-10-10 20:18:01 :: S548DF4K16000653 #
+2019-10-10 20:18:05 :: diagnose switch mclag peer-consistency-check
+2019-10-10 20:18:05 :: 
+2019-10-10 20:18:05 ::     Running diagnostic, it may take sometime...
+2019-10-10 20:18:05 :: 
+2019-10-10 20:18:05 ::     mclag-trunk-name    peer-config lacp-state   stp-state   local-ports            remote-ports
+2019-10-10 20:18:05 ::     __________________  ___________ __________   _________   _____________          _____________
+2019-10-10 20:18:05 :: 
+2019-10-10 20:18:05 ::     8DF4K17000014-0     OK         UP           OK           port1     port2         port3     port4
+2019-10-10 20:18:05 ::     8DF4K17000028-0     OK         UP           OK           port3     port4         port1     port2
+2019-10-10 20:18:05 ::     8DN4K17000133-0*    OK         UP           OK           port47    port48        port47    port48
+2019-10-10 20:18:05 ::     trunk1              OK         UP           OK           port13                  port13
+2019-10-10 20:18:05 :: 
+2019-10-10 20:18:05 :: S548DF4K16000653 #
+2019-10-10 20:18:09 :: get switch lldp neighbors-summary
+2019-10-10 20:18:09 :: 
+2019-10-10 20:18:09 :: Capability codes:
+2019-10-10 20:18:09 :: 	R:Router, B:Bridge, T:Telephone, C:DOCSIS Cable Device
+2019-10-10 20:18:09 :: 	W:WLAN Access Point, P:Repeater, S:Station, O:Other
+2019-10-10 20:18:09 :: MED type codes:
+2019-10-10 20:18:09 :: 	Generic:Generic Endpoint (Class 1), Media:Media Endpoint (Class 2)
+2019-10-10 20:18:09 :: 	Comms:Communications Endpoint (Class 3), Network:Network Connectivity Device
+2019-10-10 20:18:09 :: 
+2019-10-10 20:18:09 ::   Portname    Status   Device-name                 TTL   Capability  MED-type  Port-ID
+2019-10-10 20:18:09 ::   __________  _______  __________________________  ____  __________  ________  _______
+2019-10-10 20:18:09 ::   port1       Up       S548DF4K17000014            120   BR          -         port1
+2019-10-10 20:18:09 ::   port2       Up       S548DF4K17000014            120   BR          -         port2
+2019-10-10 20:18:09 ::   port3       Up       S548DF4K17000028            120   BR          -         port3
+2019-10-10 20:18:09 ::   port4       Up       S548DF4K17000028            120   BR          -         port4
+2019-10-10 20:18:09 ::   port5       Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port6       Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port7       Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port8       Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port9       Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port10      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port11      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port12      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port13      Up       SW2                         120   BR          Network   port13
+2019-10-10 20:18:09 ::   port14      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port15      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port16      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port17      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port18      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port19      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port20      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port21      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port22      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port23      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port24      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port25      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port26      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port27      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port28      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port29      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port30      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port31      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port32      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port33      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port34      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port35      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port36      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port37      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port38      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port39      Up       -                           -     -           -         -
+2019-10-10 20:18:09 ::   port40      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port41      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port42      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port43      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port44      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port45      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port46      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port47      Up       S548DN4K17000133            120   BR          -         port47
+2019-10-10 20:18:09 ::   port48      Up       S548DN4K17000133            120   BR          -         port48
+2019-10-10 20:18:09 ::   port49      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port50      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port51      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port52      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port53      Down     -                           -     -           -         -
+2019-10-10 20:18:09 ::   port54      Down     -                           -     -           -         -
+2019-10-10 20:18:09 :: 
+2019-10-10 20:18:09 :: S548DF4K16000653 #
+2019-10-10 20:18:13 :: show switch interface port39
+2019-10-10 20:18:13 :: config switch interface
+2019-10-10 20:18:13 ::     edit "port39"
+2019-10-10 20:18:13 ::         set allowed-vlans 4093
+2019-10-10 20:18:13 ::         set untagged-vlans 4093
+2019-10-10 20:18:13 ::         set snmp-index 39
+2019-10-10 20:18:13 ::         set log-mac-event enable
+2019-10-10 20:18:13 ::     next
+2019-10-10 20:18:13 :: end
+2019-10-10 20:18:13 :: 
+2019-10-10 20:18:13 :: S548DF4K16000653 #
+2019-10-10 20:18:17 :: get system status
+2019-10-10 20:18:17 :: Version: FortiSwitch-548D v6.2.0,build0192,191005 (Interim)
+2019-10-10 20:18:17 :: Serial-Number: S548DN4K17000133
+2019-10-10 20:18:17 :: BIOS version: 04000013
+2019-10-10 20:18:17 :: System Part-Number: P18057-06
+2019-10-10 20:18:17 :: Burn in MAC: 70:4c:a5:79:22:5a
+2019-10-10 20:18:17 :: Hostname: S548DN4K17000133
+2019-10-10 20:18:17 :: Distribution: International
+2019-10-10 20:18:17 :: Branch point: 192
+2019-10-10 20:18:17 :: System time: Thu Oct 10 20:18:15 2019
+2019-10-10 20:18:17 :: 
+2019-10-10 20:18:17 :: S548DN4K17000133 #
+2019-10-10 20:18:21 :: show switch trunk
+2019-10-10 20:18:21 :: config switch trunk
+2019-10-10 20:18:21 ::     edit "8DF4K17000014-0"
+2019-10-10 20:18:21 ::         set mode lacp-active
+2019-10-10 20:18:21 ::         set auto-isl 1
+2019-10-10 20:18:21 ::         set mclag enable
+2019-10-10 20:18:21 ::             set members "port3" "port4"
+2019-10-10 20:18:21 ::     next
+2019-10-10 20:18:21 ::     edit "8DF4K17000028-0"
+2019-10-10 20:18:21 ::         set mode lacp-active
+2019-10-10 20:18:21 ::         set auto-isl 1
+2019-10-10 20:18:21 ::         set mclag enable
+2019-10-10 20:18:21 ::             set members "port1" "port2"
+2019-10-10 20:18:21 ::     next
+2019-10-10 20:18:21 ::     edit "8DF4K16000653-0"
+2019-10-10 20:18:21 ::         set mode lacp-active
+2019-10-10 20:18:21 ::         set auto-isl 1
+2019-10-10 20:18:21 ::         set mclag-icl enable
+2019-10-10 20:18:21 ::             set members "port47" "port48"
+2019-10-10 20:18:21 ::     next
+2019-10-10 20:18:21 ::     edit "trunk1"
+2019-10-10 20:18:21 ::         set mode lacp-active
+2019-10-10 20:18:21 ::         set mclag enable
+2019-10-10 20:18:21 ::             set members "port13"
+2019-10-10 20:18:21 ::     next
+2019-10-10 20:18:21 :: --More--          end
+2019-10-10 20:18:21 :: 
+2019-10-10 20:18:21 :: S548DN4K17000133 #
+2019-10-10 20:18:25 :: diagnose switch mclag peer-consistency-check
+2019-10-10 20:18:25 :: 
+2019-10-10 20:18:25 ::     Running diagnostic, it may take sometime...
+2019-10-10 20:18:25 :: 
+2019-10-10 20:18:25 ::     mclag-trunk-name    peer-config lacp-state   stp-state   local-ports            remote-ports
+2019-10-10 20:18:25 ::     __________________  ___________ __________   _________   _____________          _____________
+2019-10-10 20:18:25 :: 
+2019-10-10 20:18:25 ::     8DF4K16000653-0*    OK         UP           OK           port47    port48        port47    port48
+2019-10-10 20:18:25 ::     8DF4K17000014-0     OK         UP           OK           port3     port4         port1     port2
+2019-10-10 20:18:25 ::     8DF4K17000028-0     OK         UP           OK           port1     port2         port3     port4
+2019-10-10 20:18:25 ::     trunk1              OK         UP           OK           port13                  port13
+2019-10-10 20:18:25 :: 
+2019-10-10 20:18:25 :: S548DN4K17000133 #
+2019-10-10 20:18:29 :: get switch lldp neighbors-summary
+2019-10-10 20:18:29 :: 
+2019-10-10 20:18:29 :: Capability codes:
+2019-10-10 20:18:29 :: 	R:Router, B:Bridge, T:Telephone, C:DOCSIS Cable Device
+2019-10-10 20:18:29 :: 	W:WLAN Access Point, P:Repeater, S:Station, O:Other
+2019-10-10 20:18:29 :: MED type codes:
+2019-10-10 20:18:29 :: 	Generic:Generic Endpoint (Class 1), Media:Media Endpoint (Class 2)
+2019-10-10 20:18:29 :: 	Comms:Communications Endpoint (Class 3), Network:Network Connectivity Device
+2019-10-10 20:18:29 :: 
+2019-10-10 20:18:29 ::   Portname    Status   Device-name                 TTL   Capability  MED-type  Port-ID
+2019-10-10 20:18:29 ::   __________  _______  __________________________  ____  __________  ________  _______
+2019-10-10 20:18:29 ::   port1       Up       S548DF4K17000028            120   BR          -         port1
+2019-10-10 20:18:29 ::   port2       Up       S548DF4K17000028            120   BR          -         port2
+2019-10-10 20:18:29 ::   port3       Up       S548DF4K17000014            120   BR          -         port3
+2019-10-10 20:18:29 ::   port4       Up       S548DF4K17000014            120   BR          -         port4
+2019-10-10 20:18:29 ::   port5       Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port6       Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port7       Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port8       Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port9       Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port10      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port11      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port12      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port13      Up       SW2                         120   BR          Network   port14
+2019-10-10 20:18:29 ::   port14      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port15      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port16      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port17      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port18      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port19      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port20      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port21      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port22      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port23      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port24      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port25      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port26      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port27      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port28      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port29      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port30      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port31      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port32      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port33      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port34      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port35      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port36      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port37      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port38      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port39      Up       -                           -     -           -         -
+2019-10-10 20:18:29 ::   port40      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port41      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port42      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port43      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port44      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port45      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port46      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port47      Up       S548DF4K16000653            120   BR          -         port47
+2019-10-10 20:18:29 ::   port48      Up       S548DF4K16000653            120   BR          -         port48
+2019-10-10 20:18:29 ::   port49      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port50      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port51      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port52      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port53      Down     -                           -     -           -         -
+2019-10-10 20:18:29 ::   port54      Down     -                           -     -           -         -
+2019-10-10 20:18:29 :: 
+2019-10-10 20:18:29 :: S548DN4K17000133 #
+2019-10-10 20:18:33 :: show switch interface port39
+2019-10-10 20:18:33 :: config switch interface
+2019-10-10 20:18:33 ::     edit "port39"
+2019-10-10 20:18:33 ::         set allowed-vlans 4093
+2019-10-10 20:18:33 ::         set untagged-vlans 4093
+2019-10-10 20:18:33 ::         set snmp-index 39
+2019-10-10 20:18:33 ::         set log-mac-event enable
+2019-10-10 20:18:33 ::     next
+2019-10-10 20:18:33 :: end
+2019-10-10 20:18:33 :: 
+2019-10-10 20:18:33 :: S548DN4K17000133 #
+====================================================================================
+Sample Ctrld cpu utilization during log_mac events, MAC table size = 2000
+====================================================================================
+2019-10-10 20:36:51 :: dut2:newcli     1332      R      99.9     0.3
+2019-10-10 20:36:51 :: dut2:newcli     1332      R      73.9     0.3
+2019-10-10 20:36:51 :: dut1:newcli     1304      R      70.3     0.3
+2019-10-10 20:36:51 :: dut1:newcli     1304      R      99.9     0.3
+2019-10-10 20:36:59 :: dut2:newcli     1334      R      72.6     0.3
+2019-10-10 20:36:59 :: dut2:newcli     1334      R      74.0     0.3
+2019-10-10 20:36:59 :: dut1:newcli     1306      R      69.3     0.3
+2019-10-10 20:36:59 :: dut1:newcli     1306      R      99.9     0.3
+2019-10-10 20:37:07 :: dut2:newcli     1336      R      77.7     0.3
+2019-10-10 20:37:07 :: dut2:newcli     1336      R      81.4     0.3
+2019-10-10 20:37:07 :: dut1:newcli     1308      R      77.6     0.3
+2019-10-10 20:37:07 :: dut1:newcli     1308      R      99.9     0.3
+2019-10-10 20:37:15 :: dut2:newcli     1338      R      73.1     0.3
+2019-10-10 20:37:15 :: dut2:newcli     1338      R      73.9     0.3
+2019-10-10 20:37:15 :: dut1:newcli     1310      R      70.2     0.3
+2019-10-10 20:37:15 :: dut1:telnetd     1298      S      70.2     0.3
+2019-10-10 20:37:15 :: dut1:newcli     1310      R      72.2     0.3
+2019-10-10 20:37:23 :: dut1:newcli     1312      R      70.1     0.3
+2019-10-10 20:37:23 :: dut1:newcli     1312      R      72.9     0.3
+2019-10-10 20:37:23 :: dut2:newcli     1340      R      79.4     0.3
+2019-10-10 20:37:23 :: dut2:newcli     1340      R      76.5     0.3
+2019-10-10 20:37:32 :: dut1:newcli     1314      R      77.2     0.3
+2019-10-10 20:37:32 :: dut1:newcli     1314      R      44.0     0.3
+2019-10-10 20:37:32 :: dut2:lldpmedd     1044      S      99.9     0.4
+2019-10-10 20:37:32 :: dut2:fortilinkd     1049      R      65.4     0.4
+2019-10-10 20:37:32 :: dut2:newcli     1342      R      99.9     0.3
+2019-10-10 20:37:32 :: dut1: Current MAC table size  = 10
+2019-10-10 20:37:32 :: dut1: 1U, 9S, 90I; 1978T, 1652F
+2019-10-10 20:37:32 :: dut1:current sample of ctrld cpu utilization = 0.9
+2019-10-10 20:37:32 :: dut1: ctrld     1009      S       0.9     0.3
+2019-10-10 20:37:32 :: dut1:highest sample for ctrld cpu utilization =0.9
+2019-10-10 20:37:32 :: dut1: ctrld     1009      S       0.9     0.3
+-------------------------------------------------------------------------------------
+2019-10-10 20:37:40 :: dut2:newcli     1344      R      72.5     0.3
+2019-10-10 20:37:40 :: dut2:newcli     1344      R      74.3     0.3
+2019-10-10 20:37:40 :: dut1:newcli     1316      R      79.7     0.3
+2019-10-10 20:37:40 :: dut1:newcli     1316      R      81.4     0.3
+2019-10-10 20:37:48 :: dut2:newcli     1346      R      77.6     0.3
+2019-10-10 20:37:48 :: dut2:newcli     1346      R      45.9     0.3
+2019-10-10 20:37:56 :: dut2:newcli     1348      R      70.2     0.3
+2019-10-10 20:37:56 :: dut2:newcli     1348      R      99.9     0.3
+2019-10-10 20:37:56 :: dut2: Current MAC table size  = 1009
+2019-10-10 20:37:56 :: dut2: 1U, 9S, 90I; 1978T, 1652F
+2019-10-10 20:37:56 :: dut2:current sample of ctrld cpu utilization = 0.9
+2019-10-10 20:37:56 :: dut2: ctrld     1037      S       0.9     0.3
+2019-10-10 20:37:56 :: dut2:highest sample for ctrld cpu utilization =0.9
+2019-10-10 20:37:56 :: dut2: ctrld     1037      S       0.9     0.3
+-------------------------------------------------------------------------------------
+2019-10-10 20:37:58 :: 
+2019-10-10 20:37:58 :: S548DF4K17000028 # diagnose switch mclag peer-consistency-check
+2019-10-10 20:37:58 :: 
+2019-10-10 20:37:58 ::     ICL is not configured!
+2019-10-10 20:37:58 :: 
+2019-10-10 20:37:58 :: S548DF4K17000028 #
+2019-10-10 20:38:02 :: diagnose stp vlan list 
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 :: MST Instance Information, primary-Channel:
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 :: Instance ID 0 (CST)
+2019-10-10 20:38:02 ::   Config         Priority 24576
+2019-10-10 20:38:02 ::                  Bridge MAC 704ca5829982, MD5 Digest 9999b43d77cc58bba8854f9991c4a487
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   Root           MAC 704ca579225a, Priority 24576, Path Cost 0, Remaining Hops 19
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   Regional Root  MAC 704ca579225a, Priority 24576, Path Cost 1, Root Port core1
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   Active Times   Forward Time 15, Max Age 20, Remaining Hops 19
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   TCN Events     Triggered 5 (0d 0h 26m 11s ago), Received 15 (0d 0h 25m 8s ago)
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   Port               Speed   Cost       Priority   Role         State        HelloTime  Flags
+2019-10-10 20:38:02 ::   ________________   ______  _________  _________  ___________  __________   _________  _______________
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   port5              -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port6              -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port7              -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port8              -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port9              -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port10             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port11             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port12             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port14             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port15             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port16             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port17             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port18             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port19             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port20             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port21             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port22             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port23             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port24             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port25             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port26             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port27             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port28             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port29             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port30             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port31             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port32             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port33             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port34             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port35             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port36             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port37             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port38             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port39             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port40             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port41             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port42             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port43             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port44             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port45             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port46             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port51             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port52             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port53             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   port54             -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   internal           1G      20000      128        DESIGNATED   FORWARDING   2          ED
+2019-10-10 20:38:02 ::   704CA5CBC3DC-0     10G     1          128        DESIGNATED   FORWARDING   2          ED
+2019-10-10 20:38:02 ::   8DF4K17000014-0    2G      1          128        ALTERNATIVE  DISCARDING   2          EN
+2019-10-10 20:38:02 ::   704CA5A8FCFA-0     10G     1          128        DESIGNATED   FORWARDING   2          ED
+2019-10-10 20:38:02 ::   sw1-trunk          -       200000000  128        DISABLED     DISCARDING   2          ED
+2019-10-10 20:38:02 ::   core1              4G      1          128        ROOT         FORWARDING   2          EN
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   Flags: EN(STP enable), ED(Edge), LP(Loop Protection Triggered)
+2019-10-10 20:38:02 ::   RG(Root Guard Triggered), BG(BPDU Guard Triggered), IC(PVST Port Inconsistent)
+2019-10-10 20:38:02 ::   MV(PVST Port Vlan Mismatch)
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 :: Instance ID 15
+2019-10-10 20:38:02 ::   Config         Priority 24576, VLANs 4094
+2019-10-10 20:38:02 ::                  Bridge MAC 704ca5829982
+2019-10-10 20:38:02 ::   Regional Root  MAC 704ca579225a, Priority 24576, Path Cost 1, Root Port core1
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   TCN Events     Triggered 5 (0d 0h 26m 10s ago), Received 14 (0d 0h 25m 6s ago)
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   Port               Speed   Cost       Priority   Role         State        Flags
+2019-10-10 20:38:02 ::   ________________   ______  _________  _________  ___________  __________   _______________
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   internal           1G      20000      128        DESIGNATED   FORWARDING   ED
+2019-10-10 20:38:02 ::   704CA5CBC3DC-0     10G     1          128        DESIGNATED   FORWARDING   ED
+2019-10-10 20:38:02 ::   8DF4K17000014-0    2G      1          128        ALTERNATIVE  DISCARDING   EN
+2019-10-10 20:38:02 ::   704CA5A8FCFA-0     10G     1          128        DESIGNATED   FORWARDING   ED
+2019-10-10 20:38:02 ::   core1              4G      1          128        ROOT         FORWARDING   EN
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 ::   Flags: EN(STP enable), ED(Edge), LP(Loop Protection Triggered)
+2019-10-10 20:38:02 ::   RG(Root Guard Triggered), BG(BPDU Guard Triggered), IC(PVST Port Inconsistent)
+2019-10-10 20:38:02 ::   MV(PVST Port Vlan Mismatch)
+2019-10-10 20:38:02 :: 
+2019-10-10 20:38:02 :: S548DF4K17000028 #
