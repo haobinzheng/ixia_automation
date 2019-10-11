@@ -684,22 +684,22 @@ if testcase == 4:
 
 if testcase == 3:
 	test_steps = """
-	1. Reboot FGTs
-	2. Factory reset all switches
-	3. Configure physical ports to ldp-profile default-auto-isl
-	4. Configure mclag-isl and auto-isl-port-group
-	5. Configure switch trunk port via FGT
-	6. Upgrade switches 
-	7. Configure log-mac-event
-	8. Close consoles for FGT and FSW
-	9. Start test loops
-		for each mac_size:
-			-setup ixia and ensure initial traffic flow is ok 
-			-setup log files for process
-			-start cpu monitoring process 
-			-start background delete-mac process
-			-Main process loop: 
-				-measure traffic loss 
+1. Reboot FGTs
+2. Factory reset all switches
+3. Configure physical ports to ldp-profile default-auto-isl
+4. Configure mclag-isl and auto-isl-port-group
+5. Configure switch trunk port via FGT
+6. Upgrade switches 
+7. Configure log-mac-event
+8. Close consoles for FGT and FSW
+9. Start test loops
+	for each mac_size:
+		-setup ixia and ensure initial traffic flow is ok 
+		-setup log files for process
+		-start cpu monitoring process 
+		-start background delete-mac process
+		-Main process loop: 
+			-measure traffic loss 
 	"""
 	print(test_steps)
 	icl_ports = ['port47','port48']
