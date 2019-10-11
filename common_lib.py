@@ -101,6 +101,9 @@ def dut_process_cpu(ip,dut_name,filename,proc_name,event,**kwargs):
 		cpu_dict = top[2]
 
 		debug(cpu_dict)
+		#every process data structure has the same record for the CPU idle number, and if need to be shown only once. 
+		#showed is a valuable to record whether it has been shown before
+		showed = False
 		if proc_name in cpu_dict:
 			proc_cpu = cpu_dict[proc_name]['cpu']
 			proc_line = cpu_dict[proc_name]['line']
@@ -124,10 +127,11 @@ def dut_process_cpu(ip,dut_name,filename,proc_name,event,**kwargs):
 					 
 				f.write(time_str(f"{dut_name}: {dut_proc_highest[dut_name]['line']}\n"))
 				f.write("-------------------------------------------------------------------------------------\n")
-			if idle < 5:
+			if idle < 5 and not showed:
 				switch_show_cmd_log(dut,"diagnose switch mclag peer-consistency-check",filename)
 				switch_show_cmd_log(dut,"diagnose stp vlan list ",filename)
 				print_file(result, filename,dut_name)
+				showed = True
 
 		#sleep(2)
 		counter += 1
@@ -219,8 +223,7 @@ def period_login(dut_list,lock,stop):
 		sleep(300)
 		debug("******Login thread: relogin after 300 seconds ")
 		for dut in dut_list:
-			with lock:
-				relogin_if_needed(dut)
+			relogin_if_needed(dut)
 			sleep(20)
 	debug("*** Login thread: Main thread is done....Existing background DUT login activities")
 			
@@ -1658,8 +1661,8 @@ def parse_config_trunk(result):
 					trunk_dict = {}
 					trunk_dict['name'] = trunk
 				else:
-					Info("parse_config_trunk: not able to parse edit line, exit")
-					exit()
+					ErrorNotify("parse_config_trunk: not able to parse edit line")
+					return "Error:<parse_config_trunk> not able to parse edit line"
 				
 			elif 'member' in line:
 				debug(f"parse_config_trunk: parsing set member line... line ={line}")
@@ -1669,8 +1672,8 @@ def parse_config_trunk(result):
 					port_list = match.group(1)
 					debug(f'port_list = {port_list}')
 				else:
-					Info("parse_config_trunk: error passing member line")
-					exit()
+					ErrorNotify("parse_config_trunk: error passing member line")
+					return "Error:<parse_config_trunk> error passing member line"
 				regex = r'\"(port[0-9]+)\"'
 				ports = re.findall(regex,port_list)
 				debug(ports)
@@ -1723,6 +1726,7 @@ def dut_switch_trunk(dut):
 
 	result = collect_show_cmd(dut,'show switch trunk')
 	config = parse_config_output(result)
+	print(f"!!!!!!!!! show switch trunk output: {config}")
 	trunk_dict_list = parse_config_trunk(config)
 	debug(trunk_dict_list)
 	return trunk_dict_list

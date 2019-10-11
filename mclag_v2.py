@@ -725,15 +725,12 @@ if testcase == 3:
 	#This is a workaround for a problem: when the both fgt are booted together, normal agg interface didn't go up and need toggling
 
 	if settings.FGT_REBOOT:
-		console_timer(300,msg="After rebooting FGTs, wait for 300 sec")
+		console_timer(600,msg="After rebooting FGTs, wait for 600 sec")
 		relogin_dut_all(fgt_list)
 		config_system_interface(fgt1,"Agg-424D-1","set status down")
 		sleep(2)
 		config_system_interface(fgt1,"Agg-424D-1","set status up")
 		sleep(2)
-
-
-	
 
 	if upgrade_fgt and test_setup.lower() == "fg-548d" and not setup:
 		tprint(f" ===================== upgrading managed FSW to build {settings.build_548d} ===============")
@@ -799,23 +796,38 @@ if testcase == 3:
 			dut_name = dut_dir['name']
 			switch_show_cmd_name(dut_dir,"get system status")
 			dut = dut_dir['telnet']
-			trunk_dict_list = dut_switch_trunk(dut) 
-			for trunk in trunk_dict_list:
-				if set(trunk['mem'] ) == set(icl_ports):
-					switch_configure_cmd_name(dut_dir,"config switch trunk")
-					switch_configure_cmd_name(dut_dir,f"edit {trunk['name']}")
-					switch_configure_cmd_name(dut_dir,'set mclag-icl enable')
-					switch_configure_cmd_name(dut_dir,'end')
-
-					if 'dut1' in dut_name or 'dut2' in dut_name:
-						switch_configure_cmd_name(dut_dir,"config switch auto-isl-port-group")
-						switch_configure_cmd_name(dut_dir,"edit core1")
-						switch_configure_cmd_name(dut_dir,f"set members {core_ports[0]} {core_ports[1]} {core_ports[2]} {core_ports[3]}")
-						switch_configure_cmd_name(dut_dir,'end')
-					break
+			ICL_CONFIG = False
+			while not ICL_CONFIG: 
+				sleep(10)
+				tprint("Configuring MCLAG-ICL, if icl trunk is not found, maybe auto-discovery is not done yet")
+				output = dut_switch_trunk(dut) 
+				if "Error" in output:
+					ErrorNotify(output)
+					continue
+				else:
+					trunk_dict_list = output
+					for trunk in trunk_dict_list:
+						if set(trunk['mem']) == set(icl_ports):
+							Info(f"ICL ports = {trunk['mem']}")
+							switch_configure_cmd_name(dut_dir,"config switch trunk")
+							switch_configure_cmd_name(dut_dir,f"edit {trunk['name']}")
+							switch_configure_cmd_name(dut_dir,'set mclag-icl enable')
+							switch_configure_cmd_name(dut_dir,'end')
+							ICL_CONFIG = True	
+							break
+			if 'dut1' in dut_name or 'dut2' in dut_name:
+				switch_configure_cmd_name(dut_dir,"config switch auto-isl-port-group")
+				switch_configure_cmd_name(dut_dir,"edit core1")
+				switch_configure_cmd_name(dut_dir,f"set members {core_ports[0]} {core_ports[1]} {core_ports[2]} {core_ports[3]}")
+				switch_configure_cmd_name(dut_dir,'end')
 			console_timer(10,msg="wait for 10 sec after mclag related config is done on one FSW")
-		console_timer(120,msg="after configure auto-isl-port-group wait for 120 s")
+		console_timer(300,msg="after configure auto-isl-port-group wait for 300s, check out the mclag-icl is NOT missing")
 		
+		tprint("After configuring MCLAG and wait for 5 min, check the configuration ")
+		for dut_dir in dut_dir_list:
+			dut_name = dut_dir['name']
+			switch_show_cmd_name(dut_dir,"show switch trunk")
+			switch_show_cmd_name(dut_dir,"show switch auto-isl-port-group")
 		#relogin_dut_all(dut_list)
 		for d in dut_dir_list:
 			configure_switch_file(d['telnet'],d['cfg_b'])
@@ -857,12 +869,15 @@ if testcase == 3:
 		else: 
 			tprint(" Not FSW software upgrade. After finished configuring, reboot all FSWs")
 			for dut in dut_list:
-				with lock:
-					switch_exec_reboot(dut)
+				switch_exec_reboot(dut)
 			console_timer(300,msg ="After reboot,wait for 300 seconds")
 		relogin_dut_all(dut_list)
 
-		tprint("------------  end of configuring fortigate  --------------------")
+		for fgt_dir in fgt_dir_list:
+			fgt = fgt_dir['telnet']
+			fgt.close() 
+
+		tprint("------------  end of configuring fortigate and FSW  --------------------")
 		pre_test_verification(dut_list)
 	# Enable or disable log-mac-event on all trunk interface
 	if log_mac_event:
@@ -871,7 +886,6 @@ if testcase == 3:
 		cmd = "set log-mac-event disable"
 	for dut_dir in dut_dir_list:
 		dut_name = dut_dir['name']
-		# switch_show_cmd_name(dut_dir,"get system status")
 		dut = dut_dir['telnet']
 		trunk_dict_list = dut_switch_trunk(dut)
 		
@@ -891,6 +905,10 @@ if testcase == 3:
 	monitor_file = "Log/"+test_setup+ '_'+log_mac_flag+'_'+'monitor.txt'
 
 	system_verification_log(dut_list,cpu_log)
+	top_threads = True
+	threads_exit(stop_threads,threads_list)
+	for dut in dut_list:
+			dut.close()
 
 	for mac_table in mac_list:
 		portsList_v4 = ['1/1','1/2','1/7','1/8']

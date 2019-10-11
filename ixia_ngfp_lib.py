@@ -928,7 +928,7 @@ def ixia_start_protcols_verify(handle_list, **kwargs):
         #tprint('protocol_info', ipv4_proto_info_1)
         proto_info.pop('status') 
         if ixia_protocal_status(proto_info) == "UP":
-            tprint("Protocol session is UP: {}".format(proto_info.keys()))
+            tprint("Protocol session is UP: {}".format(''.join('%s ' % i for i in proto_info.keys())))
         elif ixia_protocal_status(proto_info) == "DOWN":
             tprint("protocol session is DOWN: {}, check your test setup!!".format(list(proto_info.keys())[0]))
             return False

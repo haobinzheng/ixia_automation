@@ -202,8 +202,13 @@ def Info(*args, **kwargs):
     tempk = ' '.join([str(kwargs[k]) for k in kwargs])
     temp = tempa + ' ' + tempk # puts a space between the two for clean output
     print(str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + " :: " + "Info: " + temp)
+    print('\n')
 
-
+def ErrorNotify(*args, **kwargs):
+    tempa = ' '.join(str(a) for a in args)
+    tempk = ' '.join([str(kwargs[k]) for k in kwargs])
+    temp = tempa + ' ' + tempk # puts a space between the two for clean output
+    print(str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + " :: " + "Error: " + temp)
 
 def print_flow_stats_3rd_log(flow_list,file):
 	with open(file,'a+') as f:
@@ -334,7 +339,7 @@ def create_console_connection(ip_address, console_port, username, password,timeo
                 logging.debug(e)
 
 def threads_exit(stop_threads,threads_list):
-	stop_threads = True
+	# stop_threads = True
 	for t in threads_list:
 		t.join()
 
@@ -644,6 +649,14 @@ def switch_login(tn,*args,**kwargs):
 		login_mode = kwargs['mode']
 	else:
 		login_mode = None
+
+	tn.write(('\x03').encode('ascii'))
+	time.sleep(0.5)
+	#tprint("successful login\n")
+	tn.write(('\x03').encode('ascii'))
+	time.sleep(0.5)
+	tn.write(('\x03').encode('ascii'))
+	time.sleep(0.5)	
 
 	tn.write(('' + '\n').encode('ascii'))
 	#time.sleep(2)
@@ -1035,11 +1048,11 @@ def switch_find_login_prompt_new(tn):
 def switch_find_login_prompt(tn):
 	TIMEOUT = 2
 	tn.write(('' + '\n').encode('ascii'))
-	#time.sleep(1)
+	time.sleep(1)
 	tn.write(('' + '\n').encode('ascii'))
-	#time.sleep(1)
+	time.sleep(1)
 	tn.write(('' + '\n').encode('ascii'))
-	#time.sleep(1)
+	time.sleep(1)
 	tn.write(('' + '\n').encode('ascii'))
 	#time.sleep(1)
 
