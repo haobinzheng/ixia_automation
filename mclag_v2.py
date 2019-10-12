@@ -927,24 +927,42 @@ for each mac_size:
 
 		tprint("------------  end of configuring fortigate and FSW  --------------------")
 		pre_test_verification(dut_list)
-
+		if log_mac_event:
+			cmd = "set log-mac-event enable"
+		else:
+			cmd = "set log-mac-event disable"
+		for dut_dir in dut_dir_list:
+			dut_name = dut_dir['name']
+			dut = dut_dir['telnet']
+			trunk_dict_list = dut_switch_trunk(dut)
+			
+			if 'dut3' in dut_name or 'dut4' in dut_name:
+				config_switch_port_cmd(dut,'port39',cmd)
+			for trunk in trunk_dict_list:
+				trunk_name = trunk['name']
+				config_switch_port_cmd(dut,trunk_name,cmd)
+	else:
+		for dut in dut_list:
+			switch_exec_reboot(dut)
+		console_timer(300,msg ="After reboot,wait for 300 seconds")
+		relogin_dut_all(dut_list)
 	# Enable or disable log-mac-event on all trunk interface
 
 
-	if log_mac_event:
-		cmd = "set log-mac-event enable"
-	else:
-		cmd = "set log-mac-event disable"
-	for dut_dir in dut_dir_list:
-		dut_name = dut_dir['name']
-		dut = dut_dir['telnet']
-		trunk_dict_list = dut_switch_trunk(dut)
+	# if log_mac_event:
+	# 	cmd = "set log-mac-event enable"
+	# else:
+	# 	cmd = "set log-mac-event disable"
+	# for dut_dir in dut_dir_list:
+	# 	dut_name = dut_dir['name']
+	# 	dut = dut_dir['telnet']
+	# 	trunk_dict_list = dut_switch_trunk(dut)
 		
-		if 'dut3' in dut_name or 'dut4' in dut_name:
-			config_switch_port_cmd(dut,'port39',cmd)
-		for trunk in trunk_dict_list:
-			trunk_name = trunk['name']
-			config_switch_port_cmd(dut,trunk_name,cmd)
+	# 	if 'dut3' in dut_name or 'dut4' in dut_name:
+	# 		config_switch_port_cmd(dut,'port39',cmd)
+	# 	for trunk in trunk_dict_list:
+	# 		trunk_name = trunk['name']
+	# 		config_switch_port_cmd(dut,trunk_name,cmd)
 
 	
 	tprint("Test Case #{}: Start executing test case and generating activites".format(testcase))
@@ -992,7 +1010,7 @@ for each mac_size:
 		topo_h2 = topo_list[1]
 		topo_h3 = topo_list[2]
 		topo_h4 = topo_list[3]
-		ixia_start_protcols_verify(dhcp_handle_list,timeout=150)
+		ixia_start_protcols_verify(dhcp_handle_list,timeout=600)
 		tprint("Creating traffic item I....")
 		ixia_create_ipv4_traffic(topo_h1,topo_h2,rate=10)
 		tprint("Creating traffic item II....")
@@ -1002,7 +1020,7 @@ for each mac_size:
 		tprint("Creating traffic item IV....")
 		ixia_create_ipv4_traffic(topo_h4,topo_h3,rate=10)
 
-		console_timer(20,msg="Wait for 20 sec after traffics are created")
+		console_timer(30,msg="Wait for 30 sec after traffics are created")
 		ixia_start_traffic()
 		console_timer(30,msg="Measure traffic for 30 sec and show stats")
 		tprint("Collecting statistics, Please take a look at traffic stats to make sure no packet loss..")

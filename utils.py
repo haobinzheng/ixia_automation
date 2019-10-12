@@ -812,10 +812,12 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 
 	#tprint("successful login\n")
 	tn.write(('\x03').encode('ascii'))
+	sleep(1)
 	tn.write(('\x03').encode('ascii'))
-	#tprint("successful login\n")
-	# tn.write(('\x03').encode('ascii'))
-	# time.sleep(2)
+	sleep(1)
+	 
+	tn.write(('\x03').encode('ascii'))
+	time.sleep(1)
 
 	#tprint("successful login\n")
 	tn.write(('' + '\n').encode('ascii'))
