@@ -759,7 +759,7 @@ for each mac_size:
 		if settings.FACTORY or factory:
 			tprint("=============== resetting all switches to factory default ===========")
 			for dut in dut_list:
-				switch_interactive_exec(dut,"execute factoryresetfull","Do you want to continue? (y/n)")
+				switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)")
 			print("after reset sleep 5 min")
 			console_timer(300,msg="Wait for 5 min after reset factory default")
 			print("after sleep, relogin, should change password ")
@@ -836,13 +836,24 @@ for each mac_size:
 							break
 					sleep(2)
 					switch_show_cmd(dut,"show switch trunk")
-					if check_icl_config(dut):
-						Info(f"mclag-icl is configured correctly at {dut_name}")
-						ICL_CONFIG = True
-					else:
-						ErrorNotify(f"mclag-icl is not configured properly at {dut_name} and need to re-do")
-						ICL_CONFIG = False
-						sw_display_log(dut)
+					icl_check_counter = 0
+					while True:
+						tprint(f"--------- Checking mclag-icl configuration for #{icl_check_counter} time ------")
+						if check_icl_config(dut):
+							Info(f"mclag-icl is configured correctly at {dut_name}")
+							ICL_CONFIG = True
+							break
+						else:
+							ErrorNotify(f"!! mclag-icl is NOT configured properly at {dut_name}, wait for 2 seconds and re-check")
+							ICL_CONFIG = False
+							sw_display_log(dut)
+							icl_check_counter +=1
+							if icl_check_counter == 10:
+								ErrorNotify(f"!!! Give up checking mclag-icl configuration, need to re-config")
+								break
+							else:
+								sw_delete_log(dut)
+								sleep(2)
 
 			if 'dut1' in dut_name or 'dut2' in dut_name:
 				switch_configure_cmd_name(dut_dir,"config switch auto-isl-port-group")
@@ -950,15 +961,17 @@ for each mac_size:
 	for dut in dut_list:
 		dut.close()
 
+	loop_count = 0
 	init_tracking_loop(loop_count)
 	for mac_table in mac_list:
 		"""
 		loop_position = 
 		"End"
 		"Penultimate"
+		"Middle"
 		"Start"
 		"""
-		loop_position = tracking_loop(loop_count) 
+		loop_position = tracking_loop(loop_count,mac_list) 
 		portsList_v4 = ['1/1','1/2','1/7','1/8']
 		debug("Setup IXIA with ports running as dhcp client mode")
 		ports = ixia_connect_ports(chassis_ip,portsList_v4,ixnetwork_tcl_server,tcl_server)

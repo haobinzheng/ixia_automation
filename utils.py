@@ -22,14 +22,16 @@ import spur
 def init_tracking_loop(loop_count):
 	loop_count = 0
 
-def tracking_loop(loop_count):
+def tracking_loop(loop_count,mac_list):
 	loop_count +=1
 	if loop_count == len(mac_list):
 		Tracking = "End"
 	elif loop_count == len(mac_list) - 1:
 		Tracking = "Penultimate"
-	else:
+	elif loop_count == 1:
 		Tracking = "Start"
+	else:
+		Tracking = "Middle"
 	return Tracking
 
 def touch(fname):

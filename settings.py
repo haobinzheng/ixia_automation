@@ -18,8 +18,8 @@ THREADING  = False
 TELNET = False
 FACTORY = False
 build_548d = 192
-FGT_REBOOT = True
-STAGE_UPGRADE = False
+FGT_REBOOT = False
+STAGE_UPGRADE = True
 # def init():
 # 	global DEBUG
 # 	DEBUG = False

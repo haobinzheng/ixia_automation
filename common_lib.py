@@ -1737,6 +1737,8 @@ def check_mclag_peer(dut):
 
 def check_icl_config(dut):
 	result = collect_show_cmd(dut,'show switch trunk')
+	tprint("================At check_icl_config, print <show switch trunk> ===============")
+	print_collect_show(result)
 	config = parse_config_output(result)
 	for block in config:
 		for line in block:
