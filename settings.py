@@ -11,15 +11,15 @@ Please make sure to execute the following procedures before running the test:
 DEBUG = False
 REBOOT = False
 CLEAR_LINE = False
-TC1_RUNTIME = 1000000 # Test case #1 run time = TC!_RUNTIME * 10 sec for each round of test 
+TC1_RUNTIME = 100 # Test case #1 run time = TC!_RUNTIME * 10 sec for each round of test 
 IXIA_CLEANUP = False 
 THREADING  = False
 #MULTIPROCESSING = True
 TELNET = False
 FACTORY = False
-build_548d = 192
+build_548d = 193
 FGT_REBOOT = False
-STAGE_UPGRADE = False
+STAGE_UPGRADE = True
 # def init():
 # 	global DEBUG
 # 	DEBUG = False

@@ -710,7 +710,7 @@ def switch_login(tn,*args,**kwargs):
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
 		tn.write(('admin' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
 		sleep(1)
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 	# tn.write(('get system status\n').encode('ascii'))
@@ -747,7 +747,7 @@ def telnet_connection(ip_address,**kwargs):
 	if "password" in kwargs:
 		pwd = kwargs["password"]
 	else:
-		pwd = 'admin'
+		pwd = 'fortinet123'
 	user = 'admin'
 	#switch_login(ip_address,console_port)
 	try:
@@ -843,9 +843,9 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		sleep(1)
@@ -853,15 +853,15 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	elif p == 'shell':
 		Info("Login without password")
 	elif p == 'new':
-		Info("This first time login to image not allowing blank password, password has been changed to <admin>")
+		Info("This first time login to image not allowing blank password, password has been changed to <fortinet123>")
 	elif p == None:
-		Info("Not in login prompt, hit enter a couple times to show login prompt")
+		Info("Not in login prompt, press enter a couple times to show login prompt")
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		sleep(1)
@@ -964,13 +964,13 @@ def get_switch_telnet_connection(ip_address, console_port,**kwargs):
 	tn.write(('' + '\n').encode('ascii'))
 	sleep(1)
 	if switch_need_change_password(tn) == True:
-		tprint("Password is changed to *admin*. Done")
+		tprint("Password is changed to *fortinet123*. Done")
 		return tn
 	if switch_find_login_prompt(tn) == True:
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
 		tn.write(('admin' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
 		sleep(1)
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 
@@ -1018,9 +1018,9 @@ def switch_need_change_password(tn):
 		debug("It is a NOT a new switch that needs to change password")
 		return False
 	else:
-		debug("it is a new switch that needs to change password, change password to *admin* ")
-		tn.write(('admin' + '\n').encode('ascii'))
-		tn.write(('admin' + '\n').encode('ascii'))
+		debug("it is a new switch that needs to change password, change password to *fortinet123* ")
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
 		return True
 
 def switch_find_login_prompt_new(tn):
@@ -1040,7 +1040,7 @@ def switch_find_login_prompt_new(tn):
 	debug(output[2].decode().strip())
 	prompt = output[2].decode().strip()
 	if output[0] == -1: 
-		debug("It is a NOT login prompt, but something is wrong ")
+		debug("It is a NOT login prompt, Need further action to login")
 	if output[0] == 0:
 		debug("it is a login prompt, you need to re-login")
 		return ("login",None)
@@ -1054,9 +1054,9 @@ def switch_find_login_prompt_new(tn):
 			result = None
 		return ("shell",result)
 	elif "New Password:"in prompt:
-		debug("it is a new switch that needs to change password, change password to *admin* ")
-		tn.write(('admin' + '\n').encode('ascii'))
-		tn.write(('admin' + '\n').encode('ascii'))
+		debug("it is a new switch that needs to change password, change password to *fortinet123* ")
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
 		return ("new",None)
 	else:
 		debug("can not get any prompt, need to use robust login procedure...")

@@ -475,14 +475,14 @@ if dev_mode == False:
 		fgt1_dir = {}
 		fgt2_dir = {}
 		fgt_dir_list = []
-		fgt1 = get_switch_telnet_connection_new(fgt1_com,fgt1_port,password='admin')
+		fgt1 = get_switch_telnet_connection_new(fgt1_com,fgt1_port,password='fortinet123')
 		fgt1_dir['name'] = fgt1_name
 		fgt1_dir['location'] = fgt1_location
 		fgt1_dir['telnet'] = fgt1
 		fgt1_dir['cfg'] = fgt1_cfg
 		fgt_dir_list.append(fgt1_dir)
 
-		fgt2 = get_switch_telnet_connection_new(fgt2_com,fgt2_port,password='admin')
+		fgt2 = get_switch_telnet_connection_new(fgt2_com,fgt2_port,password='fortinet123')
 		fgt2_dir['name'] = fgt2_name
 		fgt2_dir['location'] = fgt2_location
 		fgt2_dir['telnet'] = fgt2
@@ -579,7 +579,7 @@ if testcase == 4:
 	fgt2_dir = {}
 	fgt_dir_list = []
 	
-	fgt1 = get_switch_telnet_connection(fgt1_com,fgt1_port,password='admin')
+	fgt1 = get_switch_telnet_connection(fgt1_com,fgt1_port,password='fortinet123')
 	fgt1_dir['name'] = fgt1_name
 	fgt1_dir['location'] = fgt1_location
 	fgt1_dir['telnet'] = fgt1
@@ -709,14 +709,14 @@ for each mac_size:
 	fgt2_dir = {}
 	fgt_dir_list = []
 	
-	fgt1 = get_switch_telnet_connection_new(fgt1_com,fgt1_port,password='admin')
+	fgt1 = get_switch_telnet_connection_new(fgt1_com,fgt1_port,password='fortinet123')
 	fgt1_dir['name'] = fgt1_name
 	fgt1_dir['location'] = fgt1_location
 	fgt1_dir['telnet'] = fgt1
 	fgt1_dir['cfg'] = fgt1_cfg
 	fgt_dir_list.append(fgt1_dir)
 
-	fgt2 = get_switch_telnet_connection_new(fgt2_com,fgt2_port,password='admin')
+	fgt2 = get_switch_telnet_connection_new(fgt2_com,fgt2_port,password='fortinet123')
 	fgt2_dir['name'] = fgt2_name
 	fgt2_dir['location'] = fgt2_location
 	fgt2_dir['telnet'] = fgt2
@@ -749,11 +749,13 @@ for each mac_size:
 		sleep(2)
 		config_system_interface(fgt1,"Agg-424D-1","set status up")
 		sleep(2)
-
+	BOOTED = False
 	if upgrade_fgt and test_setup.lower() == "fg-548d" and not setup:
 		tprint(f" ===================== upgrading managed FSW to build {settings.build_548d} ===============")
-		fgt_upgrade_548d(fgt1,fgt1_dir)
+		# fgt_upgrade_548d(fgt1,fgt1_dir)
+		fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=193)
 		console_timer(200,msg = "After software upgrade, wait for 200 seconds") 
+		BOOTED = True
 
 	if setup == True:
 		if settings.FACTORY or factory:
@@ -942,9 +944,10 @@ for each mac_size:
 				trunk_name = trunk['name']
 				config_switch_port_cmd(dut,trunk_name,cmd)
 	else:
-		for dut in dut_list:
-			switch_exec_reboot(dut)
-		console_timer(300,msg ="After reboot,wait for 300 seconds")
+		if not BOOTED:
+			for dut in dut_list:
+				switch_exec_reboot(dut)
+			console_timer(300,msg ="After reboot,wait for 300 seconds")
 		relogin_dut_all(dut_list)
 	# Enable or disable log-mac-event on all trunk interface
 
@@ -1010,7 +1013,7 @@ for each mac_size:
 		topo_h2 = topo_list[1]
 		topo_h3 = topo_list[2]
 		topo_h4 = topo_list[3]
-		ixia_start_protcols_verify(dhcp_handle_list,timeout=600)
+		ixia_start_protcols_verify(dhcp_handle_list,timeout=900)
 		tprint("Creating traffic item I....")
 		ixia_create_ipv4_traffic(topo_h1,topo_h2,rate=10)
 		tprint("Creating traffic item II....")
@@ -1099,48 +1102,48 @@ for each mac_size:
 				args = (ip,dut_name,dut_background_cmd_list,event)) for (ip,dut_name) in zip(ip_list,dut_name_list) ]
 			for proc in proc_list2:	
 				proc.start()
-			try:
-				while True:
-					for _ in range(10):
-						ixia_clear_traffic_stats()
-						traffic_stats = collect_ixia_traffic_stats()
-						flow_stat_list = parse_traffic_stats(traffic_stats)
-						print_flow_stats_3rd(flow_stat_list)
-						print_file("Logging traffic stats #{}".format(counter),monitor_file)
-						print_flow_stats_3rd_log(flow_stat_list,monitor_file)
-						sleep(10)
-					counter += 1
-					if counter == settings.TC1_RUNTIME:
-						break
-			except KeyboardInterrupt:
-				print ("=== Main thread:Ctrl-c received! Sending kill to threads...")
-				stop_threads = True
-				event.set()
-				for t in threads_list:
-					t.kill_received = True
-					t.join()
-				for p in proc_list1:
-					p.join()
-				for p in proc_list2:
-					p.join()
-				tprint("=== Main thread received Ctrl-C, exiting the main")
-				exit()
-			#After each iteration is done.
-			if settings.THREADING == True: #threading
-				stop_threads = True
-				for t in threads_list:
-					t.join()
-			else:  # mix of threading and process
-				event.set()
-				for t in threads_list:
-					t.join()
-				for p in proc_list1:
-					p.join()
-				for p in proc_list2:
-					p.join()
+		try:
+			while True:
+				for _ in range(10):
+					ixia_clear_traffic_stats()
+					traffic_stats = collect_ixia_traffic_stats()
+					flow_stat_list = parse_traffic_stats(traffic_stats)
+					print_flow_stats_3rd(flow_stat_list)
+					print_file("Logging traffic stats #{}".format(counter),monitor_file)
+					print_flow_stats_3rd_log(flow_stat_list,monitor_file)
+					sleep(10)
+				counter += 1
+				if counter == settings.TC1_RUNTIME:
+					break
+		except KeyboardInterrupt:
+			print ("=== Main thread:Ctrl-c received! Sending kill to threads...")
+			stop_threads = True
+			event.set()
+			for t in threads_list:
+				t.kill_received = True
+				t.join()
+			for p in proc_list1:
+				p.join()
+			for p in proc_list2:
+				p.join()
+			tprint("=== Main thread received Ctrl-C, exiting the main")
+			exit()
+		#After each iteration is done.
+		if settings.THREADING == True: #threading
+			stop_threads = True
+			for t in threads_list:
+				t.join()
+		else:  # mix of threading and process
+			event.set()
+			for t in threads_list:
+				t.join()
+			for p in proc_list1:
+				p.join()
+			for p in proc_list2:
+				p.join()
 
-			if loop_position != 'Penultimate':
-				ixia_diconnect()
+		if loop_position != 'Penultimate':
+			ixia_diconnect()
 	filename = f"Log/{cpu_log}"
 	scp_file(file=filename)
 
