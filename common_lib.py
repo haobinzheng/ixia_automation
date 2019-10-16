@@ -40,6 +40,26 @@ def dut_background_proc(ip,dut_name,cmd_list,event):
 			dut = reliable_telnet(ip,sig=event)
 			continue
 
+def dut_commands_proc(ip,dut_name,cmds_list,show_cmds_list,filename, event):
+	dut_dir = {}
+	tprint("================== Start running dut_commands_proc to generate exercise commands activites =================")
+	dut = reliable_telnet(ip,sig=event) 
+	dut_dir['telnet'] = dut
+	dut_dir['name'] = dut_name
+	while not event.is_set():
+		try:
+			for block in cmds_list:
+				for show_cmd in show_cmds_list:
+					result = collect_show_cmd(dut,show_cmd)
+					print_collect_show(result)
+					print_file(result,filename,dut_name = dut_name)
+				config_block_cmds(dut_dir, block)
+				sleep(10)
+		except (BrokenPipeError,EOFError,UnicodeDecodeError) as e:
+			debug(f"Having problem telnet to {dut_name}")
+			dut = reliable_telnet(ip,sig=event)
+			continue
+
 def ixia_monitor_traffic(monitor_file,stop):
 	while not stop():
 		ixia_clear_traffic_stats()

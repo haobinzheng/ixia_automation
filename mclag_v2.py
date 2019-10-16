@@ -56,6 +56,7 @@ parser.add_argument("-y", "--clean_up", help="Clean up IXIA after test is done. 
 parser.add_argument("-sw", "--upgrade", help="FSW software upgrade via FGT,image build number at settings.py ", action="store_true")
 
 
+
 global DEBUG
 if len(sys.argv) > 1:
     #parser.print_help()
@@ -301,6 +302,8 @@ if dev_mode == False:
 		fgt2_name = "3960E"
 		fgt2_cfg = "fgt2.cfg"
 
+		fgt_telnet = "10.105.50.241"
+
 	if test_setup == "548D":
 		################################
 		#548D Test setup
@@ -428,7 +431,45 @@ if dev_mode == False:
 			switch_unshut_port(sw2,"port24")
 			switch_shut_port(sw2,"port13")
 			switch_shut_port(sw2,"port14")
-			
+	
+	######################################################################
+	# Experiement code starts here
+	######################################################################
+	# proc_commands_file = f"Log/commands_{test_setup}.log"
+	# event  = multiprocessing.Event()
+	# ip_list = [fgt_telnet]
+	# dut_name_list = ["fgt1"]
+	# proc_list_all = []
+	# cmds_list = []
+	# show_cmds_list = []
+	# cmd = """
+	# config system interface
+	# edit fortilink
+	# set fortilink-neighbor-detect lldp 
+	# end
+	# """
+	# cmds_list.append(cmd)
+
+	# cmd = """
+	# config system interface
+	# edit fortilink
+	# set fortilink-neighbor-detect fortilink
+	# end
+	# """
+	# cmds_list.append(cmd)
+	
+	# cmd = "execute switch-controller get-conn-status"
+	# show_cmds_list.append(cmd)
+
+
+	# proc_list3 = [multiprocessing.Process(name=f'commands_{dut_name}',\
+	# 	target = dut_commands_proc, \
+	# 	args = (ip,dut_name,cmds_list,show_cmds_list, proc_commands_file, event)) for (ip,dut_name) in zip(ip_list,dut_name_list) \
+	# 	]
+	# for proc in proc_list3:	
+	# 	proc.start()
+	# list_add(proc_list_all,proc_list3)
+	# exit()		
 
 	dut1_dir = {}
 	dut2_dir = {}
@@ -468,6 +509,7 @@ if dev_mode == False:
 	# Develop new codes starts from here
 	# stop_threads = False
 	# dut_cpu_memory(dut_dir_list,lambda: stop_threads)
+
 
 
 	if no_fortigate:
@@ -558,6 +600,9 @@ if dev_mode == False:
 chassis_ip = '10.105.241.234'
 tcl_server = '10.105.241.234'
 ixnetwork_tcl_server = "10.105.19.19:8004"
+
+
+
 
 if testcase == 4:
 	if setup:
@@ -948,6 +993,7 @@ for each mac_size:
 			for dut in dut_list:
 				switch_exec_reboot(dut)
 			console_timer(300,msg ="After reboot,wait for 300 seconds")
+		tprint("After rebooting devices under test, relogin the consoles")
 		relogin_dut_all(dut_list)
 	# Enable or disable log-mac-event on all trunk interface
 
@@ -975,6 +1021,7 @@ for each mac_size:
 		log_mac_flag = "NoLogMac"
 	cpu_log = "Log/"+test_setup+ '_'+ log_mac_flag+'_'+'cpu.log'
 	monitor_file = "Log/"+test_setup+ '_'+log_mac_flag+'_'+'monitor.txt'
+	proc_commands_file = f"Log/commands_{test_setup}.log"
 
 	system_verification_log(dut_list,cpu_log)
 	# top_threads = True
@@ -1013,7 +1060,7 @@ for each mac_size:
 		topo_h2 = topo_list[1]
 		topo_h3 = topo_list[2]
 		topo_h4 = topo_list[3]
-		ixia_start_protcols_verify(dhcp_handle_list,timeout=900)
+		ixia_start_protcols_verify(dhcp_handle_list,timeout=1800)
 		tprint("Creating traffic item I....")
 		ixia_create_ipv4_traffic(topo_h1,topo_h2,rate=10)
 		tprint("Creating traffic item II....")
@@ -1049,6 +1096,11 @@ for each mac_size:
 		with open(monitor_file,'a+') as f:
 			f.write("=====================================================================================\n")
 			f.write("Sample traffic statistics to monitor pack loss , MAC table size = {}\n".format(mac_table * 2))
+			f.write("=====================================================================================\n")
+
+		with open(proc_commands_file,'a+') as f:
+			f.write("=====================================================================================\n")
+			f.write("Config and show commands log: FGT fortilink discovery, MAC table size = {}\n".format(mac_table * 2))
 			f.write("=====================================================================================\n")
 		#uncomment for official run
 		
@@ -1089,6 +1141,9 @@ for each mac_size:
 			file = cpu_log
 			proc_list1 = []
 			proc_list2 = []
+			proc_list3 = []
+			proce_list_all = []
+
 			proc_list1 = [multiprocessing.Process(name=f'{proc_name}_cpu_{dut_name}',\
 				target = dut_process_cpu,\
 				args = (ip,dut_name,file, proc_name,event),\
@@ -1097,11 +1152,48 @@ for each mac_size:
 				]
 			for proc in proc_list1:	
 				proc.start()
+			list_add(proc_list_all,proc_list1)
 			
-			proc_list2 = [multiprocessing.Process(name=f'background_{dut_name}',target = dut_background_proc, \
-				args = (ip,dut_name,dut_background_cmd_list,event)) for (ip,dut_name) in zip(ip_list,dut_name_list) ]
+			proc_list2 = [multiprocessing.Process(name=f'background_{dut_name}',\
+				target = dut_background_proc, \
+				args = (ip,dut_name,dut_background_cmd_list,event)) for (ip,dut_name) in zip(ip_list,dut_name_list) \
+				]
 			for proc in proc_list2:	
 				proc.start()
+			list_add(proc_list_all,proc_list2)
+
+			ip_list_3 = [fgt_telnet]
+			dut_name_list_3 = ["fgt1"]
+			cmds_list = []
+			show_cmds_list = []
+			cmd = """
+			config system interface
+			edit fortilink
+			set fortilink-neighbor-detect lldp 
+			end
+			"""
+			cmds_list.append(cmd)
+			
+			cmd = """
+			config system interface
+			edit fortilink
+			set fortilink-neighbor-detect fortilink
+			end
+			"""
+			cmds_list.append(cmd)
+			
+			cmd = "execute switch-controller get-conn-status"
+			show_cmds_list.append(cmd)
+
+
+			proc_list3 = [multiprocessing.Process(name=f'commands_{dut_name}',\
+				target = dut_commands_proc, \
+				args = (ip,dut_name,cmds_list,show_cmds_list, proc_commands_file, event)) for (ip,dut_name) in zip(ip_list_3,dut_name_list_3) \
+				]
+			for proc in proc_list3:	
+				proc.start()
+			list_add(proc_list_all,proc_list3)
+			 
 		try:
 			while True:
 				for _ in range(10):
@@ -1137,9 +1229,7 @@ for each mac_size:
 			event.set()
 			for t in threads_list:
 				t.join()
-			for p in proc_list1:
-				p.join()
-			for p in proc_list2:
+			for p in proc_list_all:
 				p.join()
 
 		if loop_position != 'Penultimate':

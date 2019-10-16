@@ -19,6 +19,10 @@ from threading import Thread
 import subprocess
 import spur
 
+def list_add(proc_list_all,proc_list):
+	for i in proc_list:
+		proc_list_all.append(i)
+
 def init_tracking_loop(loop_count):
 	loop_count = 0
 
@@ -586,6 +590,13 @@ def switch_show_cmd(tn,cmd,**kwargs):
 #						|  end \
 #				"
 ###############################################################################
+
+def ist_add(proc_list_all,proc_list):
+
+	for i in proc_list1:
+		proc_list_all.append(i)
+
+
 def configure_switch_file(dut,config_file):
 	tprint("*****************Configure device on comserver = {},port={}".format(dut.host,dut.port))
 	switch_show_cmd(dut,"get system status")
