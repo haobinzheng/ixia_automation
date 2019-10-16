@@ -433,13 +433,50 @@ if dev_mode == False:
 			switch_shut_port(sw2,"port14")
 	
 	######################################################################
-	# Experiement code starts here
+	# Experiment code starts here
 	######################################################################
-	# proc_commands_file = f"Log/commands_{test_setup}.log"
 	# event  = multiprocessing.Event()
-	# ip_list = [fgt_telnet]
-	# dut_name_list = ["fgt1"]
+	# if log_mac_event:
+	# 	log_mac_flag = "LogMac"
+	# else:
+	# 	log_mac_flag = "NoLogMac"
+	# cpu_log = "Log/"+test_setup+ '_'+ log_mac_flag+'_'+'cpu.log'
+	# monitor_file = "Log/"+test_setup+ '_'+log_mac_flag+'_'+'monitor.txt'
+	# proc_commands_file = f"Log/commands_{test_setup}.log"
+	# dut_background_cmd = "diagnose switch mac-address delete all"
+	# dut_background_cmd_list = [dut_background_cmd]
+
+	# dut_name_list = ["dut1","dut2","dut3","dut4"]
+	# proc_name = 'ctrld'
+	# file = cpu_log
+	# proc_list1 = []
+	# proc_list2 = []
+	# proc_list3 = []
 	# proc_list_all = []
+
+	# proc_list1 = [multiprocessing.Process(name=f'{proc_name}_cpu_{dut_name}',\
+	# 	target = dut_process_cpu,\
+	# 	args = (ip,dut_name,file, proc_name,event),\
+	# 	kwargs= {"cmds":dut_background_cmd_list}) \
+	# 	for (ip,dut_name) in zip(ip_list,dut_name_list) \
+	# 	]
+	# for proc in proc_list1:	
+	# 	proc.start()
+	# list_add(proc_list_all,proc_list1)
+
+	# print("!!!!!! Start proccess list 2 !!!!!!")
+	
+	# proc_list2 = [multiprocessing.Process(name=f'background_{dut_name}',\
+	# 	target = dut_background_proc,\
+	# 	args = (ip,dut_name,dut_background_cmd_list,event)) \
+	# 	for (ip,dut_name) in zip(ip_list,dut_name_list) \
+	# 	]
+	# for proc in proc_list2:	
+	# 	proc.start()
+	# list_add(proc_list_all,proc_list2)
+
+	# ip_list_3 = [fgt_telnet]
+	# dut_name_list_3 = ["fgt1"]
 	# cmds_list = []
 	# show_cmds_list = []
 	# cmd = """
@@ -449,7 +486,7 @@ if dev_mode == False:
 	# end
 	# """
 	# cmds_list.append(cmd)
-
+	
 	# cmd = """
 	# config system interface
 	# edit fortilink
@@ -461,15 +498,19 @@ if dev_mode == False:
 	# cmd = "execute switch-controller get-conn-status"
 	# show_cmds_list.append(cmd)
 
+	# print("!!!!!! Start proccess list 3 !!!!!!")
 
 	# proc_list3 = [multiprocessing.Process(name=f'commands_{dut_name}',\
 	# 	target = dut_commands_proc, \
-	# 	args = (ip,dut_name,cmds_list,show_cmds_list, proc_commands_file, event)) for (ip,dut_name) in zip(ip_list,dut_name_list) \
+	# 	args = (ip,dut_name,cmds_list,show_cmds_list, proc_commands_file, event)) \
+	# 	for (ip,dut_name) in zip(ip_list_3,dut_name_list_3) \
 	# 	]
 	# for proc in proc_list3:	
 	# 	proc.start()
 	# list_add(proc_list_all,proc_list3)
-	# exit()		
+	# exit()
+
+	########################### end of experiment codes ##############################
 
 	dut1_dir = {}
 	dut2_dir = {}
@@ -1031,6 +1072,8 @@ for each mac_size:
 
 	loop_count = 0
 	init_tracking_loop(loop_count)
+	event  = multiprocessing.Event()
+	lock = threading.Lock()
 	for mac_table in mac_list:
 		"""
 		loop_position = 
@@ -1123,9 +1166,7 @@ for each mac_size:
 			stop_threads = False
 			threads_list = []
 			tprint("====== Main proc TC#3: Creating multithread lock...")
-			lock = threading.Lock()
 			tprint("====== Main process for TC#3: Creating multiprocessing event...")
-			event  = multiprocessing.Event()
 			# thread1 = Thread(target = ixia_topo_swap,args = (topology_handle_dict_list,dut_list,mac_table,\
 			# 	lambda: stop_threads,traffic_list))
 			# thread1.start()
@@ -1142,7 +1183,7 @@ for each mac_size:
 			proc_list1 = []
 			proc_list2 = []
 			proc_list3 = []
-			proce_list_all = []
+			proc_list_all = []
 
 			proc_list1 = [multiprocessing.Process(name=f'{proc_name}_cpu_{dut_name}',\
 				target = dut_process_cpu,\
@@ -1155,8 +1196,9 @@ for each mac_size:
 			list_add(proc_list_all,proc_list1)
 			
 			proc_list2 = [multiprocessing.Process(name=f'background_{dut_name}',\
-				target = dut_background_proc, \
-				args = (ip,dut_name,dut_background_cmd_list,event)) for (ip,dut_name) in zip(ip_list,dut_name_list) \
+				target = dut_background_proc,\
+				args = (ip,dut_name,dut_background_cmd_list,event)) \
+				for (ip,dut_name) in zip(ip_list,dut_name_list) \
 				]
 			for proc in proc_list2:	
 				proc.start()
@@ -1188,7 +1230,8 @@ for each mac_size:
 
 			proc_list3 = [multiprocessing.Process(name=f'commands_{dut_name}',\
 				target = dut_commands_proc, \
-				args = (ip,dut_name,cmds_list,show_cmds_list, proc_commands_file, event)) for (ip,dut_name) in zip(ip_list_3,dut_name_list_3) \
+				args = (ip,dut_name,cmds_list,show_cmds_list, proc_commands_file, event)) \
+				for (ip,dut_name) in zip(ip_list_3,dut_name_list_3) \
 				]
 			for proc in proc_list3:	
 				proc.start()
