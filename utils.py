@@ -183,6 +183,16 @@ def print_file(msg, file,**kwargs):
 		else:
 			f.write(time_str("{}:{}\n".format(dut_name,msg)))
 
+def dprint(msg):
+	# global DEBUG
+	# print(DEBUG)
+	if settings.DEBUG:
+		if type(msg) == list:
+			for m in msg:
+				tprint("Debug: {}".format(m))
+		else:
+			tprint("Debug: {}".format(msg))
+
 def debug(msg):
 	# global DEBUG
 	# print(DEBUG)
@@ -422,7 +432,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:
 		timeout = kwargs['t']
 	else:
-		timeout = 2
+		timeout = 3
 	#relogin_if_needed(tn)
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
@@ -1033,6 +1043,33 @@ def switch_need_change_password(tn):
 		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('fortinet123' + '\n').encode('ascii'))
 		return True
+
+def fgt_ssh_chassis(tn,ip,chassis_id):
+	TIMEOUT = 3
+	cmd = f"exec ssh admin@{ip}"
+	tn.write((cmd + '\n').encode('ascii'))
+	output = tn.expect([re.compile(b"password:")],timeout=TIMEOUT)
+	dprint(output)
+	prompt = output[2].decode().strip()
+	dprint(f"After entering the exec ssh@xxxx command, the fortigate prompt = {prompt}")
+	result = output[0]
+	if result == 0: #this is password: prompt
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		out = tn.expect([re.compile(b"#")],timeout=TIMEOUT)
+		dprint(f"after enter password, device prompt overall prompt = {out}")
+		login_result = out[0]
+		device_prompt = out[2].decode().strip()
+		dprint(f"after entering password, login_result = {login_result},device prompt ={device_prompt}")
+		if int(login_result) == 0 and chassis_id in device_prompt:
+			dprint("login successful")
+			return True
+	elif "#" in prompt:
+		if chassis_id in prompt:
+			return True
+	else:
+		print("need to enter yes and password, handle later")
+		return False
+
 
 def switch_find_login_prompt_new(tn):
 	TIMEOUT = 3

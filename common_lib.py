@@ -50,7 +50,7 @@ def dut_commands_proc(ip,dut_name,cmds_list,show_cmds_list,filename, event):
 		try:
 			for block in cmds_list:
 				for show_cmd in show_cmds_list:
-					result = collect_show_cmd(dut,show_cmd)
+					result = collect_show_cmd(dut,show_cmd,t=10)
 					print_collect_show(result)
 					print_file(result,filename,dut_name = dut_name)
 				config_block_cmds(dut_dir, block)

@@ -18,12 +18,14 @@ from threading import Thread
 import subprocess
 import spur
 import multiprocessing
+from collections import OrderedDict
+from copy import deepcopy
 
 from ixia_ngfp_lib import *
 from utils import *
 from settings import *
 
-def fgt_switch_controller_GetConnectionStatus(fgt):
+def fgt_switch_controller_GetConnectionStatus():
 	con_status_sample = """
 	FortiGate-3960E # execute switch-controller get-conn-status 
 	Managed-devices in current vdom root:
@@ -41,3 +43,105 @@ def fgt_switch_controller_GetConnectionStatus(fgt):
 		 Managed-Switches: 6 (UP: 6 DOWN: 0)
 	 
 	"""
+
+	dict_list = [] 
+	
+	lines = con_status_sample.split('\n')
+	for line in lines:
+		line = line.strip()
+		if "SWITCH-ID" in line and "VERSION" in line:
+			line_dict = OrderedDict()
+			items = re.split('\\s+',line)
+			print(items)
+			if items:
+				for i in items:
+					line_dict[i] = '' 
+			else:
+				return False
+		elif "169.254" in line:
+			print(line)
+			d = deepcopy(line_dict)
+			matched_list = []
+			chassis_regex = r"[S|s][0-9A-Za-z]+"
+			version_regex = r"v6\.[0-9\.]+ \(.+\)"
+			status_regex = r"[A-Za-z]+/[A-Za-z]+"
+			flag_regex =r"\s+[CUSDE-]\s+"
+			ip_regex = r"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"
+			time_regex = r"\s+[0-9A-Za-z\s]+\s+[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\s+20[0-9][0-9]"
+			name_regex = r"\s+-\s+"
+			regex_list = [chassis_regex,version_regex,status_regex,flag_regex,ip_regex,time_regex,name_regex]
+			for regex in regex_list:
+				matched= re.search(regex,line)
+				if matched:
+					matched_list.append(matched.group().strip())
+				else:
+					ErrorNotify(f"Error parsing : {line} for {regex}")
+					continue
+
+			for (k,v) in zip(d.keys(),matched_list):
+				d[k] = v
+			dict_list.append(d)
+			 
+	print(dict_list)
+	return dict_list
+
+
+def fgt_ssh_managed_chassis(fgt1):
+	output = collect_show_cmd(fgt1,"execute dhcp lease-list fortilink",t=5)
+	dhcp_dict_list = fgt_dhcp_lease(output)
+	for dhcp in dhcp_dict_list:
+		ip = dhcp["IP"]
+		chassis_id = dhcp["Hostname"]
+		if fgt_ssh_chassis(fgt1,ip,chassis_id) == True:
+			tprint(f"ssh to {chassis_id} at {ip} is successful")
+		else:
+			tprint(f"ssh to {chassis_id} at {ip} failed")
+
+def fgt_dhcp_lease(output):
+	output = """
+
+	FortiGate-3960E # execute dhcp lease-list fortilink
+	fortilink
+	  IP			MAC-Address		Hostname		VCI			Expiry
+	  169.254.1.5		90:6c:ac:62:14:3f	S548DF4K16000653		FortiSwitch-548D-FPOE		Tue Oct 22 13:14:33 2019
+	  169.254.1.2		70:4c:a5:79:22:5b	S548DN4K17000133		FortiSwitch-548D		Tue Oct 22 13:14:33 2019
+	  169.254.1.4		70:4c:a5:82:99:83	S548DF4K17000028		FortiSwitch-548D-FPOE		Tue Oct 22 17:26:17 2019
+	  169.254.1.3		70:4c:a5:82:96:73	S548DF4K17000014		FortiSwitch-548D-FPOE		Tue Oct 22 17:26:31 2019
+	  169.254.1.7		70:4c:a5:65:93:65	S448DP3X17000253		FortiSwitch-448D-POE		Tue Oct 22 13:14:34 2019
+
+	"""
+	 
+	dhcp_dict_list = [] 
+	
+	lines = output.split('\n')
+	for line in lines:
+		line = line.strip()
+		if "IP" in line and "MAC-Address" in line:
+			dhcp_lease_dict = OrderedDict()
+			items = re.split('\\s+',line)
+			#print(items)
+			if items:
+				for i in items:
+					dhcp_lease_dict[i] = '' 
+			else:
+				return False
+		elif "169.254" in line:
+			d = deepcopy(dhcp_lease_dict)
+			items_2 = re.split('\\s+',line)
+			if items_2:
+				for (k,v) in zip(d.keys(),items_2):
+					d[k] = v
+				dhcp_dict_list.append(d)
+			else:
+				return False
+	dprint(dhcp_dict_list)
+	return dhcp_dict_list
+
+
+if __name__ == "__main__":
+	fgt_switch_controller_GetConnectionStatus()
+	dhcp_list = fgt_dhcp_lease()
+	for dhcp in dhcp_list:
+		print(dhcp["IP"], dhcp["MAC-Address"],dhcp["VCI"])
+	
+
