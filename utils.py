@@ -1761,7 +1761,7 @@ def find_inactive_trunk_port(dut):
 	#mclag_list = parse_mclag_list(result)
 
 def find_dut_image(dut):
-	result = collect_show_cmd(dut,"get system status")
+	result = collect_show_cmd(dut,"get system status",t=5)
 	for line in result:
 		if "Version" in line:
 			image = line.split(":")[1]
@@ -1799,13 +1799,13 @@ def print_interactive_line():
 	print("-------------------------------- Go to the lab to take action --------------------")
 
 if __name__ == "__main__":
-	reliable_telnet("10.105.50.59")
-	exit()
-	test_ssh()
-	exit()
-	scp_file(file="MCLAG_Perf_548D_no_mac_log.xlsx")
-	scp_file(file="MCLAG_Perf_548D_mac_log.xlsx")
-	exit()
+	# reliable_telnet("10.105.50.59")
+	# exit()
+	# test_ssh()
+	# exit()
+	# scp_file(file="MCLAG_Perf_548D_no_mac_log.xlsx")
+	# scp_file(file="MCLAG_Perf_548D_mac_log.xlsx")
+	# exit()
 	_dut1_com = "10.105.50.2"
 	_dut1_port = 2077
 	dut1_com = "10.105.50.3"
@@ -1828,7 +1828,10 @@ if __name__ == "__main__":
 
 	# dut1 = get_switch_telnet_connection(dut1_com,dut1_port)
 	# tprint(dir(dut1))
-	dut = get_switch_telnet_connection(dut2_com_2,dut2_port_2)
+	dut = get_switch_telnet_connection(dut1_com,dut1_port)
+	image = find_dut_image(dut)
+	print(image)
+	exit()
 	#switch_exec_reboot(dut1,device="DUT")
 	# result = switch_show_cmd(dut,"diag switch physical linerate up")
 	# tprint(result)
