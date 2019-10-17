@@ -89,6 +89,7 @@ def fgt_switch_controller_GetConnectionStatus():
 def fgt_ssh_managed_chassis(fgt1):
 	output = collect_show_cmd(fgt1,"execute dhcp lease-list fortilink",t=5)
 	dhcp_dict_list = fgt_dhcp_lease(output)
+	result = True
 	for dhcp in dhcp_dict_list:
 		ip = dhcp["IP"]
 		chassis_id = dhcp["Hostname"]
@@ -96,6 +97,8 @@ def fgt_ssh_managed_chassis(fgt1):
 			tprint(f"ssh to {chassis_id} at {ip} is successful")
 		else:
 			tprint(f"ssh to {chassis_id} at {ip} failed")
+			result = False
+	return result
 
 def fgt_dhcp_lease(output):
 	output = """

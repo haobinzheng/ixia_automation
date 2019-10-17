@@ -513,50 +513,52 @@ if dev_mode == False:
 
 	########################### end of experiment codes ##############################
 
-	# dut1_dir = {}
-	# dut2_dir = {}
-	# dut3_dir = {} 
-	# dut4_dir = {}
-	# dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
-	# dut1_dir['name'] = dut1_name
-	# dut1_dir['location'] = dut1_location
-	# dut1_dir['telnet'] = dut1
-	# dut1_dir['cfg'] = dut1_cfg
-	# dut1_dir['cfg_b'] = dut1_cfg_basic
+	dut1_dir = {}
+	dut2_dir = {}
+	dut3_dir = {} 
+	dut4_dir = {}
+	dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+	dut1_dir['name'] = dut1_name
+	dut1_dir['location'] = dut1_location
+	dut1_dir['telnet'] = dut1
+	dut1_dir['cfg'] = dut1_cfg
+	dut1_dir['cfg_b'] = dut1_cfg_basic
 
-	# dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
-	# dut2_dir['name'] = dut2_name
-	# dut2_dir['location'] = dut2_location
-	# dut2_dir['telnet'] = dut2
-	# dut2_dir['cfg'] = dut2_cfg
-	# dut2_dir['cfg_b'] = dut2_cfg_basic
+	dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+	dut2_dir['name'] = dut2_name
+	dut2_dir['location'] = dut2_location
+	dut2_dir['telnet'] = dut2
+	dut2_dir['cfg'] = dut2_cfg
+	dut2_dir['cfg_b'] = dut2_cfg_basic
 
-	# dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
-	# dut3_dir['name'] = dut3_name
-	# dut3_dir['location'] = dut3_location
-	# dut3_dir['telnet'] = dut3
-	# dut3_dir['cfg'] = dut3_cfg
-	# dut3_dir['cfg_b'] = dut3_cfg_basic
+	dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+	dut3_dir['name'] = dut3_name
+	dut3_dir['location'] = dut3_location
+	dut3_dir['telnet'] = dut3
+	dut3_dir['cfg'] = dut3_cfg
+	dut3_dir['cfg_b'] = dut3_cfg_basic
 
-	# dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
-	# dut4_dir['name'] = dut4_name
-	# dut4_dir['location'] = dut4_location
-	# dut4_dir['telnet'] = dut4
-	# dut4_dir['cfg'] = dut4_cfg
-	# dut4_dir['cfg_b'] = dut4_cfg_basic
+	dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+	dut4_dir['name'] = dut4_name
+	dut4_dir['location'] = dut4_location
+	dut4_dir['telnet'] = dut4
+	dut4_dir['cfg'] = dut4_cfg
+	dut4_dir['cfg_b'] = dut4_cfg_basic
 
-	# dut_list = [dut1,dut2,dut3,dut4]
-	# dut_dir_list = [dut1_dir,dut2_dir,dut3_dir,dut4_dir]
+	dut_list = [dut1,dut2,dut3,dut4]
+	dut_dir_list = [dut1_dir,dut2_dir,dut3_dir,dut4_dir]
+
+	for dut_dir in dut_dir_list:
+		dut = dut_dir['telnet']
+		dut_name = dut_dir['name']
+		image = find_dut_image(dut)
+		tprint(f"============================ {dut_name} software image = {image}")
 
 	# Develop new codes starts from here
 	# stop_threads = False
 	# dut_cpu_memory(dut_dir_list,lambda: stop_threads)
 
-	# for dut_dir in dut_dir_list:
-	# 	dut = dut_dir['telnet']
-	# 	dut_name = dut_dir['name']
-	# 	image = find_dut_image(dut)
-	# 	tprint(f"============================ {dut_name} software image = {image}")
+	
 
 
 	if no_fortigate:
@@ -719,7 +721,14 @@ if testcase == 5:
 			counter += 1
 			config_block_cmds(fgt1_dir, config)
 			console_timer(30,msg=f"wait 30 sec after configuring config_{counter}")
-			fgt_ssh_managed_chassis(fgt1)
+			result = fgt_ssh_managed_chassis(fgt1)
+			if result == False:
+				for dut in dut_list:
+					sw_display_log(dut)
+			else:
+				for dut in dut_list:
+					sw_delete_log(dut)
+
 			 
 		 
 	# output = collect_show_cmd(fgt1,"execute dhcp lease-list fortilink",t=5)
