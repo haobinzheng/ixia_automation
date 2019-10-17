@@ -1781,6 +1781,11 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 		build = int(kwargs['build'])
 	else:
 		build = settings.build_548d
+	if sw_list in kwargs:
+		dut_list = sw_list
+		reboot = True
+	else:
+		reboot = False
 	tprint(f"================ Upgrading FSWs via Fortigate to {build} =============")
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D_FPOE-v6-build0{build}-FORTINET.out 10.105.19.19"
 	switch_exec_cmd(fgt1, cmd)
@@ -1796,6 +1801,11 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	cmd = "execute switch-controller switch-software stage all S548DF-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
 	console_timer(400,msg="upgrading all 548-DF switches to S548DF-IMG.swtp, wait for 400 secs for all switches download image")
+
+	relogin_dut_all(dut_list)
+	for dut in dut_list:
+		switch_exec_reboot(dut)
+	console_timer(300,msg ="After reboot,wait for 300 seconds")
 
 def fgt_upgrade_548d(fgt1,fgt1_dir,**kwargs):
 	if "build" in kwargs:

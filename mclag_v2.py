@@ -985,10 +985,11 @@ for each mac_size:
 		tprint(f" ===================== upgrading managed FSW to build {settings.build_548d} ===============")
 		
 		if settings.STAGE_UPGRADE:
-			fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=sw_build)
-			for dut in dut_list:
-				switch_exec_reboot(dut)
-			console_timer(300,msg ="After reboot,wait for 300 seconds")
+			fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=sw_build,sw_list=dut_list)
+			#upgraded switches must be rebooted after stages upgrade.  When sw_list is used, the reboot is done at the above procedure
+			# for dut in dut_list:
+			# 	switch_exec_reboot(dut)
+			# console_timer(300,msg ="After reboot,wait for 300 seconds")
 		else:
 			fgt_upgrade_548d(fgt1,fgt1_dir,build=sw_build)
 			console_timer(400,msg ="After software upgrade, wait for 400 seconds") 
@@ -1143,10 +1144,10 @@ for each mac_size:
 		if upgrade_fgt and test_setup.lower() == "fg-548d":
 			debug("Start to upgrade fsw")
 			if settings.STAGE_UPGRADE:
-				fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=sw_build)
-				for dut in dut_list:
-					switch_exec_reboot(dut)
-				console_timer(300,msg ="After reboot,wait for 300 seconds")
+				fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=sw_build,sw_list=dut_list)
+				# for dut in dut_list:
+				# 	switch_exec_reboot(dut)
+				# console_timer(300,msg ="After reboot,wait for 300 seconds")
 			else:
 				fgt_upgrade_548d(fgt1,fgt1_dir,build=sw_build)
 				console_timer(400,msg ="After software upgrade, wait for 400 seconds") 
