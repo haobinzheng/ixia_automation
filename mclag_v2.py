@@ -723,11 +723,16 @@ if testcase == 5:
 			console_timer(30,msg=f"wait 30 sec after configuring config_{counter}")
 			result = fgt_ssh_managed_chassis(fgt1)
 			if result == False:
+				relogin_dut_all(dut_list)
 				for dut in dut_list:
 					sw_display_log(dut)
+					sw_delete_log(dut)
+				sw_display_log(fgt1)
+				sw_delete_log(fgt1)
 			else:
 				for dut in dut_list:
 					sw_delete_log(dut)
+				sw_delete_log(fgt1)
 
 			 
 		 
