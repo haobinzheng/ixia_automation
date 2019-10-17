@@ -54,7 +54,7 @@ parser.add_argument("-lm", "--log_mac", help="enable port mac log event", action
 parser.add_argument("-i", "--interactive", help="Enter interactive mode for test parameters", action="store_true")
 parser.add_argument("-e", "--config_host_sw", help="Configure host switches connected to ixia when changing testbed", action="store_true")
 parser.add_argument("-y", "--clean_up", help="Clean up IXIA after test is done. Default = No", action="store_true")
-parser.add_argument("-sw", "--upgrade", help="FSW software upgrade via FGT,image build number at settings.py ", action="store_true")
+parser.add_argument("-sw", "--upgrade", type = int,help="FSW software upgrade via FGT,image build number at settings.py, example: 193")
 
 
 
@@ -101,7 +101,8 @@ if len(sys.argv) > 1:
 		exit()
 	if args.upgrade:
 		upgrade_fgt = True
-		tprint("Upgrade FSW software via via Fortigate")
+		sw_build = args.upgrade
+		tprint(f"**Upgrade FSW software via via Fortigate to build {sw_build}")
 	else:
 		upgrade_fgt = False
 	if args.verbose:
@@ -983,7 +984,7 @@ for each mac_size:
 	if upgrade_fgt and test_setup.lower() == "fg-548d" and not setup:
 		tprint(f" ===================== upgrading managed FSW to build {settings.build_548d} ===============")
 		# fgt_upgrade_548d(fgt1,fgt1_dir)
-		fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=193)
+		fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=sw_build)
 		console_timer(200,msg = "After software upgrade, wait for 200 seconds") 
 		BOOTED = True
 
@@ -1136,12 +1137,12 @@ for each mac_size:
 		if upgrade_fgt and test_setup.lower() == "fg-548d":
 			debug("Start to upgrade fsw")
 			if settings.STAGE_UPGRADE:
-				fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=192)
+				fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=sw_build)
 				for dut in dut_list:
 					switch_exec_reboot(dut)
 				console_timer(300,msg ="After reboot,wait for 300 seconds")
 			else:
-				fgt_upgrade_548d(fgt1,fgt1_dir)
+				fgt_upgrade_548d(fgt1,fgt1_dir,build=sw_build)
 				console_timer(400,msg ="After software upgrade, wait for 400 seconds") 
 		else: 
 			tprint(" Not FSW software upgrade. After finished configuring, reboot all FSWs")
