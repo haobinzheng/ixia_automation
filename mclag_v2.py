@@ -874,6 +874,50 @@ for each mac_size:
 		-measure traffic loss 
 	"""
 	print(test_steps)
+
+	dut1_dir = {}
+	dut2_dir = {}
+	dut3_dir = {} 
+	dut4_dir = {}
+	dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+	dut1_dir['name'] = dut1_name
+	dut1_dir['location'] = dut1_location
+	dut1_dir['telnet'] = dut1
+	dut1_dir['cfg'] = dut1_cfg
+	dut1_dir['cfg_b'] = dut1_cfg_basic
+
+	dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+	dut2_dir['name'] = dut2_name
+	dut2_dir['location'] = dut2_location
+	dut2_dir['telnet'] = dut2
+	dut2_dir['cfg'] = dut2_cfg
+	dut2_dir['cfg_b'] = dut2_cfg_basic
+
+	dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+	dut3_dir['name'] = dut3_name
+	dut3_dir['location'] = dut3_location
+	dut3_dir['telnet'] = dut3
+	dut3_dir['cfg'] = dut3_cfg
+	dut3_dir['cfg_b'] = dut3_cfg_basic
+
+	dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+	dut4_dir['name'] = dut4_name
+	dut4_dir['location'] = dut4_location
+	dut4_dir['telnet'] = dut4
+	dut4_dir['cfg'] = dut4_cfg
+	dut4_dir['cfg_b'] = dut4_cfg_basic
+
+	dut_list = [dut1,dut2,dut3,dut4]
+	dut_dir_list = [dut1_dir,dut2_dir,dut3_dir,dut4_dir]
+
+	for dut_dir in dut_dir_list:
+		dut = dut_dir['telnet']
+		dut_name = dut_dir['name']
+		image = find_dut_image(dut)
+		tprint(f"============================ {dut_name} software image = {image}")
+
+
+
 	icl_ports = ['port47','port48']
 	core_ports = ["port1","port2","port3","port4"]
 	tprint('------------------------------ login Fortigate devices -----------------------')
@@ -1125,20 +1169,20 @@ for each mac_size:
 	# Enable or disable log-mac-event on all trunk interface
 
 
-	# if log_mac_event:
-	# 	cmd = "set log-mac-event enable"
-	# else:
-	# 	cmd = "set log-mac-event disable"
-	# for dut_dir in dut_dir_list:
-	# 	dut_name = dut_dir['name']
-	# 	dut = dut_dir['telnet']
-	# 	trunk_dict_list = dut_switch_trunk(dut)
+	if log_mac_event:
+		cmd = "set log-mac-event enable"
+	else:
+		cmd = "set log-mac-event disable"
+	for dut_dir in dut_dir_list:
+		dut_name = dut_dir['name']
+		dut = dut_dir['telnet']
+		trunk_dict_list = dut_switch_trunk(dut)
 		
-	# 	if 'dut3' in dut_name or 'dut4' in dut_name:
-	# 		config_switch_port_cmd(dut,'port39',cmd)
-	# 	for trunk in trunk_dict_list:
-	# 		trunk_name = trunk['name']
-	# 		config_switch_port_cmd(dut,trunk_name,cmd)
+		if 'dut3' in dut_name or 'dut4' in dut_name:
+			config_switch_port_cmd(dut,'port39',cmd)
+		for trunk in trunk_dict_list:
+			trunk_name = trunk['name']
+			config_switch_port_cmd(dut,trunk_name,cmd)
 
 	
 	tprint("Test Case #{}: Start executing test case and generating activites".format(testcase))
