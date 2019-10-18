@@ -1044,6 +1044,18 @@ def switch_need_change_password(tn):
 		tn.write(('fortinet123' + '\n').encode('ascii'))
 		return True
 
+def find_shell_prompt(tn,chassis_id):
+	out = tn.expect([re.compile(b"#")],timeout=TIMEOUT)
+	dprint(f"after enter password, device prompt overall prompt = {out}")
+	login_result = out[0]
+	device_prompt = out[2].decode().strip()
+	dprint(f"Expecting # prompt, if return 0, # is found. return = {login_result},device prompt ={device_prompt}")
+	if int(login_result) == 0 and chassis_id in device_prompt:
+		dprint("login successful")
+		return True
+	else:
+		return False
+
 def fgt_ssh_chassis(tn,ip,chassis_id):
 	TIMEOUT = 3
 	cmd = f"exec ssh admin@{ip}"
@@ -1066,8 +1078,35 @@ def fgt_ssh_chassis(tn,ip,chassis_id):
 	elif "#" in prompt:
 		if chassis_id in prompt:
 			return True
+	elif "(yes/no)" in prompt:
+		first_time_after_upgrade_prompt = """
+		Connected
+ 
+exec ssh admin@169.254.1.4
+FortiGate-3960E # exec ssh admin@169.254.1.4
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:c7yDVxDblBbigD59G176xbR418eKCIhtNeFiNKrtXcE.
+Please contact your system administrator.
+Add correct host key in /tmp/home/admin/.ssh/known_hosts to get rid of this message.
+Offending ED25519 key in /tmp/home/admin/.ssh/known_hosts:3
+ 
+The remote host key has changed. Do you want to accept the new key and continue connecting (yes/no)?  
+"""
+		tn.write(('yes' + '\n').encode('ascii'))
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		if find_shell_prompt(tn,chassis_id):
+			return True
+		else:
+			return False
 	else:
-		print("need to enter yes and password, handle later")
+		print("Something unexpected is happens, handle later")
+		print(output)
 		return False
 
 
