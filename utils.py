@@ -880,7 +880,7 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
-		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('admin' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
 		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
@@ -1801,6 +1801,7 @@ def find_inactive_trunk_port(dut):
 
 def find_dut_image(dut):
 	result = collect_show_cmd(dut,"get system status",t=5)
+	print(result)
 	for line in result:
 		if "Version" in line:
 			image = line.split(":")[1]

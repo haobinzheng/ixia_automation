@@ -1781,8 +1781,8 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 		build = int(kwargs['build'])
 	else:
 		build = settings.build_548d
-	if sw_list in kwargs:
-		dut_list = sw_list
+	if "sw_list" in kwargs:
+		dut_list = kwargs['sw_list']
 		reboot = True
 	else:
 		reboot = False
