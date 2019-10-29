@@ -382,24 +382,28 @@ if dev_mode == False:
 		dut1_location = "Rack20-18"
 		dut1_name = "dut1-448d"
 		dut1_cfg = "dut1_448d.cfg"
+		dut1_cfg_basic = "dut1_448d_basic.cfg"
 
 		dut2_com = "10.105.50.1"
 		dut2_port = 2081
 		dut2_location = "Rack20-25"
 		dut2_name = "dut2-448d"
 		dut2_cfg = "dut2_448d.cfg"
+		dut2_cfg_basic = "dut2_448d_basic.cfg"
 
 		dut3_com = "10.105.50.2"
 		dut3_port = 2077
 		dut3_location = "Rack21-18"
 		dut3_name = "dut3-448d"
 		dut3_cfg = "dut3_448d.cfg"
+		dut3_cfg_basic = "dut3_448d_basic.cfg"
 
 		dut4_com = "10.105.50.2"
 		dut4_port = 2078
 		dut4_location = "Rack21-19"
 		dut4_name = "dut4-448d"
 		dut4_cfg = "dut4_448d.cfg"
+		dut4_cfg_basic = "dut4_448d_basic.cfg"
 
 		dut1_telnet = "10.105.50.64"
 		dut2_telnet = "10.105.50.65"
@@ -1181,12 +1185,12 @@ for each mac_size:
 				trunk_name = trunk['name']
 				config_switch_port_cmd(dut,trunk_name,cmd)
 	else:
-		if not BOOTED:
+		if not BOOTED and settings.REBOOT:
 			for dut in dut_list:
 				switch_exec_reboot(dut)
 			console_timer(300,msg ="After reboot,wait for 300 seconds")
-		tprint("After rebooting devices under test, relogin the consoles")
-		relogin_dut_all(dut_list)
+			tprint("After rebooting devices under test, relogin the consoles")
+			relogin_dut_all(dut_list)
 	# Enable or disable log-mac-event on all trunk interface
 
 
