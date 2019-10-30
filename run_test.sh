@@ -3,8 +3,11 @@ rm Log/*.log
 
 #python mclag_v2.py -t 448D -test 2 -n 1 -file demo -u
 
-echo "python mclag_v2.py -t 448D -test 2 -b -n 1 -c -f "
-python mclag_v2.py -t 448D -test 2 -n 1 
+echo "python mclag_v2.py -t 448D -test 2 -b -n 5 -c -f -file demo_1"
+python mclag_v2.py -t 448D -test 2 -b -n 5 -c -f -file demo_1
+
+echo "python mclag_v2.py -t 448D -test 2 -n 10 -file demo_2"
+python mclag_v2.py -t 448D -test 2 -n 10 -file demo_2 
 #python mclag_v2.py -t 448D -test 2 -n 1 -file demo -u
 
 

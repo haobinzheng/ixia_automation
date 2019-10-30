@@ -2103,12 +2103,12 @@ FSW topology:  Two-tier MCLAG
 	dict_2_excel(stat_dir_list,filename)
 	sleep(5)
 	scp_file(file=filename)
-	stop_threads = True
-	thread.join()
+	# stop_threads = True
+	# thread.join()
 	tprint(" ===================================== End OF MCLAG Port-Down Performance Test:4-Member ========================= ")
 
-	for t in threads_list:
-		t.join()
+	# for t in threads_list:
+	# 	t.join()
 
 
 if clean_up or settings.IXIA_CLEANUP:
