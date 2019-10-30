@@ -241,6 +241,7 @@ def ErrorNotify(*args, **kwargs):
 
 def print_flow_stats_3rd_log(flow_list,file):
 	with open(file,'a+') as f:
+		f.write("-----------------------------------------------------------------\n")
 		for flow in flow_list:
 			f.write(time_str("Flow ID:{}\n".format(flow['id'])))
 			f.write(time_str("TX_Port:{}\n".format(flow['tx_port'])))
@@ -253,6 +254,7 @@ def print_flow_stats_3rd_log(flow_list,file):
 			f.write("-----------------------------------------------------------------\n")
 
 def print_flow_stats_3rd(flow_list):
+	print("----------------------------------------------")
 	for flow in flow_list:
 		tprint("Flow ID:{}".format(flow['id']))
 		tprint("TX_Port:{}".format(flow['tx_port']))
@@ -263,7 +265,7 @@ def print_flow_stats_3rd(flow_list):
 		tprint("Pkt Loss:{}".format(flow['loss_pkts']))
 		tprint("Pkt Loss Time:{}".format(flow["loss_time"]))
 		#tprint("Test Case: {}".format(flow['reason']))
-		tprint("----------------------------------------------")
+		print("----------------------------------------------")
 
 def print_flow_stats_new(flow_list):
 	for flow in flow_list:

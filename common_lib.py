@@ -1110,8 +1110,9 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 			print_interactive_line()
 			tprint("Unplug 1st active port fiber on DUT: {} located at: {} port:{}".format(dut_name,location,first_active_port))
 			keyin = input("Are you done with unplugging cable? if so press any key...")
-		tprint("Wait for {} seconds and measure packet loss".format(wait_time))
-		time.sleep(wait_time)
+		# tprint("Wait for {} seconds and measure packet loss".format(wait_time))
+		# time.sleep(wait_time)
+		console_timer(wait_time,msg = f"Wait for {wait_time} seconds then measure packet loss")
 		traffic_stats = collect_ixia_traffic_stats()
 		 
 		flow_stat_list_down_1 = parse_traffic_stats_new(traffic_stats,reason="1st-down")
@@ -1153,8 +1154,9 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 				print_interactive_line()
 				tprint("Unplug MCLAG-2 2nd port fiber on DUT: {} located at: {} port:{}".format(dut_name,location,lag2_2nd_port))
 				keyin = input("Are you done with changing cable? if so press any key...")
-		tprint("Wait for {} seconds before measuring traffic loss".format(wait_time))
-		time.sleep(wait_time)
+		#tprint("Wait for {} seconds before measuring traffic loss".format(wait_time))
+		console_timer(wait_time,msg = f"Wait for {wait_time} seconds before measuring traffic loss")
+		#time.sleep(wait_time)
 		traffic_stats = collect_ixia_traffic_stats()
 		flow_stat_list_down_2 = parse_traffic_stats_new(traffic_stats,reason="2nd-down")
 		for f in flow_stat_list_down_2:
@@ -1186,8 +1188,9 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 				tprint(" MCLAG-2: Reconnect 2nd fiber on DUT: {} located at: {} port:{}".format(dut_name,location,lag2_2nd_port))
 				keyin = input("Are you done with changing cable? if so press any key...")
 	
-		tprint("Wait for {} seconds and measure packet loss".format(wait_time))
-		time.sleep(wait_time)
+		#tprint("Wait for {} seconds and measure packet loss".format(wait_time))
+		console_timer(wait_time,msg = f"Wait for {wait_time} seconds then measure packet loss")
+		#time.sleep(wait_time)
 		traffic_stats = collect_ixia_traffic_stats()
 		 
 		flow_stat_list_up_1 = parse_traffic_stats_new(traffic_stats,reason="2nd-up")
@@ -1218,8 +1221,9 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 				tprint("MCLAG-2: Reconnect 1st active fiber on DUT:{} located at:{} port:{}".format(dut_name,location,first_active_port))
 				keyin = input("Are you done with changing cable? if so press any key...")
 		
-		tprint("Wait for {} seconds and measure packet loss".format(wait_time_long))
-		time.sleep(wait_time)
+		#tprint("Wait for {} seconds and measure packet loss".format(wait_time_long))
+		console_timer(wait_time,msg = f"Wait for {wait_time} seconds then measure packet loss")
+		#time.sleep(wait_time)
 		traffic_stats = collect_ixia_traffic_stats()
 
 		
@@ -1848,6 +1852,34 @@ def sa_upgrade_448d(dut,dut_dir,**kwargs):
 	dut_name = dut_dir['name']
 	tprint(f"=================== Upgrading FSW {dut_name} to build # {build} =================")
 	image_names = [f"FSW_448D_FPOE-v6-build0{build}-FORTINET.out",f"FSW_448D_POE-v6-build0{build}-FORTINET.out",f"FSW_448D-v6-build0{build}-FORTINET.out"]
+	for image in image_names:
+		dprint(f"image name = {image}")
+		cmd = f"execute restore image tftp {image} 10.105.19.19"
+		tprint(f"upgrade command = {cmd}")
+		switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
+		output = switch_read_console_output(dut,timeout = 60)
+		dprint(output)
+		for line in output: 
+			if "Command fail" in line:
+				dprint(f"upgrade with image {image} failed for {dut_name}")
+				continue
+
+			elif "Check image OK" in line:
+				Info(f"At {dut_name} image {image} is downloaded and checked OK,upgrade should be fine")
+				return True
+
+	return False
+
+
+def sa_upgrade_548d(dut,dut_dir,**kwargs):
+	if "build" in kwargs:
+		build = int(kwargs['build'])
+	else:
+		build = settings.build_448d
+
+	dut_name = dut_dir['name']
+	tprint(f"=================== Upgrading FSW {dut_name} to build # {build} =================")
+	image_names = [f"FSW_548D_FPOE-v6-build0{build}-FORTINET.out",f"FSW_548D-v6-build0{build}-FORTINET.out"]
 	for image in image_names:
 		dprint(f"image name = {image}")
 		cmd = f"execute restore image tftp {image} 10.105.19.19"

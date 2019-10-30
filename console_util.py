@@ -24,7 +24,7 @@ def login(ip, user, password, prompt):
         output = tn.read_until(('Password: ').encode('ascii'), 2)
         logger.console(output)
         tn.write((user + '\n').encode('ascii'))
-        output = tn.read_until(('#').encode('ascii'), 2)
+        output = tn.read_until(('#').encode('ascii'), 5)
         #output = tn.read_until('#', 2)
         logger.console(output)
         if "#".encode('ascii') not in output:

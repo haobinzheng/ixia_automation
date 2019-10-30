@@ -55,6 +55,8 @@ parser.add_argument("-i", "--interactive", help="Enter interactive mode for test
 parser.add_argument("-e", "--config_host_sw", help="Configure host switches connected to ixia when changing testbed", action="store_true")
 parser.add_argument("-y", "--clean_up", help="Clean up IXIA after test is done. Default = No", action="store_true")
 parser.add_argument("-sw", "--upgrade", type = int,help="FSW software upgrade via FGT,image build number at settings.py, example: 193")
+parser.add_argument("-ug", "--sa_upgrade", type = int,help="FSW software upgrade via FGT,image build number at settings.py, example: 193")
+
 
 
 
@@ -99,6 +101,12 @@ if len(sys.argv) > 1:
 """
 		print(guide)
 		exit()
+	if args.sa_upgrade:
+		upgrade_sa = True
+		sw_build = args.sa_upgrade
+		tprint(f"**Upgrade FSW software via via Fortigate to build {sw_build}")
+	else:
+		upgrade_sa = False
 	if args.upgrade:
 		upgrade_fgt = True
 		sw_build = args.upgrade
@@ -348,15 +356,15 @@ if dev_mode == False:
 
 		if config_host_sw == True:
 			testbed_description = """
-			1) SW1: shut port25
-					shut port26
-					shut port7
-					unsht port 13
-					unshut port14
-			2)SW2: 	shut port23
-					shut port24
-					unshut port13
-					unshut port14
+	1) SW1: shut port25
+		shut port26
+		shut port7
+		unsht port 13
+		unshut port14
+	2)SW2: 	shut port23
+		shut port24
+		unshut port13
+		unshut port14
 			""" 
 			print(testbed_description)
 			sw1=get_switch_telnet_connection("10.105.50.3",2097)
@@ -587,6 +595,20 @@ if dev_mode == False:
 	######################################################################
 
 	if no_fortigate:
+		fgt1_com = "10.105.50.1"
+		fgt1_port = 2066
+		fgt1_location = "Rack20"
+		fgt1_name = "3960E"
+		fgt1_cfg = "fgt1.cfg"
+
+		fgt2_com = "10.105.50.2"
+		fgt2_port = 2074
+		fgt2_location = "Rack21"
+		fgt2_name = "3960E"
+		fgt2_cfg = "fgt2.cfg"
+
+		fgt_telnet = "10.105.50.241"
+
 		tprint("--------------------------Shutting down connetions to Fortigate nodes -------")
 		fgt1_dir = {}
 		fgt2_dir = {}
@@ -1821,16 +1843,29 @@ FSW topology:  Two-tier MCLAG
 
 			# console_timer(180,msg="Wait for 3 min after rebooting all switches")
 
-			build_num = 194
-			for d in dut_dir_list:
-				if sa_upgrade_448d(d['telnet'],d,build = 194):
-					tprint(f"Upgrade FSW {d['name']} to build {build_num} is successful")
+			if upgrade_sa == True:
+				if test_setup == "448D":
+					for d in dut_dir_list:
+						if sa_upgrade_448d(d['telnet'],d,build = sw_build):
+							tprint(f"Upgrade FSW {d['name']} to build {build_num} is successful")
+						else:
+							tprint(f"Upgrade FSW {d['name']} to build {build_num} failed")
+					console_timer(300,msg="After upgrading FSWs, wait for 5 minutes")
+					tprint("====== Relogin all DUTs after upgrade is finished")
+					for dut in dut_list:
+						relogin_if_needed(dut)
+				elif test_setup == "548D":
+					for d in dut_dir_list:
+						if sa_upgrade_548d(d['telnet'],d,build = sw_build):
+							tprint(f"Upgrade FSW {d['name']} to build {sw_build} is successful")
+						else:
+							tprint(f"Upgrade FSW {d['name']} to build {sw_build} failed")
+					console_timer(300,msg="After upgrading FSWs, wait for 5 minutes")
+					tprint("====== Relogin all DUTs after upgrade is finished")
+					for dut in dut_list:
+						relogin_if_needed(dut)
 				else:
-					tprint(f"Upgrade FSW {d['name']} to build {build_num} failed")
-			console_timer(300,msg="After upgrading FSWs, wait for 5 minutes")
-			tprint("====== Relogin all DUTs after upgrade is finished")
-			for dut in dut_list:
-				relogin_if_needed(dut)
+					pass
 		else:
 			for d in dut_dir_list:
 				configure_switch_file(d['telnet'],d['cfg'])
