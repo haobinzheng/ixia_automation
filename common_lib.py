@@ -1112,8 +1112,7 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 			keyin = input("Are you done with unplugging cable? if so press any key...")
 		tprint("Wait for {} seconds and measure packet loss".format(wait_time))
 		time.sleep(wait_time)
-		with lock:
-			traffic_stats = collect_ixia_traffic_stats()
+		traffic_stats = collect_ixia_traffic_stats()
 		 
 		flow_stat_list_down_1 = parse_traffic_stats_new(traffic_stats,reason="1st-down")
 		for f in flow_stat_list_down_1:
@@ -1121,7 +1120,9 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 			f['lag_mem'] = lag_mem
 			f['test_num'] = i+1
 			f['tier'] = tier
-		print_flow_stats_new(flow_stat_list_down_1)
+		# print_flow_stats_new(flow_stat_list_down_1)
+
+		print_flow_stats_3rd(flow_stat_list_down_1)
 
 		tprint("Clearing IXIA traffic statistics ....")
 		ixia_clear_traffic_stats()
@@ -1161,7 +1162,7 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 			f['lag_mem'] = lag_mem
 			f['test_num'] = i+1
 			f['tier'] = tier
-		print_flow_stats_new(flow_stat_list_down_2)
+		print_flow_stats_3rd(flow_stat_list_down_2)
 
 		tprint("Clearing traffic statistics ....")
 		ixia_clear_traffic_stats()
@@ -1195,7 +1196,7 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 			f['lag_mem'] = lag_mem
 			f['test_num'] = i+1
 			f['tier'] = tier
-		print_flow_stats_new(flow_stat_list_up_1)
+		print_flow_stats_3rd(flow_stat_list_up_1)
 
 		tprint("Clearing traffic statistics ....")
 		ixia_clear_traffic_stats()
@@ -1242,7 +1243,7 @@ def dut_fibercut_test(dut_dir,mode,**kwargs):
 			f['lag_mem'] = lag_mem
 			f['test_num'] = i+1
 			f['tier'] = tier
-		print_flow_stats_new(flow_stat_list_up_2)
+		print_flow_stats_3rd(flow_stat_list_up_2)
 
 
 		iterate_list = flow_stat_list_down_1 + flow_stat_list_down_2 + flow_stat_list_up_1 + flow_stat_list_up_2
@@ -1473,7 +1474,7 @@ def dut_reboot_test_new(dut1,**kwargs):
 			f['dut'] = dut_name
 			f['lag_mem'] = lag_mem
 			f['test_num'] = i+1
-		print_flow_stats_new(flow_stat_list_down)
+		print_flow_stats_3rd(flow_stat_list_down)
 
 		tprint("Allow traffic to run for another 200 seconds after rebooting ....")
 		time.sleep(200)
@@ -1485,7 +1486,7 @@ def dut_reboot_test_new(dut1,**kwargs):
 			f['dut'] = dut_name
 			f['lag_mem'] = lag_mem
 			f['test_num'] = i+1
-		print_flow_stats_new(flow_stat_list_up)
+		print_flow_stats_3rd(flow_stat_list_up)
 		iterate_list = flow_stat_list_up + flow_stat_list_down
 		test_list.append(iterate_list)
 		
@@ -1513,7 +1514,7 @@ def collect_ixia_traffic_stats_stable():
 		count += 1
 		flow_stat_list_down = parse_traffic_stats_new(stats,reason="down")
 		debug("^^^^^^^^^^^^^^^^^^^^^^^^^ Waiting packet loss to show up ^^^^^^^^^^^^^^")
-		print_flow_stats_new(flow_stat_list_down)
+		print_flow_stats_3rd(flow_stat_list_down)
 		time.sleep(3)
 		stats = collect_ixia_traffic_stats()
 
@@ -1848,19 +1849,19 @@ def sa_upgrade_448d(dut,dut_dir,**kwargs):
 	tprint(f"=================== Upgrading FSW {dut_name} to build # {build} =================")
 	image_names = [f"FSW_448D_FPOE-v6-build0{build}-FORTINET.out",f"FSW_448D_POE-v6-build0{build}-FORTINET.out",f"FSW_448D-v6-build0{build}-FORTINET.out"]
 	for image in image_names:
-		print(f"image name = {image}")
+		dprint(f"image name = {image}")
 		cmd = f"execute restore image tftp {image} 10.105.19.19"
-		print(f"upgrade command = {cmd}")
+		tprint(f"upgrade command = {cmd}")
 		switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
 		output = switch_read_console_output(dut,timeout = 60)
-		print(output)
+		dprint(output)
 		for line in output: 
 			if "Command fail" in line:
-				print(f"upgrade with image {image} failed for {dut_name}")
+				dprint(f"upgrade with image {image} failed for {dut_name}")
 				continue
 
 			elif "Check image OK" in line:
-				tprint(f"Image {image} is downloaded and checked OK,upgrade should be fine")
+				Info(f"At {dut_name} image {image} is downloaded and checked OK,upgrade should be fine")
 				return True
 
 	return False

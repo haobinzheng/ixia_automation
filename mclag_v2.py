@@ -159,7 +159,7 @@ if len(sys.argv) > 1:
 		tprint("** Test iterate numbers = {}".format(Run_time))
 	if args.testcase:
 		testcase = args.testcase
-		tprint("** Test Case To Run:{}".format(testcase))
+		tprint("** Test Case To Run: #{}".format(testcase))
 	else:
 		testcase = "all"
 		tprint("** Test Case To Run:{}".format(testcase))
@@ -574,14 +574,17 @@ if dev_mode == False:
 	######################################################################
 	# for d in dut_dir_list:
 	# 	configure_switch_file(d['telnet'],d['cfg'])
-	build_num = 194
-	for d in dut_dir_list:
-		dut = d['telnet']
-		if sa_upgrade_448d(d['telnet'],d,build = 194):
-			tprint(f"Upgrade FSW {d['name']} to build {build_num} is successful")
-		else:
-			tprint(f"Upgrade FSW {d['name']} to build {build_num} failed")
-	exit()
+	# build_num = 194
+	# for d in dut_dir_list:
+	# 	dut = d['telnet']
+	# 	if sa_upgrade_448d(d['telnet'],d,build = 194):
+	# 		tprint(f"Upgrade FSW {d['name']} to build {build_num} is successful")
+	# 	else:
+	# 		tprint(f"Upgrade FSW {d['name']} to build {build_num} failed")
+	# exit()
+	######################################################################
+	# End of DUT dependent Experiment code starts here
+	######################################################################
 
 	if no_fortigate:
 		tprint("--------------------------Shutting down connetions to Fortigate nodes -------")
@@ -1810,18 +1813,27 @@ FSW topology:  Two-tier MCLAG
 			for d in dut_dir_list:
 				configure_switch_file(d['telnet'],d['cfg'])
 	 
-			print("*****************Reboot all DUTs to have a fresh start, it takes probably 3 minutes")
-			i=0
-			for dut in dut_list:
-				i+=1
-				switch_exec_reboot(dut,device="dut{}".format(i))
+			# print("*****************Reboot all DUTs to have a fresh start, it takes probably 3 minutes")
+			# i=0
+			# for dut in dut_list:
+			# 	i+=1
+			# 	switch_exec_reboot(dut,device="dut{}".format(i))
 
-			console_timer(180,msg="Wait for 3 min after rebooting all switches")
+			# console_timer(180,msg="Wait for 3 min after rebooting all switches")
+
+			build_num = 194
 			for d in dut_dir_list:
-				dut = d['telnet']
-				sa_upgrade_448d(d['telnet'],d,build = 194)
-		for dut in dut_list:
-			relogin_if_needed(dut)
+				if sa_upgrade_448d(d['telnet'],d,build = 194):
+					tprint(f"Upgrade FSW {d['name']} to build {build_num} is successful")
+				else:
+					tprint(f"Upgrade FSW {d['name']} to build {build_num} failed")
+			console_timer(300,msg="After upgrading FSWs, wait for 5 minutes")
+			tprint("====== Relogin all DUTs after upgrade is finished")
+			for dut in dut_list:
+				relogin_if_needed(dut)
+		else:
+			for d in dut_dir_list:
+				configure_switch_file(d['telnet'],d['cfg'])
 
 	
 	print(description)
@@ -1932,17 +1944,21 @@ FSW topology:  Two-tier MCLAG
 	
 	tprint("Collect statistics after running traffic for 15 seconds, Please take a look at printed traffic stats to make sure no packet loss..")
  
-	traffic_stats = ixiangpf.traffic_stats(
-	    mode = 'flow'
-	    )
+	# traffic_stats = ixiangpf.traffic_stats(
+	#     mode = 'flow'
+	#     )
 
-	if traffic_stats['status'] != '1':
-	    tprint('\nError: Failed to get traffic flow stats.\n')
-	    tprint(traffic_stats)
-	    sys.exit()
+	# if traffic_stats['status'] != '1':
+	#     tprint('\nError: Failed to get traffic flow stats.\n')
+	#     tprint(traffic_stats)
+	#     sys.exit()
 
+	traffic_stats = collect_ixia_traffic_stats()
 	flow_stat_list = parse_traffic_stats(traffic_stats)
-	print_flow_stats(flow_stat_list)
+	print_flow_stats_3rd(flow_stat_list)
+
+	# flow_stat_list = parse_traffic_stats(traffic_stats)
+	# print_flow_stats(flow_stat_list)
 	if dev_mode == True:
 		stop_threads = True
 		thread.join()
@@ -1978,9 +1994,9 @@ FSW topology:  Two-tier MCLAG
 	threads_list = []
 	# thread = Thread(target = background_ixia_activity,args = (topology_handle_dict_list,dut_list,lambda: stop_threads))
 	# thread.start()
-	thread2 = Thread(target = period_login,args = (dut_list,lambda: stop_threads))
-	thread2.start()
-	threads_list.append(thread2)
+	# thread2 = Thread(target = period_login,args = (dut_list,lambda: stop_threads))
+	# thread2.start()
+	# threads_list.append(thread2)
 
 	if log_mac_event:
 		tprint("Enabling log-mac-event.........")
