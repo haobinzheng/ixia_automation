@@ -1852,7 +1852,7 @@ def sa_upgrade_448d(dut,dut_dir,**kwargs):
 		cmd = f"execute restore image tftp {image} 10.105.19.19"
 		print(f"upgrade command = {cmd}")
 		switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
-		output = switch_read_console_output(dut,timeout = 30)
+		output = switch_read_console_output(dut,timeout = 60)
 		print(output)
 		for line in output: 
 			if "Command fail" in line:
