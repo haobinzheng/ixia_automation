@@ -10,8 +10,8 @@ rm Log/*.log
 # python mclag_v2.py -t fg-548d -mac 2-2-1 -test 3 
 #python mclag_v2.py -t 448D -mac 1000-10000-1000 -test 1 -lm  
 
-echo "python mclag_v2.py -t 448D -mac 1000-10000-1000 -test 1"
-python mclag_v2.py -t 448D -mac 1000-10000-1000 -test 1 
+echo "python mclag_v2.py -t 448D -test 2 -b -n 1 -c -f "
+python mclag_v2.py -t 448D -test 2 -b -n 1 -c -f 
 
 #python mclag_v2.py -t 548D -n 3 -b -v -mac 1000 -file mac_1k_no_logmac 
 

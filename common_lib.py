@@ -1836,3 +1836,31 @@ def fgt_upgrade_548d(fgt1,fgt1_dir,**kwargs):
 	console_timer(10,msg="upgrading S548DF4K17000014 S548DF-IMG.swtp")
 	cmd = "execute switch-controller get-upgrade-status"
 	switch_show_cmd_name(fgt1_dir,cmd)
+
+
+def sa_upgrade_448d(dut,dut_dir,**kwargs):
+	if "build" in kwargs:
+		build = int(kwargs['build'])
+	else:
+		build = settings.build_448d
+
+	dut_name = dut_dir['name']
+	tprint(f"=================== Upgrading FSW {dut_name} to build # {build} =================")
+	image_names = [f"FSW_448D_FPOE-v6-build0{build}-FORTINET.out",f"FSW_448D_POE-v6-build0{build}-FORTINET.out",f"FSW_448D-v6-build0{build}-FORTINET.out"]
+	for image in image_names:
+		print(f"image name = {image}")
+		cmd = f"execute restore image tftp {image} 10.105.19.19"
+		print(f"upgrade command = {cmd}")
+		switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
+		output = switch_read_console_output(dut,timeout = 30)
+		print(output)
+		for line in output: 
+			if "Command fail" in line:
+				print(f"upgrade with image {image} failed for {dut_name}")
+				continue
+
+			elif "Check image OK" in line:
+				tprint(f"Image {image} is downloaded and checked OK,upgrade should be fine")
+				return True
+
+	return False

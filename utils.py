@@ -647,6 +647,26 @@ def switch_configure_cmd_name(dut_dir,cmd):
 	time.sleep(0.5)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
 
+def switch_read_console_output(tn,**kwargs):
+	if "timeout" in kwargs:
+		t = kwargs['timeout']
+	else:
+		t = 10
+	output = tn.read_until(("# ").encode('ascii'),timeout=t)
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).rstrip(' ')
+		out_str_list.append(o_str)
+	# tprint(dir(output))
+	# tprint(type(output))
+	# tprint(out_list)
+	for i in out_str_list:
+		tprint(i)
+	return out_str_list
+
+
 def switch_configure_cmd(tn,cmd,**kwargs):
 	if 'mode' in kwargs:
 		mode = kwargs['mode']
@@ -1801,7 +1821,7 @@ def find_inactive_trunk_port(dut):
 
 def find_dut_image(dut):
 	result = collect_show_cmd(dut,"get system status",t=5)
-	print(result)
+	dprint(result)
 	for line in result:
 		if "Version" in line:
 			image = line.split(":")[1]

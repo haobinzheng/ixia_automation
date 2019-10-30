@@ -413,16 +413,16 @@ if dev_mode == False:
 
 		if config_host_sw == True:
 			testbed_description = """
-			1) SW1: unshut port25
-					unshut port26
-					shut port7
-					sht port 13
-					shut port14
-			2)SW2: 	unshut port23
-					unshut port24
-					shut port13
-					shut port14
-			""" 
+	1) SW1: unshut port25
+		unshut port26
+		shut port7
+		sht port 13
+		shut port14
+	2)SW2: 	unshut port23
+		unshut port24
+		shut port13
+		shut port14
+	""" 
 			print(testbed_description)
 			tprint("======================== Configure SW1 and SW2 for 448D setup ===============")
 			sw1=get_switch_telnet_connection("10.105.50.3",2097)
@@ -439,8 +439,13 @@ if dev_mode == False:
 			switch_shut_port(sw2,"port14")
 	
 	######################################################################
-	# Experiment code starts here
+	# DUT independent Experiment code starts here
 	######################################################################
+	# for d in dut_dir_list:
+	# 	configure_switch_file(d['telnet'],d['cfg'])
+	# for d in dut_dir_list:
+	# 	dut = d['telnet']
+	# 	sa_upgrade_448d(d['telnet'],d,build = 194)
 	# event  = multiprocessing.Event()
 	# if log_mac_event:
 	# 	log_mac_flag = "LogMac"
@@ -564,7 +569,19 @@ if dev_mode == False:
 	# dut_cpu_memory(dut_dir_list,lambda: stop_threads)
 
 	
-
+	######################################################################
+	# DUT dependent Experiment code starts here
+	######################################################################
+	# for d in dut_dir_list:
+	# 	configure_switch_file(d['telnet'],d['cfg'])
+	build_num = 194
+	for d in dut_dir_list:
+		dut = d['telnet']
+		if sa_upgrade_448d(d['telnet'],d,build = 194):
+			tprint(f"Upgrade FSW {d['name']} to build {build_num} is successful")
+		else:
+			tprint(f"Upgrade FSW {d['name']} to build {build_num} failed")
+	exit()
 
 	if no_fortigate:
 		tprint("--------------------------Shutting down connetions to Fortigate nodes -------")
@@ -1185,12 +1202,12 @@ for each mac_size:
 				trunk_name = trunk['name']
 				config_switch_port_cmd(dut,trunk_name,cmd)
 	else:
-		if not BOOTED and settings.REBOOT:
+		if not BOOTED:
 			for dut in dut_list:
 				switch_exec_reboot(dut)
 			console_timer(300,msg ="After reboot,wait for 300 seconds")
-			tprint("After rebooting devices under test, relogin the consoles")
-			relogin_dut_all(dut_list)
+		tprint("After rebooting devices under test, relogin the consoles")
+		relogin_dut_all(dut_list)
 	# Enable or disable log-mac-event on all trunk interface
 
 
@@ -1759,15 +1776,54 @@ FSW topology:  Two-tier MCLAG
 #########################################################################################
 if testcase == 2:
 	description = """============================================================================================
-Purpose: Measure packet loss performance for two-tier MCLAG . 
+Purpose: Measure packet loss performance at two-tier MCLAG in standalone mode . 
 Command:python mclag_v2.py -t 548D -e -test 2 -n 1 (only firber-cut test)
 	python mclag_v2.py -t 548D -e -test 2 -b -n 1 (reboot + firber-cut test)
 	python mclag_v2.py -t 548D -e -test 2 -b -n 1 -lm (reboot + firber-cut test: log-mc)
 	For help: python mclag_v2.py --help
-IXIA topology: 1st pair for ports(2 ports total) running static IP mode	
-			   2nd pair port for background activities		   
+IXIA topology: 1st pair IXIA ports for sending and receiving performance measuring traffic	
+	  (optional)2nd pair XIA ports genering background traffic, such as large number traffic streams 		   
 FSW topology:  Two-tier MCLAG
 ===============================================================================================""" 
+	if setup == True:
+		if settings.FACTORY or factory:
+			tprint("=============== resetting all switches to factory default ===========")
+			for dut in dut_list:
+				switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)")
+			dprint("after reset sleep 5 min")
+			console_timer(300,msg="Wait for 5 min after reset factory default")
+			print("after sleep, relogin, should change password ")
+		
+
+			tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
+			dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+			dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+			dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+			dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+			dut_list = [dut1,dut2,dut3,dut4]
+			dut1_dir['telnet'] = dut1 
+			dut2_dir['telnet'] = dut2
+			dut3_dir['telnet'] = dut3
+			dut4_dir['telnet'] = dut4
+
+
+			for d in dut_dir_list:
+				configure_switch_file(d['telnet'],d['cfg'])
+	 
+			print("*****************Reboot all DUTs to have a fresh start, it takes probably 3 minutes")
+			i=0
+			for dut in dut_list:
+				i+=1
+				switch_exec_reboot(dut,device="dut{}".format(i))
+
+			console_timer(180,msg="Wait for 3 min after rebooting all switches")
+			for d in dut_dir_list:
+				dut = d['telnet']
+				sa_upgrade_448d(d['telnet'],d,build = 194)
+		for dut in dut_list:
+			relogin_if_needed(dut)
+
+	
 	print(description)
 	portsList_v4 = ['1/1','1/2','1/7','1/8']
 	tprint("==========Connect to IXIA chassis and configure ports, topology and protocols=====")
