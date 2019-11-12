@@ -92,10 +92,11 @@ def ixia_rest_create_topology(*args,**kwargs):
         deviceGroup1 = topology1.DeviceGroup.add(Name=dg_name, Multiplier=multi)
         ethernet1 = deviceGroup1.Ethernet.add(Name='Eth1')
         ethernet1.Mac.Increment(start_value=mac_start, step_value='00:00:00:00:00:01')
-        ethernet1.EnableVlans.Single(True)
+        #vlan can not be used in FSW, dont know why. need to investigate
+        # ethernet1.EnableVlans.Single(True)
 
-        ixNetwork.info('Configuring vlanID')
-        vlanObj = ethernet1.Vlan.find()[0].VlanId.Increment(start_value=vlan_id, step_value=0)
+        # ixNetwork.info('Configuring vlanID')
+        # vlanObj = ethernet1.Vlan.find()[0].VlanId.Increment(start_value=vlan_id, step_value=0)
         return ethernet1
     except Exception as errMsg:
         print('\n%s' % traceback.format_exc(None, errMsg))
@@ -114,6 +115,8 @@ def ixia_rest_create_ip(*args,**kwargs):
         ixNetwork.info('Configuring IPv4')
         ipv4 = ethernet.Ipv4.add(Name='Ipv4')
         ipv4.Address.Increment(start_value=start_ip, step_value='0.0.0.1')
+        #ipv4.address.RandomMask(mask_value=16)
+        print(dir(ipv4.Address))
         ipv4.GatewayIp.Increment(start_value=gw_start_ip, step_value='0.0.0.1')
         return ipv4
     except Exception as errMsg:
@@ -200,7 +203,7 @@ if __name__ == "__main__":
         vport = vport_holder_list[0],
         topo_name = "Topology_1",   
         dg_name = "DG1",    
-        multiplier = 10,    
+        multiplier = 1000,    
         mac_start = "00:11:01:01:01:01",
         vlan_id = 1
     )     
@@ -211,7 +214,7 @@ if __name__ == "__main__":
     ip_session = ixia_rest_create_ip(
         session = ixNetwork,
         start_ip = "10.1.1.1",
-        gw_start_ip = "10.1.1.100",
+        gw_start_ip = "10.2.1.1",
         ethernet = ethernet_session,
     )
 
@@ -220,7 +223,7 @@ if __name__ == "__main__":
         vport = vport_holder_list[1],
         topo_name = "Topology_2",   
         dg_name = "DG2",    
-        multiplier = 10,    
+        multiplier = 1000,    
         mac_start = "00:12:01:01:01:01",
         vlan_id = 1
     )     
@@ -230,7 +233,7 @@ if __name__ == "__main__":
         exit()
     ip_session = ixia_rest_create_ip(
         session = ixNetwork,
-        start_ip = "10.1.1.100",
+        start_ip = "10.2.1.1",
         gw_start_ip = "10.1.1.1",
         ethernet = ethernet_session,
     )
