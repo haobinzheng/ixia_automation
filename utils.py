@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 import xlsxwriter
 from excel import *
-from ixia_ngfp_lib import *
+#from ixia_ngfp_lib import *
 import settings
 from console_util  import  *
 import pexpect
@@ -668,6 +668,9 @@ def switch_read_console_output(tn,**kwargs):
 		tprint(i)
 	return out_str_list
 
+# def switch_config_cmd_dutinfo(original_func):
+# 	def wrapper(*args,**kwargs):
+
 
 def switch_configure_cmd(tn,cmd,**kwargs):
 	if 'mode' in kwargs:
@@ -678,7 +681,8 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 	if mode == "silent":
 		pass
 	else:
-		tprint("configuring: {}".format(cmd))
+		dut_prompt = find_dut_promtp(tn)
+		tprint("configuring {}: {}".format(dut_prompt,cmd))
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
 	time.sleep(0.5)
@@ -764,6 +768,19 @@ def switch_login(tn,*args,**kwargs):
 	switch_configure_cmd(tn,'set admintimeout 480',mode="silent")
 	switch_configure_cmd(tn,'end',mode="silent")
 	return tn
+
+def find_dut_promtp(tn):
+	tn.write(('' + '\n').encode('ascii'))
+	output = tn.read_until(("# ").encode('ascii'))
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	for o in out_list:
+		o_str = o.decode(encoding).rstrip(' ')
+		if "#" in o_str:
+			prompt = o_str.strip(' ')
+			prompt = prompt.strip("#")
+	dprint(prompt)
+	return prompt
 
 def reliable_telnet(ip_address,*args,**kwargs):
 	if 'sig' in kwargs:
@@ -1890,7 +1907,11 @@ if __name__ == "__main__":
 
 	# dut1 = get_switch_telnet_connection(dut1_com,dut1_port)
 	# tprint(dir(dut1))
+
+
 	dut = get_switch_telnet_connection(dut1_com,dut1_port)
+	find_dut_promtp(dut)
+	exit()
 	image = find_dut_image(dut)
 	print(image)
 	exit()
