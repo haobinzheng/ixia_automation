@@ -32,50 +32,50 @@ def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
     # ixChassisIpList = ['10.105.241.216']
     
     #portList = [[ixChassisIpList[0], 1,8], [ixChassisIpList[0], 1, 7]]
+    while True:
+        try:
+            testPlatform = TestPlatform(ip_address=apiServerIp, log_file_name='restpy.log')
 
-    try:
-        testPlatform = TestPlatform(ip_address=apiServerIp, log_file_name='restpy.log')
+            # Console output verbosity: 'none'|request|'request response'
+            testPlatform.Trace = 'request_response'
 
-        # Console output verbosity: 'none'|request|'request response'
-        testPlatform.Trace = 'request_response'
+            testPlatform.Authenticate(username, password)
+            session = testPlatform.Sessions.add()
+            ixNetwork = session.Ixnetwork
+            testPlatform.info(ixNetwork)
+            
+            ixNetwork.NewConfig()
 
-        testPlatform.Authenticate(username, password)
-        session = testPlatform.Sessions.add()
-        ixNetwork = session.Ixnetwork
-        testPlatform.info(ixNetwork)
-        
-        ixNetwork.NewConfig()
+            ixNetwork.Globals.Licensing.LicensingServers = licenseServerIp
+            ixNetwork.Globals.Licensing.Mode = licenseMode
+            ixNetwork.Globals.Licensing.Tier = licenseTier
 
-        ixNetwork.Globals.Licensing.LicensingServers = licenseServerIp
-        ixNetwork.Globals.Licensing.Mode = licenseMode
-        ixNetwork.Globals.Licensing.Tier = licenseTier
+            # Create vports and name them so you could use .find() to filter vports by the name.
+            #After this command is executed, ixnetwork will create two virtual ports with connection status "Unassigend"
+            count = 0
+            vport_holder_list = []
+            for port in portList:
+                count += 1
+                vport = ixNetwork.Vport.add(Name=f'Port_{count}')
+                #testPlatform.info(vport)
+                vport_holder_list.append(vport)
+            vportList = [vport.href for vport in ixNetwork.Vport.find()]
+            vport1 = vport_holder_list[0]
+            vport2 = vport_holder_list[1]
+            # Assign ports.  
+            testPorts = []
+            for item in portList:
+                testPorts.append(dict(Arg1=item[0], Arg2=item[1], Arg3=item[2]))
+            dprint(testPorts)
 
-        # Create vports and name them so you could use .find() to filter vports by the name.
-        #After this command is executed, ixnetwork will create two virtual ports with connection status "Unassigend"
-        count = 0
-        vport_holder_list = []
-        for port in portList:
-            count += 1
-            vport = ixNetwork.Vport.add(Name=f'Port_{count}')
-            #testPlatform.info(vport)
-            vport_holder_list.append(vport)
-        vportList = [vport.href for vport in ixNetwork.Vport.find()]
-        vport1 = vport_holder_list[0]
-        vport2 = vport_holder_list[1]
-        # Assign ports.  
-        testPorts = []
-        for item in portList:
-            testPorts.append(dict(Arg1=item[0], Arg2=item[1], Arg3=item[2]))
-        dprint(testPorts)
+            ixNetwork.AssignPorts(testPorts, [], vportList, forceTakePortOwnership)
+            return testPlatform,session,ixNetwork,vport_holder_list
 
-        ixNetwork.AssignPorts(testPorts, [], vportList, forceTakePortOwnership)
-        return testPlatform,session,ixNetwork,vport_holder_list
-
-    except Exception as errMsg:
-        print('\n%s' % traceback.format_exc(None, errMsg))
-        if debugMode == False and 'session' in locals():
-            session.remove()
-        return False,False
+        except Exception as errMsg:
+            print('\n%s' % traceback.format_exc(None, errMsg))
+            if debugMode == False and 'session' in locals():
+                session.remove()
+          
 
 def ixia_rest_create_topology(*args,**kwargs):
     debugMode = False
@@ -106,6 +106,7 @@ def ixia_rest_create_topology(*args,**kwargs):
             session.remove()
         return False
 
+
 def ixia_rest_create_ip(*args,**kwargs):
     debugMode = False
     try:
@@ -133,6 +134,29 @@ def ixia_rest_create_ip(*args,**kwargs):
             session.remove()
         return False
 
+def ixia_rest_create_dhcp_client(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        ethernet = kwargs['ethernet']
+         
+
+        ixNetwork.info('Configuring IPv4 Dhcpv4client')
+
+        #dhcpv4client = ethernet.Dhcpv4client.add(Multiplier=None, Name=None, StackedLayers=None)
+        dhcpv4client = ethernet.Dhcpv4client.add(Name="DHCP_client")
+        testPlatform.info(dhcpv4client)
+        
+        # testPlatform.info(address.prefix)
+        return dhcpv4client
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
     #     ixNetwork.info('Configuring IGMP Host')
     #     igmpHost = ipv4.IgmpHost.add(Name='igmpHost')
   
@@ -141,22 +165,24 @@ def ixia_rest_create_ip(*args,**kwargs):
 
 def ixia_rest_start_protocols(*args,**kwargs):
     debugMode = False
-    try:
-        session = kwargs['session']
-        testPlatform = kwargs['platform']
-        ixNetwork = kwargs['ixnet']
-        ixNetwork.StartAllProtocols(Arg1='sync')
-
-        ixNetwork.info('Verify protocol sessions\n')
-        protocolsSummary = StatViewAssistant(ixNetwork, 'Protocols Summary')
-        protocolsSummary.CheckCondition('Sessions Not Started', StatViewAssistant.EQUAL, 0)
-        protocolsSummary.CheckCondition('Sessions Down', StatViewAssistant.EQUAL, 0)
-        ixNetwork.info(protocolsSummary)
-    except Exception as errMsg:
-        print('\n%s' % traceback.format_exc(None, errMsg))
-        if debugMode == False and 'session' in locals():
-            session.remove()
-        return False
+    session = kwargs['session']
+    testPlatform = kwargs['platform']
+    ixNetwork = kwargs['ixnet']
+    ixNetwork.StartAllProtocols(Arg1='sync')
+    wait_time = 90
+    while True:
+        try:
+            ixNetwork.info('Verify protocol sessions\n')
+            console_timer(wait_time,msg = f'wait for {wait_time} after protocol starts')
+            protocolsSummary = StatViewAssistant(ixNetwork, 'Protocols Summary')
+            protocolsSummary.CheckCondition('Sessions Not Started', StatViewAssistant.EQUAL, 0)
+            protocolsSummary.CheckCondition('Sessions Down', StatViewAssistant.EQUAL, 0)
+            ixNetwork.info(protocolsSummary)
+            return 
+        except Exception as errMsg:
+            print('\n%s' % traceback.format_exc(None, errMsg))
+            if debugMode == False and 'session' in locals():
+                wait_time += 30
 
 def ixia_rest_create_traffic(*args,**kwargs):
     debugMode = False
@@ -291,7 +317,7 @@ if __name__ == "__main__":
         vport = vport_holder_list[0],
         topo_name = "Topology_1",   
         dg_name = "DG1",    
-        multiplier = 100,    
+        multiplier = 10000,    
         mac_start = "00:11:01:01:01:01",
         vlan_id = 1
     )     
@@ -299,15 +325,15 @@ if __name__ == "__main__":
     if ethernet1 == False:
         print(f"Error creating topology on chassis {ixChassisIpList} port {vport_holder_list[0]}")
         exit()
-    ip_session = ixia_rest_create_ip(
-        platform = testPlatform, 
-        session = Session,
-        ixnet = ixNetwork,
-        start_ip = "10.1.1.1",
-        gw_start_ip = "10.2.1.1",
-        ethernet = ethernet1,
-        maskbits = 16,
-    )
+    # ip_session = ixia_rest_create_ip(
+    #     platform = testPlatform, 
+    #     session = Session,
+    #     ixnet = ixNetwork,
+    #     start_ip = "10.1.1.1",
+    #     gw_start_ip = "10.2.1.1",
+    #     ethernet = ethernet1,
+    #     maskbits = 16,
+    # )
     ethernet2,topology2 = ixia_rest_create_topology(
         platform = testPlatform, 
         session = Session,
@@ -315,7 +341,7 @@ if __name__ == "__main__":
         vport = vport_holder_list[1],
         topo_name = "Topology_2",   
         dg_name = "DG2",    
-        multiplier = 100,    
+        multiplier = 10000,    
         mac_start = "00:12:01:01:01:01",
         vlan_id = 1
     )     
@@ -323,21 +349,35 @@ if __name__ == "__main__":
     if ethernet2 == False:
         print(f"Error creating topology on chassis {ixChassisIpList} port {vport_holder_list[0]}")
         exit()
-    ip_session = ixia_rest_create_ip(
+
+    dhcp_session1 = ixia_rest_create_dhcp_client(
         platform = testPlatform, 
         session = Session,
         ixnet = ixNetwork,
-        start_ip = "10.2.1.1",
-        gw_start_ip = "10.1.1.1",
-        ethernet = ethernet2,
-        maskbits = 16,
+        ethernet = ethernet1,
     )
+    dhcp_session2 = ixia_rest_create_dhcp_client(
+        platform = testPlatform, 
+        session = Session,
+        ixnet = ixNetwork,
+        ethernet = ethernet2,
+    )
+    # ip_session = ixia_rest_create_ip(
+    #     platform = testPlatform, 
+    #     session = Session,
+    #     ixnet = ixNetwork,
+    #     start_ip = "10.2.1.1",
+    #     gw_start_ip = "10.1.1.1",
+    #     ethernet = ethernet2,
+    #     maskbits = 16,
+    # )
 
     ixia_rest_start_protocols(
         platform = testPlatform, 
         session = Session,
         ixnet = ixNetwork,
     )
+
     ixia_rest_create_traffic(
         platform = testPlatform, 
         session = Session,
@@ -361,6 +401,7 @@ if __name__ == "__main__":
         session = Session,
         ixnet = ixNetwork,
         )
+    sleep(30)
     ixia_rest_collect_stats(
         platform = testPlatform, 
         session = Session,
