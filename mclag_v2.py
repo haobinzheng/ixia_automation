@@ -692,6 +692,184 @@ chassis_ip = '10.105.241.234'
 tcl_server = '10.105.241.234'
 ixnetwork_tcl_server = "10.105.19.19:8004"
 
+if testcase == 6:
+	description = """
+	Execute this testing at testbed 448D
+	Test flapguard timer feature
+	1. Configure flapguard on DUT4 port49
+	2. Start flap DUT3 port49
+	3. Check the status of DUT4 port49
+	"""
+
+	flap_times = 5
+	flap_timeout = 10  # timeout after 5 minutes
+	flap_duration = 300  # calculate the number of flaps within this duration to determin the stability
+	flap_port = "port49"
+
+	#switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
+ 	
+	while True:
+		# print_double_line()
+		print(f"""
+Please follow the manual below to preceed:
+=================================================
+'setup' = Config flapguard parameters
+'r'  = Reset flap guard status
+'t'  = Set flap guard timer
+'f'  = Flap ports to trigger flap guard
+'s'  = Show current flap guard config and status
+'d'  = Disable flap guard on the port
+'e'  = Re-enable flap guard on the port
+'b'  = Reboot DUT to reset everything
+'gd'  = Disable flapguard-retain-trigger
+'ge'  = Enable flapguard-retain-trigger
+'x'  = Type end at switch cnosole
+'down' = Admin down the port
+'up'  = Admin up the port
+'q'  = Quit
+""")
+		keyin = input(f"Please enter a key(r,t,f,s,d,e,q): ")
+		if keyin.upper() == "R":
+			switch_exec_cmd(dut4,f"execute flapguard reset {flap_port}")
+			show_flapguard_cmds(dut4,flap_port)
+			continue
+		elif keyin.upper() == "SETUP":
+			keyin = input(f"Please enter flap rate(how many times within a duration,default = 5): ")
+			try:
+				flap_times = int(keyin)
+			except Exception: 
+				print("\nNot a vailid input for timer")
+				continue
+			keyin = input(f"Please enter flap duration(default=300): ")
+			try:
+				flap_duration= int(keyin)
+			except Exception: 
+				print("\nNot a vailid input for timer")
+				continue
+			keyin = input(f"Please enter flap timeout(default = 5 min): ")
+			try:
+				flap_timeout = int(keyin)
+			except Exception: 
+				print("\nNot a vailid input for timer")
+				continue
+			keyin = input(f"Please enter flap port(default = port49): ")
+			try:
+				flap_port = keyin
+				if flap_port == '':
+					flap_port = "port49"
+					print("Entering empty string, port = port49")
+			except Exception: 
+				print("\nNot a vailid input for timer")
+				continue
+			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
+			continue
+		elif keyin.upper() == "T":
+			print_double_line()
+			keyin = input(f"Enter port flap guard timeout (0-120):")
+			try:
+				flap_timeout = int(keyin)
+			except Exception: 
+				print("\nNot a vailid input for timer")
+				continue
+			print(f"Set the flapguard timer to {flap_timeout} minutes")
+			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times)
+			show_flapguard_cmds(dut4,flap_port)
+			continue
+		elif keyin.upper() == "F":
+			print("\n======Start to flap ports at its neighbor switch to trigger flap guard")
+			for _ in range(flap_times):
+				switch_flap_port(dut3,"port49")
+			show_flapguard_cmds(dut4,flap_port)
+			keyin = input(f"Do you want to wait for flap guard timer to timeout(n/y)?: ")
+			if keyin.upper() == "Y":
+				console_timer(new_timeout*60 + 10 ,msg="check port status after flapguard timeout expires")
+				print_dash_line()
+				show_flapguard_cmds(dut4,flap_port)
+			continue
+		elif keyin.upper() == "S":
+			show_flapguard_cmds(dut4,flap_port)
+			continue
+		elif keyin.upper() == 'D':
+			print(f"\n========Start to disable flap guard at {flap_port}")
+			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times,disable='y')
+			show_flapguard_cmds(dut4,flap_port)
+			continue
+		elif keyin.upper() == 'E':
+			print(f"====== Start to enable flap guard at the port {flap_port}\n")
+			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times)
+			show_flapguard_cmds(dut4,flap_port)
+			continue
+		elif keyin.upper() == "B":
+			print(f"\n====== Start to reboot DUT to reset everything")
+			switch_exec_reboot(dut4,device='DUT4-448D')
+			switch_exec_reboot(dut3,device='DUT3-448D')
+			console_timer(300,msg="Wait for 300 seconds for reboot")
+			relogin_if_needed(dut3)
+			relogin_if_needed(dut4)
+			show_flapguard_cmds(dut4,flap_port)
+			continue
+		elif keyin.upper() == "GD":
+			switch_configure_cmd(dut4,'config switch global')
+			switch_configure_cmd(dut4,'set flapguard-retain-trigger disable')
+			switch_configure_cmd(dut4,'end')
+			output = switch_show_cmd(dut4, f"show switch global")
+			continue
+		elif keyin.upper() == "GE":
+			switch_configure_cmd(dut4,'config switch global')
+			switch_configure_cmd(dut4,'set flapguard-retain-trigger enable')
+			switch_configure_cmd(dut4,'end')
+			output = switch_show_cmd(dut4, f"show switch global")
+			continue
+		elif keyin.upper() == "X":
+			switch_configure_cmd(dut4,'end')
+			continue
+		elif keyin.upper() == "UP":
+			switch_unshut_port(dut4,flap_port)
+			sleep(2)
+			continue
+		elif keyin.upper() == "DOWN":
+			switch_shut_port(dut4,flap_port)
+			sleep(2)
+			continue
+		elif keyin.upper() == 'Q':
+			exit()
+		else:
+			continue
+		
+
+		
+
+		# console_timer((flap_timeout+1)*60,msg="check port status after flapping the port")
+		# output = switch_show_cmd(dut4, f"show switch physical-port {flap_port}")
+		# output = switch_show_cmd(dut4, "diag flapguard status")
+		# output = switch_show_cmd(dut4,"diag switch physical-ports summary")
+		new_timeout = int(flap_timeout/2)
+		print_dash_line()
+		keyin = input(f"Will cut short flapguard timer from {flap_timeout} minute to {new_timeout} minute on {flap_port}, When ready to resume, press any key...\n")
+		print_dash_line()
+		switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=new_timeout,rate=flap_times )
+		output = switch_show_cmd(dut4, f"show switch physical-port {flap_port}")
+		press_any_key()
+		output = switch_show_cmd(dut4, "diag flapguard status")
+		press_any_key()
+		output = switch_show_cmd(dut4,"diag switch physical-ports summary")
+		press_any_key()
+		output = switch_show_cmd(dut4, "diag flapguard status")
+		press_any_key()
+		output = switch_show_cmd(dut4,"diag switch physical-ports summary")
+		press_any_key()
+		output = switch_show_cmd(dut4, "diag flapguard status")
+		press_any_key()
+		output = switch_show_cmd(dut4,"diag switch physical-ports summary")
+		press_any_key()
+		print_dash_line()
+		
+		
+		# keyin = input(f"Will reest the {flap_port} and restart another iteration, When read to start, press any key...\n")
+		# print_dash_line()
+		# switch_exec_cmd(dut4,"execute flapguard reset")
+
+
 
 if testcase == 5:
 	fgt1_dir = {}
@@ -999,6 +1177,10 @@ for each mac_size:
 	fgt2_dir['cfg'] = fgt2_cfg
 	fgt_dir_list.append(fgt2_dir)
 
+	config_system_interface(fgt1,"port13","set status up")
+	config_system_interface(fgt1,"port14","set status up")
+	config_system_interface(fgt2,"port13","set status up")
+	config_system_interface(fgt2,"port14","set status up")
 	config_local_access = """
 	config switch-controller security-policy local-access
     	edit "default"
@@ -1280,7 +1462,7 @@ for each mac_size:
 		"Start"
 		"""
 		loop_position = tracking_loop(loop_count,mac_list) 
-		portsList_v4 = ['1/1','1/2','1/7','1/8']
+		portsList_v4 = ['4/15','4/16']
 		debug("Setup IXIA with ports running as dhcp client mode")
 		ports = ixia_connect_ports(chassis_ip,portsList_v4,ixnetwork_tcl_server,tcl_server)
 		topo_list = []

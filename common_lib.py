@@ -25,6 +25,15 @@ from utils import *
 from settings import *
  
 
+def show_flapguard_cmds(dut4,flap_port):
+	output = switch_show_cmd(dut4, f"show switch global")
+	output = switch_show_cmd(dut4, f"show switch physical-port {flap_port}")
+	press_any_key()
+	output = switch_show_cmd(dut4, "diag flapguard status")
+	press_any_key()
+	output = switch_show_cmd(dut4,"diag switch physical-ports summary")
+	press_any_key()
+
 def get_system_status(dut):
 	pass
 

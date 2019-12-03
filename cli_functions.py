@@ -25,6 +25,38 @@ from ixia_ngfp_lib import *
 from utils import *
 from settings import *
 
+def switch_config_flapguard_port(**kwargs):
+	if 'disable' in kwargs:
+		dut = kwargs['dut']
+		port = kwargs['port']
+		disable = kwargs['disable']
+		if disable.upper() == "Y":
+			config_flap = f"""
+			config switch physical-port
+			edit {port}
+			set flapguard disable
+			end
+			"""
+			config_cmds_lines(dut, config_flap)
+			return 
+	dut = kwargs['dut']
+	port = kwargs['port']
+	flap_duration = kwargs['duration']
+	flap_timeout = kwargs['timeout']
+	flap_rate = kwargs['rate']
+
+	config_flap = f"""
+		config switch physical-port
+		edit {port}
+		set flapguard enable
+		set flap-timeout {flap_timeout}
+		set flap-duration {flap_duration}
+		set flap-rate {flap_rate}
+		end
+	"""
+	config_cmds_lines(dut, config_flap)
+
+
 def fgt_switch_controller_GetConnectionStatus():
 	con_status_sample = """
 	FortiGate-3960E # execute switch-controller get-conn-status 

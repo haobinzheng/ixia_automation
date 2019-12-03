@@ -403,6 +403,11 @@ def switch_exec_reboot(dut,**kwargs):
 	# thread.start()
 	return
 
+def switch_flap_port(tn, port):
+	switch_shut_port(tn,port)
+	sleep(2)
+	switch_unshut_port(tn,port)
+
 def switch_shut_port(tn,port):
 	switch_configure_cmd(tn,"config switch physical")
 	switch_configure_cmd(tn,"edit {}".format(port))
@@ -621,6 +626,17 @@ def configure_switch_batch(dut,config_keys):
 	 cmds = config_keys.split('|')
 	 for cmd in cmds:
 	 	switch_configure_cmd(dut,"config switch trunk")
+
+def press_any_key():
+	print_dash_line()
+	keyin = input(f"Press any key to continue...")
+
+def config_cmds_lines(dut, cmdblock):
+	b= cmdblock.split("\n")
+	b = [x.strip() for x in b if x.strip()]
+	for cmd in b:
+		switch_configure_cmd(dut,cmd)
+		 
 
 def config_block_cmds(dut_dir, cmdblock):
 	b= cmdblock.split("\n")
@@ -1876,6 +1892,11 @@ def test_ssh():
 
 def print_interactive_line():
 	print("-------------------------------- Go to the lab to take action --------------------")
+
+def print_dash_line():
+	print("------------------------------------------------------------------------------------------------------")
+def print_double_line():
+	print("======================================================================================================")
 
 if __name__ == "__main__":
 	# reliable_telnet("10.105.50.59")
