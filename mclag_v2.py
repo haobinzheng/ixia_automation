@@ -700,7 +700,8 @@ if testcase == 6:
 	2. Start flap DUT3 port49
 	3. Check the status of DUT4 port49
 	"""
-
+	local_port_list = ["port47", "port48","port49","port51","port52"]
+	remote_port_list = ["port47", "port48","port49","port51","port52"]
 	flap_times = 5
 	flap_timeout = 10  # timeout after 5 minutes
 	flap_duration = 300  # calculate the number of flaps within this duration to determin the stability
@@ -728,40 +729,43 @@ Please follow the manual below to preceed:
 'up'  = Admin up the port
 'q'  = Quit
 """)
-		keyin = input(f"Please enter a key(r,t,f,s,d,e,q): ")
+		keyin = input(f"Please enter a key: ")
 		if keyin.upper() == "R":
 			switch_exec_cmd(dut4,f"execute flapguard reset {flap_port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "SETUP":
-			keyin = input(f"Please enter flap rate(how many times within a duration,default = 5): ")
-			try:
-				flap_times = int(keyin)
-			except Exception: 
-				print("\nNot a vailid input for timer")
-				continue
-			keyin = input(f"Please enter flap duration(default=300): ")
-			try:
-				flap_duration= int(keyin)
-			except Exception: 
-				print("\nNot a vailid input for timer")
-				continue
-			keyin = input(f"Please enter flap timeout(default = 5 min): ")
-			try:
-				flap_timeout = int(keyin)
-			except Exception: 
-				print("\nNot a vailid input for timer")
-				continue
-			keyin = input(f"Please enter flap port(default = port49): ")
-			try:
-				flap_port = keyin
-				if flap_port == '':
-					flap_port = "port49"
-					print("Entering empty string, port = port49")
-			except Exception: 
-				print("\nNot a vailid input for timer")
-				continue
-			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
+			for port in local_port_list:
+				print(f"Setting up flap guard paramenters for {port}:")
+				print_dash_line()
+				keyin = input(f"Please enter flap rate(how many times within a duration,default = 5): ")
+				try:
+					flap_times = int(keyin)
+				except Exception: 
+					print("\nNot a vailid input for timer")
+					continue
+				keyin = input(f"Please enter flap duration(default=300): ")
+				try:
+					flap_duration= int(keyin)
+				except Exception: 
+					print("\nNot a vailid input for timer")
+					continue
+				keyin = input(f"Please enter flap timeout(default = 5 min): ")
+				try:
+					flap_timeout = int(keyin)
+				except Exception: 
+					print("\nNot a vailid input for timer")
+					continue
+				# keyin = input(f"Please enter flap port(default = port49): ")
+				# try:
+				# 	flap_port = keyin
+				# 	if flap_port == '':
+				# 		flap_port = "port49"
+				# 		print("Entering empty string, port = port49")
+				# except Exception: 
+				# 	print("\nNot a vailid input for timer")
+				# 	continue
+				switch_config_flapguard_port(dut=dut4,port=port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
 			continue
 		elif keyin.upper() == "T":
 			print_double_line()
@@ -773,12 +777,35 @@ Please follow the manual below to preceed:
 				continue
 			print(f"Set the flapguard timer to {flap_timeout} minutes")
 			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times)
+			for port in locat_port_list:
+				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "F":
+			keyin = input(f"Please enter the port you want to flap(example, port47, all) ")
+			try:
+				test_port = keyin
+			except Exception: 
+				print("\nNot a vailid input for port")
+				continue
+			keyin = input(f"Please enter flap times: ")
+			try:
+				flap_times = int(keyin)
+			except Exception: 
+				print("\nNot a vailid input for timer")
+				continue
 			print("\n======Start to flap ports at its neighbor switch to trigger flap guard")
-			for _ in range(flap_times):
-				switch_flap_port(dut3,"port49")
+			if flap_port.upper == "ALL":
+				for port in remote_port_list:
+					for _ in range(flap_times):
+						switch_flap_port(dut3,port)
+						sleep(1)
+			else:
+				for _ in range(flap_times):
+					switch_flap_port(dut3,test_port)
+					sleep(1)
+			for port in local_port_list:
+				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			keyin = input(f"Do you want to wait for flap guard timer to timeout(n/y)?: ")
 			if keyin.upper() == "Y":
@@ -787,6 +814,8 @@ Please follow the manual below to preceed:
 				show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "S":
+			for port in local_port_list:
+				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == 'D':
@@ -797,6 +826,8 @@ Please follow the manual below to preceed:
 		elif keyin.upper() == 'E':
 			print(f"====== Start to enable flap guard at the port {flap_port}\n")
 			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times)
+			for port in local_port_list:
+				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "B":
@@ -806,6 +837,8 @@ Please follow the manual below to preceed:
 			console_timer(300,msg="Wait for 300 seconds for reboot")
 			relogin_if_needed(dut3)
 			relogin_if_needed(dut4)
+			for port in local_port_list:
+				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "GD":
