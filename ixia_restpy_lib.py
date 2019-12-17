@@ -325,15 +325,15 @@ if __name__ == "__main__":
     if ethernet1 == False:
         print(f"Error creating topology on chassis {ixChassisIpList} port {vport_holder_list[0]}")
         exit()
-    # ip_session = ixia_rest_create_ip(
-    #     platform = testPlatform, 
-    #     session = Session,
-    #     ixnet = ixNetwork,
-    #     start_ip = "10.1.1.1",
-    #     gw_start_ip = "10.2.1.1",
-    #     ethernet = ethernet1,
-    #     maskbits = 16,
-    # )
+    ip_session = ixia_rest_create_ip(
+        platform = testPlatform, 
+        session = Session,
+        ixnet = ixNetwork,
+        start_ip = "10.1.1.1",
+        gw_start_ip = "10.2.1.1",
+        ethernet = ethernet1,
+        maskbits = 16,
+    )
     ethernet2,topology2 = ixia_rest_create_topology(
         platform = testPlatform, 
         session = Session,
@@ -350,27 +350,27 @@ if __name__ == "__main__":
         print(f"Error creating topology on chassis {ixChassisIpList} port {vport_holder_list[0]}")
         exit()
 
-    dhcp_session1 = ixia_rest_create_dhcp_client(
-        platform = testPlatform, 
-        session = Session,
-        ixnet = ixNetwork,
-        ethernet = ethernet1,
-    )
-    dhcp_session2 = ixia_rest_create_dhcp_client(
-        platform = testPlatform, 
-        session = Session,
-        ixnet = ixNetwork,
-        ethernet = ethernet2,
-    )
-    # ip_session = ixia_rest_create_ip(
+    # dhcp_session1 = ixia_rest_create_dhcp_client(
     #     platform = testPlatform, 
     #     session = Session,
     #     ixnet = ixNetwork,
-    #     start_ip = "10.2.1.1",
-    #     gw_start_ip = "10.1.1.1",
-    #     ethernet = ethernet2,
-    #     maskbits = 16,
+    #     ethernet = ethernet1,
     # )
+    # dhcp_session2 = ixia_rest_create_dhcp_client(
+    #     platform = testPlatform, 
+    #     session = Session,
+    #     ixnet = ixNetwork,
+    #     ethernet = ethernet2,
+    # )
+    ip_session = ixia_rest_create_ip(
+        platform = testPlatform, 
+        session = Session,
+        ixnet = ixNetwork,
+        start_ip = "10.2.1.1",
+        gw_start_ip = "10.1.1.1",
+        ethernet = ethernet2,
+        maskbits = 16,
+    )
 
     ixia_rest_start_protocols(
         platform = testPlatform, 

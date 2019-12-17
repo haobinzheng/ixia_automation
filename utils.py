@@ -405,7 +405,7 @@ def switch_exec_reboot(dut,**kwargs):
 
 def switch_flap_port(tn, port):
 	switch_shut_port(tn,port)
-	sleep(2)
+	sleep(3)
 	switch_unshut_port(tn,port)
 
 def switch_shut_port(tn,port):

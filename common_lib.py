@@ -216,6 +216,12 @@ def dut_process_log(ip,dut_name,filename,intf_name,event_config,event_done,**kwa
 	debug("Exit event is set by parent process, exiting")
 	tprint("===============================Exiting dut_process_log process ===================")
 
+def dut_process_flap_port(dut,port):
+	while True:
+		switch_shut_port(tn,port)
+		sleep(10)
+		switch_unshut_port(tn,port)
+
 def dut_process_interface(ip,dut_name,filename,intf_name_list,event_config,event_done,**kwargs):
 	
 	if "cmds" in kwargs:
@@ -1801,14 +1807,19 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	else:
 		reboot = False
 	tprint(f"================ Upgrading FSWs via Fortigate to {build} =============")
+	switch_exec_cmd(fgt1, "config global")
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D_FPOE-v6-build0{build}-FORTINET.out 10.105.19.19"
 	switch_exec_cmd(fgt1, cmd)
+	sleep(10)
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D-v6-build0{build}-FORTINET.out 10.105.19.19"
 	switch_exec_cmd(fgt1, cmd)
-
+	sleep(10)
+	switch_exec_cmd(fgt1, "end")
+	switch_exec_cmd(fgt1, "config vdom")
+	switch_exec_cmd(fgt1, "edit root")
 	cmd = "execute switch-controller switch-software list-available"
 	switch_show_cmd_name(fgt1_dir,cmd)
-
+	sleep(2)
 	cmd = "execute switch-controller switch-software stage all S548DN-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
 	console_timer(10,msg="upgrading all 548-D switches to S548DN-IMG.swtp")

@@ -55,7 +55,7 @@ parser.add_argument("-i", "--interactive", help="Enter interactive mode for test
 parser.add_argument("-e", "--config_host_sw", help="Configure host switches connected to ixia when changing testbed", action="store_true")
 parser.add_argument("-y", "--clean_up", help="Clean up IXIA after test is done. Default = No", action="store_true")
 parser.add_argument("-sw", "--upgrade", type = int,help="FSW software upgrade via FGT,image build number at settings.py, example: 193")
-parser.add_argument("-ug", "--sa_upgrade", type = int,help="FSW software upgrade via FGT,image build number at settings.py, example: 193")
+parser.add_argument("-ug", "--sa_upgrade", type = int,help="FSW software upgrade in standlone mode,image build number at settings.py, example: 193")
 
 
 
@@ -104,7 +104,7 @@ if len(sys.argv) > 1:
 	if args.sa_upgrade:
 		upgrade_sa = True
 		sw_build = args.sa_upgrade
-		tprint(f"**Upgrade FSW software via via Fortigate to build {sw_build}")
+		tprint(f"**Upgrade FSW software in standalone mode to build {sw_build}")
 	else:
 		upgrade_sa = False
 	if args.upgrade:
@@ -692,6 +692,105 @@ chassis_ip = '10.105.241.234'
 tcl_server = '10.105.241.234'
 ixnetwork_tcl_server = "10.105.19.19:8004"
 
+if testcase == -1:
+	print(f"This is to setup testbed, such configuring, upgrading, etc")
+	print (f"""
+example: 1. Upgrade testbed FG-548D to build 384:
+	python mclag_v2.py -t fg-548d -test -1 -sw 384
+	2. Upgrade standalone 448D bo build 384:
+	python mclag_v2.py -t 448D -test -1 -ug 384
+	""")
+	
+
+	
+	if upgrade_fgt and test_setup.lower() == "fg-548d":
+		tprint('------------------------------ login Fortigate devices -----------------------')
+		fgt1_dir = {}
+		fgt2_dir = {}
+		fgt_dir_list = []
+		
+		fgt1 = get_switch_telnet_connection_new(fgt1_com,fgt1_port,password='fortinet123')
+		fgt1_dir['name'] = fgt1_name
+		fgt1_dir['location'] = fgt1_location
+		fgt1_dir['telnet'] = fgt1
+		fgt1_dir['cfg'] = fgt1_cfg
+		fgt_dir_list.append(fgt1_dir)
+
+		fgt2 = get_switch_telnet_connection_new(fgt2_com,fgt2_port,password='fortinet123')
+		fgt2_dir['name'] = fgt2_name
+		fgt2_dir['location'] = fgt2_location
+		fgt2_dir['telnet'] = fgt2
+		fgt2_dir['cfg'] = fgt2_cfg
+		fgt_dir_list.append(fgt2_dir)
+
+		config_system_interface(fgt1,"port13","set status up")
+		config_system_interface(fgt1,"port14","set status up")
+		config_system_interface(fgt2,"port13","set status up")
+		config_system_interface(fgt2,"port14","set status up")
+		debug("Start to upgrade fsw using Fortigate and 548D setup")
+		if settings.STAGE_UPGRADE:
+			fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=sw_build,sw_list=dut_list)
+			# for dut in dut_list:
+			# 	switch_exec_reboot(dut)
+			console_timer(300,msg ="After reboot,wait for 300 seconds")
+			relogin_dut_all(dut_list)
+		else:
+			fgt_upgrade_548d(fgt1,fgt1_dir,build=sw_build)
+			console_timer(400,msg ="After software upgrade, wait for 400 seconds") 
+	elif test_setup.lower() == "448d":
+		if upgrade_sa:
+			tprint("======Upgrade standalone 448D testbed")
+			for d in dut_dir_list:
+				if sa_upgrade_448d(d['telnet'],d,build = sw_build):
+					tprint(f"Upgrade FSW {d['name']} to build {sw_build} is successful")
+				else:
+					tprint(f"Upgrade FSW {d['name']} to build {sw_build} failed")
+			console_timer(300,msg="After upgrading FSWs, wait for 5 minutes")
+			tprint("====== Relogin all DUTs after upgrade is finished")
+			for dut in dut_list:
+				relogin_if_needed(dut)
+		if setup: 
+			for d in dut_dir_list:
+				configure_switch_file(d['telnet'],d['cfg'])
+	elif test_setup.lower() == "548d":
+		if upgrade_sa:
+			tprint("======Upgrade standalone 548D testbed ")
+			for d in dut_dir_list:
+				if sa_upgrade_548d(d['telnet'],d,build = sw_build):
+					tprint(f"Upgrade FSW {d['name']} to build {sw_build} is successful")
+				else:
+					tprint(f"Upgrade FSW {d['name']} to build {sw_build} failed")
+			console_timer(300,msg="After upgrading FSWs, wait for 5 minutes")
+			tprint("====== Relogin all DUTs after upgrade is finished")
+			for dut in dut_list:
+				relogin_if_needed(dut)
+		if setup: 
+			for d in dut_dir_list:
+				configure_switch_file(d['telnet'],d['cfg'])
+	else:
+		pass
+	exit()
+
+if testcase == 7:
+	description = """
+	reproduce itables overflow problem
+	"""
+	proc = multiprocessing.Process(name=f'flap_interface_dut2',\
+		target = dut_process_flap_port,\
+		args = (dut2,"port13"),\
+	)
+	tprint("start process to flap mgmt interface.....")
+	proc.start()
+	switch_exec_cmd(dut1,"fnsys sh")
+	while True:
+		switch_show_cmd(dut1,"iptables -L")
+		switch_exec_cmd(dut1,"exit")
+		switch_show_cmd(dut1,"get system interface")
+		switch_exec_cmd(dut1,"fnsys sh")
+		print_double_line()
+		sleep(5)
+	proc.join()
+
 if testcase == 6:
 	description = """
 	Execute this testing at testbed 448D
@@ -731,7 +830,8 @@ Please follow the manual below to preceed:
 """)
 		keyin = input(f"Please enter a key: ")
 		if keyin.upper() == "R":
-			switch_exec_cmd(dut4,f"execute flapguard reset {flap_port}")
+			for port in local_port_list:
+				switch_exec_cmd(dut4,f"execute flapguard reset {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "SETUP":
@@ -775,9 +875,16 @@ Please follow the manual below to preceed:
 			except Exception: 
 				print("\nNot a vailid input for timer")
 				continue
-			print(f"Set the flapguard timer to {flap_timeout} minutes")
-			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times)
-			for port in locat_port_list:
+			keyin = input(f"On which port would you like to change the timeout to {flap_timeout} (port47,48,49,51,52 or all)?:")
+			port = keyin
+			if port.upper() != "ALL":
+				print(f"Set the flapguard timer to {flap_timeout} minutes for the port {port}")
+				switch_config_flapguard_port(dut=dut4,port=port,duration=flap_duration,timeout=flap_timeout,rate=flap_times)
+			if port.upper() == "ALL":
+				print(f"Set the flapguard timer to {flap_timeout} minutes for All the ports(port47-49,51,52)")
+				for p in local_port_list:
+					switch_config_flapguard_port(dut=dut4,port=p,duration=flap_duration,timeout=flap_timeout,rate=flap_times)
+			for port in local_port_list:
 				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
@@ -795,7 +902,7 @@ Please follow the manual below to preceed:
 				print("\nNot a vailid input for timer")
 				continue
 			print("\n======Start to flap ports at its neighbor switch to trigger flap guard")
-			if flap_port.upper == "ALL":
+			if test_port.upper() == "ALL":
 				for port in remote_port_list:
 					for _ in range(flap_times):
 						switch_flap_port(dut3,port)
@@ -819,8 +926,19 @@ Please follow the manual below to preceed:
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == 'D':
-			print(f"\n========Start to disable flap guard at {flap_port}")
-			switch_config_flapguard_port(dut=dut4,port=flap_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times,disable='y')
+			keyin = input(f"Please enter the port you want to disable flap guard at(port47,48,49,51,52,all) ")
+			try:
+				test_port = keyin
+			except Exception: 
+				print("\nNot a vailid input for port")
+				continue
+			if test_port.upper() == "ALL":
+
+				print(f"\n========Start to disable flap guard on all ports")
+				for port in local_port_list:
+					switch_config_flapguard_port(dut=dut4,port=port,duration=flap_duration,timeout=flap_timeout,rate=flap_times,disable='y')
+			else:
+				switch_config_flapguard_port(dut=dut4,port=test_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times,disable='y')
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == 'E':
@@ -835,6 +953,7 @@ Please follow the manual below to preceed:
 			switch_exec_reboot(dut4,device='DUT4-448D')
 			switch_exec_reboot(dut3,device='DUT3-448D')
 			console_timer(300,msg="Wait for 300 seconds for reboot")
+			print(f"Relogin after reboot, show relevant config and status")
 			relogin_if_needed(dut3)
 			relogin_if_needed(dut4)
 			for port in local_port_list:
