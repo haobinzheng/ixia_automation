@@ -218,9 +218,9 @@ def dut_process_log(ip,dut_name,filename,intf_name,event_config,event_done,**kwa
 
 def dut_process_flap_port(dut,port):
 	while True:
-		switch_shut_port(tn,port)
+		switch_shut_port(dut,port)
 		sleep(10)
-		switch_unshut_port(tn,port)
+		switch_unshut_port(dut,port)
 
 def dut_process_interface(ip,dut_name,filename,intf_name_list,event_config,event_done,**kwargs):
 	
