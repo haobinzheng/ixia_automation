@@ -170,8 +170,12 @@ def dut_process_cpu(ip,dut_name,filename,proc_name,event,**kwargs):
 	tprint("===============================Exiting dut_proc_cpu process ===================")
 
 def sw_display_log(dut,*args, **kwargs):
+	if 'lines' in kwargs:
+		display_lines = kwargs['lines']
+	else:
+		display_lines = 1000
 	switch_exec_cmd(dut,"execute log filter start-line 1")
-	switch_exec_cmd(dut,"execute log filter view-lines 1000")
+	switch_exec_cmd(dut,f"execute log filter view-lines {display_lines}")
 	result = collect_show_cmd(dut,'execute log display',t=3)
 	print_collect_show(result)
 
@@ -216,12 +220,24 @@ def dut_process_log(ip,dut_name,filename,intf_name,event_config,event_done,**kwa
 	debug("Exit event is set by parent process, exiting")
 	tprint("===============================Exiting dut_process_log process ===================")
 
-def dut_process_flap_port(dut,port):
+def dut_process_flap_port(dut2,dut3,dut4):
 	while True:
-		switch_shut_port(dut,port)
-		sleep(10)
-		switch_unshut_port(dut,port)
-		sleep(10)
+		switch_shut_port(dut2,"port47")
+		switch_shut_port(dut2,"port48")
+		switch_shut_port(dut3,"port1")
+		switch_shut_port(dut3,"port2")
+		switch_shut_port(dut4,"port3")
+		switch_shut_port(dut4,"port4")
+		#sleep(5)
+		switch_unshut_port(dut2,"port47")
+		switch_unshut_port(dut2,"port48")
+		switch_unshut_port(dut3,"port1")
+		switch_unshut_port(dut3,"port2")
+		switch_unshut_port(dut4,"port3")
+		switch_unshut_port(dut4,"port4")
+		#sleep(2)
+		
+
 
 def dut_process_interface(ip,dut_name,filename,intf_name_list,event_config,event_done,**kwargs):
 	

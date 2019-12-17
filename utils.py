@@ -420,6 +420,12 @@ def switch_unshut_port(tn,port):
 	switch_configure_cmd(tn,"set status up")
 	switch_configure_cmd(tn,"end")
 
+def switch_system_interface_shut(tn,port):
+	fgt_shut_port(tn,port)
+	
+def switch_system_interface_unshut(tn,port):
+	fgt_unshut_port(tn,port)
+
 def fgt_shut_port(tn,port):
 	switch_configure_cmd(tn,"config system interface")
 	switch_configure_cmd(tn,"edit {}".format(port))
