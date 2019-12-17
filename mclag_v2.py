@@ -785,7 +785,7 @@ if testcase == 7:
 	while True:
 		switch_show_cmd(dut1,"iptables -L")
 		switch_exec_cmd(dut1,"exit")
-		switch_show_cmd(dut1,"get system interface")
+		switch_show_cmd(dut1,"get system interface physical")
 		switch_exec_cmd(dut1,"fnsys sh")
 		print_double_line()
 		sleep(5)

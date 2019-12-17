@@ -221,6 +221,7 @@ def dut_process_flap_port(dut,port):
 		switch_shut_port(dut,port)
 		sleep(10)
 		switch_unshut_port(dut,port)
+		sleep(10)
 
 def dut_process_interface(ip,dut_name,filename,intf_name_list,event_config,event_done,**kwargs):
 	
