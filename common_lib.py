@@ -226,16 +226,18 @@ def dut_process_flap_port(dut2,dut3,dut4):
 		switch_shut_port(dut2,"port48")
 		switch_shut_port(dut3,"port1")
 		switch_shut_port(dut3,"port2")
+		switch_shut_port(dut3,"port43")
 		switch_shut_port(dut4,"port3")
 		switch_shut_port(dut4,"port4")
-		#sleep(5)
+		sleep(2)
 		switch_unshut_port(dut2,"port47")
 		switch_unshut_port(dut2,"port48")
 		switch_unshut_port(dut3,"port1")
 		switch_unshut_port(dut3,"port2")
 		switch_unshut_port(dut4,"port3")
 		switch_unshut_port(dut4,"port4")
-		#sleep(2)
+		switch_unshut_port(dut3,"port43")
+		sleep(20)
 		
 
 
