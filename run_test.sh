@@ -8,13 +8,15 @@ rm Log/*.log
 # echo "python mclag_v2.py -t 448D -test 6"
 # python mclag_v2.py -t 448D -test 6
 #echo "python mclag_v2.py -t 448D -test -1 -c -ug 384"
-# echo "python mclag_v2.py -t 448D -test -1 -c -e"
+# echo "python mclag_v2.py -t 448D -test -1 -f -c "
 
 # python mclag_v2.py -t 448D -test -1 -c -e
 
-echo "python mclag_v2.py -t 448D -test 7"
+# echo "python mclag_v2.py -t 548D -test -1 -c -nf"
 
-python mclag_v2.py -t 448D -test 7
+# python mclag_v2.py -t 548D -test -1 -ug 384
+echo "python mclag_v2.py -t 548D -test 6"
+python mclag_v2.py -t 548D -test 6
 
 # echo "python mclag_v2.py -t 448D -test 2 -b -n 5 -c -f -file demo_1"
 # python mclag_v2.py -t 448D -test 2 -b -n 5 -c -f -file demo_1

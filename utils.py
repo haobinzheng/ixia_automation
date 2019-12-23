@@ -422,17 +422,21 @@ def switch_unshut_port(tn,port):
 
 def switch_system_interface_shut(tn,port):
 	fgt_shut_port(tn,port)
-	
+
 def switch_system_interface_unshut(tn,port):
 	fgt_unshut_port(tn,port)
 
 def fgt_shut_port(tn,port):
+	switch_configure_cmd(tn,"config vdom")
+	switch_configure_cmd(tn,"edit root")
 	switch_configure_cmd(tn,"config system interface")
 	switch_configure_cmd(tn,"edit {}".format(port))
 	switch_configure_cmd(tn,"set status down")
 	switch_configure_cmd(tn,"end")
 
 def fgt_unshut_port(tn,port):
+	switch_configure_cmd(tn,"config vdom")
+	switch_configure_cmd(tn,"edit root")
 	switch_configure_cmd(tn,"config system interface")
 	switch_configure_cmd(tn,"edit {}".format(port))
 	switch_configure_cmd(tn,"set status up")
@@ -643,6 +647,12 @@ def config_cmds_lines(dut, cmdblock):
 	for cmd in b:
 		switch_configure_cmd(dut,cmd)
 		 
+
+def config_block_cmds_new(dut, cmdblock):
+	b= cmdblock.split("\n")
+	b = [x.strip() for x in b if x.strip()]
+	for cmd in b:
+		switch_configure_cmd(dut,cmd)
 
 def config_block_cmds(dut_dir, cmdblock):
 	b= cmdblock.split("\n")

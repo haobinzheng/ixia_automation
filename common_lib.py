@@ -220,6 +220,97 @@ def dut_process_log(ip,dut_name,filename,intf_name,event_config,event_done,**kwa
 	debug("Exit event is set by parent process, exiting")
 	tprint("===============================Exiting dut_process_log process ===================")
 
+def config_qinq_port(*args,**kwargs):
+	dut = kwargs['dut']
+	c_vlan = kwargs['c_vlan']
+	s_vlan = kwargs['s_vlan']
+	port = kwargs['port']
+
+	config = f"""
+	config switch interface 
+	edit {port}
+		set vlan-tpid default 
+		config qnq
+			set status enable
+			set vlan-mapping-miss-drop enable 
+			set add-inner {c_vlan}
+			set edge-type customer
+			set stp-qnq-admin enable
+			set priority follow-c-tag 
+			set remove-inner enable
+		config vlan-mapping
+			edit 1
+			set description 'vlan-mapping-1' 
+			set match-c-vlan {c_vlan}
+			set new-s-vlan {s_vlan}
+		next end
+		end next
+		end
+	"""
+	config_block_cmds_new(dut,config)
+
+def get_switch_port_summary(dut):
+	result = collect_show_cmd(dut,"diag switch physical-ports summary")
+	port_list = []
+	for line in result:
+		if "Portname" in line:
+			heads = re.split('\\s+',line)
+		elif "port" in line and "8100" in line:
+			port_line_dict = {}
+			items = re.split('\\s+',line)
+			for k,v in zip(heads,items):
+				port_line_dict[k] = v
+
+			port_list.append(port_line_dict)
+		else:
+			pass
+	return port_list
+
+def get_switch_lldp_summary(dut):
+	result = collect_show_cmd(dut,"get switch lldp neighbors-summary")
+	lldp_list = []
+	for line in result:
+		if "Portname" in line and "TTL" in line:
+			heads = re.split('\\s+',line)
+		elif "Up" in line or "Down" in line:
+			port_line_dict = {}
+			items = re.split('\\s+',line)
+			for k,v in zip(heads,items):
+				port_line_dict[k] = v
+
+			lldp_list.append(port_line_dict)
+		else:
+			pass
+	return lldp_list
+
+
+def delete_mirror_ports(*args,**kwargs):
+	dut = kwargs['dut']
+	config = f"""
+	config switch mirror
+		delete 1
+	end
+	"""
+	config_block_cmds_new(dut,config)
+
+
+def config_mirror_ports(*args,**kwargs):
+	dut = kwargs['dut']
+	dst_port = kwargs['dst_port']
+	src_port = kwargs['src_port']
+	config = f"""
+	config switch mirror
+		edit 1
+			set status active
+			set dst {dst_port}
+			set switching-packet enable
+			set src-ingress {src_port}
+			set src-egress {src_port}
+		next
+	end
+	"""
+	config_block_cmds_new(dut,config)
+
 def dut_process_flap_port(dut2,dut3,dut4):
 	while True:
 		switch_shut_port(dut2,"port47")

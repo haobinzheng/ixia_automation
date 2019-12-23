@@ -642,7 +642,18 @@ if dev_mode == False:
 			tprint("Factory reseting {} at {}......".format(dut_name,location))
 			switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)")
 
-		sleep(200)
+		console_timer(300,msg="Wait for 5 min after reset factory default")
+
+		tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
+		dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+		dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+		dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+		dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+		dut_list = [dut1,dut2,dut3,dut4]
+		dut1_dir['telnet'] = dut1 
+		dut2_dir['telnet'] = dut2
+		dut3_dir['telnet'] = dut3
+		dut4_dir['telnet'] = dut4
 		for dut in dut_list:
 			relogin_if_needed(dut)
 
@@ -749,12 +760,31 @@ example: 1. Upgrade testbed FG-548D to build 384:
 			tprint("====== Relogin all DUTs after upgrade is finished")
 			for dut in dut_list:
 				relogin_if_needed(dut)
+		if settings.FACTORY or factory:
+			tprint("=============== resetting all switches to factory default ===========")
+			for dut in dut_list:
+				switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)")
+			print("after reset sleep 5 min")
+			console_timer(300,msg="Wait for 5 min after reset factory default")
+			print("after sleep, relogin, should change password ")
+		
+
+			tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
+			dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+			dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+			dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+			dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+			dut_list = [dut1,dut2,dut3,dut4]
+			dut1_dir['telnet'] = dut1 
+			dut2_dir['telnet'] = dut2
+			dut3_dir['telnet'] = dut3
+			dut4_dir['telnet'] = dut4
 		if setup: 
 			for d in dut_dir_list:
 				configure_switch_file(d['telnet'],d['cfg'])
 	elif test_setup.lower() == "548d":
 		if upgrade_sa:
-			tprint("======Upgrade standalone 548D testbed ")
+			tprint("============== Upgrade standalone 548D testbed ============== ")
 			for d in dut_dir_list:
 				if sa_upgrade_548d(d['telnet'],d,build = sw_build):
 					tprint(f"Upgrade FSW {d['name']} to build {sw_build} is successful")
@@ -764,6 +794,26 @@ example: 1. Upgrade testbed FG-548D to build 384:
 			tprint("====== Relogin all DUTs after upgrade is finished")
 			for dut in dut_list:
 				relogin_if_needed(dut)
+		if settings.FACTORY or factory:
+			tprint("=============== resetting all switches to factory default ===========")
+			for dut in dut_list:
+				switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)")
+			print("after reset sleep 5 min")
+			console_timer(300,msg="Wait for 5 min after reset factory default")
+			print("after sleep, relogin, should change password ")
+		
+
+			tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
+			dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+			dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+			dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+			dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+			dut_list = [dut1,dut2,dut3,dut4]
+			dut1_dir['telnet'] = dut1 
+			dut2_dir['telnet'] = dut2
+			dut3_dir['telnet'] = dut3
+			dut4_dir['telnet'] = dut4
+
 		if setup: 
 			for d in dut_dir_list:
 				configure_switch_file(d['telnet'],d['cfg'])
@@ -823,7 +873,8 @@ if testcase == 6:
 		# print_double_line()
 		print(f"""
 Please follow the manual below to preceed:
-=================================================
+===========================================================================================================================
+Description: DUT4 is the switch that is being testing, DUT3 has port flapping that causes DUT4's port having status change
 'setup' = Config flapguard parameters
 'r'  = Reset flap guard status
 't'  = Set flap guard timer
@@ -837,8 +888,22 @@ Please follow the manual below to preceed:
 'x'  = Type end at switch cnosole
 'down' = Admin down the port
 'up'  = Admin up the port
+'v' = config virtual wire and enable flap guard at member ports
+'m' = config a mirror port to have flap guard enabled 
+'qnq' = config qinq port and enable flap-guard on the qinq port
 'q'  = Quit
-""")
+""")	
+		up_port_list = []
+		port_list = get_switch_port_summary(dut4)
+		for port_dict in port_list:
+			if port_dict['Status'] == "up":
+				up_port_list.append(port_dict['Portname'])
+
+		dut3_neighbor_list = []
+		for port_dict in get_switch_lldp_summary(dut):
+			if port_dict["Status"] == "Up" and port_dict["Device-name"] == "DUT-3":
+				dut3_neighbor_list.append(port_dict['Port-ID'])
+
 		keyin = input(f"Please enter a key: ")
 		if keyin.upper() == "R":
 			for port in local_port_list:
@@ -846,37 +911,63 @@ Please follow the manual below to preceed:
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "SETUP":
-			for port in local_port_list:
-				print(f"Setting up flap guard paramenters for {port}:")
+			
+			keyin = input(f"Please select to configure individual port(i) or all port(a): (i/a)")
+			if keyin.upper() == "I":
+				for port in up_port_list:
+					print(f"\nSetting up flap guard paramenters for {port}:")
+					print_dash_line()
+					keyin = input(f"Please enter flap rate(how many times within a duration,default = 5): ")
+					try:
+						flap_times = int(keyin)
+					except Exception: 
+						print("\nNot a vailid input for timer")
+						continue
+					keyin = input(f"Please enter flap duration(default=300): ")
+					try:
+						flap_duration= int(keyin)
+					except Exception: 
+						print("\nNot a vailid input for timer")
+						continue
+					keyin = input(f"Please enter flap timeout(default = 5 min): ")
+					try:
+						flap_timeout = int(keyin)
+					except Exception: 
+						print("\nNot a vailid input for timer")
+						continue
+					switch_config_flapguard_port(dut=dut4,port=port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
+			elif keyin.upper() == "A":
+				print(f"\nSetting up flap guard paramenters for all up ports:")
 				print_dash_line()
 				keyin = input(f"Please enter flap rate(how many times within a duration,default = 5): ")
 				try:
-					flap_times = int(keyin)
+					if flap_times == '':
+						flap_times = 5
+					else:
+						flap_times = int(keyin)
 				except Exception: 
 					print("\nNot a vailid input for timer")
 					continue
 				keyin = input(f"Please enter flap duration(default=300): ")
 				try:
-					flap_duration= int(keyin)
+					if flap_duration == '':
+						flap_duration = 300
+					else:
+						flap_duration= int(keyin)
 				except Exception: 
 					print("\nNot a vailid input for timer")
 					continue
 				keyin = input(f"Please enter flap timeout(default = 5 min): ")
 				try:
-					flap_timeout = int(keyin)
+					if flap_timeout == '':
+						flap_timeout = 5
+					else:
+						flap_timeout = int(keyin)
 				except Exception: 
 					print("\nNot a vailid input for timer")
 					continue
-				# keyin = input(f"Please enter flap port(default = port49): ")
-				# try:
-				# 	flap_port = keyin
-				# 	if flap_port == '':
-				# 		flap_port = "port49"
-				# 		print("Entering empty string, port = port49")
-				# except Exception: 
-				# 	print("\nNot a vailid input for timer")
-				# 	continue
-				switch_config_flapguard_port(dut=dut4,port=port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
+				for port in up_port_list:
+					switch_config_flapguard_port(dut=dut4,port=port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
 			continue
 		elif keyin.upper() == "T":
 			print_double_line()
@@ -900,7 +991,7 @@ Please follow the manual below to preceed:
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "F":
-			keyin = input(f"Please enter the port you want to flap(example, port47, all) ")
+			keyin = input(f"Please enter a DUT3's port you want to flap(example, port47, all) ")
 			try:
 				test_port = keyin
 			except Exception: 
@@ -914,7 +1005,7 @@ Please follow the manual below to preceed:
 				continue
 			print("\n======Start to flap ports at its neighbor switch to trigger flap guard")
 			if test_port.upper() == "ALL":
-				for port in remote_port_list:
+				for port in dut3_neighbor_list:
 					for _ in range(flap_times):
 						switch_flap_port(dut3,port)
 						sleep(1)
@@ -932,7 +1023,7 @@ Please follow the manual below to preceed:
 				show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == "S":
-			for port in local_port_list:
+			for port in up_port_list:
 				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
@@ -944,12 +1035,13 @@ Please follow the manual below to preceed:
 				print("\nNot a vailid input for port")
 				continue
 			if test_port.upper() == "ALL":
-
 				print(f"\n========Start to disable flap guard on all ports")
-				for port in local_port_list:
+				for port in up_port_list:
 					switch_config_flapguard_port(dut=dut4,port=port,duration=flap_duration,timeout=flap_timeout,rate=flap_times,disable='y')
 			else:
 				switch_config_flapguard_port(dut=dut4,port=test_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times,disable='y')
+			for port in up_port_list:
+				switch_show_cmd(dut4,f"show switch physical-port {port}")
 			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == 'E':
@@ -993,6 +1085,42 @@ Please follow the manual below to preceed:
 		elif keyin.upper() == "DOWN":
 			switch_shut_port(dut4,flap_port)
 			sleep(2)
+			continue
+		elif keyin.upper() == "V":
+			tprint("Configure virtual wire on DUT4")
+			config = """
+			config switch virtual-wire 
+				edit vw-47-48
+					set first-member port47
+					set second-member port48
+					set vlan 1
+				next
+			end
+			"""
+			config_block_cmds(dut4_dir,config)
+			switch_show_cmd(dut4,'show switch virtual-wire')
+			continue
+		elif keyin.upper() == "M":
+			d_port = 'port1'
+			s_port = 'port47'
+			tprint(f"Configure DUT4: source port = {s_port}, destination port = {d_port}")
+			config_mirror_ports(dut=dut4,dst_port=d_port,src_port=s_port)
+			switch_show_cmd(dut4,'show switch mirror 1')
+			switch_config_flapguard_port(dut=dut4,port=s_port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
+			for port in local_port_list:
+				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
+			show_flapguard_cmds(dut4,flap_port)
+			continue
+		elif keyin.upper() == "QNQ":
+			qnq_port = 'port47'
+			port=qnq_port
+			tprint(f"configure DUT4 p{port} to be QinQ and enable flap-guard feature")
+			config_qinq_port(dut=dut4,c_vlan=1,s_vlan=100,port=qnq_port)
+			switch_show_cmd(dut4,f'show switch interface {port}')
+			switch_config_flapguard_port(dut=dut4,port=port,duration=flap_duration,timeout=flap_timeout,rate=flap_times )
+			for port in local_port_list:
+				output = switch_show_cmd(dut4, f"show switch physical-port {port}")
+			show_flapguard_cmds(dut4,flap_port)
 			continue
 		elif keyin.upper() == 'Q':
 			exit()
