@@ -931,7 +931,9 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	p = prompt[0]
 	debug(prompt)
 	if p == 'login':
-		Info("This is new software image, login back with passord admin")
+		Info("This is new software image, login back without passord ")
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("login: ").encode('ascii'),timeout=10)

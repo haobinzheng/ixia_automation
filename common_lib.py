@@ -1904,8 +1904,86 @@ def dut_switch_trunk(dut):
 	trunk_dict_list = parse_config_trunk(config)
 	debug(trunk_dict_list)
 	return trunk_dict_list
-	
 
+def enable_auto_isl(func):
+	def inner_func(*args,**kwargs):
+		tprint("reset all switch to factory")
+		func(*args,**kwargs)
+		console_timer(300,msg="After resetting switches to factory, wait for 300 seconds")
+		if "dut_list" in kwargs:
+			dut_list = kwargs['sw_list']
+		# else:
+		# 	return inner_func
+		for dut in dut_list:
+			neighbor_list = get_switch_lldp_summary(dut)
+			for neighbor in neighbor_list:
+				if neighbor["Status"] == "Up":
+					port = neighbor["Portname"]
+					sw_physical_port_cmd(dut,port,"set lldp-profile default-auto-isl")
+
+		for dut in dut_list:
+			switch_exec_reboot(dut)
+		console_timer(300,msg="After setting auto isl on all up ports and reboot, wait for 300 seconds")
+	return inner_func
+
+@enable_auto_isl
+def switch_factory_reset(*args, **kwargs):
+	dut_list = kwargs['dut_list']
+	for dut in dut_list:
+		switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)")
+
+def fgt_get_conn_status(dut):
+	pass
+
+
+# active-3960E (root) # execute switch-controller get-conn-status
+# Managed-devices in current vdom root:
+ 
+# STACK-NAME: FortiSwitch-Stack-fortilink
+# SWITCH-ID         VERSION           STATUS         FLAG   ADDRESS              JOIN-TIME            NAME            
+# S548DF4K17000014  v6.4.0 (384)      Authorized/Up   -   169.254.1.2     Fri Jan  3 14:02:14 2020    -               
+# S548DF4K17000028  v6.4.0 (384)      Authorized/Up   C   169.254.1.3     Fri Jan  3 14:02:46 2020    -               
+ 
+# 	 Flags: C=config sync, U=upgrading, S=staged, D=delayed reboot pending, E=configuration sync error
+# 	 Managed-Switches: 2 (UP: 2 DOWN: 0)
+
+def sw_physical_port_cmd(dut,port,cmd):
+	switch_configure_cmd(dut,'end')
+	switch_configure_cmd(dut,"config switch physical-port")
+	switch_configure_cmd(dut,f"edit {port}")
+	switch_configure_cmd(dut,cmd)
+	switch_configure_cmd(dut,'end')
+
+
+def enable_isl_neighbor(func):
+	def inner_func(*args,**kwargs):
+		if "sw_list" in kwargs:
+			dut_list = kwargs['sw_list']
+		# else:
+		# 	return inner_func
+
+		for dut in dut_list:
+			neighbor_list = get_switch_lldp_summary(dut)
+			for neighbor in neighbor_list:
+				if neighbor["Status"] == "Up":
+					port = neighbor["Portname"]
+					sw_physical_port_cmd(dut,port,"set lldp-profile default-auto-isl")
+
+		for dut in dut_list:
+			switch_exec_reboot(dut)
+		console_timer(300,msg="After enabling auto_isl lldp profile, wait for 300s for fgt to rediscover all managed switches")
+		func(*args,**kwargs)
+	return inner_func
+
+def decorator_func(func):
+	def inner_func(fgt1,fgt1_dir, **kwargs):
+		print("Entering decorator function, before calling original function")
+		func(fgt1,fgt1_dir,**kwargs)
+		print("After calling original function")
+	return inner_func
+
+
+@enable_isl_neighbor			
 def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	if "build" in kwargs:
 		build = int(kwargs['build'])
@@ -1920,10 +1998,10 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	switch_exec_cmd(fgt1, "config global")
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D_FPOE-v6-build0{build}-FORTINET.out 10.105.19.19"
 	switch_exec_cmd(fgt1, cmd)
-	sleep(10)
+	sleep(30)
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D-v6-build0{build}-FORTINET.out 10.105.19.19"
 	switch_exec_cmd(fgt1, cmd)
-	sleep(10)
+	sleep(30)
 	switch_exec_cmd(fgt1, "end")
 	switch_exec_cmd(fgt1, "config vdom")
 	switch_exec_cmd(fgt1, "edit root")
@@ -1932,15 +2010,15 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	sleep(2)
 	cmd = "execute switch-controller switch-software stage all S548DN-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
-	console_timer(10,msg="upgrading all 548-D switches to S548DN-IMG.swtp")
+	console_timer(30,msg="upgrading all 548-D switches to S548DN-IMG.swtp")
 	cmd = "execute switch-controller switch-software stage all S548DF-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
 	console_timer(400,msg="upgrading all 548-DF switches to S548DF-IMG.swtp, wait for 400 secs for all switches download image")
 
 	relogin_dut_all(dut_list)
-	for dut in dut_list:
-		switch_exec_reboot(dut)
-	console_timer(300,msg ="After reboot,wait for 300 seconds")
+	# for dut in dut_list:
+	# 	switch_exec_reboot(dut)
+	# console_timer(300,msg ="After reboot,wait for 300 seconds")
 
 def fgt_upgrade_548d(fgt1,fgt1_dir,**kwargs):
 	if "build" in kwargs:
@@ -1948,6 +2026,7 @@ def fgt_upgrade_548d(fgt1,fgt1_dir,**kwargs):
 	else:
 		build = settings.build_548d
 	tprint("================ Upgrading FSWs via Fortigate =============")
+	switch_exec_cmd(fgt1,'config global')
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D_FPOE-v6-build0{build}-FORTINET.out 10.105.19.19"
 	switch_exec_cmd(fgt1, cmd)
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D-v6-build0{build}-FORTINET.out 10.105.19.19"

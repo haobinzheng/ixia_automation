@@ -3,7 +3,9 @@ rm Log/*.log
 
 #python mclag_v2.py -t 448D -test 2 -n 1 -file demo -u
 # echo "python mclag_v2.py -t 548D -e -test 2 -n 1 -c -f -file demo_548d_1 -ug 194"
-# echo "python mclag_v2.py -t fg-548d -test 0 -sw 383"
+
+echo "python mclag_v2.py -t fg-548d -test -1 -sw 385 -f "
+python mclag_v2.py -t fg-548d -test -1 -sw 385 -f 
 # python mclag_v2.py -t fg-548d -test 9 -sw 383
 # echo "python mclag_v2.py -t 448D -test 6"
 # python mclag_v2.py -t 448D -test 6
@@ -15,8 +17,8 @@ rm Log/*.log
 # echo "python mclag_v2.py -t 548D -test -1 -c -nf"
 
 # python mclag_v2.py -t 548D -test -1 -ug 384
-echo "python mclag_v2.py -t 548D -test 6"
-python mclag_v2.py -t 548D -test 6
+# echo "python mclag_v2.py -t 548D -test 6"
+# python mclag_v2.py -t 548D -test 6
 
 # echo "python mclag_v2.py -t 448D -test 2 -b -n 5 -c -f -file demo_1"
 # python mclag_v2.py -t 448D -test 2 -b -n 5 -c -f -file demo_1

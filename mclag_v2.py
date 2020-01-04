@@ -713,7 +713,6 @@ example: 1. Upgrade testbed FG-548D to build 384:
 	""")
 	
 
-	
 	if upgrade_fgt and test_setup.lower() == "fg-548d":
 		tprint('------------------------------ login Fortigate devices -----------------------')
 		fgt1_dir = {}
@@ -734,16 +733,35 @@ example: 1. Upgrade testbed FG-548D to build 384:
 		fgt2_dir['cfg'] = fgt2_cfg
 		fgt_dir_list.append(fgt2_dir)
 
-		config_system_interface(fgt1,"port13","set status up")
-		config_system_interface(fgt1,"port14","set status up")
-		config_system_interface(fgt2,"port13","set status up")
-		config_system_interface(fgt2,"port14","set status up")
+		fgt_unshut_port(fgt1,"port13")		
+		fgt_unshut_port(fgt1,"port14")
+		fgt_unshut_port(fgt2,"port13")		
+		fgt_unshut_port(fgt2,"port14")
 		debug("Start to upgrade fsw using Fortigate and 548D setup")
+
+		if settings.FACTORY or factory:
+			tprint("=============== resetting all switches to factory default ===========")
+			for dut in dut_list:
+				switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)")
+			print("after reset sleep 5 min")
+			console_timer(300,msg="Wait for 5 min after reset factory default")
+			print("after sleep, relogin, should change password ")
+			tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
+			dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+			dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+			dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+			dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+			dut_list = [dut1,dut2,dut3,dut4]
+			dut1_dir['telnet'] = dut1 
+			dut2_dir['telnet'] = dut2
+			dut3_dir['telnet'] = dut3
+			dut4_dir['telnet'] = dut4
+
 		if settings.STAGE_UPGRADE:
 			fgt_upgrade_548d_stages(fgt1,fgt1_dir,build=sw_build,sw_list=dut_list)
 			# for dut in dut_list:
 			# 	switch_exec_reboot(dut)
-			console_timer(300,msg ="After reboot,wait for 300 seconds")
+			#console_timer(300,msg ="After reboot,wait for 300 seconds")
 			relogin_dut_all(dut_list)
 		else:
 			fgt_upgrade_548d(fgt1,fgt1_dir,build=sw_build)
