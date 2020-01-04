@@ -2035,6 +2035,9 @@ def fgt_upgrade_548d(fgt1,fgt1_dir,**kwargs):
 	cmd = "execute switch-controller switch-software list-available"
 	switch_show_cmd_name(fgt1_dir,cmd)
 
+	switch_exec_cmd(fgt1, "end")
+	switch_exec_cmd(fgt1, "config vdom")
+	switch_exec_cmd(fgt1, "edit root")
 	cmd = "execute switch-controller switch-software upgrade S548DN4K17000133 S548DN-IMG.swtp"
 	switch_exec_cmd(fgt1, cmd)
 	console_timer(10,msg="upgrading S548DN4K17000133 S548DN-IMG.swtp")
