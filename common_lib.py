@@ -1983,6 +1983,20 @@ def decorator_func(func):
 	return inner_func
 
 
+def enable_https_image_push(func):
+	def inner_func(fgt1,fgt1_dir,**kwargs):
+		cmds = """
+		conf vdom
+		edit root
+		conf switch-controller global
+		set https-image-push enable
+		end
+		"""
+		config_cmds_lines(fgt1,cmds)
+		func(fgt1,fgt1_dir,**kwargs)
+	return inner_func
+
+@enable_https_image_push
 @enable_isl_neighbor			
 def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	if "build" in kwargs:
@@ -1997,10 +2011,10 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	tprint(f"================ Upgrading FSWs via Fortigate to {build} =============")
 	switch_exec_cmd(fgt1, "config global")
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D_FPOE-v6-build0{build}-FORTINET.out 10.105.19.19"
-	switch_exec_cmd(fgt1, cmd)
+	switch_exec_cmd(fgt1, cmd,wait=30)
 	sleep(30)
 	cmd = f"execute switch-controller switch-software upload tftp FSW_548D-v6-build0{build}-FORTINET.out 10.105.19.19"
-	switch_exec_cmd(fgt1, cmd)
+	switch_exec_cmd(fgt1, cmd,wait=30)
 	sleep(30)
 	switch_exec_cmd(fgt1, "end")
 	switch_exec_cmd(fgt1, "config vdom")
@@ -2009,10 +2023,10 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	switch_show_cmd_name(fgt1_dir,cmd)
 	sleep(2)
 	cmd = "execute switch-controller switch-software stage all S548DN-IMG.swtp"
-	switch_exec_cmd(fgt1, cmd)
+	switch_exec_cmd(fgt1, cmd,wait=30)
 	console_timer(30,msg="upgrading all 548-D switches to S548DN-IMG.swtp")
 	cmd = "execute switch-controller switch-software stage all S548DF-IMG.swtp"
-	switch_exec_cmd(fgt1, cmd)
+	switch_exec_cmd(fgt1, cmd,wait=30)
 	console_timer(400,msg="upgrading all 548-DF switches to S548DF-IMG.swtp, wait for 400 secs for all switches download image")
 
 	relogin_dut_all(dut_list)
@@ -2020,6 +2034,7 @@ def fgt_upgrade_548d_stages(fgt1,fgt1_dir,**kwargs):
 	# 	switch_exec_reboot(dut)
 	# console_timer(300,msg ="After reboot,wait for 300 seconds")
 
+@enable_https_image_push
 def fgt_upgrade_548d(fgt1,fgt1_dir,**kwargs):
 	if "build" in kwargs:
 		build = int(kwargs['build'])
@@ -2039,17 +2054,17 @@ def fgt_upgrade_548d(fgt1,fgt1_dir,**kwargs):
 	switch_exec_cmd(fgt1, "config vdom")
 	switch_exec_cmd(fgt1, "edit root")
 	cmd = "execute switch-controller switch-software upgrade S548DN4K17000133 S548DN-IMG.swtp"
-	switch_exec_cmd(fgt1, cmd)
+	switch_exec_cmd(fgt1, cmd,wait=30)
 	console_timer(10,msg="upgrading S548DN4K17000133 S548DN-IMG.swtp")
 	cmd = "execute switch-controller switch-software upgrade S548DF4K16000653 S548DF-IMG.swtp"
-	switch_exec_cmd(fgt1, cmd)
+	switch_exec_cmd(fgt1, cmd,wait=30)
 	console_timer(200,msg="upgrading S548DF4K16000653 S548DF-IMG.swtp, wait for 200 secs for tier-2 switches to download image")
 
 	cmd = "execute switch-controller switch-software upgrade S548DF4K17000028 S548DF-IMG.swtp"
-	switch_exec_cmd(fgt1, cmd)
+	switch_exec_cmd(fgt1, cmd,wait=30)
 	console_timer(10,msg="upgrading S548DF4K17000028 S548DF-IMG.swtp")
 	cmd = "execute switch-controller switch-software upgrade S548DF4K17000014 S548DF-IMG.swtp"
-	switch_exec_cmd(fgt1, cmd)
+	switch_exec_cmd(fgt1, cmd,wait=30)
 	console_timer(10,msg="upgrading S548DF4K17000014 S548DF-IMG.swtp")
 	cmd = "execute switch-controller get-upgrade-status"
 	switch_show_cmd_name(fgt1_dir,cmd)
