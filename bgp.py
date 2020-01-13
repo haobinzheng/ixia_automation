@@ -237,7 +237,7 @@ if dev_mode == False:
 	# tprint("Finish creating blank spread sheet to record test result")
 	# exit()
 	
-	if test_setup.lower() == "fg-548d":
+	if test_setup.lower() == "bgp":
 		################################
 		# FGT 548D Test setup
 		################################
@@ -256,8 +256,15 @@ if dev_mode == False:
 		dut1_location = "Rack7-19"
 		dut1_port = 2071
 		dut1_name = "3032E-R7-19"
-		dut1_cfg = "3032E-R7-19.cfg"
+		dut1_cfg = "bgp/3032E-R7-19.cfg"
 		dut1_cfg_basic = "3032E_R7_19_basic.cfg"
+		dut1_mgmt_ip = "10.105.240.145"
+		dut1_mgmt_mask = "255.255.255.254"
+		dut1_loop0_ip = "1.1.1.1"
+		dut1_vlan1_ip = "10.1.1.1"
+		dut1_vlan1_mask = "255.255.255.0"
+		dut1_split_ports = ["port2"]
+		dut1_40g_ports = ["port9","port19"]
 
 		dut2_com = "10.105.241.44"
 		dut2_port = 2066
@@ -286,166 +293,8 @@ if dev_mode == False:
 		dut4_telnet = "10.105.50.63"
 		ip_list = [dut1_telnet,dut2_telnet,dut3_telnet,dut4_telnet]
 
-		if config_host_sw == True:
-			sw1=get_switch_telnet_connection("10.105.50.3",2097)
-			sw2=get_switch_telnet_connection("10.105.50.2",2092)
-			tprint("======================== Configure SW1 and SW2 for FG-548D setup ===============")
-			switch_shut_port(sw1,"port25")
-			switch_shut_port(sw1,"port26")
-			switch_shut_port(sw1,"port13")
-			switch_shut_port(sw1,"port14")
-			switch_unshut_port(sw1,"port7")
-
-			switch_shut_port(sw2,"port23")
-			switch_shut_port(sw2,"port24")
-			switch_unshut_port(sw2,"port13")
-			switch_unshut_port(sw2,"port14")
-		fgt1_com = "10.105.50.1"
-		fgt1_port = 2066
-		fgt1_location = "Rack20"
-		fgt1_name = "3960E"
-		fgt1_cfg = "fgt1.cfg"
-
-		fgt2_com = "10.105.50.2"
-		fgt2_port = 2074
-		fgt2_location = "Rack21"
-		fgt2_name = "3960E"
-		fgt2_cfg = "fgt2.cfg"
-
-		fgt_telnet = "10.105.50.241"
-
-	if test_setup == "548D":
-		################################
-		#548D Test setup
-		################################
-	
-		dut1_com = "10.105.50.3"
-		dut1_location = "Rack23-29"
-		dut1_port = 2057
-		dut1_name = "dut1-548d"
-		dut1_cfg = "dut1_548d.cfg"
-		dut1_cfg_basic = "dut1_548d_basic.cfg"
-
-		dut2_com = "10.105.50.3"
-		dut2_port = 2056
-		dut2_location = "Rack23-28"
-		dut2_name = "dut2-548d"
-		dut2_cfg = "dut2_548d.cfg"
-		dut2_cfg_basic = "dut2_548d_basic.cfg"
-
-		dut3_com = "10.105.50.1"
-		dut3_port = 2075
-		dut3_name = "dut3-548d"
-		dut3_location = "Rack20-23"
-		dut3_cfg = "dut3_548d.cfg"
-		dut3_cfg_basic = "dut3_548d_basic.cfg"
-
-		dut4_com = "10.105.50.1"
-		dut4_port = 2078
-		dut4_location = "Rack20-22"
-		dut4_name = "dut4-548d"
-		dut4_cfg = "dut4_548d.cfg"	
-		dut4_cfg_basic = "dut4_548d_basic.cfg"	
-
-		dut1_telnet = "10.105.50.59"
-		dut2_telnet = "10.105.50.60"
-		dut3_telnet = "10.105.50.62"
-		dut4_telnet = "10.105.50.63"
-		ip_list = [dut1_telnet,dut2_telnet,dut3_telnet,dut4_telnet]
 		 
-
-		if config_host_sw == True:
-			testbed_description = """
-	1) SW1: shut port25
-		shut port26
-		shut port7
-		unsht port 13
-		unshut port14
-	2)SW2: 	shut port23
-		shut port24
-		unshut port13
-		unshut port14
-			""" 
-			print(testbed_description)
-			sw1=get_switch_telnet_connection("10.105.50.3",2097)
-			sw2=get_switch_telnet_connection("10.105.50.2",2092)
-			tprint("======================== Configure SW1 and SW2 for 548D setup ===============")
-			switch_shut_port(sw1,"port25")
-			switch_shut_port(sw1,"port26")
-			switch_unshut_port(sw1,"port13")
-			switch_unshut_port(sw1,"port14")
-			switch_shut_port(sw1,"port7")
-
-			switch_shut_port(sw2,"port23")
-			switch_shut_port(sw2,"port24")
-			switch_unshut_port(sw2,"port13")
-			switch_unshut_port(sw2,"port14")
-			
-	if test_setup == "448D":
-		##############################
-		#448D Test stup
-		##############################
-		dut1_com = "10.105.50.1"
-		dut1_port = 2074
-		dut1_location = "Rack20-18"
-		dut1_name = "dut1-448d"
-		dut1_cfg = "dut1_448d.cfg"
-		dut1_cfg_basic = "dut1_448d_basic.cfg"
-
-		dut2_com = "10.105.50.1"
-		dut2_port = 2081
-		dut2_location = "Rack20-25"
-		dut2_name = "dut2-448d"
-		dut2_cfg = "dut2_448d.cfg"
-		dut2_cfg_basic = "dut2_448d_basic.cfg"
-
-		dut3_com = "10.105.50.2"
-		dut3_port = 2077
-		dut3_location = "Rack21-18"
-		dut3_name = "dut3-448d"
-		dut3_cfg = "dut3_448d.cfg"
-		dut3_cfg_basic = "dut3_448d_basic.cfg"
-
-		dut4_com = "10.105.50.2"
-		dut4_port = 2078
-		dut4_location = "Rack21-19"
-		dut4_name = "dut4-448d"
-		dut4_cfg = "dut4_448d.cfg"
-		dut4_cfg_basic = "dut4_448d_basic.cfg"
-
-		dut1_telnet = "10.105.50.64"
-		dut2_telnet = "10.105.50.65"
-		dut3_telnet = "10.105.50.66"
-		dut4_telnet = "10.105.50.67"
-		ip_list = [dut1_telnet,dut2_telnet,dut3_telnet,dut4_telnet]
-
-		if config_host_sw == True:
-			testbed_description = """
-	1) SW1: unshut port25
-		unshut port26
-		shut port7
-		sht port 13
-		shut port14
-	2)SW2: 	unshut port23
-		unshut port24
-		shut port13
-		shut port14
-	""" 
-			print(testbed_description)
-			tprint("======================== Configure SW1 and SW2 for 448D setup ===============")
-			sw1=get_switch_telnet_connection("10.105.50.3",2097)
-			sw2=get_switch_telnet_connection("10.105.50.2",2092)
-			switch_unshut_port(sw1,"port25")
-			switch_unshut_port(sw1,"port26")
-			switch_shut_port(sw1,"port13")
-			switch_shut_port(sw1,"port14")
-			switch_shut_port(sw1,"port7")
-
-			switch_unshut_port(sw2,"port23")
-			switch_unshut_port(sw2,"port24")
-			switch_shut_port(sw2,"port13")
-			switch_shut_port(sw2,"port14")
-	
+	 
 	######################################################################
 	# DUT independent Experiment code starts here
 	######################################################################
@@ -535,36 +384,43 @@ if dev_mode == False:
 	dut2_dir = {}
 	dut3_dir = {} 
 	dut4_dir = {}
+	dut5_dir = {}
 	dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
 	dut1_dir['name'] = dut1_name
 	dut1_dir['location'] = dut1_location
 	dut1_dir['telnet'] = dut1
 	dut1_dir['cfg'] = dut1_cfg
-	dut1_dir['cfg_b'] = dut1_cfg_basic
+	dut1_dir['mgmt_ip'] = dut1_mgmt_ip
+	dut1_dir['mgmt_mask']= dut1_mgmt_mask  
+	dut1_dir['loop0_ip']= dut1_loop0_ip  
+	dut1_dir['vlan1_ip']= dut1_vlan1_ip  
+	dut1_dir['vlan1_mask']= dut1_vlan1_mask  
+	dut1_dir['split_ports']= dut1_split_ports  
+	dut1_dir['40g_ports']= dut1_40g_ports  
 
-	dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
-	dut2_dir['name'] = dut2_name
-	dut2_dir['location'] = dut2_location
-	dut2_dir['telnet'] = dut2
-	dut2_dir['cfg'] = dut2_cfg
-	dut2_dir['cfg_b'] = dut2_cfg_basic
+	# dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+	# dut2_dir['name'] = dut2_name
+	# dut2_dir['location'] = dut2_location
+	# dut2_dir['telnet'] = dut2
+	# dut2_dir['cfg'] = dut2_cfg
+	# dut2_dir['cfg_b'] = dut2_cfg_basic
 
-	dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
-	dut3_dir['name'] = dut3_name
-	dut3_dir['location'] = dut3_location
-	dut3_dir['telnet'] = dut3
-	dut3_dir['cfg'] = dut3_cfg
-	dut3_dir['cfg_b'] = dut3_cfg_basic
+	# dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+	# dut3_dir['name'] = dut3_name
+	# dut3_dir['location'] = dut3_location
+	# dut3_dir['telnet'] = dut3
+	# dut3_dir['cfg'] = dut3_cfg
+	# dut3_dir['cfg_b'] = dut3_cfg_basic
 
-	dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
-	dut4_dir['name'] = dut4_name
-	dut4_dir['location'] = dut4_location
-	dut4_dir['telnet'] = dut4
-	dut4_dir['cfg'] = dut4_cfg
-	dut4_dir['cfg_b'] = dut4_cfg_basic
+	# dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+	# dut4_dir['name'] = dut4_name
+	# dut4_dir['location'] = dut4_location
+	# dut4_dir['telnet'] = dut4
+	# dut4_dir['cfg'] = dut4_cfg
+	# dut4_dir['cfg_b'] = dut4_cfg_basic
 
-	dut_list = [dut1,dut2,dut3,dut4]
-	dut_dir_list = [dut1_dir,dut2_dir,dut3_dir,dut4_dir]
+	dut_list = [dut1]
+	dut_dir_list = [dut1_dir]
 
 	for dut_dir in dut_dir_list:
 		dut = dut_dir['telnet']
@@ -572,6 +428,7 @@ if dev_mode == False:
 		image = find_dut_image(dut)
 		tprint(f"============================ {dut_name} software image = {image}")
 
+		sw_init_config(device=dut_dir)
 	# Develop new codes starts from here
 	# stop_threads = False
 	# dut_cpu_memory(dut_dir_list,lambda: stop_threads)

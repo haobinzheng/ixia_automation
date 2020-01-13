@@ -720,6 +720,15 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 	time.sleep(0.5)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
 	 
+def switch_interactive_yes(tn,prompt):
+	prompt = convert_cmd_ascii(prompt)
+	#prompt_re = (prompt + r'.*').encode('ascii')
+	tn.read_until(prompt,timeout=10)
+	time.sleep(1)
+
+	answer = convert_cmd_ascii('y' + '\n')
+	tn.write(answer)
+	time.sleep(1)
 
 def switch_interactive_exec(tn,exec_cmd,prompt):
 	#relogin_if_needed(tn)

@@ -25,3 +25,26 @@ STAGE_UPGRADE = True
 # def init():
 # 	global DEBUG
 # 	DEBUG = False
+
+
+def init_config(*args, **kwargs):
+	init = """
+	config system interface
+    edit mgmt
+    	set mode static
+        set ip {mgmt_ip} {mgmt_mask}
+        set allowaccess ping https http ssh snmp telnet radius-acct
+    next
+    edit vlan1
+        set ip {vlan1_ip} {vlan1_mask}
+        set allowaccess ping https ssh
+        set vlanid 1
+        set interface internal
+    next
+    edit "loop0"
+        set ip {loop0_ip} {loop0_mask}
+        set allowaccess ping https http ssh telnet
+        set type loopback
+    next
+end
+	"""
