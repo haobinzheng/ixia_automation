@@ -18,7 +18,7 @@ sys.path.append('C:/Program Files (x86)/Ixia/IxNetwork/7.50.0.8EB/API/Python')
  
 from ixia_ngfp_lib import *
 from utils import *
-from settings import *
+import settings 
 from test_process import * 
 from common_lib import *
 from common_codes import *
@@ -434,18 +434,18 @@ if upgrade_sa:
 	for dut_dir in dut_dir_list:
 		result = fsw_upgrade(build=sw_build,dut_dict=dut_dir)
 		if not result:
-			tprint(f"############# Upgrade {dut_dir['name']} to build #{sw_build} Fails +++++++++++++ ")
+			tprint(f"############# Upgrade {dut_dir['name']} to build #{sw_build} Fails ########### ")
 		else:
-			tprint(f"############# Upgrade {dut_dir['name']} to build #{sw_build} is successful +++++++++++++ ")
+			tprint(f"############# Upgrade {dut_dir['name']} to build #{sw_build} is successful ############")
 
-	console_timer(200,msg="Wait for 200s after started upgrading all switches")
+	console_timer(400,msg="Wait for 400s after started upgrading all switches")
 	for dut_dir in dut_dir_list:
 		dut = dut_dir['telnet']
 		dut_name = dut_dir['name']
 		try:
 			relogin_if_needed(dut)
 		except Exception as e:
-			debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
+			debug("something is wrong with rlogin_if_needed at bgp, try again")
 			relogin_if_needed(dut)
 		image = find_dut_image(dut)
 		tprint(f"============================ {dut_name} software image = {image} ============")
