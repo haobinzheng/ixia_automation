@@ -216,7 +216,7 @@ def sw_init_config(*args, **kwargs):
         end
         """
         config_cmds_lines(dut,config_split_ports)
-        switch_interactive_yes(dut,"Do you want to continue? (y/n)")
+        switch_enter_yes(dut)
         console_timer(200,msg="switch is being rebooted after configuring split port, wait for 200s")
         try:
             relogin_if_needed(dut)
