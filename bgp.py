@@ -405,6 +405,8 @@ dut5_dir['40g_ports']= dut5_40g_ports
 
 dut_list = [dut1,dut2,dut3,dut4,dut5]
 dut_dir_list = [dut1_dir,dut2_dir,dut3_dir,dut4_dir,dut5_dir]
+#dut_dir_list = [dut1_dir]
+
 
 if factory:
 	for dut_dir in dut_dir_list:
@@ -430,7 +432,23 @@ if setup:
 
 if upgrade_sa:
 	for dut_dir in dut_dir_list:
-		fsw_upgrade(build=sw_build,dut_dict=dut_dir)
+		result = fsw_upgrade(build=sw_build,dut_dict=dut_dir)
+		if not result:
+			tprint(f"############# Upgrade {dut_dir['name']} to build #{sw_build} Fails +++++++++++++ ")
+		else:
+			tprint(f"############# Upgrade {dut_dir['name']} to build #{sw_build} is successful +++++++++++++ ")
+
+	console_timer(200,msg="Wait for 200s after started upgrading all switches")
+	for dut_dir in dut_dir_list:
+		dut = dut_dir['telnet']
+		dut_name = dut_dir['name']
+		try:
+			relogin_if_needed(dut)
+		except Exception as e:
+			debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
+			relogin_if_needed(dut)
+		image = find_dut_image(dut)
+		tprint(f"============================ {dut_name} software image = {image} ============")
 exit()
 	
 	######################################################################

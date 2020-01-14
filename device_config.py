@@ -1,5 +1,5 @@
 from utils import *
-from settings import *
+import settings 
 from test_process import * 
 from common_lib import *
 from common_codes import *
@@ -83,19 +83,32 @@ def fsw_upgrade(*args,**kwargs):
     cmd = f"execute restore image tftp {image_name} 10.105.19.19"
     tprint(f"upgrade command = {cmd}")
     switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
-    output = switch_read_console_output(dut,timeout = 60)
-    switch_interactive_yes(dut,prompt)
+    #console_timer(60,msg="wait for 60s to download image from tftp server")
+    #switch_wait_enter_yes(dut,"Do you want to continue? (y/n)")
+    prompt = "Do you want to continue? (y/n)"
+    output = switch_read_console_output(dut,timeout = 40)
     dprint(output)
+    result = False
     for line in output: 
         if "Command fail" in line:
-            dprint(f"upgrade with image {image_name} failed for {dut_name}")
-            return False
+            Info(f"upgrade with image {image_name} failed for {dut_name}")
+            result = False
 
         elif "Check image OK" in line:
             Info(f"At {dut_name} image {image_name} is downloaded and checked OK,upgrade should be fine")
-            return True
+            result = True
 
-    return False
+        elif "Writing the disk" in line:
+            Info(f"At {dut_name} image {image_name} is being written into disk, upgrade is Good!")
+            result = True
+
+        elif "Do you want to continue" in line:
+            dprint(f"Being prompted to answer yes/no 2nd time.  Prompt = {prompt}")
+            switch_enter_yes(dut)
+            result = True
+        else:
+            pass
+    return result
 
 def sw_init_config(*args, **kwargs):
     dut_dir = kwargs['device']

@@ -721,16 +721,26 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 	tn.write(cmd)
 	time.sleep(0.5)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
-	 
-def switch_interactive_yes(tn,prompt):
-	# prompt = convert_cmd_ascii(prompt)
-	# #prompt_re = (prompt + r'.*').encode('ascii')
-	# tn.read_until(prompt,timeout=10)
-	# time.sleep(1)
 
-	answer = convert_cmd_ascii('y' + '\n')
+def switch_wait_enter_yes(tn,prompt):
+	prompt = convert_cmd_ascii(prompt)
+	#prompt_re = (prompt + r'.*').encode('ascii')
+	tn.read_until(prompt,timeout=30)
+	time.sleep(1)
+
+	answer = convert_cmd_ascii('y' )
 	tn.write(answer)
 	time.sleep(1)
+	 
+def switch_enter_yes(tn):
+	# prompt = convert_cmd_ascii(prompt)
+	# #prompt_re = (prompt + r'.*').encode('ascii')
+	# tn.read_until(prompt,timeout=60)
+	# time.sleep(1)
+
+	answer = convert_cmd_ascii('y')
+	tn.write(answer)
+	time.sleep(2)
 
 def switch_interactive_exec(tn,exec_cmd,prompt):
 	#relogin_if_needed(tn)
@@ -745,7 +755,8 @@ def switch_interactive_exec(tn,exec_cmd,prompt):
 	tn.read_until(prompt,timeout=10)
 	time.sleep(1)
 
-	answer = convert_cmd_ascii('y' + '\n')
+	answer = convert_cmd_ascii('y')
+	#answer = convert_cmd_ascii('y' + '\n')
 	tn.write(answer)
 	time.sleep(1)
 
@@ -959,8 +970,21 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		Info("This first time login to image not allowing blank password, password has been changed to <fortinet123>")
 	elif p == None:
 		Info("Not in login prompt, press enter a couple times to show login prompt")
+		tn.write(('\x03').encode('ascii'))
+		tn.write(('\x03').encode('ascii'))
+		tn.write(('\x03').encode('ascii'))
+		tn.write(('\x03').encode('ascii'))
+		time.sleep(1)
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
 		tn.write(('admin' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
