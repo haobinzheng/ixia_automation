@@ -84,6 +84,7 @@ def fsw_upgrade(*args,**kwargs):
     tprint(f"upgrade command = {cmd}")
     switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
     output = switch_read_console_output(dut,timeout = 60)
+    switch_interactive_yes(dut,prompt)
     dprint(output)
     for line in output: 
         if "Command fail" in line:
