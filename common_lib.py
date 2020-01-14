@@ -2097,7 +2097,15 @@ def sa_upgrade_448d(dut,dut_dir,**kwargs):
 
 	return False
 
-
+def sw_config_port_speed(dut,port,speed):
+	config = f"""
+	config switch physical-port
+	edit {port}
+	set speed {speed}
+	end
+	"""
+	config_cmds_lines(dut,config)
+	
 def sa_upgrade_548d(dut,dut_dir,**kwargs):
 	if "build" in kwargs:
 		build = int(kwargs['build'])

@@ -604,6 +604,8 @@ def switch_show_cmd(tn,cmd,**kwargs):
 			out_str_list.append(o_str)
 		except Exception as e:
 			pass
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
 	# tprint(dir(output))
 	# tprint(type(output))
 	#tprint(out_list)
@@ -721,10 +723,10 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 	tn.read_until(("# ").encode('ascii'),timeout=10)
 	 
 def switch_interactive_yes(tn,prompt):
-	prompt = convert_cmd_ascii(prompt)
-	#prompt_re = (prompt + r'.*').encode('ascii')
-	tn.read_until(prompt,timeout=10)
-	time.sleep(1)
+	# prompt = convert_cmd_ascii(prompt)
+	# #prompt_re = (prompt + r'.*').encode('ascii')
+	# tn.read_until(prompt,timeout=10)
+	# time.sleep(1)
 
 	answer = convert_cmd_ascii('y' + '\n')
 	tn.write(answer)
@@ -781,19 +783,19 @@ def switch_login(tn,*args,**kwargs):
 	#time.sleep(2)
 	#tn.write(('\x03').encode('ascii'))
 	#time.sleep(2)
-	tn.read_until(("login: ").encode('ascii'),timeout=10)
-	tn.write(('admin' + '\n').encode('ascii'))
-	tn.read_until(("Password: ").encode('ascii'),timeout=10)
-	tn.write(('' + '\n').encode('ascii'))
-	sleep(1)
-	tn.read_until(("# ").encode('ascii'),timeout=10)
+	# tn.read_until(("login: ").encode('ascii'),timeout=10)
+	# tn.write(('admin' + '\n').encode('ascii'))
+	# tn.read_until(("Password: ").encode('ascii'),timeout=10)
+	# tn.write(('' + '\n').encode('ascii'))
+	# sleep(1)
+	# tn.read_until(("# ").encode('ascii'),timeout=10)
 
-	tn.write(('' + '\n').encode('ascii'))
-	sleep(1)
-	tn.write(('' + '\n').encode('ascii'))
-	sleep(1)
-	tn.write(('' + '\n').encode('ascii'))
-	sleep(1)
+	# tn.write(('' + '\n').encode('ascii'))
+	# sleep(1)
+	# tn.write(('' + '\n').encode('ascii'))
+	# sleep(1)
+	# tn.write(('' + '\n').encode('ascii'))
+	# sleep(1)
 	if switch_find_login_prompt(tn) == True:
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
 		tn.write(('admin' + '\n').encode('ascii'))
@@ -913,10 +915,8 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 
 	#tprint("successful login\n")
 	tn.write(('\x03').encode('ascii'))
-	sleep(1)
 	tn.write(('\x03').encode('ascii'))
-	sleep(1)
-	 
+	tn.write(('\x03').encode('ascii'))
 	tn.write(('\x03').encode('ascii'))
 	time.sleep(1)
 
@@ -925,7 +925,7 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
-
+	time.sleep(1)
 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
 
@@ -1880,6 +1880,16 @@ def find_inactive_trunk_port(dut):
 
 	
 	#mclag_list = parse_mclag_list(result)
+def find_dut_model(dut):
+	result = collect_show_cmd(dut,"get system status",t=5)
+	dprint(result)
+	for line in result:
+		if "Version" in line:
+			image = line.split(":")[1]
+			matched = re.search(r'(.+)v.+',image)
+			if matched:
+				return matched.group(1)
+	return None
 
 def find_dut_image(dut):
 	result = collect_show_cmd(dut,"get system status",t=5)
@@ -2009,3 +2019,20 @@ def smooth_cli_line(line):
 		line = line.strip()
 	debug(f'new line = {line}')
 	return line
+
+def switch_factory_reset_relogin(dut_dir):
+	dut = dut_dir['telnet']
+	dut_com = dut_dir['comm'] 
+	dut_port = dut_dir['comm_port']
+
+	switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)") 
+	console_timer(300,msg="Wait for 5 min after reset factory default")
+	tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
+	dut = get_switch_telnet_connection_new(dut_com,dut_port)
+	dut_dir['telnet'] = dut
+
+def switch_factory_reset_nologin(dut_dir):
+	dut = dut_dir['telnet']
+	dut_com = dut_dir['comm'] 
+	dut_port = dut_dir['comm_port']
+	switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)") 

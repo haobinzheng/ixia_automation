@@ -10,7 +10,7 @@ Please make sure to execute the following procedures before running the test:
 	4)Make sure the have -e option at CLI to run sw1 and sw2 setup
 	5)Make sure to uncomment of lines under the <official run> marker 
 ===============================================================================================""" 
-DEBUG = False
+DEBUG = True
 REBOOT = False
 CLEAR_LINE = False
 TC1_RUNTIME = 100 # Test case #1 run time = TC!_RUNTIME * 10 sec for each round of test 

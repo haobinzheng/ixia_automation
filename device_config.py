@@ -5,6 +5,96 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 
+class Router_BGP():
+    def __init__(self, *args, **kwargs):
+        pass
+
+class FSW():
+    def __init__(self, *args,**kwargs):
+        dut_dir = args[0]
+        self.comm = dut_dir['comm']  
+        self.comm_port = dut_dir['comm_port']  
+        self.name = dut_dir['name']  
+        self.location = dut_dir['location'] 
+        self.console = dut_dir['telnet']  
+        self.cfg_file = dut_dir['cfg'] 
+        self.mgmt_ip = dut_dir['mgmt_ip'] 
+        self.mgmt_mask = dut_dir['mgmt_mask']  
+        self.loop0_ip = dut_dir['loop0_ip']  
+        self.vlan1_ip = dut_dir['vlan1_ip'] 
+        self.vlan1_subnet = dut_dir['vlan1_subnet']  
+        self.vlan1_mask = dut_dir['vlan1_mask'] 
+        self.split_ports = dut_dir['split_ports'] 
+        self.ports_40g = dut_dir['40g_ports']
+
+
+def update_data_loop(self):
+      if len(self.receive_queue) > 0:
+         updated_data = self.receive_queue.pop(0)
+         if updated_data[0][0] == "Restart":
+            print ("Displayer: scanner just restarted real-time scaning,I am now clearing display queue, but scroll display is still going on without any change.....")
+            self.display_queue = []  # ininitiaze display queue only, but will not change the display object
+            return
+         elif updated_data[0][0] == "Done":
+            print ("Displayer: scanner has done one round of scanning, I am now displaying all the scanned stocks...")
+            try:  # This check is actually redundant
+               if self.display_queue[-1][0] == "Done" or self.display_queue[-1][0] == "Restart":
+                  self.display_queue.pop()
+            except Exception as e:
+               print ("Displayer: display queue is empty")
+            print ("Displayer: scanner is done with scanning, now my display queue = {}".format(self.display_queue))
+            #self.market_one = MultiProc_StockMarket(self.display_queue, self.order)
+            self.market_one.load_market(self.display_queue)
+         else:
+            print("Displayer: popping one stock information from top of the receiving queue and dislay: {}".format(updated_data))
+            #self.market_one = MultiProc_StockMarket(updated_data, self.order)
+            self.market_one.load_market(updated_data)
+
+def fsw_upgrade(*args,**kwargs):
+    build = int(kwargs['build'])
+    dut_dict = kwargs['dut_dict']
+    dut_name = dut_dict['name']
+    dut = dut_dict['telnet']
+    
+    tprint(f"=================== Upgrading FSW {dut_name} to build # {build} =================")
+    model = find_dut_model(dut)
+    model = model.strip()
+    if model == "FSW_448D_FPOE":
+        image_name = f"FSW_448D_FPOE-v6-build0{build}-FORTINET.out"
+    elif model == "FSW_448D_POE":
+        image_name =  f"FSW_448D_POE-v6-build0{build}-FORTINET.out" 
+    elif model == "FSW_448D-v6":
+        image_name = f"FSW_448D-v6-build0{build}-FORTINET.out"
+    elif model == "FortiSwitch-3032E":
+        image_name = f"FSW_3032E-v6-build0{build}-FORTINET.out"
+    elif model == "FortiSwitch-3032D":
+        image_name = f"FSW_3032D-v6-build0{build}-FORTINET.out"
+    elif model == "FortiSwitch-1048E":
+        image_name = f"FSW_1048E-v6-build0{build}-FORTINET.out"
+    elif model == "FortiSwitch-1048D":
+        image_name = f"FSW_1048D-v6-build0{build}-FORTINET.out"
+    elif model == "FortiSwitch-1024D":
+        image_name = f"FSW_1024D-v6-build0{build}-FORTINET.out"
+    else:
+        tprint("!!!!!!!!! Not able to identify switch platform, upgrade fails")
+        return False
+
+    dprint(f"image name = {image_name}")
+    cmd = f"execute restore image tftp {image} 10.105.19.19"
+    tprint(f"upgrade command = {cmd}")
+    switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
+    output = switch_read_console_output(dut,timeout = 60)
+    dprint(output)
+    for line in output: 
+        if "Command fail" in line:
+            dprint(f"upgrade with image {image} failed for {dut_name}")
+            return False
+
+        elif "Check image OK" in line:
+            Info(f"At {dut_name} image {image} is downloaded and checked OK,upgrade should be fine")
+            return True
+
+    return False
 
 def sw_init_config(*args, **kwargs):
     dut_dir = kwargs['device']
@@ -16,29 +106,35 @@ def sw_init_config(*args, **kwargs):
     mgmt_ip = dut_dir['mgmt_ip']  
     mgmt_mask = dut_dir['mgmt_mask']  
     loop0_ip = dut_dir['loop0_ip']   
-    vlan_ip = dut_dir['vlan1_ip'] 
+    vlan1_ip = dut_dir['vlan1_ip']
+    vlan1_subnet = dut_dir['vlan1_subnet']
     vlan1_mask = dut_dir['vlan1_mask']  
     split_ports = dut_dir['split_ports'] 
-    port_40g = [dut_dir['40g_ports'] 
+    ports_40g = dut_dir['40g_ports'] 
 
+    config_global_hostname = f"""
+    config system global
+    set hostname {dut_name}
+    end
+    """
 
-	config_mgmt_mode = f"""
-	config system interface
-    edit mgmt
-	set mode static
-	end
-	config system interface
-    	edit "mgmt"
-		set mode static
+    config_cmds_lines(dut,config_global_hostname)
+
+    config_mgmt_mode = f"""
+    config system interface
+    config system interface
+    	edit mgmt
+    	set mode static
     	end
-	config system interface
+    config system interface
     	edit "mgmt"
     	set mode static
     	end
-	"""
+    """
+    config_cmds_lines(dut,config_mgmt_mode)
 
-	config_sys_interface = f"""
-	config system interface
+    config_sys_interface = f"""
+    config system interface
     edit mgmt
     	set mode static
         set ip {mgmt_ip} {mgmt_mask}
@@ -51,16 +147,70 @@ def sw_init_config(*args, **kwargs):
         set interface internal
     next
     edit "loop0"
-        set ip {loop0_ip} {loop0_mask}
+        set ip {loop0_ip} 255.255.255.255
         set allowaccess ping https http ssh telnet
         set type loopback
     next
-	end
-	"""
+    end
+    """
+    config_cmds_lines(dut,config_sys_interface)
+
+
+    static_route = f"""
+    config router static
+    edit 1
+        set device "mgmt"
+        set dst 0.0.0.0 0.0.0.0
+        set gateway 10.105.241.254
+    next
+    end
+    """
+    config_cmds_lines(dut,static_route)
+
+    for port in ports_40g:
+        sw_config_port_speed(dut,port,"40000cr4")
+
+    ospf_config = f"""
+    config router ospf
+    set router-id {loop0_ip}
+        config area
+            edit 0.0.0.0
+            next
+        end
+        config ospf-interface
+            edit "1"
+                set interface "vlan1"
+            next
+        end
+        config network
+            edit 1
+                set area 0.0.0.0
+                set prefix {vlan1_subnet} 255.255.255.0
+            next
+        end
+        config redistribute "connected"
+            set status enable
+        end
+    end
+    """
+    config_cmds_lines(dut,ospf_config)
+
     for port in split_ports:
         config_split_ports = f"""
         config switch phy-mode
         set {port}-phy-mode 4x10G
         end
         """
+        config_cmds_lines(dut,config_split_ports)
         switch_interactive_yes(dut,"Do you want to continue? (y/n)")
+        console_timer(200,msg="switch is being rebooted after configuring split port, wait for 200s")
+        try:
+            relogin_if_needed(dut)
+        except Exception as e:
+            debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
+            relogin_if_needed(dut)
+
+    switch_show_cmd(dut,"show system interface")
+    switch_show_cmd(dut,"get switch module summary")
+    switch_show_cmd(dut,"show router ospf")
+    switch_show_cmd(dut,"show router static")
