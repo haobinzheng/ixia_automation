@@ -80,18 +80,18 @@ def fsw_upgrade(*args,**kwargs):
         return False
 
     dprint(f"image name = {image_name}")
-    cmd = f"execute restore image tftp {image} 10.105.19.19"
+    cmd = f"execute restore image tftp {image_name} 10.105.19.19"
     tprint(f"upgrade command = {cmd}")
     switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
     output = switch_read_console_output(dut,timeout = 60)
     dprint(output)
     for line in output: 
         if "Command fail" in line:
-            dprint(f"upgrade with image {image} failed for {dut_name}")
+            dprint(f"upgrade with image {image_name} failed for {dut_name}")
             return False
 
         elif "Check image OK" in line:
-            Info(f"At {dut_name} image {image} is downloaded and checked OK,upgrade should be fine")
+            Info(f"At {dut_name} image {image_name} is downloaded and checked OK,upgrade should be fine")
             return True
 
     return False
