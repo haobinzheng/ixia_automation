@@ -266,6 +266,48 @@ def get_switch_port_summary(dut):
 			pass
 	return port_list
 
+def get_router_info_ospf_neighbor_template(dut):
+	cmd = "get router info ospf neighbor all"
+	head1 = "Neighbor"
+	head2 = "State"
+	line1 = "2-Way"
+	line2 = "Full"
+	return get_table_with_heading(dut,cmd,head1,head2,line1,line2)
+
+def get_table_with_heading(dut,cmd,head_id1,head_id2,*args):
+	result = collect_show_cmd(dut,cmd)
+	table_list = []
+	for line in result:
+		if head_id1 in line and head_id2 in line:
+			heads = re.split('\\s+',line)
+			continue
+		for item in args:
+			if item in line:
+				port_line_dict = {}
+				items = re.split('\\s+',line)
+				for k,v in zip(heads,items):
+					port_line_dict[k] = v
+
+				table_list.append(port_line_dict)
+				continue
+	return table_list
+
+def get_router_info_ospf_neighbor(dut):
+	result = collect_show_cmd(dut,"get router info ospf neighbor all")
+	neighbor_list = []
+	for line in result:
+		if "2-Way" in line or "Full" in line or "DR" in line or "Backup" in line or "DROther" in line:
+			items = re.split('\\s+',line)
+			neighbor_dict = {}
+			neighbor_dict["id"] = items[0]
+			neighbor_dict["pri"] = items[1]
+			neighbor_dict["state"] = items[2]
+			neighbor_dict["dead"] = items[3]
+			neighbor_dict['address']= items[4]
+			neighbor_dict["interface"]= items[5]
+			neighbor_list.append(neighbor_dict) 
+	return neighbor_list
+
 def get_switch_lldp_summary(dut):
 	result = collect_show_cmd(dut,"get switch lldp neighbors-summary")
 	lldp_list = []
@@ -2105,7 +2147,7 @@ def sw_config_port_speed(dut,port,speed):
 	end
 	"""
 	config_cmds_lines(dut,config)
-	
+
 def sa_upgrade_548d(dut,dut_dir,**kwargs):
 	if "build" in kwargs:
 		build = int(kwargs['build'])

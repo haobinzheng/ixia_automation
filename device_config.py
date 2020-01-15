@@ -5,28 +5,184 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 
-class Router_BGP():
-    def __init__(self, *args, **kwargs):
-        pass
 
-class FSW():
-    def __init__(self, *args,**kwargs):
-        dut_dir = args[0]
-        self.comm = dut_dir['comm']  
-        self.comm_port = dut_dir['comm_port']  
-        self.name = dut_dir['name']  
-        self.location = dut_dir['location'] 
-        self.console = dut_dir['telnet']  
-        self.cfg_file = dut_dir['cfg'] 
-        self.mgmt_ip = dut_dir['mgmt_ip'] 
-        self.mgmt_mask = dut_dir['mgmt_mask']  
-        self.loop0_ip = dut_dir['loop0_ip']  
-        self.vlan1_ip = dut_dir['vlan1_ip'] 
-        self.vlan1_subnet = dut_dir['vlan1_subnet']  
-        self.vlan1_mask = dut_dir['vlan1_mask'] 
-        self.split_ports = dut_dir['split_ports'] 
-        self.ports_40g = dut_dir['40g_ports']
+def bgp_testbed_init():
+    dut1_com = "10.105.241.144"
+    dut1_location = "Rack7-19"
+    dut1_port = 2071
+    dut1_name = "3032E-R7-19"
+    dut1_cfg = "bgp/3032E-R7-19.cfg"
+    dut1_cfg_basic = "3032E_R7_19_basic.cfg"
+    dut1_mgmt_ip = "10.105.240.145"
+    dut1_mgmt_mask = "255.255.254.0"
+    dut1_loop0_ip = "1.1.1.1"
+    dut1_vlan1_ip = "10.1.1.1"
+    dut1_vlan1_subnet = "10.1.1.0"
+    dut1_vlan1_mask = "255.255.255.0"
+    dut1_split_ports = ["port2"]
+    dut1_40g_ports = ["port9","port19"]
 
+    dut2_com = "10.105.241.44"
+    dut2_location = "Rack7-40"
+    dut2_port = 2066
+    dut2_name = "3032D-R7-40"
+    dut2_cfg = "bgp/3032D-R7-40.cfg"
+    dut2_cfg_basic = "3032D_R7_40_basic.cfg"
+    dut2_mgmt_ip = "10.105.241.40"
+    dut2_mgmt_mask = "255.255.254.0"
+    dut2_loop0_ip = "2.2.2.2"
+    dut2_vlan1_ip = "10.1.1.2"
+    dut2_vlan1_subnet = "10.1.1.0"
+    dut2_vlan1_mask = "255.255.255.0"
+    dut2_split_ports = ["port5"]
+    dut2_40g_ports = ["port9","port13"]
+
+    dut3_com = "10.105.240.44"
+    dut3_location = "Rack4-41"
+    dut3_port = 2090
+    dut3_name = "1048E-R4-41"
+    dut3_cfg = "bgp/1048E-R4-41.cfg"
+    dut3_cfg_basic = "1048E_R4_41_basic.cfg"
+    dut3_mgmt_ip = "10.105.240.41"
+    dut3_mgmt_mask = "255.255.254.0"
+    dut3_loop0_ip = "3.3.3.3"
+    dut3_vlan1_ip = "10.1.1.3"
+    dut3_vlan1_subnet = "10.1.1.0"
+    dut3_vlan1_mask = "255.255.255.0"
+    dut3_split_ports = []
+    dut3_40g_ports = []
+
+    dut4_com = "10.105.240.44"
+    dut4_location = "Rack4-40"
+    dut4_port = 2007
+    dut4_name = "1048D-R4-40"
+    dut4_cfg = "bgp/1048D-R4-40.cfg"
+    dut4_cfg_basic = "1048D_R4_40_basic.cfg"
+    dut4_mgmt_ip = "10.105.240.40"
+    dut4_mgmt_mask = "255.255.254.0"
+    dut4_loop0_ip = "4.4.4.4"
+    dut4_vlan1_ip = "10.1.1.4"
+    dut4_vlan1_subnet = "10.1.1.0"
+    dut4_vlan1_mask = "255.255.255.0"
+    dut4_split_ports = []
+    dut4_40g_ports = []
+
+    dut5_com = "10.105.240.144"
+    dut5_location = "Rack5-38"
+    dut5_port = 2068
+    dut5_name = "1024D-R5-38"
+    dut5_cfg = "bgp/1024D-R5-38.cfg"
+    dut5_cfg_basic = "1024D_R5_38_basic.cfg"
+    dut5_mgmt_ip = "10.105.240.138"
+    dut5_mgmt_mask = "255.255.254.0"
+    dut5_loop0_ip = "5.5.5.5"
+    dut5_vlan1_ip = "10.1.1.5"
+    dut5_vlan1_subnet = "10.1.1.0"
+    dut5_vlan1_mask = "255.255.255.0"
+    dut5_split_ports = []
+    dut5_40g_ports = []
+
+
+    dut1_dir = {}
+    dut2_dir = {}
+    dut3_dir = {} 
+    dut4_dir = {}
+    dut5_dir = {}
+
+    dut_dir_list = []
+    dut_list = []
+
+    dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+    dut1_dir['comm'] = dut1_com
+    dut1_dir['comm_port'] = dut1_port
+    dut1_dir['name'] = dut1_name
+    dut1_dir['location'] = dut1_location
+    dut1_dir['telnet'] = dut1
+    dut1_dir['cfg'] = dut1_cfg
+    dut1_dir['mgmt_ip'] = dut1_mgmt_ip
+    dut1_dir['mgmt_mask']= dut1_mgmt_mask  
+    dut1_dir['loop0_ip']= dut1_loop0_ip  
+    dut1_dir['vlan1_ip']= dut1_vlan1_ip  
+    dut1_dir['vlan1_subnet'] = dut1_vlan1_subnet
+    dut1_dir['vlan1_mask']= dut1_vlan1_mask  
+    dut1_dir['split_ports']= dut1_split_ports  
+    dut1_dir['40g_ports']= dut1_40g_ports  
+    dut_dir_list.append(dut1_dir)
+    dut_list.append(dut1)
+     
+    dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+    dut2_dir['comm'] = dut2_com
+    dut2_dir['comm_port'] = dut2_port
+    dut2_dir['name'] = dut2_name
+    dut2_dir['location'] = dut2_location
+    dut2_dir['telnet'] = dut2
+    dut2_dir['cfg'] = dut2_cfg
+    dut2_dir['mgmt_ip'] = dut2_mgmt_ip
+    dut2_dir['mgmt_mask']= dut2_mgmt_mask  
+    dut2_dir['loop0_ip']= dut2_loop0_ip  
+    dut2_dir['vlan1_ip']= dut2_vlan1_ip  
+    dut2_dir['vlan1_subnet'] = dut2_vlan1_subnet
+    dut2_dir['vlan1_mask']= dut2_vlan1_mask  
+    dut2_dir['split_ports']= dut2_split_ports  
+    dut2_dir['40g_ports']= dut2_40g_ports 
+    dut_dir_list.append(dut2_dir)
+    dut_list.append(dut2)
+
+    dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+    dut3_dir['comm'] = dut3_com
+    dut3_dir['comm_port'] = dut3_port
+    dut3_dir['name'] = dut3_name
+    dut3_dir['location'] = dut3_location
+    dut3_dir['telnet'] = dut3
+    dut3_dir['cfg'] = dut3_cfg
+    dut3_dir['mgmt_ip'] = dut3_mgmt_ip
+    dut3_dir['mgmt_mask']= dut3_mgmt_mask  
+    dut3_dir['loop0_ip']= dut3_loop0_ip  
+    dut3_dir['vlan1_ip']= dut3_vlan1_ip  
+    dut3_dir['vlan1_subnet'] = dut3_vlan1_subnet
+    dut3_dir['vlan1_mask']= dut3_vlan1_mask  
+    dut3_dir['split_ports']= dut3_split_ports  
+    dut3_dir['40g_ports']= dut3_40g_ports 
+    dut_dir_list.append(dut3_dir)
+    dut_list.append(dut3)
+
+    dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+    dut4_dir['comm'] = dut4_com
+    dut4_dir['comm_port'] = dut4_port
+    dut4_dir['name'] = dut4_name
+    dut4_dir['location'] = dut4_location
+    dut4_dir['telnet'] = dut4
+    dut4_dir['cfg'] = dut4_cfg
+    dut4_dir['mgmt_ip'] = dut4_mgmt_ip
+    dut4_dir['mgmt_mask']= dut4_mgmt_mask  
+    dut4_dir['loop0_ip']= dut4_loop0_ip  
+    dut4_dir['vlan1_ip']= dut4_vlan1_ip  
+    dut4_dir['vlan1_subnet'] = dut4_vlan1_subnet
+    dut4_dir['vlan1_mask']= dut4_vlan1_mask  
+    dut4_dir['split_ports']= dut4_split_ports  
+    dut4_dir['40g_ports']= dut4_40g_ports 
+    dut_dir_list.append(dut4_dir)
+    dut_list.append(dut4)
+
+    dut5 = get_switch_telnet_connection_new(dut5_com,dut5_port)
+    dut5_dir['comm'] = dut5_com
+    dut5_dir['comm_port'] = dut5_port
+    dut5_dir['name'] = dut5_name
+    dut5_dir['location'] = dut5_location
+    dut5_dir['telnet'] = dut5
+    dut5_dir['cfg'] = dut5_cfg
+    dut5_dir['mgmt_ip'] = dut5_mgmt_ip
+    dut5_dir['mgmt_mask']= dut5_mgmt_mask  
+    dut5_dir['loop0_ip']= dut5_loop0_ip  
+    dut5_dir['vlan1_ip']= dut5_vlan1_ip  
+    dut5_dir['vlan1_subnet'] = dut5_vlan1_subnet
+    dut5_dir['vlan1_mask']= dut5_vlan1_mask  
+    dut5_dir['split_ports']= dut5_split_ports  
+    dut5_dir['40g_ports']= dut5_40g_ports 
+    dut_dir_list.append(dut5_dir) 
+    dut_list.append(dut5)
+
+    return dut_dir_list
 
 def update_data_loop(self):
       if len(self.receive_queue) > 0:
@@ -66,15 +222,30 @@ def fsw_upgrade(*args,**kwargs):
     elif model == "FSW_448D-v6":
         image_name = f"FSW_448D-v6-build0{build}-FORTINET.out"
     elif model == "FortiSwitch-3032E":
-        image_name = f"FSW_3032E-v6-build0{build}-FORTINET.out"
+        if build == -1:
+            image_name = "fs3e32.deb"
+        else:
+            image_name = f"FSW_3032E-v6-build0{build}-FORTINET.out"
     elif model == "FortiSwitch-3032D":
-        image_name = f"FSW_3032D-v6-build0{build}-FORTINET.out"
+        if build == -1:
+            image_name = "fs3d32.deb"
+        else:
+            image_name = f"FSW_3032D-v6-build0{build}-FORTINET.out"
     elif model == "FortiSwitch-1048E":
-        image_name = f"FSW_1048E-v6-build0{build}-FORTINET.out"
+        if build == -1:
+            image_name = "fs1e48.deb"
+        else:
+            image_name = f"FSW_1048E-v6-build0{build}-FORTINET.out"
     elif model == "FortiSwitch-1048D":
-        image_name = f"FSW_1048D-v6-build0{build}-FORTINET.out"
+        if build == -1:
+            image_name = "fs1d48.deb"
+        else:
+            image_name = f"FSW_1048D-v6-build0{build}-FORTINET.out"
     elif model == "FortiSwitch-1024D":
-        image_name = f"FSW_1024D-v6-build0{build}-FORTINET.out"
+        if build == -1:
+            image_name = "fs1d24.deb"
+        else:
+            image_name = f"FSW_1024D-v6-build0{build}-FORTINET.out"
     else:
         tprint("!!!!!!!!! Not able to identify switch platform, upgrade fails")
         return False
@@ -223,6 +394,15 @@ def sw_init_config(*args, **kwargs):
         except Exception as e:
             debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
             relogin_if_needed(dut)
+    i = 0
+    for port in split_ports:
+        i +=1 
+        config = f"""
+        edit {port}.{i}
+            set speed 10000sr
+            end 
+        """
+        config_cmds_lines(dut,config)
 
     switch_show_cmd(dut,"show system interface")
     switch_show_cmd(dut,"get switch module summary")
