@@ -19,6 +19,15 @@ from threading import Thread
 import subprocess
 import spur
 
+def ip_break_up(ip):
+	matched = re.search(r'([0-9]+\.[0-9]+\.[0-9]+)\.([0-9]+)',ip)
+	if matched:
+	  net = matched.group(1)
+	  host = matched.group(2)
+	  return net,host
+	return None, None
+
+
 def list_add(proc_list_all,proc_list):
 	for i in proc_list:
 		proc_list_all.append(i)
@@ -591,6 +600,10 @@ def switch_show_cmd(tn,cmd,**kwargs):
 		timeout = 2
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
 	sleep(timeout)
 	output = tn.read_very_eager()
 	#output = tn.read_until(("# ").encode('ascii'))
