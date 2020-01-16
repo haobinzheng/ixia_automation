@@ -40,6 +40,18 @@ class Router_OSPF:
         self.dut = self.switch.console
         self.neighbor_list = self.neighbor_discovery()
 
+    def show_neighbor(self):
+        switch_show_cmd(self.dut, "get router info ospf neighbor all")
+
+    def change_router_id(self,id):
+        ospf_config = f"""
+        config router ospf
+            set router-id {id}
+            end
+        end
+        """
+        config_cmds_lines(self.dut,ospf_config)
+
     def update_neighbors(self):
         self.neighbor_list = self.neighbor_discovery()
 
@@ -56,7 +68,7 @@ class Router_OSPF:
         for neighbor in self.neighbor_list:
             neighbor.show_details()
 
-    def add_network_entries(prefixes,masks):
+    def add_network_entries(self,prefixes,masks):
         i=0
         for prefix,mask in zip(prefixes,masks):
             i+=1 
@@ -174,6 +186,29 @@ class Router_BGP:
             """
             config_cmds_lines(dut,bgp_config)
 
+    def config_ebgp_mesh_direct(self):
+        tprint(f"============== Configurating eBGP mesh at {self.switch.name} ")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as {self.switch.ebgp_as}
+            set router-id {self.router_id }
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for switch in self.switch.neighbor_switch_list:
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {switch.vlan1_ip}
+                    set remote-as {switch.ebgp_as}
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
+
     def config_redistribute_connected(self):
         tprint(f"============== Redistrubte connected to BGP at {self.switch.name} ")
         switch = self.switch
@@ -265,8 +300,33 @@ class FortiSwitch:
         self.ports_40g = dut_dir['40g_ports']
         self.static_route = dut_dir['static_route']
         self.static_route_mask = dut_dir['static_route_mask']
+        self.ebgp_as = dut_dir['ebgp_as']
         self.router_ospf = Router_OSPF(self)
         self.router_bgp = Router_BGP(self)
+        self.lldp_neighbor_list = get_switch_lldp_summary(self.console)
+        self.neighbor_ip_list = []
+        self.neighbor_switch_list = []
+
+    def show_vlan_neighbors(self):
+        tprint(self.neighbor_ip_list)
+
+    def vlan_neighors(self,other_switches):
+        lldp_neighbors = self.lldp_neighbor_list
+        neighbor_ip_list = []
+        neighbor_switch_list = []
+        for neighbor in lldp_neighbors:
+            if neighbor["Status"]  == 'Up':
+                # print( neighbor["Device-name"])
+                # debug(f"lldp neighbor dict = {self.lldp_neighbor_list}")
+                for switch in other_switches:
+                    #print(f"switch.name = {switch.name}")
+                    if neighbor["Device-name"].strip() == switch.name:
+                        neighbor_ip_list.append(switch.vlan1_ip)
+                        neighbor_switch_list.append(switch)
+                        break
+        #print(neighbor_ip_list)
+        self.neighbor_ip_list= neighbor_ip_list
+        self.neighbor_switch_list = neighbor_switch_list
 
     def show_routing_table(self):
         switch_show_cmd(self.console,"get router info routing-table all ")
@@ -284,7 +344,6 @@ class FortiSwitch:
         tprint(f"   Split Ports  = {self.split_ports}")
         tprint(f"   40G Ports  = {self.ports_40g}")
         tprint("\n")
-
 
     def config_static_routes(self,num):
         for i in range(2,num+2):

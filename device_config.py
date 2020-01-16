@@ -121,6 +121,7 @@ def bgp_testbed_init():
     dut1_dir['40g_ports']= dut1_40g_ports
     dut1_dir['static_route'] = dut1_static_route_base 
     dut1_dir['static_route_mask'] = dut1_static_route_mask 
+    dut1_dir['ebgp_as']  = 65001
     
     dut_dir_list.append(dut1_dir)
     dut_list.append(dut1)
@@ -144,6 +145,7 @@ def bgp_testbed_init():
     dut2_dir['40g_ports']= dut2_40g_ports 
     dut2_dir['static_route'] = dut2_static_route_base 
     dut2_dir['static_route_mask'] = dut2_static_route_mask 
+    dut2_dir['ebgp_as']  = 65002
     dut_dir_list.append(dut2_dir)
     dut_list.append(dut2)
 
@@ -166,6 +168,7 @@ def bgp_testbed_init():
     dut3_dir['40g_ports']= dut3_40g_ports 
     dut3_dir['static_route'] = dut3_static_route_base 
     dut3_dir['static_route_mask'] = dut3_static_route_mask 
+    dut3_dir['ebgp_as']  = 65003
     dut_dir_list.append(dut3_dir)
     dut_list.append(dut3)
 
@@ -188,6 +191,7 @@ def bgp_testbed_init():
     dut4_dir['40g_ports']= dut4_40g_ports 
     dut4_dir['static_route'] = dut4_static_route_base 
     dut4_dir['static_route_mask'] = dut4_static_route_mask 
+    dut4_dir['ebgp_as']  = 65004
     dut_dir_list.append(dut4_dir)
     dut_list.append(dut4)
 
@@ -210,6 +214,7 @@ def bgp_testbed_init():
     dut5_dir['40g_ports']= dut5_40g_ports 
     dut5_dir['static_route'] = dut5_static_route_base 
     dut5_dir['static_route_mask'] = dut5_static_route_mask 
+    dut5_dir['ebgp_as']  = 65005
     dut_dir_list.append(dut5_dir) 
     dut_list.append(dut5)
 

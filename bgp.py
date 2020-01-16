@@ -250,6 +250,12 @@ if setup:
 		image = find_dut_image(dut)
 		tprint(f"============================ {dut_name} software image = {image}")
 		sw_init_config(device=dut_dir)
+
+	console_timer(30,msg="After intial configuration, show switch related information")
+	switches = [FortiSwitch(dut_dir) for dut_dir in dut_dir_list]
+	for switch in switches:
+			switch.router_ospf.show_ospf_neighbors()
+			switch.router_bgp.show_bgp_summary()
 		# Develop new codes starts from here
 		# stop_threads = False
 		# dut_cpu_memory(dut_dir_list,lambda: stop_threads)
@@ -328,9 +334,10 @@ if testcase == 4:
 
 if testcase == 5:
 	for switch in switches:
+		switch.router_ospf.change_router_id(switch.vlan1_2nd)
 		switch.router_ospf.disable_redistributed_connected()
 		switch.router_ospf.delete_network_entries()
-		switch.router_ospf.add_network_entries([self.switch.vlan1_2nd],['255.255.255.255'])
+		switch.router_ospf.add_network_entries([switch.vlan1_2nd,switch.vlan1_subnet],['255.255.255.255',switch.vlan1_mask])
 		switch.router_ospf.enable_redistributed_connected()
 	console_timer(10,msg="After changing ospf configuration, wait for 10 sec")
 	for switch in switches:
@@ -342,7 +349,19 @@ if testcase == 5:
 
 	console_timer(60,msg="After configuring iBGP sessions, wait for 60s")
 	for switch in switches:
+		switch.router_ospf.show_neighbor()
+		switch.router_ospf.show_ospf_neighbors()
 		switch.router_bgp.show_bgp_summary()
+
+if testcase == 6:
+	for switch in switches:
+		switch.vlan_neighors(switches)
+		switch.show_vlan_neighbors()
+		switch.router_bgp.config_ebgp_mesh_direct()
+	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+	for switch in switches:	
+		switch.router_bgp.show_bgp_summary()
+
 
 	 
 print("###################")
