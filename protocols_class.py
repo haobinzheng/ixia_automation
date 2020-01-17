@@ -303,7 +303,7 @@ class Router_BGP:
                 end
             end
             """
-            config_cmds_lines(dut,bgp_config)
+            config_cmds_lines(self.switch.console,bgp_config)
 
     def config_ibgp_mesh_loopback(self):
         tprint(f"============== Configurating iBGP at {self.switch.name} ")
@@ -480,7 +480,6 @@ class FortiSwitch:
 
     def relogin_after_factory(self):
         tprint('-------------------- re-login switch after factory rest-----------------------')
-     
         dut_com = self.dut_dir['comm'] 
         dut_port = self.dut_dir['comm_port']
         dut = get_switch_telnet_connection_new(dut_com,dut_port)
