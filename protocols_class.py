@@ -251,6 +251,11 @@ class Router_BGP:
     def show_protocol_states(self):
         self.show_config()
         self.show_bgp_summary()
+        self.show_bgp_network()
+
+    def show_bgp_network(self):
+        dut = self.switch.dut
+        switch_show_cmd(self.switch.console,"get router info bgp network")
 
     def get_neighbors_summary(self):
         bgp_neighor_list = get_router_bgp_summary(self.switch.console)
@@ -431,7 +436,8 @@ class FortiSwitch:
         self.name = dut_dir['name'] 
         self.label = dut_dir['label'] 
         self.location = dut_dir['location'] 
-        self.console = dut_dir['telnet']  
+        self.console = dut_dir['telnet'] 
+        self.dut = dut_dir['telnet']  
         self.cfg_file = dut_dir['cfg'] 
         self.mgmt_ip = dut_dir['mgmt_ip'] 
         self.mgmt_mask = dut_dir['mgmt_mask']  
@@ -513,7 +519,7 @@ class FortiSwitch:
             config_cmds_lines(self.console,config)
 
     def init_config(self):
-        dut = switch.dut
+        dut = self.dut
         config_global_hostname = f"""
         config system global
         set hostname {self.name}
@@ -522,6 +528,12 @@ class FortiSwitch:
 
         config_cmds_lines(dut,config_global_hostname)
 
+        config = f"""
+        config system console 
+        set output standard
+        end
+        """
+        config_cmds_lines(dut,config)
         config_mgmt_mode = f"""
         config system interface
         config system interface

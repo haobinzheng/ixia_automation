@@ -284,9 +284,18 @@ if upgrade_sa:
 switches = [FortiSwitch(dut_dir) for dut_dir in dut_dir_list]
 if testcase == 1 or test_all:
 	testcase = 1
-	description = "XXXXXXXXXXXXXXXXX"
-	print("===================== Test iBGP via loopbacks ===================")
+	description = "Test iBGP via loopbacks"
+	print_test_subject(testcase,description)
 	description 
+	for switch in switches:
+		switch.factory_reset_nologin()
+
+	console_timer(150,msg = "After factory reset, wait for 150 seconds")
+
+	for switch in switches:
+		switch.relogin_after_factory()
+		switch.init_config()
+
 	for switch in switches:
 		switch.show_switch_info()
 		switch.router_ospf.basic_config()
@@ -322,8 +331,8 @@ if testcase == 1 or test_all:
 
 if testcase == 2 or test_all:
 	testcase = 2
-	description = "XXXXXXXXXXXXXXXXX"
-	print("===================== Test BGP iBGP direct interface ===================")	
+	description = "iBGP SVI interface"
+	print_test_subject(testcase,description)
 	for switch in switches:
 		switch.show_switch_info()
 		switch.router_ospf.basic_config()
@@ -338,8 +347,8 @@ if testcase == 2 or test_all:
 	check_bgp_test_result(testcase,description,switches)
 if testcase == 3 or test_all:
 	testcase = 3
-	description = "XXXXXXXXXXXXXXXXX"
-	print("===================== Test BGP Redistribute connected ===================")	
+	description = "BGP Redistribute connected"
+	print_test_subject(testcase,description)
 	for switch in switches:
 		switch.config_sys_interface(10)
 
@@ -361,8 +370,9 @@ if testcase == 3 or test_all:
 
 if testcase == 4 or test_all:
 	testcase = 4
-	description = "XXXXXXXXXXXXXXXXX"
-	print("===================== Test BGP Redistribute static ===================")	
+	description = "BGP Redistribute static"
+	print_test_subject(testcase,description)
+	print("=====================  BGP Redistribute static ===================")	
 	for switch in switches:
 		switch.config_static_routes(10)
 
@@ -374,11 +384,14 @@ if testcase == 4 or test_all:
 	console_timer(10,msg="After redistributing static routes into BGP, wait for 10 sec")
 	for switch in switches:
 		switch.show_routing_table()
+
 	check_bgp_test_result(testcase,description,switches)
 
 if testcase == 5 or test_all:
 	testcase = 5
-	description = "XXXXXXXXXXXXXXXXX" 
+	description = "iBGP via second interface" 
+	print_test_subject(testcase,description)
+	
 	for switch in switches:
 		switch.router_ospf.change_router_id(switch.vlan1_2nd)
 		switch.router_ospf.disable_redistributed_connected()
@@ -402,7 +415,8 @@ if testcase == 5 or test_all:
 
 if testcase == 6 or test_all:
 	testcase = 6
-	description = "XXXXXXXXXXXXXXXXX"
+	description = "eBGP connection"
+	print_test_subject(testcase,description)
 	for switch in switches:
 		switch.vlan_neighors(switches)
 		switch.show_vlan_neighbors()
@@ -413,8 +427,9 @@ if testcase == 6 or test_all:
 
 if testcase == 7 or test_all:
 	testcase = 7
-	description = "XXXXXXXXXXXXXXXXX"
-	tprint("================= Redistrubuting ospf into BGP ===================")
+	description = "Redistrubuting ospf into BGP"
+	print_test_subject(testcase,description)
+	
 	# for switch in switches:
 	# 	switch.vlan_neighors(switches)
 	# 	switch.show_vlan_neighbors()
@@ -434,8 +449,8 @@ if testcase == 7 or test_all:
 
 if testcase == 8 or test_all:
 	testcase = 8
-	description = "XXXXXXXXXXXXXXXXX"
-	tprint("====================== Test BGP BFD neighbor =====================")
+	description = "BGP BFD neighbor"
+	 
 	for switch in switches:
 		switch.show_switch_info()
 		switch.router_ospf.basic_config()

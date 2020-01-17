@@ -730,7 +730,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 	else:
 		dut_prompt = find_dut_promtp(tn)
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
-	cmd = convert_cmd_ascii_n(cmd)
+	cmd = convert_cmd_ascii(cmd)
 	tn.write(cmd)
 	time.sleep(0.5)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
@@ -2043,6 +2043,9 @@ if __name__ == "__main__":
 	# result = switch_show_cmd(dut1,"get switch lldp neighbors-summary")
 	#tprint(result)
 	#tprint(result)
+
+def print_test_subject(testcase,description):
+	print(f"======================={testcase}: {description} =============================")
 
 def smooth_cli_line(line):
 	line = line.strip()
