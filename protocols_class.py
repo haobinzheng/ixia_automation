@@ -59,6 +59,10 @@ class Router_OSPF:
         self.neighbor_list = []
         #self.change_router_id(self.switch.loop0_ip)
 
+    def update_switch(self,switch):
+        self.switch = switch
+        self.dut = switch.console
+
     def basic_config(self):
         ospf_config = f"""
         config router ospf
@@ -244,6 +248,9 @@ class Router_BGP:
         self.ospf_neighbors_address = [n.address for n in self.switch.router_ospf.neighbor_list]
         self.router_id = self.switch.loop0_ip
         self.bgp_neighbors_objs = None
+
+    def update_switch(self,switch):
+        self.switch = switch
 
     def check_neighbor_status(self):
         self.get_neighbors_summary()
@@ -502,6 +509,8 @@ class FortiSwitch:
         self.dut_dir['telnet'] = dut
         self.console = dut
         self.dut = dut
+        self.router_ospf.update_switch(self)
+        self.router_bgp.update_switch(self)
 
     def show_switch_info(self):
         tprint("=====================================================================")
