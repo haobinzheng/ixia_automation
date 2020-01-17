@@ -15,6 +15,16 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 
+def switches_clean_up(switches):
+    for switch in switches:
+        switch.factory_reset_nologin()
+
+    console_timer(150,msg = "After factory reset, wait for 150 seconds")
+
+    for switch in switches:
+        switch.relogin_after_factory()
+        switch.init_config()
+
 def check_bgp_test_result(testcase,description,switches):
     result = "Passed"
     for switch in switches:

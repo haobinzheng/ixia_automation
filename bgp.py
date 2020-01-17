@@ -286,14 +286,7 @@ if testcase == 1 or test_all:
 	testcase = 1
 	description = "Test iBGP via loopbacks"
 	print_test_subject(testcase,description)
-	for switch in switches:
-		switch.factory_reset_nologin()
-
-	console_timer(150,msg = "After factory reset, wait for 150 seconds")
-
-	for switch in switches:
-		switch.relogin_after_factory()
-		switch.init_config()
+	switches_clean_up(switches)
 
 	for switch in switches:
 		switch.show_switch_info()
@@ -332,6 +325,7 @@ if testcase == 2 or test_all:
 	testcase = 2
 	description = "iBGP SVI interface"
 	print_test_subject(testcase,description)
+	switches_clean_up(switches)
 	for switch in switches:
 		switch.show_switch_info()
 		switch.router_ospf.basic_config()
@@ -348,6 +342,7 @@ if testcase == 3 or test_all:
 	testcase = 3
 	description = "BGP Redistribute connected"
 	print_test_subject(testcase,description)
+	switches_clean_up(switches)
 	for switch in switches:
 		switch.config_sys_interface(10)
 
@@ -371,6 +366,7 @@ if testcase == 4 or test_all:
 	testcase = 4
 	description = "BGP Redistribute static"
 	print_test_subject(testcase,description)
+	switches_clean_up(switches)
 	print("=====================  BGP Redistribute static ===================")	
 	for switch in switches:
 		switch.config_static_routes(10)
@@ -390,6 +386,7 @@ if testcase == 5 or test_all:
 	testcase = 5
 	description = "iBGP via second interface" 
 	print_test_subject(testcase,description)
+	switches_clean_up(switches)
 	
 	for switch in switches:
 		switch.router_ospf.change_router_id(switch.vlan1_2nd)
@@ -416,6 +413,7 @@ if testcase == 6 or test_all:
 	testcase = 6
 	description = "eBGP connection"
 	print_test_subject(testcase,description)
+	switches_clean_up(switches)
 	for switch in switches:
 		switch.vlan_neighors(switches)
 		switch.show_vlan_neighbors()
@@ -428,6 +426,7 @@ if testcase == 7 or test_all:
 	testcase = 7
 	description = "Redistrubuting ospf into BGP"
 	print_test_subject(testcase,description)
+	switches_clean_up(switches)
 	
 	# for switch in switches:
 	# 	switch.vlan_neighors(switches)
@@ -449,6 +448,8 @@ if testcase == 7 or test_all:
 if testcase == 8 or test_all:
 	testcase = 8
 	description = "BGP BFD neighbor"
+	print_test_subject(testcase,description)
+	switches_clean_up(switches)
 	 
 	for switch in switches:
 		switch.show_switch_info()
