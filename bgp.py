@@ -286,7 +286,6 @@ if testcase == 1 or test_all:
 	testcase = 1
 	description = "Test iBGP via loopbacks"
 	print_test_subject(testcase,description)
-	description 
 	for switch in switches:
 		switch.factory_reset_nologin()
 

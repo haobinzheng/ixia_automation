@@ -760,7 +760,7 @@ def switch_interactive_exec(tn,exec_cmd,prompt):
 	exec_cmd = exec_cmd + '\n'
 	exec_cmd = convert_cmd_ascii(exec_cmd)
 	tn.write(exec_cmd)
-	time.sleep(2)
+	time.sleep(1)
 
 	 
 	prompt = convert_cmd_ascii(prompt)
