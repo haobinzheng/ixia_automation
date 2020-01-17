@@ -509,8 +509,10 @@ class FortiSwitch:
         self.dut_dir['telnet'] = dut
         self.console = dut
         self.dut = dut
-        self.router_ospf.update_switch(self)
-        self.router_bgp.update_switch(self)
+        self.router_ospf = Router_OSPF(self)
+        self.router_bgp = Router_BGP(self)
+        # self.router_ospf.update_switch(self)
+        # self.router_bgp.update_switch(self)
 
     def show_switch_info(self):
         tprint("=====================================================================")
