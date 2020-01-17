@@ -174,6 +174,7 @@ if args.testcase:
 	tprint("** Test Case To Run: #{}".format(testcase))
 else:
 	test_all = True
+	testcase = 0
 	tprint("** All Test Case To Be Run:{}".format(test_all))
 if args.mac:
 	mac_input = args.mac
