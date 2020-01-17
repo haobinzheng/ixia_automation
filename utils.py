@@ -730,7 +730,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 	else:
 		dut_prompt = find_dut_prompt(tn)
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
-	cmd = convert_cmd_ascii(cmd)
+	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
 	time.sleep(0.5)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
