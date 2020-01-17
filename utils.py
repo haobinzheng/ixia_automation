@@ -2045,7 +2045,7 @@ if __name__ == "__main__":
 	#tprint(result)
 
 def print_test_subject(testcase,description):
-	print(f"======================={testcase}: {description} =============================")
+	print(f"======================= Testcase #{testcase}: {description} =============================")
 
 def smooth_cli_line(line):
 	line = line.strip()
