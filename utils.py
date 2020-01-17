@@ -728,7 +728,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 	if mode == "silent":
 		pass
 	else:
-		dut_prompt = find_dut_promtp(tn)
+		dut_prompt = find_dut_prompt(tn)
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
 	cmd = convert_cmd_ascii(cmd)
 	tn.write(cmd)
@@ -836,7 +836,7 @@ def switch_login(tn,*args,**kwargs):
 	switch_configure_cmd(tn,'end',mode="silent")
 	return tn
 
-def find_dut_promtp(tn):
+def find_dut_prompt(tn):
 	tn.write(('' + '\n').encode('ascii'))
 	output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
@@ -2002,7 +2002,7 @@ if __name__ == "__main__":
 
 
 	dut = get_switch_telnet_connection(dut1_com,dut1_port)
-	find_dut_promtp(dut)
+	find_dut_prompt(dut)
 	exit()
 	image = find_dut_image(dut)
 	print(image)
