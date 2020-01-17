@@ -173,8 +173,8 @@ if args.testcase:
 	testcase = args.testcase
 	tprint("** Test Case To Run: #{}".format(testcase))
 else:
-	testcase = "all"
-	tprint("** Test Case To Run:{}".format(testcase))
+	test_all = True
+	tprint("** All Test Case To Be Run:{}".format(test_all))
 if args.mac:
 	mac_input = args.mac
 	if "-" in mac_input:
@@ -281,26 +281,64 @@ if upgrade_sa:
 		tprint(f"============================ {dut_name} software image = {image} ============")
 
 switches = [FortiSwitch(dut_dir) for dut_dir in dut_dir_list]
-if testcase == 1:
+if testcase == 1 or test_all:
+	testcase = 1
+	description = "XXXXXXXXXXXXXXXXX"
+	print("===================== Test iBGP via loopbacks ===================")
+	description 
 	for switch in switches:
 		switch.show_switch_info()
-		switch.router_ospf.show_ospf_neighbors()
+		switch.router_ospf.basic_config()
+	console_timer(20,msg="After configuring ospf, wait for 20 sec")
+
+	for switch in switches:
+		switch.router_ospf.neighbor_discovery()
+		switch.router_bgp.update_ospf_neighbors()
 		switch.router_bgp.config_ibgp_mesh_loopback()
 
-	console_timer(60,msg="After configuring iBGP sessions, wait for 60s")
+	console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
 	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors()
 		switch.router_bgp.show_bgp_summary()
-if testcase == 2:
+
+	for switch in switches:
+		switch.router_bgp.config_ibgp_loopback_bfd('enable')
+
+	console_timer(20,msg="After configuring iBGP sessions via loopbacks, wait for 20s")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors()
+		switch.router_bgp.show_bgp_summary()
+
+	for switch in switches:
+		switch.router_bgp.config_ibgp_loopback_bfd('disable')
+
+	console_timer(20,msg="After configuring iBGP sessions via loopbacks, wait for 20s")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors()
+		switch.router_bgp.show_bgp_summary()
+
+	check_bgp_test_result(testcase,description,switches)
+
+if testcase == 2 or test_all:
+	testcase = 2
+	description = "XXXXXXXXXXXXXXXXX"
+	print("===================== Test BGP iBGP direct interface ===================")	
 	for switch in switches:
 		switch.show_switch_info()
-		switch.router_ospf.show_ospf_neighbors()
+		switch.router_ospf.basic_config()
+		switch.router_ospf.neighbor_discovery()
 		switch.router_bgp.config_ibgp_mesh_direct()
 
 	console_timer(60,msg="After configuring iBGP sessions, wait for 60s")
 	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors()
 		switch.router_bgp.show_bgp_summary()
-if testcase == 3:
-	
+
+	check_bgp_test_result(testcase,description,switches)
+if testcase == 3 or test_all:
+	testcase = 3
+	description = "XXXXXXXXXXXXXXXXX"
+	print("===================== Test BGP Redistribute connected ===================")	
 	for switch in switches:
 		switch.config_sys_interface(10)
 
@@ -318,8 +356,12 @@ if testcase == 3:
 
 	for switch in switches:
 		switch.show_routing_table()
+	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 4:
+if testcase == 4 or test_all:
+	testcase = 4
+	description = "XXXXXXXXXXXXXXXXX"
+	print("===================== Test BGP Redistribute static ===================")	
 	for switch in switches:
 		switch.config_static_routes(10)
 
@@ -331,8 +373,11 @@ if testcase == 4:
 	console_timer(10,msg="After redistributing static routes into BGP, wait for 10 sec")
 	for switch in switches:
 		switch.show_routing_table()
+	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 5:
+if testcase == 5 or test_all:
+	testcase = 5
+	description = "XXXXXXXXXXXXXXXXX" 
 	for switch in switches:
 		switch.router_ospf.change_router_id(switch.vlan1_2nd)
 		switch.router_ospf.disable_redistributed_connected()
@@ -352,8 +397,11 @@ if testcase == 5:
 		switch.router_ospf.show_neighbor()
 		switch.router_ospf.show_ospf_neighbors()
 		switch.router_bgp.show_bgp_summary()
+	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6:
+if testcase == 6 or test_all:
+	testcase = 6
+	description = "XXXXXXXXXXXXXXXXX"
 	for switch in switches:
 		switch.vlan_neighors(switches)
 		switch.show_vlan_neighbors()
@@ -362,8 +410,74 @@ if testcase == 6:
 	for switch in switches:	
 		switch.router_bgp.show_bgp_summary()
 
+if testcase == 7 or test_all:
+	testcase = 7
+	description = "XXXXXXXXXXXXXXXXX"
+	tprint("================= Redistrubuting ospf into BGP ===================")
+	# for switch in switches:
+	# 	switch.vlan_neighors(switches)
+	# 	switch.show_vlan_neighbors()
+	# 	switch.router_bgp.config_ebgp_mesh_direct()
+	# console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+	# for switch in switches:	
+	# 	switch.router_bgp.show_bgp_summary()
 
-	 
+	for switch in switches:
+		switch.config_sys_interface(10)
+		switch.router_ospf.announce_loopbacks(10)
+		switch.router_bgp.config_redistribute_ospf("enable")
+	console_timer(10,msg="After announcing loopbacks to BGP, wait for 10s")
+	for switch in switches:
+		switch.show_routing_table()
+	check_bgp_test_result(testcase,description,switches)
+
+if testcase == 8 or test_all:
+	testcase = 8
+	description = "XXXXXXXXXXXXXXXXX"
+	tprint("====================== Test BGP BFD neighbor =====================")
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.basic_config()
+	console_timer(20,msg="After configuring ospf, wait for 20 sec")
+
+	for switch in switches:
+		switch.router_ospf.neighbor_discovery()
+		switch.router_bgp.update_ospf_neighbors()
+		switch.router_bgp.config_ibgp_mesh_loopback()
+
+	console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+	for switch in switches:
+		switch.router_ospf.show_protocol_states()
+		switch.router_bgp.show_protocol_states()
+
+	for switch in switches:
+		switch.router_bgp.config_ibgp_loopback_bfd('enable')
+
+	console_timer(20,msg="After enabling BFD over iBGP sessions, wait for 20s")
+	for switch in switches:
+		switch.router_ospf.show_protocol_states()
+		switch.router_bgp.show_protocol_states()
+
+	for switch in switches:
+		switch.router_bgp.config_ibgp_loopback_bfd('disable')
+
+	console_timer(20,msg="After disabling BFD over iBGP sessions, wait for 20s")
+	for switch in switches:
+		switch.router_ospf.show_protocol_states()
+		switch.router_bgp.show_protocol_states()
+	check_bgp_test_result(testcase,description,switches)
+
+if testcase == 9 or test_all:
+	description = "XXXXXXXXXXXXXXXXX"
+	check_bgp_test_result(testcase,description,switches)
+	
+	# result = "Passed"
+	# for switch in switches:
+	# 	#switch.router_bgp.get_neighbors_summary()
+	# 	if not switch.router_bgp.check_neighbor_status():
+	# 		result = "Failed"
+	# tprint(f"====================== Test case {testcase} is {result} ==========")		 
+
 print("###################")
 tprint("Test run is PASSED")
 print("###################")

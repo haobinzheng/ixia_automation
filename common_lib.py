@@ -292,6 +292,38 @@ def get_table_with_heading(dut,cmd,head_id1,head_id2,*args):
 				continue
 	return table_list
 
+def get_router_bgp_summary(dut):
+# IPv4 Unicast Summary:
+# BGP router identifier 1.1.1.1, local AS number 65000 vrf-id 0
+# BGP table version 0
+# RIB entries 0, using 0 bytes of memory
+# Peers 4, using 83 KiB of memory
+
+# Neighbor        V         AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+# 2.2.2.2         4      65000      70      76        0    0    0 00:08:17            0
+# 3.3.3.3         4      65000      71      77        0    0    0 00:08:17            0
+# 4.4.4.4         4      65000      71      83        0    0    0 00:08:17            0
+# 5.5.5.5         4      65000      66      75        0    0    0 00:08:17            0
+
+# Total number of neighbors 4
+
+	result = collect_show_cmd(dut,"get router info bgp summary")
+	items_list = []
+	for line in result:
+		line = line.strip()
+		if "Neighbor" in line and "AS" in line and "MsgRcvd" in line:
+			heads = re.split('\\s+',line)
+		elif re.match(r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)',line):
+			port_line_dict = {}
+			items = re.split('\\s+',line)
+			for k,v in zip(heads,items):
+				port_line_dict[k] = v
+			items_list.append(port_line_dict)
+		else:
+			pass
+	#print(items_list)
+	return items_list
+
 def get_router_info_ospf_neighbor(dut):
 	result = collect_show_cmd(dut,"get router info ospf neighbor all")
 	neighbor_list = []

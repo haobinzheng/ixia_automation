@@ -220,27 +220,7 @@ def bgp_testbed_init():
 
     return dut_dir_list
 
-def update_data_loop(self):
-      if len(self.receive_queue) > 0:
-         updated_data = self.receive_queue.pop(0)
-         if updated_data[0][0] == "Restart":
-            print ("Displayer: scanner just restarted real-time scaning,I am now clearing display queue, but scroll display is still going on without any change.....")
-            self.display_queue = []  # ininitiaze display queue only, but will not change the display object
-            return
-         elif updated_data[0][0] == "Done":
-            print ("Displayer: scanner has done one round of scanning, I am now displaying all the scanned stocks...")
-            try:  # This check is actually redundant
-               if self.display_queue[-1][0] == "Done" or self.display_queue[-1][0] == "Restart":
-                  self.display_queue.pop()
-            except Exception as e:
-               print ("Displayer: display queue is empty")
-            print ("Displayer: scanner is done with scanning, now my display queue = {}".format(self.display_queue))
-            #self.market_one = MultiProc_StockMarket(self.display_queue, self.order)
-            self.market_one.load_market(self.display_queue)
-         else:
-            print("Displayer: popping one stock information from top of the receiving queue and dislay: {}".format(updated_data))
-            #self.market_one = MultiProc_StockMarket(updated_data, self.order)
-            self.market_one.load_market(updated_data)
+
 
 def fsw_upgrade(*args,**kwargs):
     build = int(kwargs['build'])
@@ -361,7 +341,7 @@ def sw_init_config(*args, **kwargs):
     	set mode static
         set ip {mgmt_ip} {mgmt_mask}
         set allowaccess ping https http ssh snmp telnet radius-acct
-    next
+        next
     edit vlan1
         set ip {vlan1_ip} {vlan1_mask}
         set allowaccess ping https ssh telnet
@@ -372,12 +352,14 @@ def sw_init_config(*args, **kwargs):
             edit 1
                 set ip {vlan1_2nd} 255.255.255.255
                 set allowaccess ping https ssh telnet
-    next
+            next
+            end
+        next
     edit "loop0"
         set ip {loop0_ip} 255.255.255.255
         set allowaccess ping https http ssh telnet
         set type loopback
-    next
+        next
     end
     """
     config_cmds_lines(dut,config_sys_interface)
@@ -397,36 +379,36 @@ def sw_init_config(*args, **kwargs):
     for port in ports_40g:
         sw_config_port_speed(dut,port,"40000cr4")
 
-    ospf_config = f"""
-    config router ospf
-    set router-id {loop0_ip}
-        config area
-            edit 0.0.0.0
-            next
-        end
-        config ospf-interface
-            edit "1"
-                set interface "vlan1"
-            next
-        end
-        config network
-            edit 1
-                set area 0.0.0.0
-                set prefix {vlan1_subnet} 255.255.255.0
-            next
-        end
-        config network
-            edit 2
-                set area 0.0.0.0
-                set prefix {loop0_ip} 255.255.255.255
-            next
-        end
-        config redistribute "connected"
-            set status enable
-        end
-    end
-    """
-    config_cmds_lines(dut,ospf_config)
+    # ospf_config = f"""
+    # config router ospf
+    # set router-id {loop0_ip}
+    #     config area
+    #         edit 0.0.0.0
+    #         next
+    #     end
+    #     config ospf-interface
+    #         edit "1"
+    #             set interface "vlan1"
+    #         next
+    #     end
+    #     config network
+    #         edit 1
+    #             set area 0.0.0.0
+    #             set prefix {vlan1_subnet} 255.255.255.0
+    #         next
+    #     end
+    #     config network
+    #         edit 2
+    #             set area 0.0.0.0
+    #             set prefix {loop0_ip} 255.255.255.255
+    #         next
+    #     end
+    #     config redistribute "connected"
+    #         set status enable
+    #     end
+    # end
+    # """
+    # config_cmds_lines(dut,ospf_config)
 
     for port in split_ports:
         config_split_ports = f"""
