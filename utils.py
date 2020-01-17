@@ -979,6 +979,9 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 	elif p == 'shell':
 		Info("Login without password")
+		#prevent enter a prompt that is in a config mode
+		tn.write(('end' + '\n').encode('ascii'))
+		tn.write(('end' + '\n').encode('ascii'))
 	elif p == 'new':
 		Info("This first time login to image not allowing blank password, password has been changed to <fortinet123>")
 	elif p == None:
