@@ -321,6 +321,12 @@ def sw_init_config(*args, **kwargs):
     """
 
     config_cmds_lines(dut,config_global_hostname)
+    config = f"""
+        config system console 
+        set output standard
+        end
+        """
+    config_cmds_lines(dut,config)
 
     config_mgmt_mode = f"""
     config system interface
