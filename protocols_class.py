@@ -491,6 +491,7 @@ class FortiSwitch:
         dut = get_switch_telnet_connection_new(dut_com,dut_port)
         self.dut_dir['telnet'] = dut
         self.console = dut
+        self.dut = dut
 
     def show_switch_info(self):
         tprint("=====================================================================")
