@@ -171,6 +171,7 @@ else:
 	tprint("** Test iterate numbers = {}".format(Run_time))
 if args.testcase:
 	testcase = args.testcase
+	test_all = False
 	tprint("** Test Case To Run: #{}".format(testcase))
 else:
 	test_all = True
@@ -316,8 +317,7 @@ if testcase == 1 or test_all:
 
 	console_timer(20,msg="After configuring iBGP sessions via loopbacks, wait for 20s")
 	for switch in switches:
-		switch.router_ospf.show_ospf_neighbors()
-		switch.router_bgp.show_bgp_summary()
+		switch.show_routing()
 
 	check_bgp_test_result(testcase,description,switches)
 
@@ -329,13 +329,15 @@ if testcase == 2 or test_all:
 	for switch in switches:
 		switch.show_switch_info()
 		switch.router_ospf.basic_config()
+
+	console_timer(20,msg="After configuring basic OSPF, wait for 20s")
+	for switch in switches:
 		switch.router_ospf.neighbor_discovery()
 		switch.router_bgp.config_ibgp_mesh_direct()
 
 	console_timer(60,msg="After configuring iBGP sessions, wait for 60s")
 	for switch in switches:
-		switch.router_ospf.show_ospf_neighbors()
-		switch.router_bgp.show_bgp_summary()
+		switch.show_routing()
 
 	check_bgp_test_result(testcase,description,switches)
 if testcase == 3 or test_all:
@@ -343,12 +345,16 @@ if testcase == 3 or test_all:
 	description = "BGP Redistribute connected"
 	print_test_subject(testcase,description)
 	switches_clean_up(switches)
-	for switch in switches:
-		switch.config_sys_interface(10)
 
 	for switch in switches:
 		switch.show_switch_info()
-		switch.router_ospf.show_ospf_neighbors()
+		switch.router_ospf.basic_config()
+
+	for switch in switches:
+		switch.config_sys_interface(10)
+	
+
+	for switch in switches:
 		switch.router_bgp.config_ibgp_mesh_loopback()
 
 	console_timer(20,msg="After configuring iBGP sessions, wait for 20s")
@@ -359,7 +365,7 @@ if testcase == 3 or test_all:
 	console_timer(10,meg="After redistributing connected into BGP, wait for 10 sec")
 
 	for switch in switches:
-		switch.show_routing_table()
+		switch.show_routing()
 	check_bgp_test_result(testcase,description,switches)
 
 if testcase == 4 or test_all:
@@ -367,7 +373,10 @@ if testcase == 4 or test_all:
 	description = "BGP Redistribute static"
 	print_test_subject(testcase,description)
 	switches_clean_up(switches)
-	print("=====================  BGP Redistribute static ===================")	
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.basic_config()
+
 	for switch in switches:
 		switch.config_static_routes(10)
 
@@ -378,7 +387,7 @@ if testcase == 4 or test_all:
 
 	console_timer(10,msg="After redistributing static routes into BGP, wait for 10 sec")
 	for switch in switches:
-		switch.show_routing_table()
+		switch.show_routing()
 
 	check_bgp_test_result(testcase,description,switches)
 
@@ -404,9 +413,8 @@ if testcase == 5 or test_all:
 
 	console_timer(60,msg="After configuring iBGP sessions, wait for 60s")
 	for switch in switches:
-		switch.router_ospf.show_neighbor()
-		switch.router_ospf.show_ospf_neighbors()
-		switch.router_bgp.show_bgp_summary()
+		switch.show_routing()
+
 	check_bgp_test_result(testcase,description,switches)
 
 if testcase == 6 or test_all:
@@ -419,8 +427,8 @@ if testcase == 6 or test_all:
 		switch.show_vlan_neighbors()
 		switch.router_bgp.config_ebgp_mesh_direct()
 	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
-	for switch in switches:	
-		switch.router_bgp.show_bgp_summary()
+	for switch in switches:
+		switch.show_routing()
 
 if testcase == 7 or test_all:
 	testcase = 7
@@ -442,7 +450,7 @@ if testcase == 7 or test_all:
 		switch.router_bgp.config_redistribute_ospf("enable")
 	console_timer(10,msg="After announcing loopbacks to BGP, wait for 10s")
 	for switch in switches:
-		switch.show_routing_table()
+		switch.show_routing()
 	check_bgp_test_result(testcase,description,switches)
 
 if testcase == 8 or test_all:
@@ -479,8 +487,7 @@ if testcase == 8 or test_all:
 
 	console_timer(20,msg="After disabling BFD over iBGP sessions, wait for 20s")
 	for switch in switches:
-		switch.router_ospf.show_protocol_states()
-		switch.router_bgp.show_protocol_states()
+		switch.show_routing()
 	check_bgp_test_result(testcase,description,switches)
 
 if testcase == 9 or test_all:

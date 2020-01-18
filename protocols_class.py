@@ -31,7 +31,7 @@ def check_bgp_test_result(testcase,description,switches):
         #switch.router_bgp.get_neighbors_summary()
         if not switch.router_bgp.check_neighbor_status():
             result = "Failed"
-    tprint(f"====================== Test case #{testcase}:{description} has been {result} ==========")   
+    tprint(f"====================== Test case #{testcase}:{description} has been {result} ==========\n\n")   
 
 class Ospf_Neighbor:
     def __init__(self,*args,**kargs):
@@ -225,7 +225,7 @@ class BGP_Neighbor:
         self.up_timer = neighbor_dict["Up/Down"]
         try:
             self.prefix_recieved = int(neighbor_dict["State/PfxRcd"])
-        except exception as e:
+        except Exception as e:
             self.prefix_recieved = neighbor_dict["State/PfxRcd"]
 
     def show_details(self):
@@ -495,6 +495,11 @@ class FortiSwitch:
         self.neighbor_ip_list= neighbor_ip_list
         self.neighbor_switch_list = neighbor_switch_list
 
+    def show_routing(self):
+        self.show_routing_table()
+        self.router_ospf.show_protocol_states()
+        self.router_bgp.show_protocol_states()
+
     def show_routing_table(self):
         switch_show_cmd(self.console,"get router info routing-table all ")
 
@@ -598,7 +603,6 @@ class FortiSwitch:
         """
         config_cmds_lines(dut,config_sys_interface)
 
-
         static_route = f"""
         config router static
         edit 1
@@ -609,6 +613,36 @@ class FortiSwitch:
         end
         """
         config_cmds_lines(dut,static_route)
+
+        for port in self.ports_40g:
+            sw_config_port_speed(dut,port,"40000cr4")
+
+        for port in self.split_ports:
+            config_split_ports = f"""
+            config switch phy-mode
+            set {port}-phy-mode 4x10G
+            end
+            """
+            config_cmds_lines(dut,config_split_ports)
+            switch_enter_yes(dut)
+            console_timer(200,msg="switch is being rebooted after configuring split port, wait for 200s")
+            try:
+                relogin_if_needed(dut)
+            except Exception as e:
+                debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
+                relogin_if_needed(dut)
+
+        for port in self.split_ports:
+            i = 0
+            for i in range(4):
+                i +=1 
+                config = f"""
+                config switch physical-port
+                edit {port}.{i}
+                    set speed 10000sr
+                    end 
+                """
+                config_cmds_lines(dut,config)
 
     def config_sys_interface(self,num):
         dut = self.console

@@ -2075,4 +2075,6 @@ def switch_factory_reset_nologin(dut_dir):
 	dut = dut_dir['telnet']
 	dut_com = dut_dir['comm'] 
 	dut_port = dut_dir['comm_port']
+	dut_name = dut_dir['name']
+	tprint(f":::::::::: Factory resetting {dut_name} :::::::::::")
 	switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)") 

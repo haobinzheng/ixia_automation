@@ -305,7 +305,7 @@ if __name__ == "__main__":
     apiServerIp = '10.105.19.19'
     ixChassisIpList = ['10.105.241.234']
     
-    portList = [[ixChassisIpList[0], 4,15], [ixChassisIpList[0], 4, 16]]
+    portList = [[ixChassisIpList[0], 1,1], [ixChassisIpList[0], 1, 2],[ixChassisIpList[0], 1, 3],[ixChassisIpList[0], 1, 4],[ixChassisIpList[0], 1, 5],[ixChassisIpList[0], 1, 6]]
     testPlatform,Session,ixNetwork,vport_holder_list = ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList)
     if ixNetwork == False:
         print(f"Error connected to IXIA chassis {ixChassisIpList}")
