@@ -494,6 +494,24 @@ if testcase == 8 or test_all:
 if testcase == 9 or test_all:
 	description = "eBGP with traffic"
 	print_test_subject(testcase,description)
+
+	switches_clean_up(switches)
+
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.basic_config()
+	console_timer(20,msg="After configuring ospf, wait for 20 sec")
+
+	for switch in switches:
+		switch.router_ospf.neighbor_discovery()
+		switch.router_bgp.update_ospf_neighbors()
+		switch.router_bgp.config_ibgp_mesh_loopback()
+
+	console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors()
+		switch.router_bgp.show_bgp_summary()
+		
 	apiServerIp = '10.105.19.19'
 	ixChassisIpList = ['10.105.241.234']
 
@@ -503,7 +521,7 @@ if testcase == 9 or test_all:
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
 	myixia.topologies[0].add_ipv4(ip='10.1.1.101',gw='10.1.1.1',mask=24)
 	myixia.topologies[1].add_ipv4(ip='10.1.1.102',gw='10.1.1.1',mask=24)
-	myixia.topologies[2].add_ipv4(ip='10.1.1.103',gw='10.1.1.1',mask=24)
+	#myixia.topologies[2].add_ipv4(ip='10.1.1.103',gw='10.1.1.1',mask=24)
 	myixia.topologies[3].add_ipv4(ip='10.1.1.104',gw='10.1.1.1',mask=24)
 	myixia.topologies[4].add_ipv4(ip='10.1.1.105',gw='10.1.1.1',mask=24)
 	myixia.topologies[5].add_ipv4(ip='10.1.1.106',gw='10.1.1.1',mask=24)

@@ -211,7 +211,7 @@ def ixia_rest_create_topology(*args,**kwargs):
         ixNetwork.info(f'Creating Topology Group {topo_name}')
         topology = ixNetwork.Topology.add(Name=topo_name, Ports=vport)
         deviceGroup = topology.DeviceGroup.add(Name=dg_name, Multiplier=multi)
-        ethernet = deviceGroup.Ethernet.add(Name='Eth1')
+        ethernet = deviceGroup.Ethernet.add(Name=topo_name)
         ethernet.Mac.Increment(start_value=mac_start, step_value='00:00:00:00:00:01')
         #vlan can not be used in FSW, dont know why. need to investigate
         # ethernet1.EnableVlans.Single(True)
@@ -293,7 +293,7 @@ def ixia_rest_start_protocols(*args,**kwargs):
     else:
         wait_time = 90
     try_counter = 0
-    while try_counter < 3:
+    while try_counter < 2:
         try:
             ixNetwork.info('Verify protocol sessions\n')
             console_timer(wait_time,msg = f'wait for {wait_time} after protocol starts')

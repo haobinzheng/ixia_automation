@@ -311,6 +311,10 @@ def fsw_upgrade(*args,**kwargs):
             image_name = "fs1d24.deb"
         else:
             image_name = f"FSW_1024D-v6-build0{build}-FORTINET.out"
+    elif model == "FortiSwitch-548D-FPOE":
+            image_name = f"FSW_548D_FPOE-v6-build0{build}-FORTINET"
+    elif model == "FortiSwitch-548D":
+            image_name = f"FSW_548D-v6-build0{build}-FORTINET"
     else:
         tprint("!!!!!!!!! Not able to identify switch platform, upgrade fails")
         return False
