@@ -114,7 +114,7 @@ try:
     bgp1 = ipv4.BgpIpv4Peer.add(Name='Bgp1')
     bgp1.DutIp.Increment(start_value='10.1.1.1', step_value='0.0.0.0')
     bgp1.Type.Single('internal')
-    bgp1.Type.Single('external')
+    #bgp1.Type.Single('external')
     bgp1.LocalAs2Bytes.Increment(start_value=101, step_value=0)
     # bgp1.RemoteAs2Bytes.Increment(start_value=65000, step_value=0)
 
@@ -148,7 +148,7 @@ try:
     bgp2 = ipv4.BgpIpv4Peer.add(Name='Bgp2')
     bgp2.DutIp.Increment(start_value='10.1.1.2', step_value='0.0.0.0')
     bgp2.Type.Single('internal')
-    bgp2.Type.Single('external')
+    #bgp2.Type.Single('external')
     bgp2.LocalAs2Bytes.Increment(start_value=102, step_value=0)
     # bgp2.RemoteAs2Bytes.Increment(start_value=65000, step_value=0)
 

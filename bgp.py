@@ -25,6 +25,7 @@ from common_codes import *
 from cli_functions import *
 from device_config import *
 from protocols_class import *
+from ixia_restpy_lib import *
 
 #from clear_console import *
 #init()
@@ -491,9 +492,36 @@ if testcase == 8 or test_all:
 	check_bgp_test_result(testcase,description,switches)
 
 if testcase == 9 or test_all:
-	description = "XXXXXXXXXXXXXXXXX"
+	description = "eBGP with traffic"
+	print_test_subject(testcase,description)
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1"], [ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1"],\
+	[ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.30.1.1"],[ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1"], \
+	[ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1"],[ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1"]]
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+	myixia.topologies[0].add_ipv4(ip='10.1.1.101',gw='10.1.1.1',mask=24)
+	myixia.topologies[1].add_ipv4(ip='10.1.1.102',gw='10.1.1.1',mask=24)
+	myixia.topologies[2].add_ipv4(ip='10.1.1.103',gw='10.1.1.1',mask=24)
+	myixia.topologies[3].add_ipv4(ip='10.1.1.104',gw='10.1.1.1',mask=24)
+	myixia.topologies[4].add_ipv4(ip='10.1.1.105',gw='10.1.1.1',mask=24)
+	myixia.topologies[5].add_ipv4(ip='10.1.1.106',gw='10.1.1.1',mask=24)
+
+	myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=100)
+	myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=100)
+
+	myixia.start_protocol(wait=40)
+
+	myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="topo1_2_topo2",tracking_name="Tracking_1")
+	myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="topo2_2_topo1",tracking_name="Tracking_2")
+
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
 	check_bgp_test_result(testcase,description,switches)
-	
+
 	# result = "Passed"
 	# for switch in switches:
 	# 	#switch.router_bgp.get_neighbors_summary()
