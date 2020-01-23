@@ -476,24 +476,7 @@ def ixia_rest_create_bgp(*args,**kwargs):
     ipv4PrefixPool.PrefixLength.Single(32)
 
     ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
-    # bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add(NoOfASPathSegmentsPerRouteRange=6)
-    # testplatform.info(bgpiprouteproperty)
-    # enableaspathsegments = bgpiprouteproperty.EnableAsPathSegments
-    # testplatform.info(enableaspathsegments)
-    # enableaspathsegments.Single("True")
-
-    # bgpaspathsegmentlist = bgpiprouteproperty.BgpAsPathSegmentList.find()
-    # #testplatform.info(bgpaspathsegmentlist)
-    # enableaspathsegment = bgpaspathsegmentlist.EnableASPathSegment.Single("True")
     
-    # print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
-    # i = 0
-    # for seg in bgpaspathsegmentlist:
-    #     bgpasnumberlist = seg.BgpAsNumberList.find()
-    #     testplatform.info(bgpasnumberlist)
-
-    #     bgpasnumberlist.AsNumber.Single(65000+i)
-    #     i += 1 
 
 def ixia_rest_add_as_path(*args,**kwargs):
     ipv4PrefixPool = kwargs['pool']
@@ -514,16 +497,7 @@ def ixia_rest_add_as_path(*args,**kwargs):
         bgpasnumberlist.AsNumber.Single(as_start_num+i)
         i += 1 
 
-"""
-bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
-enableaspathsegments = bgpiprouteproperty.EnableAsPathSegments
-testplatform.info(enableaspathsegments)
-
-
-bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
-maxnoofaspathsegmentsperrouterange = bgpiprouteproperty.MaxNoOfASPathSegmentsPerRouteRange
-testplatform.info(maxnoofaspathsegmentsperrouterange)
-"""
+ 
 if __name__ == "__main__":
     apiServerIp = '10.105.19.19'
     ixChassisIpList = ['10.105.241.234']
