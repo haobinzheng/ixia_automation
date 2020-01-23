@@ -61,6 +61,7 @@ class IXIA_TOPOLOGY:
         bgp_type = kwargs['bgp_type']
         num = kwargs['num']
         self.bgp = ixia_rest_create_bgp(
+            platform = self.ixia.testPlatform,
             ixnet = self.ixia.ixNetwork,
             name = self.bgp_name,
             peer_ip = dut_ip,
@@ -448,6 +449,7 @@ def check_traffic(flow_stats_list):
 
 
 def ixia_rest_create_bgp(*args,**kwargs):
+    testplatform = kwargs['platform']
     bgp_name = kwargs['name']
     bgp_peer_ip = kwargs['peer_ip']
     bgp_type = kwargs['type']  #Either internal or external
@@ -473,12 +475,44 @@ def ixia_rest_create_bgp(*args,**kwargs):
     ipv4PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0.0.0.1')
     ipv4PrefixPool.PrefixLength.Single(32)
 
-    bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add(NoOfASPathSegmentsPerRouteRange=6)
-    enableaspathsegments = bgpiprouteproperty.EnableAsPathSegments
-    enableaspathsegments.Single("enable")
-    aspathperroute = bgpiprouteproperty.AsPathPerRoute
-    aspathperroute.Increment(start_value=65000, step_value=None)
-    #testplatform.info(enableaspathsegments)
+    ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
+    # bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add(NoOfASPathSegmentsPerRouteRange=6)
+    # testplatform.info(bgpiprouteproperty)
+    # enableaspathsegments = bgpiprouteproperty.EnableAsPathSegments
+    # testplatform.info(enableaspathsegments)
+    # enableaspathsegments.Single("True")
+
+    # bgpaspathsegmentlist = bgpiprouteproperty.BgpAsPathSegmentList.find()
+    # #testplatform.info(bgpaspathsegmentlist)
+    # enableaspathsegment = bgpaspathsegmentlist.EnableASPathSegment.Single("True")
+    
+    # print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+    # i = 0
+    # for seg in bgpaspathsegmentlist:
+    #     bgpasnumberlist = seg.BgpAsNumberList.find()
+    #     testplatform.info(bgpasnumberlist)
+
+    #     bgpasnumberlist.AsNumber.Single(65000+i)
+    #     i += 1 
+
+def ixia_rest_add_as_path(*args,**kwargs):
+    ipv4PrefixPool = kwargs['pool']
+    num_path = kwargs['num_path']
+    as_start_num = kwargs['as_base']
+
+    bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add(NoOfASPathSegmentsPerRouteRange=num_path)
+    bgpiprouteproperty.EnableAsPathSegments.Single("True")
+     
+
+    bgpaspathsegmentlist = bgpiprouteproperty.BgpAsPathSegmentList.find()
+    bgpaspathsegmentlist.EnableASPathSegment.Single("True")
+    
+    #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+    i = 0
+    for seg in bgpaspathsegmentlist:
+        bgpasnumberlist = seg.BgpAsNumberList.find()
+        bgpasnumberlist.AsNumber.Single(as_start_num+i)
+        i += 1 
 
 """
 bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
@@ -489,7 +523,7 @@ testplatform.info(enableaspathsegments)
 bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
 maxnoofaspathsegmentsperrouterange = bgpiprouteproperty.MaxNoOfASPathSegmentsPerRouteRange
 testplatform.info(maxnoofaspathsegmentsperrouterange)
-
+"""
 if __name__ == "__main__":
     apiServerIp = '10.105.19.19'
     ixChassisIpList = ['10.105.241.234']
