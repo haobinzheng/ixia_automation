@@ -6,6 +6,19 @@ from utils import *
 from ixnetwork_restpy.testplatform.testplatform import TestPlatform
 from ixnetwork_restpy.assistants.statistics.statviewassistant import StatViewAssistant
 
+"""
+bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
+enableaspathsegments = bgpiprouteproperty.EnableAsPathSegments
+testplatform.info(enableaspathsegments)
+
+
+bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
+maxnoofaspathsegmentsperrouterange = bgpiprouteproperty.MaxNoOfASPathSegmentsPerRouteRange
+testplatform.info(maxnoofaspathsegmentsperrouterange)
+
+
+"""
+
 class IXIA_TOPOLOGY:
     def __init__(self,*args,**kwargs):
         self.ixia = args[0]
@@ -16,6 +29,8 @@ class IXIA_TOPOLOGY:
         self.network = kwargs['network']
         self.bgp_as = kwargs['local_as']
         self.bgp_name = f"BGP_{self.name}"
+        self.ip,self.mask = seperate_ip_mask(kwargs['ip'])
+        self.gw= kwargs['gw']
         self.ethernet,self.device_group,self.topology = ixia_rest_create_topology(
         platform = self.ixia.testPlatform, 
         session = self.ixia.Session,
@@ -28,17 +43,17 @@ class IXIA_TOPOLOGY:
         )     
 
     def add_ipv4(self,*args,**kwargs):
-        ip = kwargs['ip']
-        gw = kwargs['gw']
-        mask = kwargs['mask']
+        # ip = kwargs['ip']
+        # gw = kwargs['gw']
+        # mask = kwargs['mask']
         self.ip_session = ixia_rest_create_ip(
         platform = self.ixia.testPlatform, 
         session = self.ixia.Session,
         ixnet = self.ixia.ixNetwork,
-        start_ip = ip,
-        gw_start_ip = gw,
+        start_ip = self.ip,
+        gw_start_ip = self.gw,
         ethernet = self.ethernet,
-        maskbits = mask,
+        maskbits = self.mask,
     )
 
     def add_bgp(self,*args,**kwargs):
@@ -72,7 +87,8 @@ class IXIA:
         topo_list = []
         for port in self.vport_holder_list:
             print(self.portList[i][3])
-            topo = IXIA_TOPOLOGY(self,port,name=f"Topology_{i+1}",dg_name=f"DG{i}",mac_start=self.portList[i][3],local_as = bgp_as,network=self.portList[i][4])
+            topo = IXIA_TOPOLOGY(self,port,name=f"Topology_{i+1}",dg_name=f"DG{i}",
+                mac_start=self.portList[i][3],local_as = self.portList[i][5],network=self.portList[i][4],ip=self.portList[i][6],gw=self.portList[i][7])
             topo_list.append(topo)
             i += 1
             bgp_as += 1 
@@ -291,7 +307,7 @@ def ixia_rest_start_protocols(*args,**kwargs):
     if "wait" in kwargs:
         wait_time = int(kwargs['wait'])
     else:
-        wait_time = 90
+        wait_time = 60
     try_counter = 0
     while try_counter < 2:
         try:
@@ -331,7 +347,7 @@ def ixia_rest_create_traffic(*args,**kwargs):
         # #       Therefore, ConfigElement is a list.
         ixNetwork.info('Configuring config elements')
         configElement = trafficItem.ConfigElement.find()[0]
-        configElement.FrameRate.update(Type='percentLineRate', Rate=50)
+        configElement.FrameRate.update(Type='percentLineRate', Rate=15)
         #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
         configElement.TransmissionControl.update(Type='continuous')
         configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
@@ -457,29 +473,71 @@ def ixia_rest_create_bgp(*args,**kwargs):
     ipv4PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0.0.0.1')
     ipv4PrefixPool.PrefixLength.Single(32)
 
+    bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add(NoOfASPathSegmentsPerRouteRange=6)
+    enableaspathsegments = bgpiprouteproperty.EnableAsPathSegments
+    enableaspathsegments.Single("enable")
+    aspathperroute = bgpiprouteproperty.AsPathPerRoute
+    aspathperroute.Increment(start_value=65000, step_value=None)
+    #testplatform.info(enableaspathsegments)
+
+"""
+bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
+enableaspathsegments = bgpiprouteproperty.EnableAsPathSegments
+testplatform.info(enableaspathsegments)
+
+
+bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
+maxnoofaspathsegmentsperrouterange = bgpiprouteproperty.MaxNoOfASPathSegmentsPerRouteRange
+testplatform.info(maxnoofaspathsegmentsperrouterange)
 
 if __name__ == "__main__":
     apiServerIp = '10.105.19.19'
     ixChassisIpList = ['10.105.241.234']
     
-    portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1"], [ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1"],\
-    [ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.30.1.1"],[ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1"], \
-    [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1"],[ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1"]]
+    #chassis_ip, module,port,mac,bgp_network,bgp_as,ip_address/mask, gateway
+    portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+    [ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
+    [ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.30.1.1",103,"10.1.1.103/24","10.1.1.1"],
+    [ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1",104,"10.1.1.104/24","10.1.1.1"], 
+    [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
+    [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
     myixia = IXIA(apiServerIp,ixChassisIpList,portList)
-    myixia.topologies[0].add_ipv4(ip='10.1.1.101',gw='10.1.1.1',mask=24)
-    myixia.topologies[1].add_ipv4(ip='10.1.1.102',gw='10.1.1.1',mask=24)
-    myixia.topologies[2].add_ipv4(ip='10.1.1.103',gw='10.1.1.1',mask=24)
-    myixia.topologies[3].add_ipv4(ip='10.1.1.104',gw='10.1.1.1',mask=24)
-    myixia.topologies[4].add_ipv4(ip='10.1.1.105',gw='10.1.1.1',mask=24)
-    myixia.topologies[5].add_ipv4(ip='10.1.1.106',gw='10.1.1.1',mask=24)
+    
+
+    # myixia.topologies[0].add_ipv4(ip='10.1.1.101',gw='10.1.1.1',mask=24)
+    # myixia.topologies[1].add_ipv4(ip='10.1.1.102',gw='10.1.1.1',mask=24)
+    # myixia.topologies[2].add_ipv4(ip='10.1.1.103',gw='10.1.1.1',mask=24)
+    # myixia.topologies[3].add_ipv4(ip='10.1.1.104',gw='10.1.1.1',mask=24)
+    # myixia.topologies[4].add_ipv4(ip='10.1.1.105',gw='10.1.1.1',mask=24)
+    # myixia.topologies[5].add_ipv4(ip='10.1.1.106',gw='10.1.1.1',mask=24)
+
+    myixia.topologies[0].add_ipv4()
+    myixia.topologies[1].add_ipv4()
+    myixia.topologies[2].add_ipv4()
+    myixia.topologies[3].add_ipv4()
+    myixia.topologies[4].add_ipv4()
+    myixia.topologies[5].add_ipv4()
+
 
     myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=100)
     myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=100)
+    myixia.topologies[2].add_bgp(dut_ip='10.1.1.3',bgp_type='external',num=100)
+    myixia.topologies[3].add_bgp(dut_ip='10.1.1.4',bgp_type='external',num=100)
+    myixia.topologies[4].add_bgp(dut_ip='10.1.1.5',bgp_type='external',num=100)
+    myixia.topologies[5].add_bgp(dut_ip='10.1.1.6',bgp_type='external',num=100)
+
 
     myixia.start_protocol(wait=40)
 
-    myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="topo1_2_topo2",tracking_name="Tracking_1")
-    myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="topo2_2_topo1",tracking_name="Tracking_2")
+    myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+    myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+    myixia.create_traffic(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3",tracking_name="Tracking_3")
+    myixia.create_traffic(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2",tracking_name="Tracking_4")
+
+    myixia.create_traffic(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5",tracking_name="Tracking_5")
+    myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4",tracking_name="Tracking_6")
+
 
     myixia.start_traffic()
     myixia.collect_stats()

@@ -1880,6 +1880,15 @@ def loop_command_output(dut,cmd,**kwargs):
 	debug(result) 
 	return (result)
 
+def seperate_ip_mask(ip_addr):
+	regex = r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\/([0-9]+)'
+	matched = re.search(regex,ip_addr)
+	if matched:
+		ip = matched.group(1)
+		net = matched.group(2)
+		return ip,net
+	return None,None
+
 def find_inactive_trunk_port(dut):
 	# print("========================= find_inactive_trunk port")
 	result = collect_show_cmd(dut,"diag switch mclag list")

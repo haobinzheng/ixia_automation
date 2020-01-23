@@ -309,11 +309,13 @@ def get_router_bgp_summary(dut):
 
 	result = collect_show_cmd(dut,"get router info bgp summary")
 	items_list = []
+	headline_found = False
 	for line in result:
 		line = line.strip()
 		if "Neighbor" in line and "AS" in line and "MsgRcvd" in line:
 			heads = re.split('\\s+',line)
-		elif re.match(r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)',line):
+			headline_found = True
+		elif headline_found == True and re.match(r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)',line):
 			port_line_dict = {}
 			items = re.split('\\s+',line)
 			for k,v in zip(heads,items):
@@ -338,6 +340,25 @@ def get_router_info_ospf_neighbor(dut):
 			neighbor_dict['address']= items[4]
 			neighbor_dict["interface"]= items[5]
 			neighbor_list.append(neighbor_dict) 
+	return neighbor_list
+
+def get_switch_show_bgp(dut):
+	result = collect_show_cmd(dut,"show router bgp")
+	neighbor_list = []
+	found_neighbor = False
+	for line in result:
+		if "config neighbor" in line:
+			found_neighbor = True
+			continue
+		elif found_neighbor and "edit" in line:
+			regex = r'edit.+([0-9]+\.[0-9]+\.[0-9]+\.[0-9])'
+			matched = re.search(regex,line)
+			if matched:
+				neighbor = matched.group(1)
+				neighbor_list.append(neighbor)
+		else:
+			pass
+ 
 	return neighbor_list
 
 def get_switch_lldp_summary(dut):

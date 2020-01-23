@@ -36,7 +36,7 @@ def bgp_testbed_init():
     dut2_vlan1_ip = "10.1.1.2"
     dut2_vlan1_subnet = "10.1.1.0"
     dut2_vlan1_mask = "255.255.255.0"
-    dut2_split_ports = ["port1","port5"]
+    dut2_split_ports = ["port1","port5","port7"]
     dut2_40g_ports = ["port9","port13"]
     dut2_static_route_base = "172.16.2"
     dut2_static_route_mask = "255.255.255.0"

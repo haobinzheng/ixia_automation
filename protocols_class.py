@@ -98,12 +98,16 @@ class Router_OSPF:
     def show_protocol_states(self):
         self.show_config()
         self.show_neighbor()
+        self.show_hardware_l3()
 
     def show_config(self):
         switch_show_cmd(self.switch.console,"show router ospf")
 
     def show_neighbor(self):
         switch_show_cmd(self.dut, "get router info ospf neighbor all")
+
+    def show_hardware_l3(self):
+        switch_show_cmd(self.dut,"diagnose hardware switchinfo l3-summary")
 
     def change_router_id(self,id):
         ospf_config = f"""
@@ -373,6 +377,49 @@ class Router_BGP:
             """
             config_cmds_lines(dut,bgp_config)
 
+    def config_ebgp_mesh_multihop(self):
+        tprint(f"================ Configurating eBGP multihop at {self.switch.name} =================")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as {self.switch.ebgp_as}
+            set router-id {self.router_id }
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for switch in self.switch.neighbor_switch_list:
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {switch.loop0_ip}
+                    set remote-as {switch.ebgp_as}
+                    set ebgp-enforce-multihop enable
+                    set ebgp-multihop-ttl 3
+                    set update-source loop0
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
+    def config_ebgp_ixia(self,ixia_port_info):
+        tprint(f"============== Configurating eBGP peer relationship to ixia {self.switch.name} ")
+
+        ixia_ip,ixia_mask = seperate_ip_mask(ixia_port_info[6])
+        ixia_as = ixia_port_info[5]
+        if ixia_ip == None:
+            return False
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+            edit {ixia_ip}
+                set remote-as {ixia_as}
+            next
+            end
+        end
+        """
+        config_cmds_lines(self.switch.console,bgp_config)
+        return True
 
     def config_redistribute_connected(self):
         tprint(f"============== Redistrubte connected to BGP at {self.switch.name} ")
@@ -443,6 +490,80 @@ class Router_BGP:
     def show_bgp_summary(self):
         dut=self.switch.console
         switch_show_cmd(dut,"get router info bgp summary")
+
+
+    def clear_config(self):
+        config = f"""
+        config router bgp
+    set as 65000
+    set router-id 1.1.1.1
+        config neighbor
+            edit "2.2.2.2"
+                set remote-as 65000
+                set update-source "loop0"
+            next
+            edit "3.3.3.3"
+                set remote-as 65000
+                set update-source "loop0"
+            next
+            edit "4.4.4.4"
+                set remote-as 65000
+                set update-source "loop0"
+            next
+            edit "5.5.5.5"
+                set remote-as 65000
+                set update-source "loop0"
+            next
+            edit "6.6.6.6"
+                set remote-as 65000
+                set update-source "loop0"
+            next
+            edit "7.7.7.7"
+                set remote-as 65000
+                set update-source "loop0"
+            next
+            edit "10.1.1.101"
+                set remote-as 101
+            next
+        end
+        config redistribute "connected"
+        end
+        config redistribute "static"
+        end
+        config redistribute "ospf"
+        end
+        config redistribute "rip"
+        end
+        config redistribute "isis"
+        end
+        end
+
+        """
+
+        neighbor_list = get_switch_show_bgp(self.switch.console)
+        print(neighbor_list)
+
+        bgp_config = f"""
+        config router bgp
+            unset router-id
+            unset as 
+            unset keepalive-timer
+            unset holdtime-timer
+            unset always-compare-med
+            unset bestpath-as-path-ignore  
+            end
+        """
+        config_cmds_lines(self.switch.console,bgp_config)
+
+        for n in neighbor_list:
+            config = f"""
+            config router bgp
+                config neighbor
+                delete {n}
+                end
+                end
+            """
+            config_cmds_lines(self.switch.console,config)
 
 class FortiSwitch:
     def __init__(self, *args,**kwargs):
