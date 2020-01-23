@@ -736,9 +736,12 @@ if testcase == 12 or test_all:
 
 	myixia.start_traffic()
 	myixia.collect_stats()
-	myixia.check_traffic()
+	if myixia.check_traffic() == True:
+		traffic = True
+	else:
+		traffic = False
 
-	check_bgp_test_result(testcase,description,switches)
+	check_bgp_test_result(testcase,description,switches,test1=traffic)
 
 
 

@@ -25,13 +25,22 @@ def switches_clean_up(switches):
         switch.relogin_after_factory()
         switch.init_config()
 
-def check_bgp_test_result(testcase,description,switches):
-    result = "Passed"
+def check_bgp_test_result(testcase,description,switches,**kwargs):
+    if "test1" in kwargs:
+        result1 = kwargs["test1"]
+    else:
+        result1 = True
+    result = True
     for switch in switches:
         #switch.router_bgp.get_neighbors_summary()
         if not switch.router_bgp.check_neighbor_status():
-            result = "Failed"
-    tprint(f"====================== Test case #{testcase}:{description} has been {result} ==========\n\n")   
+            result = False
+    if result1 and result:
+        final_result = "Passed"
+    else:
+        final_result = "Failed"
+
+    tprint(f"====================== Test case #{testcase}:{description} has been {final_result} ==========\n\n")   
 
 class Ospf_Neighbor:
     def __init__(self,*args,**kargs):
@@ -543,6 +552,18 @@ class Router_BGP:
         neighbor_list = get_switch_show_bgp(self.switch.console)
         print(neighbor_list)
 
+     
+
+        for n in neighbor_list:
+            config = f"""
+            config router bgp
+                config neighbor
+                delete {n}
+                end
+                end
+            """
+            config_cmds_lines(self.switch.console,config)
+
         bgp_config = f"""
         config router bgp
             unset router-id
@@ -554,16 +575,6 @@ class Router_BGP:
             end
         """
         config_cmds_lines(self.switch.console,bgp_config)
-
-        for n in neighbor_list:
-            config = f"""
-            config router bgp
-                config neighbor
-                delete {n}
-                end
-                end
-            """
-            config_cmds_lines(self.switch.console,config)
 
 class FortiSwitch:
     def __init__(self, *args,**kwargs):

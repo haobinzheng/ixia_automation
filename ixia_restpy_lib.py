@@ -128,8 +128,10 @@ class IXIA:
     def check_traffic(self):
         if check_traffic(self.flow_stats_list) == False:
             tprint("========================= Failed: significant traffic loss ============")
+            return False
         else:
-            tprint("========================= Passed: traffic is passed without loss ============")
+            tprint("========================= Passed: traffic is passed without packet loss ============")
+            return True
 
 
     def start_protocol(self,*args, **kwargs):
@@ -475,7 +477,7 @@ def ixia_rest_create_bgp(*args,**kwargs):
     ipv4PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0.0.0.1')
     ipv4PrefixPool.PrefixLength.Single(32)
 
-    ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
+    #ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
     
 
 def ixia_rest_add_as_path(*args,**kwargs):
