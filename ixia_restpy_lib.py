@@ -60,7 +60,7 @@ class IXIA_TOPOLOGY:
         dut_ip = kwargs['dut_ip']
         bgp_type = kwargs['bgp_type']
         num = kwargs['num']
-        self.bgp = ixia_rest_create_bgp(
+        self.bgp,self.network_group, self.ipv4_pool = ixia_rest_create_bgp(
             platform = self.ixia.testPlatform,
             ixnet = self.ixia.ixNetwork,
             name = self.bgp_name,
@@ -72,6 +72,10 @@ class IXIA_TOPOLOGY:
             device_group = self.device_group,
             ip = self.ip_session,
         )
+
+    def change_origin(self,code):
+        ixia_rest_set_origin(pool=self.ipv4_pool, origin=code,platform=self.ixia.testPlatform)
+    
 
 class IXIA:
     def __init__(self,*args,**kargs):
@@ -477,8 +481,22 @@ def ixia_rest_create_bgp(*args,**kwargs):
     ipv4PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0.0.0.1')
     ipv4PrefixPool.PrefixLength.Single(32)
 
+    #ixia_rest_set_origin(pool=ipv4PrefixPool,origin="egp",platform=testplatform)
+
+    return bgp2,networkGroup,ipv4PrefixPool
+
     #ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
     
+def ixia_rest_set_origin(*args,**kwargs):
+    ipv4PrefixPool = kwargs['pool']
+    origin = kwargs['origin']
+    testplatform = kwargs['platform']
+
+    bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add()
+    testplatform.info(bgpiprouteproperty.Origin.Values)
+    bgpiprouteproperty.Origin.Single(origin)
+    testplatform.info(bgpiprouteproperty.Origin.Values)
+
 
 def ixia_rest_add_as_path(*args,**kwargs):
     ipv4PrefixPool = kwargs['pool']
@@ -512,14 +530,6 @@ if __name__ == "__main__":
     [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
     [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
     myixia = IXIA(apiServerIp,ixChassisIpList,portList)
-    
-
-    # myixia.topologies[0].add_ipv4(ip='10.1.1.101',gw='10.1.1.1',mask=24)
-    # myixia.topologies[1].add_ipv4(ip='10.1.1.102',gw='10.1.1.1',mask=24)
-    # myixia.topologies[2].add_ipv4(ip='10.1.1.103',gw='10.1.1.1',mask=24)
-    # myixia.topologies[3].add_ipv4(ip='10.1.1.104',gw='10.1.1.1',mask=24)
-    # myixia.topologies[4].add_ipv4(ip='10.1.1.105',gw='10.1.1.1',mask=24)
-    # myixia.topologies[5].add_ipv4(ip='10.1.1.106',gw='10.1.1.1',mask=24)
 
     myixia.topologies[0].add_ipv4()
     myixia.topologies[1].add_ipv4()
@@ -536,7 +546,11 @@ if __name__ == "__main__":
     myixia.topologies[4].add_bgp(dut_ip='10.1.1.5',bgp_type='external',num=100)
     myixia.topologies[5].add_bgp(dut_ip='10.1.1.6',bgp_type='external',num=100)
 
+    myixia.topologies[3].change_origin("egp")
+    myixia.topologies[4].change_origin("egp")
+    myixia.topologies[5].change_origin("egp")
 
+    exit()
     myixia.start_protocol(wait=40)
 
     myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")

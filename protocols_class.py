@@ -502,53 +502,6 @@ class Router_BGP:
 
 
     def clear_config(self):
-        config = f"""
-        config router bgp
-    set as 65000
-    set router-id 1.1.1.1
-        config neighbor
-            edit "2.2.2.2"
-                set remote-as 65000
-                set update-source "loop0"
-            next
-            edit "3.3.3.3"
-                set remote-as 65000
-                set update-source "loop0"
-            next
-            edit "4.4.4.4"
-                set remote-as 65000
-                set update-source "loop0"
-            next
-            edit "5.5.5.5"
-                set remote-as 65000
-                set update-source "loop0"
-            next
-            edit "6.6.6.6"
-                set remote-as 65000
-                set update-source "loop0"
-            next
-            edit "7.7.7.7"
-                set remote-as 65000
-                set update-source "loop0"
-            next
-            edit "10.1.1.101"
-                set remote-as 101
-            next
-        end
-        config redistribute "connected"
-        end
-        config redistribute "static"
-        end
-        config redistribute "ospf"
-        end
-        config redistribute "rip"
-        end
-        config redistribute "isis"
-        end
-        end
-
-        """
-
         neighbor_list = get_switch_show_bgp(self.switch.console)
         print(neighbor_list)
 

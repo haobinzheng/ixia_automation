@@ -351,7 +351,8 @@ def get_switch_show_bgp(dut):
 			found_neighbor = True
 			continue
 		elif found_neighbor and "edit" in line:
-			regex = r'edit\\s+"([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)"'
+			line = line.replace('\"','')
+			regex = r'edit\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)'
 			matched = re.search(regex,line)
 			if matched:
 				neighbor = matched.group(1)
