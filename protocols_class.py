@@ -278,6 +278,24 @@ class Router_BGP:
             #     neighbor.show_details()
         return result
 
+    def add_ebgp_peer(self,*args,**kwargs):
+        ip = kwargs['ip']
+        remote_as = kwargs['remote_as']
+
+        if '/' in ip:
+            ip_addr,mask= seperate_ip_mask(ip)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+            edit {ip_addr}
+                set remote-as {remote_as}
+            next
+            end
+        end
+        """
+        config_cmds_lines(self.switch.console,bgp_config)
+
     def show_protocol_states(self):
         self.show_config()
         self.show_bgp_summary()

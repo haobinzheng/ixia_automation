@@ -1,4 +1,4 @@
- 
+
 import sys, os, time, traceback
 from utils import *
 
@@ -75,6 +75,12 @@ class IXIA_TOPOLOGY:
 
     def change_origin(self,code):
         ixia_rest_set_origin(pool=self.ipv4_pool, origin=code,platform=self.ixia.testPlatform)
+
+    def change_med(self,med_value):
+        ixia_rest_set_med(pool=self.ipv4_pool,med=med_value, platform=self.ixia.testPlatform)
+
+    def change_local_pref(self,value):
+        ixia_rest_set_med(pool=self.ipv4_pool,local=value, platform=self.ixia.testPlatform)
     
 
 class IXIA:
@@ -482,7 +488,7 @@ def ixia_rest_create_bgp(*args,**kwargs):
     ipv4PrefixPool.PrefixLength.Single(32)
 
     #ixia_rest_set_origin(pool=ipv4PrefixPool,origin="egp",platform=testplatform)
-
+    #ixia_rest_set_med(pool=ipv4PrefixPool,med=1234,platform=testplatform)
     return bgp2,networkGroup,ipv4PrefixPool
 
     #ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
@@ -497,6 +503,27 @@ def ixia_rest_set_origin(*args,**kwargs):
     bgpiprouteproperty.Origin.Single(origin)
     testplatform.info(bgpiprouteproperty.Origin.Values)
 
+def ixia_rest_set_local_pref(*args,**kwargs):
+    ipv4PrefixPool = kwargs['pool']
+    local = kwargs['local']
+    testplatform = kwargs['platform']
+
+    bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add()
+    testplatform.info(bgpiprouteproperty.LocalPreference.Values)
+    bgpiprouteproperty.EnableLocalPreference.Single("True")
+    bgpiprouteproperty.LocalPreference.Single(local)
+    testplatform.info(bgpiprouteproperty.LocalPreference.Values)
+
+def ixia_rest_set_med(*args,**kwargs):
+    ipv4PrefixPool = kwargs['pool']
+    med = kwargs['med']
+    testplatform = kwargs['platform']
+
+    bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add()
+    testplatform.info(bgpiprouteproperty.MultiExitDiscriminator.Values)
+    bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")
+    bgpiprouteproperty.MultiExitDiscriminator.Single(med)
+    testplatform.info(bgpiprouteproperty.MultiExitDiscriminator.Values)
 
 def ixia_rest_add_as_path(*args,**kwargs):
     ipv4PrefixPool = kwargs['pool']
