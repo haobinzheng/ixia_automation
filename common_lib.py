@@ -362,6 +362,25 @@ def get_switch_show_bgp(dut):
  
 	return neighbor_list
 
+def get_bgp_network_config(dut):
+	result = collect_show_cmd(dut,"show router bgp")
+	item_list = []
+	found_item = False
+	for line in result:
+		if "config network" in line:
+			found_item = True
+			continue
+		elif found_item and "edit" in line:
+			regex = r'edit\s+([0-9]+)'
+			matched = re.search(regex,line)
+			if matched:
+				item = matched.group(1)
+				item_list.append(item)
+		else:
+			pass
+ 
+	return item_list
+
 def get_switch_lldp_summary(dut):
 	result = collect_show_cmd(dut,"get switch lldp neighbors-summary")
 	lldp_list = []

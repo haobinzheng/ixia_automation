@@ -522,13 +522,21 @@ class Router_BGP:
     def clear_config(self):
         neighbor_list = get_switch_show_bgp(self.switch.console)
         print(neighbor_list)
-
-     
-
+        network_list = get_bgp_network_config(self.switch.console)
         for n in neighbor_list:
             config = f"""
             config router bgp
                 config neighbor
+                delete {n}
+                end
+                end
+            """
+            config_cmds_lines(self.switch.console,config)
+
+        for n in network_list:
+            config = f"""
+            config router bgp
+                config network
                 delete {n}
                 end
                 end
