@@ -80,7 +80,7 @@ class IXIA_TOPOLOGY:
         ixia_rest_set_med(pool=self.ipv4_pool,med=med_value, platform=self.ixia.testPlatform)
 
     def change_local_pref(self,value):
-        ixia_rest_set_med(pool=self.ipv4_pool,local=value, platform=self.ixia.testPlatform)
+        ixia_rest_set_local_pref(pool=self.ipv4_pool,local=value, platform=self.ixia.testPlatform)
     
 
 class IXIA:
