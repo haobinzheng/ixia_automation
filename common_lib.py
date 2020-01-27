@@ -54,6 +54,15 @@ def collect_edit_items(dut,cmd):
  			new_result.append(item)
  	return new_result
 
+def switches_cleanup_4_restore(switches):
+    for switch in switches:
+        switch.factory_reset_nologin()
+
+    console_timer(150,msg = "After factory reset, wait for 150 seconds")
+
+    for switch in switches:
+        switch.relogin_after_factory()
+        switch.pre_restore_config()
 
 def switches_clean_up(switches):
     for switch in switches:

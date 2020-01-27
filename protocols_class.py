@@ -768,6 +768,76 @@ class FortiSwitch:
             """
             config_cmds_lines(self.console,config)
 
+    def pre_restore_config(self):
+        dut = self.dut
+        config_global_hostname = f"""
+        config system global
+        set hostname {self.name}
+        end
+        """
+
+        config_cmds_lines(dut,config_global_hostname)
+
+        config = f"""
+        config system console 
+        set output standard
+        end
+        """
+        config_cmds_lines(dut,config)
+        config_mgmt_mode = f"""
+        config system interface
+        config system interface
+            edit mgmt
+            set mode static
+            end
+        config system interface
+            edit "mgmt"
+            set mode static
+            end
+        """
+        config_cmds_lines(dut,config_mgmt_mode)
+
+        config_sys_interface = f"""
+        config system interface
+        edit mgmt
+            set mode static
+            set ip {self.mgmt_ip} {self.mgmt_mask}
+            set allowaccess ping https http ssh snmp telnet radius-acct
+            next
+        edit vlan1
+            set ip {self.vlan1_ip} {self.vlan1_mask}
+            set allowaccess ping https ssh telnet
+            set vlanid 1
+            set interface internal
+            set secondary-IP enable 
+            config secondaryip 
+                edit 1
+                    set ip {self.vlan1_2nd} 255.255.255.255
+                    set allowaccess ping https ssh telnet
+                next
+                end
+            next
+        edit "loop0"
+            set ip {self.loop0_ip} 255.255.255.255
+            set allowaccess ping https http ssh telnet
+            set type loopback
+            next
+        end
+        """
+        config_cmds_lines(dut,config_sys_interface)
+
+        static_route = f"""
+        config router static
+        edit 1
+            set device "mgmt"
+            set dst 0.0.0.0 0.0.0.0
+            set gateway 10.105.241.254
+        next
+        end
+        """
+        config_cmds_lines(dut,static_route)
+
+
     def init_config(self):
         dut = self.dut
         config_global_hostname = f"""
