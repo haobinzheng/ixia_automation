@@ -25,6 +25,1623 @@ from utils import *
 from settings import *
  
 
+def check_route_exist(*args,**kwargs):
+	cmd = kwargs['cmd']
+	dut = kwargs['dut']
+	networks = kwargs['networks']
+	result = collect_show_cmd(dut,cmd)
+
+	for net in networks:
+		for line in result:
+			if net in line:
+				return True
+
+	return False
+
+def collect_edit_items(dut,cmd):
+ 	switch_exec_cmd(dut,cmd)
+ 	result = collect_edit_question_cmd(dut,"edit ?")
+ 	switch_exec_cmd(dut,"end")
+ 	result.pop(0)
+ 	result.pop(0)
+ 	new_result = []
+ 	for item in result:
+ 		if item == '':
+ 			continue
+ 		elif "route-map" in item:
+ 			continue
+ 		else:
+ 			new_result.append(item)
+ 	return new_result
+
+
+def switches_clean_up(switches):
+    for switch in switches:
+        switch.factory_reset_nologin()
+
+    console_timer(150,msg = "After factory reset, wait for 150 seconds")
+
+    for switch in switches:
+        switch.relogin_after_factory()
+        switch.init_config()
+
+def check_bgp_test_result(testcase,description,switches,**kwargs):
+    if "test1" in kwargs:
+        result1 = kwargs["test1"]
+    else:
+        result1 = True
+    result = True
+    for switch in switches:
+        #switch.router_bgp.get_neighbors_summary()
+        if not switch.router_bgp.check_neighbor_status():
+            result = False
+    if result1 and result:
+        final_result = "Passed"
+    else:
+        final_result = "Failed"
+
+    tprint(f"====================== Test case #{testcase}:{description} has been {final_result} ==========\n\n")   
+
+def basic_config_aspath_list(dut):
+	config = """
+	config router aspath-list
+    edit "as-101"
+            config rule
+                edit 1
+                    set action permit
+                    set regexp "101"
+                next
+            end
+    next
+    edit "as-102"
+            config rule
+                edit 1
+                    set action permit
+                    set regexp "102"
+                next
+            end
+    next
+    edit "as-103"
+            config rule
+                edit 1
+                    set action permit
+                    set regexp "103"
+                next
+            end
+    next
+
+    edit "as-104"
+            config rule
+                edit 1
+                    set action permit
+                    set regexp "104"
+                next
+            end
+    next
+
+
+    edit "as-105"
+            config rule
+                edit 1
+                    set action permit
+                    set regexp "105"
+                next
+            end
+    next
+
+    edit "as-106"
+            config rule
+                edit 1
+                    set action permit
+                    set regexp "106"
+                next
+            end
+    next
+
+     edit "as-65001"
+            config rule
+                edit 1
+                    set action permit
+                    set regexp "^65001 65006$
+                next
+            end
+    next
+end
+
+	"""
+
+
+def basic_config_access_list(dut):
+
+	config = """
+	config router access-list
+    edit "network-10-10"
+            config rule
+                edit 1
+                    set prefix 10.10.0.0 255.255.0.0
+                    set exact-match disable
+                next
+            end
+    next
+    edit "network-10-20"
+            config rule
+                edit 1
+                    set prefix 10.20.0.0 255.255.0.0
+                    set exact-match disable
+                next
+            end
+    next
+    edit "network-10-30"
+            config rule
+                edit 1
+                    set prefix 10.30.0.0 255.255.0.0
+                    set exact-match disable
+                next
+            end
+    next
+    edit "network-10-40"
+            config rule
+                edit 1
+                    set prefix 10.40.0.0 255.255.0.0
+                    set exact-match disable
+                next
+            end
+    next
+    edit "network-10-50"
+            config rule
+                edit 1
+                    set prefix 10.50.0.0 255.255.0.0
+                    set exact-match disable
+                next
+            end
+    next
+    edit "network-10-60"
+            config rule
+                edit 1
+                    set prefix 10.60.0.0 255.255.0.0
+                    set exact-match disable
+                next
+            end
+    next
+    edit "next-hop-ixia-1"
+            config rule
+                edit 1
+                    set prefix 10.1.1.101 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+
+    edit "next-hop-ixia-2"
+            config rule
+                edit 1
+                    set prefix 10.1.1.102 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+
+    edit "next-hop-ixia-3"
+            config rule
+                edit 1
+                    set prefix 10.1.1.103 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+
+    edit "next-hop-ixia-4"
+            config rule
+                edit 1
+                    set prefix 10.1.1.104 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+
+    edit "next-hop-ixia-5"
+            config rule
+                edit 1
+                    set prefix 10.1.1.105 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+
+    edit "next-hop-ixia-6"
+            config rule
+                edit 1
+                    set prefix 10.1.1.106 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+
+    edit "next-hop-sw1"
+            config rule
+                edit 1
+                    set prefix 1.1.1.1 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+	end
+
+	
+
+	edit "next-hop-sw2"
+            config rule
+                edit 1
+                    set prefix 2.2.2.2 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+	end
+
+	edit "next-hop-sw3"
+            config rule
+                edit 1
+                    set prefix 3.3.3.3 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+	end
+
+	edit "next-hop-sw4"
+            config rule
+                edit 1
+                    set prefix 4.4.4.4 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+	end
+
+	edit "next-hop-sw5"
+            config rule
+                edit 1
+                    set prefix 5.5.5.5 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+	end
+
+	edit "next-hop-sw6"
+            config rule
+                edit 1
+                    set prefix 6.6.6.6 255.255.255.255
+                    set exact-match enable
+                next
+            end
+    	next
+	end
+
+	"""
+	config_cmds_lines(dut,config)
+
+def basic_config_route_map(dut):
+	config = """
+	config router route-map
+    edit "match-network-10-10"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-address "network-10-10"
+                next
+            end
+    next
+    edit "match-network-10-20"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-address "network-10-20"
+                next
+            end
+    next
+    edit "match-network-10-30"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-address "network-10-30"
+                next
+            end
+    next
+    edit "match-network-10-40"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-address "network-10-40"
+                next
+            end
+    next
+    edit "match-network-10-50"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-address "network-10-50"
+                next
+            end
+    next
+    edit "match-network-10-60"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-address "network-10-60"
+                next
+            end
+    next
+ 
+	edit "match-next-hop-sw1"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw1"
+                next
+            end
+    next
+
+    
+
+    edit "match-next-hop-sw2"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw2"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw3"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw3"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw4"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw4"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw5"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw5"
+                next
+            end
+    next
+
+	edit "match-next-hop-sw6"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw6"
+                next
+            end
+    next
+
+	edit "permit-next-hop-sw1"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-sw1"
+                next
+            end
+    next
+
+    
+
+    edit "permit-next-hop-sw2"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-sw2"
+                next
+            end
+    next
+
+    edit "permit-next-hop-sw3"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-sw3"
+                next
+            end
+    next
+
+    edit "permit-next-hop-sw4"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-sw4"
+                next
+            end
+    next
+
+    edit "permit-next-hop-sw5"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-sw5"
+                next
+            end
+    next
+
+	edit "permit-next-hop-sw6"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-sw6"
+                next
+            end
+    next
+
+
+    edit "match-next-hop-ixia-1"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-ixia-1"
+                next
+            end
+    next
+    edit "match-next-hop-ixia-2"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-ixia-2"
+                next
+            end
+    next
+    edit "match-next-hop-ixia-3"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-ixia-3"
+                next
+            end
+    next
+    edit "match-next-hop-ixia-4"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-ixia-4"
+                next
+            end
+    next
+    edit "match-next-hop-ixia-5"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-ixia-5"
+                next
+            end
+    next
+    edit "match-next-hop-ixia-6"
+        set protocol bgp
+            config rule
+                edit 1
+                    set action deny
+                    set match-ip-nexthop "next-hop-ixia-6"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw1"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw1"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw2"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw2"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw3"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw3"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw4"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw4"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw5"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw5"
+                next
+            end
+    next
+
+    edit "match-next-hop-sw6"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-ip-nexthop "next-hop-sw6"
+                next
+            end
+    next
+
+
+    edit "set-weight-10"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-10"
+                    set set-weight 91111
+                next
+            end
+    next
+
+	edit "set-weight-20"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-20"
+                    set set-weight 92222
+                next
+            end
+    next
+
+    edit "set-weight-30"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-30"
+                    set set-weight 93333
+                next
+            end
+    next
+    edit "set-weight-40"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-40"
+                    set set-weight 94444
+                next
+            end
+    next
+
+    edit "set-weight-50"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-50"
+                    set set-weight 95555
+                next
+            end
+    next
+
+    edit "set-weight-60"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-60"
+                    set set-weight 96666
+                next
+            end
+    next
+    edit "origin-igp"
+        set protocol bgp
+            config rule
+                edit 1
+                    set action deny
+                    set set-origin igp
+                next
+            end
+    next
+    edit "change-origin-igp-2-egp"
+        set protocol bgp
+            config rule
+                edit 1
+                    set set match-origin igp
+                    set action permit
+                    set set-origin egp
+                next
+            end
+    next
+
+    edit "change-origin-igp-2-incomplete"
+        set protocol bgp
+            config rule
+                edit 1
+                    set set match-origin igp
+                    set action permit
+                    set set-origin incomplete
+                next
+            end
+    next
+
+	edit "change-origin-igp-2-None"
+        set protocol bgp
+            config rule
+                edit 1
+                    set set match-origin igp
+                    set action permit
+                    set set-origin none
+                next
+            end
+    next
+
+
+    edit "as-path-101"
+        set protocol bgp
+            config rule
+                edit 1
+                    set action deny
+                        set set-aspath "101"                         
+                next
+            end
+    next
+    edit "as-path-102"
+        set protocol bgp
+            config rule
+                edit 1
+                    set action deny
+                        set set-aspath "102"                         
+                next
+            end
+    next
+    edit "as-path-103"
+        set protocol bgp
+            config rule
+                edit 1
+                    set action deny
+                        set set-aspath "103"                         
+                next
+            end
+    next
+    edit "as-path-104"
+        set protocol bgp
+            config rule
+                edit 1
+                    set action deny
+                        set set-aspath "104"                         
+                next
+            end
+    next
+    edit "as-path-105"
+        set protocol bgp
+            config rule
+                edit 1
+                    set action deny
+                        set set-aspath "105"                         
+                next
+            end
+    next
+    edit "as-path-106"
+        set protocol bgp
+            config rule
+                edit 1
+                    set action deny
+                        set set-aspath "106"                         
+                next
+            end
+    next
+    edit "set-local-pref-1111"
+        set protocol bgp
+            config rule
+                edit 1
+                	set match-ip-address "network-10-10"
+                    set set-local-preference 1111
+                next
+            end
+    next
+
+    edit "set-local-pref-2222"
+        set protocol bgp
+            config rule
+                edit 1
+                	set match-ip-address "network-10-20"
+                    set set-local-preference 2222
+                next
+            end
+    next
+
+    edit "set-local-pref-3333"
+        set protocol bgp
+            config rule
+                edit 1
+					set match-ip-address "network-10-30"
+                    set set-local-preference 3333
+                next
+            end
+    next
+
+	edit "set-local-pref-4444"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-40"
+                    set set-local-preference 4444
+                next
+            end
+    next
+    edit "set-local-pref-5555"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-50"
+                    set set-local-preference 5555
+                next
+            end
+    next
+
+    edit "set-local-pref-6666"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-60"
+                    set set-local-preference 6666
+                next
+            end
+    next
+
+    edit "as-path-101"
+        set protocol bgp
+            config rule
+                edit 1                    
+                set match-as-path "as-101"
+                set set-aspath "10001"                         
+                next
+            end
+    next
+    edit "as-path-102"
+        set protocol bgp
+            config rule
+                edit 1                    
+                set match-as-path "as-102"
+                set set-aspath "10002"                         
+                next
+            end
+    next
+
+    edit "as-path-103"
+        set protocol bgp
+            config rule
+                edit 1                    
+                set match-as-path "as-103"
+                set set-aspath "10003"                         
+                next
+            end
+    next
+
+    edit "as-path-104"
+        set protocol bgp
+            config rule
+                edit 1                    
+                set match-as-path "as-104"
+                set set-aspath "10004"                         
+                next
+            end
+    next
+
+    edit "as-path-105"
+        set protocol bgp
+            config rule
+                edit 1                    
+                set match-as-path "as-105"
+                set set-aspath "10005"                         
+                next
+            end
+    next
+
+    edit "as-path-106"
+        set protocol bgp
+            config rule
+                edit 1                    
+                set match-as-path "as-106"
+                set set-aspath "10006"                         
+                next
+            end
+    next
+
+    edit "match-med-1000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 1000
+                next
+            end
+    next
+
+    edit "match-med-10000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 10000
+                next
+            end
+    next
+
+    edit "permit-med-10000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 10000
+                next
+            end
+    next
+
+    edit "match-med-2000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 2000
+                next
+            end
+    next
+
+    edit "match-med-20000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 20000
+                next
+            end
+    next
+
+    edit "permit-med-20000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 20000
+                next
+            end
+    next
+
+    edit "match-med-3000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 3000
+                next
+            end
+    next
+
+    edit "match-med-30000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 30000
+                next
+            end
+    next
+
+    edit "permit-med-30000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 30000
+                next
+            end
+    next
+
+    edit "match-med-4000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 4000
+                next
+            end
+    next
+
+    edit "match-med-40000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 40000
+                next
+            end
+    next
+
+    edit "permit-med-40000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 40000
+                next
+            end
+    next
+
+    edit "match-med-5000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 5000
+                next
+            end
+    next
+
+    edit "match-med-50000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 50000
+                next
+            end
+    next
+
+    edit "permit-med-50000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 50000
+                next
+            end
+    next
+
+    edit "match-med-6000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 6000
+                next
+            end
+    next
+
+    edit "match-med-60000"
+        set protocol bgp
+            config rule
+                edit 1
+                   	set action deny
+                    set match-metric 60000
+                next
+            end
+    next
+    edit "permit-med-60000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 60000
+                next
+            end
+    next
+
+    edit "change-med-1000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 1000
+                    set set-metric 10000
+                next
+            end
+    next
+
+    edit "change-med-2000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 2000
+                    set set-metric 20000
+                next
+            end
+    next
+
+    edit "change-med-3000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 2000
+                    set set-metric 30000
+                next
+            end
+    next
+
+
+    edit "change-med-4000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 4000
+                    set set-metric 40000
+                next
+            end
+    next
+
+    edit "change-med-5000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 5000
+                    set set-metric 50000
+                next
+            end
+    next
+
+    edit "change-med-6000"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-metric 6000
+                    set set-metric 60000
+                next
+            end
+    next
+
+
+
+	edit "permit-origin-egp"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action permit
+                    set match-origin egp
+                 next
+            end
+    next
+
+    edit "match-origin-egp"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-origin egp
+                 next
+            end
+    next
+
+    edit "match-origin"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-origin igp
+                 next
+            end
+    next
+
+    edit "change-origin"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-origin igp
+                    set set-origin egp
+                next
+            end
+    next
+
+    edit "change-aspath-101"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-101"
+                        set set-aspath "1001"                         
+                next
+            end
+    next
+
+    edit "change-aspath-102"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-102"
+                        set set-aspath "1002"                         
+                next
+            end
+    next
+
+    edit "change-aspath-103"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-103"
+                        set set-aspath "1003"                         
+                next
+            end
+    next
+
+    edit "change-aspath-104"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-104"
+                        set set-aspath "1004"                         
+                next
+            end
+    next
+
+    edit "change-aspath-105"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-105"
+                        set set-aspath "1005"                         
+                next
+            end
+    next
+
+    edit "change-aspath-106"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-106"
+                        set set-aspath "1006"                         
+                next
+            end
+    next
+
+    edit "match-aspath-101"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-101"                         
+                next
+            end
+    next
+
+	edit "match-aspath-102"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-102"                         
+                next
+            end
+    next
+
+    edit "match-aspath-103"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-103"                         
+                next
+            end
+    next
+
+	edit "match-aspath-104"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-104"                         
+                next
+            end
+    next
+
+    edit "match-aspath-105"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-105"                         
+                next
+            end
+    next
+
+    edit "match-aspath-106"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-106"                         
+                next
+            end
+    next
+
+    edit "match-aspath-1001"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-1001"                         
+                next
+            end
+    next
+
+	edit "match-aspath-1002"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-1002"                         
+                next
+            end
+    next
+
+    edit "match-aspath-1003"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-1003"                         
+                next
+            end
+    next
+
+    edit "match-aspath-1004"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-1004"                         
+                next
+            end
+    next
+
+    edit "match-aspath-1005"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-1005"                         
+                next
+            end
+    next
+
+    edit "match-aspath-1006"
+        set protocol bgp
+            config rule
+                edit 1
+                	set action deny
+                    set match-as-path "as-1006"                         
+                next
+            end
+    next
+
+    edit "permit-aspath-1001"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-1001"                         
+                next
+            end
+    next
+
+
+    edit "permit-aspath-1002"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-1002"                         
+                next
+            end
+    next
+
+    edit "permit-aspath-1003"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-1003"                         
+                next
+            end
+    next
+
+    edit "permit-aspath-1004"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-1004"                         
+                next
+            end
+    next
+
+    edit "permit-aspath-1005"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-1005"                         
+                next
+            end
+    next
+
+    edit "permit-aspath-1006"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "as-1006"                         
+                next
+            end
+    next
+
+    edit "change-next-hop-1"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-ixia-1"
+                    set set-ip-nexthop 1.1.1.1
+                next
+            end
+    next
+
+    edit "change-next-hop-2"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-ixia-2"
+                    set set-ip-nexthop 2.2.2.2
+                next
+            end
+    next
+
+    edit "change-next-hop-3"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-ixia-3"
+                    set set-ip-nexthop 3.3.3.3
+                next
+            end
+    next
+
+    edit "change-next-hop-4"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-ixia-4"
+                    set set-ip-nexthop 4.4.4.4
+                next
+            end
+    next
+
+    edit "change-next-hop-5"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-ixia-5"
+                    set set-ip-nexthop 5.5.5.5
+                next
+            end
+    next
+
+    edit "change-next-hop-6"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-nexthop "next-hop-ixia-6"
+                    set set-ip-nexthop 6.6.6.6
+                next
+            end
+    next
+
+    edit "change-weight-1"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-10"
+                    set set-weight 1
+                next
+            end
+    next
+
+    edit "change-weight-2"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-20"
+                    set set-weight 2
+                next
+            end
+    next
+
+    edit "change-weight-3"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-30"
+                    set set-weight 3
+                next
+            end
+    next
+
+    edit "change-weight-4"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-40"
+                    set set-weight 4
+                next
+            end
+    next
+
+    edit "change-weight-5"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-50"
+                    set set-weight 5
+                next
+            end
+    next
+    edit "change-weight-6"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-60"
+                    set set-weight 6
+                next
+            end
+    next
+    edit "change-atomic-1"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-10"
+                    set set-atomic-aggregate enable
+                next
+            end
+    next
+
+    edit "change-atomic-2"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-20"
+                    set set-atomic-aggregate enable
+                next
+            end
+    next
+
+
+    edit "change-atomic-3"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-30"
+                    set set-atomic-aggregate enable
+                next
+            end
+    next
+
+    edit "change-atomic-4"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-40"
+                    set set-atomic-aggregate enable
+                next
+            end
+    next
+
+    edit "change-atomic-5"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-50"
+                    set set-atomic-aggregate enable
+                next
+            end
+    next
+
+    edit "change-atomic-6"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-60"
+                    set set-atomic-aggregate enable
+                next
+            end
+    next
+
+    edit "change-originator-1"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-10"
+                    set set-originator-id 172.168.1.1
+                next
+            end
+    next
+
+    edit "change-originator-2"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-20"
+                    set set-originator-id 172.168.1.2
+                next
+            end
+    next
+
+    edit "change-originator-3"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-30"
+                    set set-originator-id 172.168.1.3
+                next
+            end
+    next
+
+    edit "change-originator-4"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-40"
+                    set set-originator-id 172.168.1.4
+                next
+            end
+    next
+
+    edit "change-originator-5"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-50"
+                    set set-originator-id 172.168.1.5
+                next
+            end
+    next
+
+    edit "change-originator-6"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-ip-address "network-10-60"
+                    set set-originator-id 172.168.1.6
+                next
+            end
+    next
+
+	end
+	"""
+	config_cmds_lines(dut,config)
+
 def show_flapguard_cmds(dut4,flap_port):
 	output = switch_show_cmd(dut4, f"show switch global")
 	output = switch_show_cmd(dut4, f"show switch physical-port {flap_port}")

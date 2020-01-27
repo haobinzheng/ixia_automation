@@ -11,7 +11,7 @@ def bgp_testbed_init():
     dut1_location = "Rack7-19"
     dut1_port = 2071
     dut1_name = "3032E-R7-19"
-    dut1_cfg = "bgp/3032E-R7-19.cfg"
+    dut1_cfg = "3032E-R7-19"
     dut1_cfg_basic = "3032E_R7_19_basic.cfg"
     dut1_mgmt_ip = "10.105.240.145"
     dut1_mgmt_mask = "255.255.254.0"
@@ -28,7 +28,7 @@ def bgp_testbed_init():
     dut2_location = "Rack7-40"
     dut2_port = 2066
     dut2_name = "3032D-R7-40"
-    dut2_cfg = "bgp/3032D-R7-40.cfg"
+    dut2_cfg = "3032D-R7-40"
     dut2_cfg_basic = "3032D_R7_40_basic.cfg"
     dut2_mgmt_ip = "10.105.241.40"
     dut2_mgmt_mask = "255.255.254.0"
@@ -45,7 +45,7 @@ def bgp_testbed_init():
     dut3_location = "Rack4-41"
     dut3_port = 2090
     dut3_name = "1048E-R4-41"
-    dut3_cfg = "bgp/1048E-R4-41.cfg"
+    dut3_cfg = "1048E-R4-41"
     dut3_cfg_basic = "1048E_R4_41_basic.cfg"
     dut3_mgmt_ip = "10.105.240.41"
     dut3_mgmt_mask = "255.255.254.0"
@@ -62,7 +62,7 @@ def bgp_testbed_init():
     dut4_location = "Rack4-40"
     dut4_port = 2007
     dut4_name = "1048D-R4-40"
-    dut4_cfg = "bgp/1048D-R4-40.cfg"
+    dut4_cfg = "1048D-R4-40"
     dut4_cfg_basic = "1048D_R4_40_basic.cfg"
     dut4_mgmt_ip = "10.105.240.40"
     dut4_mgmt_mask = "255.255.254.0"
@@ -79,7 +79,7 @@ def bgp_testbed_init():
     dut5_location = "Rack5-38"
     dut5_port = 2068
     dut5_name = "1024D-R5-38"
-    dut5_cfg = "bgp/1024D-R5-38.cfg"
+    dut5_cfg = "1024D-R5-38"
     dut5_cfg_basic = "1024D_R5_38_basic.cfg"
     dut5_mgmt_ip = "10.105.240.138"
     dut5_mgmt_mask = "255.255.254.0"
@@ -228,7 +228,7 @@ def bgp_testbed_init():
     dut6_dir['label'] = 6
     dut6_dir['location'] = "Rack8-34"
     dut6_dir['telnet'] = dut6
-    dut6_dir['cfg'] = "bgp/548D-R8-34.cfg"
+    dut6_dir['cfg'] = "548D-R8-34"
     dut6_dir['mgmt_ip'] = "10.105.241.134"
     dut6_dir['mgmt_mask']= "255.255.254.0"  
     dut6_dir['loop0_ip']= "6.6.6.6" 
@@ -251,7 +251,7 @@ def bgp_testbed_init():
     dut7_dir['label'] = 7
     dut7_dir['location'] = "Rack4-39"
     dut7_dir['telnet'] = dut7
-    dut7_dir['cfg'] = "bgp/1048D-R4-39.cfg"
+    dut7_dir['cfg'] = "1048D-R4-39"
     dut7_dir['mgmt_ip'] = "10.105.240.39"
     dut7_dir['mgmt_mask']= "255.255.254.0" 
     dut7_dir['loop0_ip']= "7.7.7.7" 

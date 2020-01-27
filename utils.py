@@ -19,6 +19,13 @@ from threading import Thread
 import subprocess
 import spur
 
+def send_Message(stock_msg):
+  #stock_msg = remove_bracket(stock_msg)
+  cmd = """osascript send_imessage.applescript 4088967681 '{}' """.format(stock_msg)
+  #print(new_cmd)
+  os.system(cmd)
+  return None
+ 
 def ip_break_up(ip):
 	matched = re.search(r'([0-9]+\.[0-9]+\.[0-9]+)\.([0-9]+)',ip)
 	if matched:
@@ -453,6 +460,32 @@ def fgt_unshut_port(tn,port):
 
 def send_ctrl_c_cmd(tn):
 	tn.write(('\x03').encode('ascii'))
+
+def collect_edit_question_cmd(tn,cmd,**kwargs):
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 3
+	#relogin_if_needed(tn)
+	cmd = convert_cmd_ascii(cmd)
+	tn.write(cmd)
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	sleep(timeout)
+	output = tn.read_very_eager()
+	#output = tn.read_until(("# ").encode('ascii'))
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).rstrip(' ')
+		out_str_list.append(o_str)
+	# tprint(dir(output))
+	# tprint(type(output))
+	#tprint(out_list)
+	# for i in out_str_list:
+	# 	tprint(i)
+	return out_str_list
 
 def collect_show_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:

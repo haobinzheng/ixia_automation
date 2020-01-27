@@ -6,18 +6,6 @@ from utils import *
 from ixnetwork_restpy.testplatform.testplatform import TestPlatform
 from ixnetwork_restpy.assistants.statistics.statviewassistant import StatViewAssistant
 
-"""
-bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
-enableaspathsegments = bgpiprouteproperty.EnableAsPathSegments
-testplatform.info(enableaspathsegments)
-
-
-bgpiprouteproperty = ipv4prefixpools.BgpIPRouteProperty.add(AdvertiseAsBgp3107=None, AdvertiseAsBgp3107Sr=None, AdvertiseAsRfc8277=None, Name=None, NoOfASPathSegmentsPerRouteRange=None, NoOfClusters=None, NoOfCommunities=None, NoOfExternalCommunities=None, NoOfLabels=None, NoOfLargeCommunities=None, NoOfTlvs=None)
-maxnoofaspathsegmentsperrouterange = bgpiprouteproperty.MaxNoOfASPathSegmentsPerRouteRange
-testplatform.info(maxnoofaspathsegmentsperrouterange)
-
-
-"""
 
 class IXIA_TOPOLOGY:
     def __init__(self,*args,**kwargs):
@@ -128,6 +116,14 @@ class IXIA:
         ixnet = self.ixNetwork,
         )
 
+    def stop_traffic(self):
+
+        ixia_rest_stop_traffic(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork,
+        )
+
     def collect_stats(self):
         self.flow_stats_list = ixia_rest_collect_stats(
         platform = self.testPlatform, 
@@ -135,6 +131,12 @@ class IXIA:
         ixnet = self.ixNetwork, 
     )
 
+    def clear_stats(self):
+        self.flow_stats_list = ixia_rest_clear_stats(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork, 
+    )
     def check_traffic(self):
         if check_traffic(self.flow_stats_list) == False:
             tprint("========================= Failed: significant traffic loss ============")
@@ -405,8 +407,40 @@ def ixia_rest_start_traffic(*args,**kwargs):
         tracking.TrackBy = [f"flowGroup0",f"trackingenabled0"]
     ixNetwork.Traffic.Apply()
     ixNetwork.Traffic.Start()
+    console_timer(10,msg="Let traffic forward for 10s after start ixia traffic")
 
- 
+def ixia_rest_stop_traffic(*args,**kwargs):
+    session = kwargs['session'] 
+    testPlatform = kwargs['platform']
+    ixNetwork = kwargs['ixnet']
+    # trafficItem = ixNetwork.Traffic.TrafficItem
+    # for item in trafficItem.find():
+    #     testPlatform.info(item)
+    #     tracking = item.Tracking.find()
+    #     testPlatform.info(tracking)
+    #     tracking.TrackBy = [f"flowGroup0",f"trackingenabled0"]
+    # ixNetwork.Traffic.Apply()
+    ixNetwork.Traffic.Stop()
+
+
+def ixia_rest_clear_stats(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+
+        ixNetwork.ClearPortsAndTrafficStats()
+        console_timer(20,msg="wait 20s for traffic stats to cleared")
+        #The following line print out all rows stats at once
+        #Assistant(ixNetwork, 'Traffic Item Statistics')
+        # ixNetwork.info('{}\n'.format(flowStatistics))
+    except Exception as errMsg:
+        print('ixia_rest_clear_stats failed! \n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+
+
 def ixia_rest_collect_stats(*args,**kwargs):
     debugMode = False
     try:

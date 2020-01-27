@@ -33,11 +33,12 @@ from ixia_restpy_lib import *
 # Connection to the chassis, IxNetwork Tcl Server                 			   #
 ################################################################################
 
-CLEAN_ALL = False
+CLEAN_ALL = True
 
 sys.stdout = Logger("Log/bgp_testing.log")
 
 parser = argparse.ArgumentParser()
+parser.add_argument("-r", "--restore", help="restore config file from tftp server", action="store_true")
 parser.add_argument("-m", "--guide", help="print out simple user manual", action="store_true")
 parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
 #parser.add_argument("-a", "--auto", help="Run in fully automated mode without manually unplugging cables", action="store_true")
@@ -106,6 +107,10 @@ python mclag_v2.py -t 448D -mac 1000-10000-1000 -e -test 1 -lm
 """
 	print(guide)
 	exit()
+if args.restore:
+	restore_config = True
+else:
+	restore_config = False
 if args.sa_upgrade:
 	upgrade_sa = True
 	sw_build = args.sa_upgrade
@@ -851,12 +856,12 @@ if testcase == 14 or test_all:
 	myixia.topologies[5].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=network_numbers)
 
 	# !!!!!!!!!!There could be a bug in IXIA where the first line of the following is NOT excuted
-	#myixia.topologies[0].change_med(1000)
-	myixia.topologies[1].change_med(1111)
-	myixia.topologies[2].change_med(2222)
-	myixia.topologies[3].change_med(3333)
-	myixia.topologies[4].change_med(4444)
-	myixia.topologies[5].change_med(5555)
+	myixia.topologies[0].change_med(1000)
+	myixia.topologies[1].change_med(2000)
+	myixia.topologies[2].change_med(3000)
+	myixia.topologies[3].change_med(4000)
+	myixia.topologies[4].change_med(5000)
+	myixia.topologies[5].change_med(6000)
 	#myixia.topologies[0].change_med(1000)
 	 
 
@@ -918,24 +923,447 @@ if testcase == 15 or test_all:
 	myixia.topologies[4].add_bgp(dut_ip='10.1.1.1',bgp_type='internal',num=10)
 	myixia.topologies[5].add_bgp(dut_ip='10.1.1.1',bgp_type='internal',num=10)
 
-	myixia.topologies[0].change_local_pref(1000)
-	myixia.topologies[1].change_local_pref(1111)
-	myixia.topologies[2].change_local_pref(2222)
-	myixia.topologies[3].change_local_pref(3333)
-	myixia.topologies[4].change_local_pref(4444)
-	myixia.topologies[5].change_local_pref(5555)
-	myixia.topologies[0].change_local_pref(1000)
+	myixia.topologies[0].change_local_pref(1111)
+	myixia.topologies[1].change_local_pref(2222)
+	myixia.topologies[2].change_local_pref(3333)
+	myixia.topologies[3].change_local_pref(4444)
+	myixia.topologies[4].change_local_pref(5555)
+	myixia.topologies[5].change_local_pref(6666)
+	 
 	 
 
 	myixia.start_protocol(wait=50)
 
 	check_bgp_test_result(testcase,description,switches)
+
+if testcase == 16 or test_all:
+	testcase = 16
+	description = "BGP Route_map: match actions:next_hop,as,network,origin,metric"
+	print_test_subject(testcase,description)
+
+	# console_timer(20,msg="After configuring ospf, wait for 20 sec")
+	# if CLEAN_ALL:
+	# 	switches_clean_up(switches)
+	# else:
+	# 	for switch in switches:
+	# 		switch.router_bgp.clear_config()
+
+	# if restore_config:
+	# 	for switch in switches:
+	# 		file = f"{switch.cfg_file}_case_{testcase}.txt" 
+	# 		switch.restore_config(file)
+
+	# ########################################################
+	# #   Configure OSPF infratructure
+	# ########################################################
+	# for switch in switches:
+	# 	switch.show_switch_info()
+	# 	switch.router_ospf.basic_config()
+	# console_timer(20,msg="After configuring ospf, wait for 20 sec")
+
+	# ########################################################
+	# #   Configure iBGP mesh infratructure
+	# ########################################################
+	# for switch in switches:
+	# 	switch.router_ospf.neighbor_discovery()
+	# 	switch.router_bgp.update_ospf_neighbors()
+	# 	switch.router_bgp.config_ibgp_mesh_loopback()
+
+	# console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+	# for switch in switches:
+	# 	switch.router_ospf.show_ospf_neighbors()
+	# 	switch.router_bgp.show_bgp_summary()
+
+	# ########################################################
+	# #   configure ACL and Route-map
+	# ########################################################
+	for switch in switches:
+		switch.route_map.clean_up()
+		switch.access_list.basic_config()
+		switch.route_map.basic_config()
+	# ########################################################
+	# #   Setup IXIA  infratructure
+	# ########################################################
+
+	########################################################
+	#   Backup the switch's configuration
+	########################################################
+	tprint("============= Backing up configurations at the start of the test ============")
+
+	for switch in switches:
+		file = f"{switch.cfg_file}_case_{testcase}.txt" 
+		switch.backup_config(file)
+
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"]]
+
+	########################################################
+	#   Configure eBGP to IXIA ports  
+	########################################################
+	for switch,ixia_port_info in zip(switches,portList):
+		if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
+	
+	 
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+
+ 	
+	for topo in myixia.topologies:
+		topo.add_ipv4()
+	 
+	myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=10)
+	 
+	myixia.topologies[0].change_med(1000)
+	myixia.topologies[1].change_med(2000)
+	 
+	 
+
+	myixia.start_protocol(wait=50)
+
+	myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+	myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+	
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
+	myixia.stop_traffic()
+	#myixia.clear_stats()
+
+	switch_1 = switches[0]
+	switch_2 = switches[1]
+	for switch in switches:
+		switch.router_bgp.get_neighbors_summary()
+	neighbors = switch_1.router_bgp.bgp_neighbors_objs
+	#find out switch_1's ixia neighbor
+	for nei in neighbors:
+		if nei.id == seperate_ip_mask(portList[0][6])[0]:
+			the_neighbor = nei
+			break
+	print(the_neighbor.id)
+
+	other_switches_2_sw1 = []
+	for i in range(1,7):
+		neighbors = switches[i].router_bgp.bgp_neighbors_objs
+		for nei in neighbors:
+			if nei.id == switch_1.rid:
+				other_switches_2_sw1.append(nei)
+				break
+	# ########################################################
+	# #   Start testing route-map: match network 
+	# ########################################################
+	# the_neighbor.add_route_map_in(route_map="match-network-10-10")
+	# console_timer(20,msg=f"After configuring route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# myixia.check_traffic()
+
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+	# the_neighbor.remove_route_map_in(route_map="match-network-10-10")
+	# console_timer(20,msg=f"After removing route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+	
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# if myixia.check_traffic():
+	# 	msg = "============= Passed: BGP route-map: match network =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# else:
+	# 	msg = "============= Passed: BGP route-map: match network =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+
+	# ########################################################
+	# #   Start testing route-map: match aspath
+	# ########################################################
+	# the_neighbor.add_route_map_in(route_map="match-aspath-101")
+	# console_timer(20,msg=f"After configuring route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# myixia.check_traffic()
+
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+	# the_neighbor.remove_route_map_in(route_map="match-aspath-101")
+	# console_timer(20,msg=f"After removing route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+	
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# if myixia.check_traffic():
+	# 	msg = "============= Passed: BGP route-map: match aspath =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# else:
+	# 	msg = "============= Passed: BGP route-map: match aspath =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+	# ########################################################
+	# #   Start testing route-map: match next_hop
+	# ########################################################
+	# the_neighbor.add_route_map_in(route_map="match-med-1000")
+	# console_timer(20,msg=f"After configuring route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# myixia.check_traffic()
+
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+	# the_neighbor.remove_route_map_in(route_map="match-med-1000")
+	# console_timer(20,msg=f"After removing route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+	
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# if myixia.check_traffic():
+	# 	msg = "============= Passed: BGP route-map: match metric =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# else:
+	# 	msg = "============= Passed: BGP route-map: match metric =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+	# ########################################################
+	# #   Start testing route-map: match next_hop
+	# ########################################################
+	# the_neighbor.add_route_map_in(route_map="match-next-hop-ixia-1")
+	# console_timer(20,msg=f"After configuring route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# myixia.check_traffic()
+
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+	# the_neighbor.remove_route_map_in(route_map="match-next-hop-ixia-1")
+	# console_timer(20,msg=f"After removing route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+	
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# if myixia.check_traffic():
+	# 	msg = "============= Passed: BGP route-map: match next_hop =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# else:
+	# 	msg = "============= Passed: BGP route-map: match next_hop =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+
+	# ########################################################
+	# #   Start testing route-map: match origin
+	# ########################################################
+	# the_neighbor.add_route_map_in(route_map="match-origin")
+	# console_timer(20,msg=f"After configuring route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# myixia.check_traffic()
+
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+	# the_neighbor.remove_route_map_in(route_map="match-origin")
+	# console_timer(20,msg=f"After removing route-map(match-network) on neighbor {the_neighbor.id}, wait for 20 sec")
+
+	# switch_1.router_bgp.clear_bgp_all()
+	# switch_2.router_bgp.clear_bgp_all()
+	
+	# switch_1.router_bgp.show_bgp_network()
+	# switch_1.show_routing_table()
+
+	# switch_2.router_bgp.show_bgp_network()
+	# switch_2.show_routing_table()
+
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# if myixia.check_traffic():
+	# 	msg = "============= Passed: BGP route-map: match origin =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# else:
+	# 	msg = "============= Passed: BGP route-map: match origin =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# myixia.stop_traffic()
+	# myixia.clear_stats()
+
+	########################################################
+	#   Start testing route-map: set origin
+	########################################################
+	set_clause_list = [("change-med-1000","match-med-10000","permit-med-10000","set metric"),
+						("change-origin","match-origin-egp","permit-origin-egp","set origin"),
+						("change-next-hop-1","match-next-hop-sw1","permit-next-hop-sw1","set nexthop"),
+						("change-aspath-101","match-aspath-1001","permit-aspath-1001","set aspath"),
+						("change-weight-1","match-aspath-101","permit-aspath-101","set weight"),
+						("set-local-pref-1111","match-aspath-101","permit-aspath-101","set local perference"),
+						]
+	for clause in set_clause_list:	
+		for neighbor_2 in other_switches_2_sw1:
+			neighbor_2.remove_route_map_in()
+		the_neighbor.remove_route_map_in()
+		the_neighbor.add_route_map_in(route_map=clause[0])
+		for neighbor_2 in other_switches_2_sw1:
+			neighbor_2.add_route_map_in(route_map=clause[1])
+
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+		 
+		console_timer(10,msg=f"After clearing BGP, wait for 10 sec")
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		networks = ["10.10.1.1"]
+
+		for i in range(1,7):
+			if switches[i].check_route_exist(networks) or switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 1 Failed: BGP route-map: set origin.{networks} still exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+			else:
+				msg = f"============= Step 1 Passed: BGP route-map: set origin.{networks} does NOT exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+
+		myixia.stop_traffic()
+		#myixia.clear_stats()
+
+		for neighbor_2 in other_switches_2_sw1:
+			neighbor_2.remove_route_map_in()
+			neighbor_2.add_route_map_in(route_map=clause[2])
+
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		myixia.start_traffic()
+		myixia.collect_stats()
+		if myixia.check_traffic():
+			msg = f"============= Step 2 Passed: BGP route-map: {clause[3]} =========="
+			tprint(msg)
+			send_Message(msg)
+		else:
+			msg = f"============= Step 2 Passed: BGP route-map: {clause[3]} =========="
+			tprint(msg)
+			send_Message(msg)
+		myixia.stop_traffic()
+		#myixia.clear_stats()
+		for neighbor_2 in other_switches_2_sw1:
+			neighbor_2.remove_route_map_in()
+		the_neighbor.remove_route_map_in()
+
+
+	# check_bgp_test_result(testcase,description,switches)
 	# result = "Passed"
 	# for switch in switches:
 	# 	#switch.router_bgp.get_neighbors_summary()
 	# 	if not switch.router_bgp.check_neighbor_status():
 	# 		result = "Failed"
-	# tprint(f"====================== Test case {testcase} is {result} ==========")		 
+	# tprint(f"====================== Test case {testcase} is {result} ==========")		
+
+
+
 
 print("###################")
 tprint("Test run is DONE")

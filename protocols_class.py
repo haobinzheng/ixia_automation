@@ -15,32 +15,55 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 
-def switches_clean_up(switches):
-    for switch in switches:
-        switch.factory_reset_nologin()
+class Router_aspath_list:
+    def __init__(self,*args,**kargs):
+        self.switch = args[0]
 
-    console_timer(150,msg = "After factory reset, wait for 150 seconds")
+    def basic_config(self):
+        basic_config_aspath_list(self.switch.console)
 
-    for switch in switches:
-        switch.relogin_after_factory()
-        switch.init_config()
+    def clean_up(self):
+        pass
 
-def check_bgp_test_result(testcase,description,switches,**kwargs):
-    if "test1" in kwargs:
-        result1 = kwargs["test1"]
-    else:
-        result1 = True
-    result = True
-    for switch in switches:
-        #switch.router_bgp.get_neighbors_summary()
-        if not switch.router_bgp.check_neighbor_status():
-            result = False
-    if result1 and result:
-        final_result = "Passed"
-    else:
-        final_result = "Failed"
+class Router_access_list:
+    def __init__(self,*args,**kargs):
+        self.switch = args[0]
 
-    tprint(f"====================== Test case #{testcase}:{description} has been {final_result} ==========\n\n")   
+    def basic_config(self):
+        basic_config_access_list(self.switch.console)
+
+    def clean_up(self):
+        pass
+
+class Router_route_map:
+    def __init__(self,*args,**kwargs):
+         self.switch = args[0]
+
+    def basic_config(self):
+        basic_config_route_map(self.switch.console)
+
+    def find_clauses(self):
+        result = collect_edit_items(self.switch.console,"config router route-map")
+        print(result)
+        clauses = []
+        for item in result:
+            two_parts = re.split('\\s+',item)
+            clauses.append(two_parts[0])
+        print(clauses)
+        self.clauses = clauses
+        return clauses
+
+
+    def clean_up(self):
+        self.find_clauses()
+        switch_exec_cmd(self.switch.console,"config router route-map")
+        for c in self.clauses:
+            switch_exec_cmd(self.switch.console, f"delete {c} " )
+        switch_exec_cmd(self.switch.console,"end")
+
+
+
+
 
 class Ospf_Neighbor:
     def __init__(self,*args,**kargs):
@@ -227,6 +250,7 @@ class BGP_Neighbor:
     def __init__(self,*args,**kargs):
         # Neighbor        V         AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
         neighbor_dict = args[0]
+        self.switch= args[1]
         self.id = neighbor_dict["Neighbor"]
         self.version = neighbor_dict["V"]
         self.AS = neighbor_dict["AS"]
@@ -253,6 +277,37 @@ class BGP_Neighbor:
         tprint(f"Neighbor Up Timer: {self.up_timer}")
         tprint(f"Neighbor Prefix Received: {self.prefix_recieved}")
 
+    def add_route_map_in(self,*args,**kwargs):
+        route_map = kwargs['route_map']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set route-map-in {route_map}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def remove_route_map_in(self,*args,**kwargs):
+        if "route_map" in kwargs:
+            route_map = kwargs['route_map']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                unset route-map-in 
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
 
 class Router_BGP:
     def __init__(self,*args,**kwargs):
@@ -264,6 +319,10 @@ class Router_BGP:
 
     def update_switch(self,switch):
         self.switch = switch
+
+    def check_network_exist(self,nets):
+        return check_route_exist(dut=self.switch.console,networks=nets,cmd="get router info bgp network")
+
 
     def check_neighbor_status(self):
         self.get_neighbors_summary()
@@ -309,7 +368,7 @@ class Router_BGP:
         bgp_neighor_list = get_router_bgp_summary(self.switch.console)
         items_list = []
         for n_dict in bgp_neighor_list:
-            n_obj = BGP_Neighbor(n_dict)
+            n_obj = BGP_Neighbor(n_dict,self.switch)
             items_list.append(n_obj)
         self.bgp_neighbors_objs = items_list
         return items_list   
@@ -481,6 +540,9 @@ class Router_BGP:
         """
         config_cmds_lines(dut,bgp_config)
 
+    def clear_bgp_all(self):
+        switch_exec_cmd(self.switch.console,"execute router clear bgp all")
+
     def config_redistribute_ospf(self,action):
         tprint(f"============== Redistrubte ospf routes to BGP at {self.switch.name} ")
         switch = self.switch
@@ -570,6 +632,7 @@ class FortiSwitch:
         self.mgmt_ip = dut_dir['mgmt_ip'] 
         self.mgmt_mask = dut_dir['mgmt_mask']  
         self.loop0_ip = dut_dir['loop0_ip']  
+        self.rid = self.loop0_ip
         self.vlan1_ip = dut_dir['vlan1_ip'] 
         self.vlan1_2nd = dut_dir['vlan1_2nd']
         self.vlan1_subnet = dut_dir['vlan1_subnet']  
@@ -581,9 +644,30 @@ class FortiSwitch:
         self.ebgp_as = dut_dir['ebgp_as']
         self.router_ospf = Router_OSPF(self)
         self.router_bgp = Router_BGP(self)
+        self.access_list= Router_access_list(self)
+        self.route_map = Router_route_map(self)
+        self.aspath_list = Router_aspath_list(self)
         self.lldp_neighbor_list = get_switch_lldp_summary(self.console)
         self.neighbor_ip_list = []
         self.neighbor_switch_list = []
+
+
+        
+
+    def backup_config(self,file_name):
+        cmd = f"execute backup config tftp {file_name} 10.105.19.19"
+        switch_exec_cmd(self.console,cmd)
+        console_timer(2)
+        
+    def restore_config(self,file_name):
+        #restore a file will cause switch to reboot
+        cmd = f"execute restore config tftp {file_name} 10.105.19.19"
+        switch_exec_cmd(self.console,cmd)
+        switch_enter_yes(self.console)
+
+
+    def check_route_exist(self,nets):
+        return check_route_exist(dut=self.console,networks=nets,cmd="get router info routing-table all")
 
     def show_vlan_neighbors(self):
         tprint(self.neighbor_ip_list)
@@ -616,6 +700,9 @@ class FortiSwitch:
 
     def factory_reset_nologin(self):
         switch_factory_reset_nologin(self.dut_dir)
+
+    def relogin(self):
+        relogin_if_needed(self.console)
 
     def relogin_after_factory(self):
         tprint('-------------------- re-login switch after factory rest-----------------------')
