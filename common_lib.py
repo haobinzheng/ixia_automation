@@ -48,7 +48,7 @@ def collect_edit_items(dut,cmd):
  	for item in result:
  		if item == '':
  			continue
- 		elif "route-map" in item:
+ 		elif "route-map" in item or "access-list" in item:
  			continue
  		else:
  			new_result.append(item)

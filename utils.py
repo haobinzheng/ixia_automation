@@ -765,7 +765,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
-	time.sleep(0.5)
+	time.sleep(0.1)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
 
 def switch_wait_enter_yes(tn,prompt):

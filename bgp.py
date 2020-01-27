@@ -109,8 +109,10 @@ python mclag_v2.py -t 448D -mac 1000-10000-1000 -e -test 1 -lm
 	exit()
 if args.restore:
 	restore_config = True
+	tprint(" **Restore config from tftp server")
 else:
 	restore_config = False
+
 if args.sa_upgrade:
 	upgrade_sa = True
 	sw_build = args.sa_upgrade
@@ -941,17 +943,20 @@ if testcase == 16 or test_all:
 	description = "BGP Route_map: match actions:next_hop,as,network,origin,metric"
 	print_test_subject(testcase,description)
 
-	# console_timer(20,msg="After configuring ospf, wait for 20 sec")
-	# if CLEAN_ALL:
-	# 	switches_clean_up(switches)
-	# else:
-	# 	for switch in switches:
-	# 		switch.router_bgp.clear_config()
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
 
-	# if restore_config:
-	# 	for switch in switches:
-	# 		file = f"{switch.cfg_file}_case_{testcase}.txt" 
-	# 		switch.restore_config(file)
+	if restore_config:
+		for switch in switches:
+			file = f"{switch.cfg_file}_case_{testcase}.txt" 
+			switch.restore_config(file)
+
+	console_timer(300,msg="wait for 300s after restore config from tftp server")
+	for switch in switches:
+		switch.relogin()
 
 	# ########################################################
 	# #   Configure OSPF infratructure
@@ -977,10 +982,10 @@ if testcase == 16 or test_all:
 	# ########################################################
 	# #   configure ACL and Route-map
 	# ########################################################
-	for switch in switches:
-		switch.route_map.clean_up()
-		switch.access_list.basic_config()
-		switch.route_map.basic_config()
+	# for switch in switches:
+	# 	switch.route_map.clean_up()
+	# 	switch.access_list.basic_config()
+	# 	switch.route_map.basic_config()
 	# ########################################################
 	# #   Setup IXIA  infratructure
 	# ########################################################
@@ -1313,15 +1318,17 @@ if testcase == 16 or test_all:
 
 		networks = ["10.10.1.1"]
 
+		step_1 = True
 		for i in range(1,7):
 			if switches[i].check_route_exist(networks) or switches[i].router_bgp.check_network_exist(networks):
-				msg = f"============= Step 1 Failed: BGP route-map: set origin.{networks} still exist at {switches[i].rid} =========="
+				msg = f"============= Step 1 Failed: BGP route-map-in: {clause[3]}.{networks} still exist at {switches[i].rid} =========="
 				tprint(msg)
 				send_Message(msg)
-			else:
-				msg = f"============= Step 1 Passed: BGP route-map: set origin.{networks} does NOT exist at {switches[i].rid} =========="
-				tprint(msg)
-				send_Message(msg)
+				step_1 = False
+		if step_1: 
+			msg = f"============= Step 1 Passed: BGP route-map-in: {clause[3]}, {networks} does NOT exist at {switches[i].rid} =========="
+			tprint(msg)
+			send_Message(msg)
 
 		myixia.stop_traffic()
 		#myixia.clear_stats()
@@ -1340,11 +1347,11 @@ if testcase == 16 or test_all:
 		myixia.start_traffic()
 		myixia.collect_stats()
 		if myixia.check_traffic():
-			msg = f"============= Step 2 Passed: BGP route-map: {clause[3]} =========="
+			msg = f"============= Step 2 Passed: BGP route-map-in: {clause[3]} with IXIA traffic =========="
 			tprint(msg)
 			send_Message(msg)
 		else:
-			msg = f"============= Step 2 Passed: BGP route-map: {clause[3]} =========="
+			msg = f"============= Step 2 Passed: BGP route-map-in: {clause[3]} with IXIA traffic =========="
 			tprint(msg)
 			send_Message(msg)
 		myixia.stop_traffic()

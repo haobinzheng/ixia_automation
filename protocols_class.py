@@ -32,8 +32,24 @@ class Router_access_list:
     def basic_config(self):
         basic_config_access_list(self.switch.console)
 
+    def acl_find_clauses(self):
+        result = collect_edit_items(self.switch.console,"config router access-list")
+        print(result)
+        clauses = []
+        for item in result:
+            two_parts = re.split('\\s+',item)
+            clauses.append(two_parts[0])
+        print(clauses)
+        self.clauses = clauses
+        return clauses
+
     def clean_up(self):
-        pass
+        self.find_clauses()
+        switch_exec_cmd(self.switch.console,"config router route-map")
+        for c in self.clauses:
+            switch_exec_cmd(self.switch.console, f"delete {c} " )
+        switch_exec_cmd(self.switch.console,"end")
+
 
 class Router_route_map:
     def __init__(self,*args,**kwargs):
@@ -702,7 +718,16 @@ class FortiSwitch:
         switch_factory_reset_nologin(self.dut_dir)
 
     def relogin(self):
-        relogin_if_needed(self.console)
+        dut = self.console
+        tprint(f"============ relogin {self.name} ====== ")
+        try:
+            relogin_if_needed(dut)
+        except Exception as e:
+            debug("something is wrong with rlogin_if_needed at bgp, try again")
+            relogin_if_needed(dut)
+        image = find_dut_image(dut)
+        tprint(f"============================ {self.name} software image = {image} ============")
+        switch_show_cmd(self.console,"get system status")
 
     def relogin_after_factory(self):
         tprint('-------------------- re-login switch after factory rest-----------------------')
