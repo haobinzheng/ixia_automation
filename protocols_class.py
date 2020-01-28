@@ -15,6 +15,26 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 
+class Router_community_list:
+    def __init__(self, *args, **kwargs):
+        self.switch = args[0]
+
+    def basic_config(self):
+        basic_config_community_list(self.switch.console)
+
+    def clean_up(self):
+        pass
+
+class Router_prefix_list:
+    def __init__(self,*args, **kwargs):
+        self.switch = args[0]
+
+    def basic_config(self):
+        basic_config_prefix_list(self.switch.console)
+
+    def clean_up(self):
+        pass
+
 class Router_aspath_list:
     def __init__(self,*args,**kargs):
         self.switch = args[0]
@@ -54,6 +74,9 @@ class Router_access_list:
 class Router_route_map:
     def __init__(self,*args,**kwargs):
          self.switch = args[0]
+
+    def community_config(self):
+        route_map_community(self.switch.console)
 
     def basic_config(self):
         basic_config_route_map(self.switch.console)
@@ -293,6 +316,140 @@ class BGP_Neighbor:
         tprint(f"Neighbor Up Timer: {self.up_timer}")
         tprint(f"Neighbor Prefix Received: {self.prefix_recieved}")
 
+    def add_prefix_list_in(self,*args,**kwargs):
+        prefix = kwargs['prefix']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set prefix-list-in  {prefix}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def add_prefix_list_out(self,*args,**kwargs):
+        prefix = kwargs['prefix']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set prefix-list-out {prefix}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def remove_prefix_list(self,*args,**kwargs):
+         
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                unset prefix-list-in   
+                unset prefix-list-out
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def add_distribute_list_in(self,*args,**kwargs):
+        distribute = kwargs['distribute']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set distribute-list-in {distribute}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def add_distribute_list_out(self,*args,**kwargs):
+        distribute = kwargs['distribute']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set distribute-list-out {distribute}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console, config)
+
+    def remove_distribute_list(self,*args,**kwargs):
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                unset distribute-list-out
+                unset distribute-list-in
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def add_aspath_in(self,*args,**kwargs):
+        aspath = kwargs['aspath']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set aspath-filter-list-in {aspath}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def add_aspath_out(self,*args,**kwargs):
+        aspath = kwargs['aspath']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set aspath-filter-list-out {aspath}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def remove_aspath_list(self):
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                unset aspath-filter-list-out  
+                unset aspath-filter-list-in
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
     def add_route_map_in(self,*args,**kwargs):
         route_map = kwargs['route_map']
 
@@ -302,6 +459,21 @@ class BGP_Neighbor:
         config neighbor
             edit {self.id}
                 set route-map-in {route_map}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def add_route_map_out(self,*args,**kwargs):
+        route_map = kwargs['route_map']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set route-map-out {route_map}
             next
         end
         end
@@ -324,6 +496,56 @@ class BGP_Neighbor:
         """
         config_cmds_lines(self.switch.console,config)
 
+    def remove_route_map_out(self,*args,**kwargs):
+        if "route_map" in kwargs:
+            route_map = kwargs['route_map']
+
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                unset route-map-out 
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def remove_route_maps(self,*args,**kwargs):
+        
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                unset route-map-out 
+                unset route-map-in
+            next
+        end
+        end
+        """
+
+    def remove_all_filters(self,*args,**kwargs):
+        
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                unset route-map-out 
+                unset route-map-in
+                unset aspath-filter-list-out  
+                unset aspath-filter-list-in
+                unset prefix-list-in   
+                unset prefix-list-out
+                unset distribute-list-out
+                unset distribute-list-in
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
 
 class Router_BGP:
     def __init__(self,*args,**kwargs):
@@ -663,6 +885,8 @@ class FortiSwitch:
         self.access_list= Router_access_list(self)
         self.route_map = Router_route_map(self)
         self.aspath_list = Router_aspath_list(self)
+        self.prefix_list = Router_prefix_list(self)
+        self.community_list = Router_community_list(self)
         self.lldp_neighbor_list = get_switch_lldp_summary(self.console)
         self.neighbor_ip_list = []
         self.neighbor_switch_list = []

@@ -94,7 +94,7 @@ def check_bgp_test_result(testcase,description,switches,**kwargs):
 def basic_config_aspath_list(dut):
 	config = """
 	config router aspath-list
-    edit "as-101"
+    edit "permit-as-101"
             config rule
                 edit 1
                     set action permit
@@ -102,7 +102,15 @@ def basic_config_aspath_list(dut):
                 next
             end
     next
-    edit "as-102"
+    edit "deny-as-101"
+            config rule
+                edit 1
+                    set action deny
+                    set regexp "101"
+                next
+            end
+    next
+    edit "permit-as-102"
             config rule
                 edit 1
                     set action permit
@@ -110,7 +118,9 @@ def basic_config_aspath_list(dut):
                 next
             end
     next
-    edit "as-103"
+
+   
+    edit "permit-as-103"
             config rule
                 edit 1
                     set action permit
@@ -119,7 +129,17 @@ def basic_config_aspath_list(dut):
             end
     next
 
-    edit "as-104"
+    edit "deny-as-103"
+            config rule
+                edit 1
+                    set action deny
+                    set regexp "103"
+                next
+            end
+    next
+
+
+    edit "permit-as-104"
             config rule
                 edit 1
                     set action permit
@@ -128,8 +148,16 @@ def basic_config_aspath_list(dut):
             end
     next
 
+    edit "deny-as-104"
+            config rule
+                edit 1
+                    set action deny
+                    set regexp "104"
+                next
+            end
+    next
 
-    edit "as-105"
+    edit "permit-as-105"
             config rule
                 edit 1
                     set action permit
@@ -138,7 +166,15 @@ def basic_config_aspath_list(dut):
             end
     next
 
-    edit "as-106"
+	edit "deny-as-105"
+            config rule
+                edit 1
+                    set action deny
+                    set regexp "105"
+                next
+            end
+    next
+    edit "permit-as-106"
             config rule
                 edit 1
                     set action permit
@@ -147,18 +183,199 @@ def basic_config_aspath_list(dut):
             end
     next
 
-     edit "as-65001"
+    edit "deny-as-106"
             config rule
                 edit 1
-                    set action permit
-                    set regexp "^65001 65006$
+                    set action deny
+                    set regexp "106"
                 next
             end
     next
-end
+
+    edit "permit-as-65001"
+            config rule
+                edit 1
+                    set action permit
+                    set regexp "^65001 65006$"
+                next
+            end
+    next
+
+    edit "deny-as-65001"
+            config rule
+                edit 1
+                    set action deny
+                    set regexp "^65001 65006$"
+                next
+            end
+    	next
+	end
 
 	"""
+	config_cmds_lines(dut,config)
 
+def route_map_community(dut):
+	config = """
+	config router route-map
+      edit "set_no_advertise"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "permit-as-101"
+                        set set-community "no-advertise"                         
+                next
+            end
+   		next
+
+   		edit "set_no_export"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "permit-as-101"
+                        set set-community "no-export"                         
+                next
+            end
+   		next
+
+   		edit "set_local_as"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "permit-as-101"
+                        set set-community "local-AS"                         
+                next
+            end
+   		next
+
+   		edit "set_internet"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "permit-as-101"
+                        set set-community "internet"                         
+                next
+            end
+   		next
+
+   		edit "set_number_1"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "permit-as-101"
+                      set set-community 101:1                         
+                next
+            end
+   		next
+
+   		edit "set_number_2"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "permit-as-101"
+                      set set-community 65000                       
+                next
+            end
+   		next
+
+   		edit "set_number_delete"
+        set protocol bgp
+            config rule
+                edit 1
+                    set match-as-path "permit-as-101"
+                      set set-community 65000                       
+                next
+            end
+   		next
+
+	end
+	"""
+	config_cmds_lines(dut,config)
+
+def basic_config_community_list(dut):
+
+	config = """
+
+	config router community-list
+    edit "deny_no_advertise"
+            config rule
+                edit 1
+                    set action deny
+                    set match "no-advertise"
+                next
+            end
+    	next
+
+	edit "permit_no_advertise"
+            config rule
+                edit 1
+                    set action permit
+                    set match "no-advertise"
+                next
+            end
+    	next
+
+    edit "deny_no_export"
+            config rule
+                edit 1
+                    set action deny
+                    set match "no-export"
+                next
+            end
+    	next
+
+	edit "permit_no_export"
+            config rule
+                edit 1
+                    set action permit
+                    set match "no-export"
+                next
+            end
+    	next
+
+	
+    edit "deny_101_1"
+            config rule
+                edit 1
+                    set action deny
+                    set match 101:1
+                next
+            end
+    	next
+
+	edit "permit_101_1"
+            config rule
+                edit 1
+                    set action permit
+                    set match 101:1
+                next
+            end
+    	next
+
+	end
+
+
+	edit "deny_65000"
+            config rule
+                edit 1
+                    set action deny
+                    set match 65000
+                next
+            end
+    	next
+
+	edit "permit_65000"
+            config rule
+                edit 1
+                    set action permit
+                    set match 65000
+                next
+            end
+    	next
+
+	end
+
+	"""
+	config_cmds_lines(dut,config)
 
 def basic_config_access_list(dut):
 
@@ -274,7 +491,6 @@ def basic_config_access_list(dut):
                 next
             end
     	next
-	end
 
 	
 
@@ -286,7 +502,7 @@ def basic_config_access_list(dut):
                 next
             end
     	next
-	end
+
 
 	edit "next-hop-sw3"
             config rule
@@ -296,7 +512,7 @@ def basic_config_access_list(dut):
                 next
             end
     	next
-	end
+
 
 	edit "next-hop-sw4"
             config rule
@@ -306,7 +522,7 @@ def basic_config_access_list(dut):
                 next
             end
     	next
-	end
+
 
 	edit "next-hop-sw5"
             config rule
@@ -316,7 +532,7 @@ def basic_config_access_list(dut):
                 next
             end
     	next
-	end
+	 
 
 	edit "next-hop-sw6"
             config rule
@@ -326,6 +542,500 @@ def basic_config_access_list(dut):
                 next
             end
     	next
+ 
+
+	edit "deny-network-10-10"
+            config rule
+                edit 1
+                    set prefix 10.10.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-network-10-20"
+            config rule
+                edit 1
+                    set prefix 10.20.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-network-10-30"
+            config rule
+                edit 1
+                    set prefix 10.30.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-network-10-40"
+            config rule
+                edit 1
+                    set prefix 10.40.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-network-10-50"
+            config rule
+                edit 1
+                    set prefix 10.50.0.0 255.255.0.0
+                   set action deny
+                next
+            end
+    next
+    edit "deny-network-10-60"
+            config rule
+                edit 1
+                    set prefix 10.60.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-next-hop-ixia-1"
+            config rule
+                edit 1
+                    set prefix 10.1.1.101 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-next-hop-ixia-2"
+            config rule
+                edit 1
+                    set prefix 10.1.1.102 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-next-hop-ixia-3"
+            config rule
+                edit 1
+                    set prefix 10.1.1.103 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-next-hop-ixia-4"
+            config rule
+                edit 1
+                    set prefix 10.1.1.104 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-next-hop-ixia-5"
+            config rule
+                edit 1
+                    set prefix 10.1.1.105 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-next-hop-ixia-6"
+            config rule
+                edit 1
+                    set prefix 10.1.1.106 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-next-hop-sw1"
+            config rule
+                edit 1
+                    set prefix 1.1.1.1 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+	
+	edit "deny-next-hop-sw2"
+            config rule
+                edit 1
+                    set prefix 2.2.2.2 255.255.255.255
+                    sset action deny
+                next
+            end
+    	next
+
+	edit "deny-next-hop-sw3"
+            config rule
+                edit 1
+                    set prefix 3.3.3.3 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+	edit "deny-ext-hop-sw4"
+            config rule
+                edit 1
+                    set prefix 4.4.4.4 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+
+	edit "deny-next-hop-sw5"
+            config rule
+                edit 1
+                    set prefix 5.5.5.5 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+
+	edit "deny-next-hop-sw6"
+            config rule
+                edit 1
+                    set prefix 6.6.6.6 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+	end
+
+
+	"""
+	config_cmds_lines(dut,config)
+
+def basic_config_prefix_list(dut):
+
+	config = """
+	config router prefix-list
+    edit "permit-prefix-10-10"
+            config rule
+                edit 1
+                    set prefix 10.10.0.0 255.255.0.0
+                    set action permit
+                next
+            end
+    next
+    edit "permit-prefix-10-20"
+            config rule
+                edit 1
+                    set prefix 10.20.0.0 255.255.0.0
+                    set action permit
+                next
+            end
+    next
+    edit "permit-prefix-10-30"
+            config rule
+                edit 1
+                    set prefix 10.30.0.0 255.255.0.0
+                    set action permit
+                next
+            end
+    next
+    edit "permit-prefix-10-40"
+            config rule
+                edit 1
+                    set prefix 10.40.0.0 255.255.0.0
+                    set action permit
+                next
+            end
+    next
+    edit "permit-prefix-10-50"
+            config rule
+                edit 1
+                    set prefix 10.50.0.0 255.255.0.0
+                    set action permit
+                next
+            end
+    next
+    edit "permit-prefix-10-60"
+            config rule
+                edit 1
+                    set prefix 10.60.0.0 255.255.0.0
+                    set action permit
+                next
+            end
+    next
+    edit "permit-prefix-hop-ixia-1"
+            config rule
+                edit 1
+                    set prefix 10.1.1.101 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+    edit "permit-prefix-hop-ixia-2"
+            config rule
+                edit 1
+                    set prefix 10.1.1.102 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+    edit "permit-prefix-hop-ixia-3"
+            config rule
+                edit 1
+                    set prefix 10.1.1.103 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+    edit "permit-prefix-hop-ixia-4"
+            config rule
+                edit 1
+                    set prefix 10.1.1.104 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+    edit "permit-prefix-hop-ixia-5"
+            config rule
+                edit 1
+                    set prefix 10.1.1.105 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+    edit "permit-prefix-hop-ixia-6"
+            config rule
+                edit 1
+                    set prefix 10.1.1.106 255.255.255.255
+                   set action permit
+                next
+            end
+    	next
+
+    edit "permit-prefix-hop-sw1"
+            config rule
+                edit 1
+                    set prefix 1.1.1.1 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+
+	
+
+	edit "permit-prefix-hop-sw2"
+            config rule
+                edit 1
+                    set prefix 2.2.2.2 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+
+	edit "permit-prefix-hop-sw3"
+            config rule
+                edit 1
+                    set prefix 3.3.3.3 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+
+	edit "permit-prefix-hop-sw4"
+            config rule
+                edit 1
+                    set prefix 4.4.4.4 255.255.255.255
+                    set action permit
+                next
+            end
+    	next
+
+
+	edit "permit-prefix-hop-sw5"
+            config rule
+                edit 1
+                    set prefix 5.5.5.5 255.255.255.255
+                    sset action permit
+                next
+            end
+    	next
+
+
+	edit "permit-prefix-hop-sw6"
+            config rule
+                edit 1
+                    set prefix 6.6.6.6 255.255.255.255
+                    set action permit
+                next
+            end
+
+
+	edit "deny-prefix-10-10"
+            config rule
+                edit 1
+                    set prefix 10.10.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-prefix-10-20"
+            config rule
+                edit 1
+                    set prefix 10.20.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-prefix-10-30"
+            config rule
+                edit 1
+                    set prefix 10.30.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-prefix-10-40"
+            config rule
+                edit 1
+                    set prefix 10.40.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-prefix-10-50"
+            config rule
+                edit 1
+                    set prefix 10.50.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-prefix-10-60"
+            config rule
+                edit 1
+                    set prefix 10.60.0.0 255.255.0.0
+                    set action deny
+                next
+            end
+    next
+    edit "deny-prefix-hop-ixia-1"
+            config rule
+                edit 1
+                    set prefix 10.1.1.101 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-prefix-hop-ixia-2"
+            config rule
+                edit 1
+                    set prefix 10.1.1.102 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-prefix-hop-ixia-3"
+            config rule
+                edit 1
+                    set prefix 10.1.1.103 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-prefix-hop-ixia-4"
+            config rule
+                edit 1
+                    set prefix 10.1.1.104 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-prefix-hop-ixia-5"
+            config rule
+                edit 1
+                    set prefix 10.1.1.105 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+    edit "deny-prefix-hop-ixia-6"
+            config rule
+                edit 1
+                    set prefix 10.1.1.106 255.255.255.255
+                   set action deny
+                next
+            end
+    	next
+
+    edit "deny-prefix-hop-sw1"
+            config rule
+                edit 1
+                    set prefix 1.1.1.1 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+	
+
+	edit "deny-prefix-hop-sw2"
+            config rule
+                edit 1
+                    set prefix 2.2.2.2 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+
+	edit "deny-prefix-hop-sw3"
+            config rule
+                edit 1
+                    set prefix 3.3.3.3 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+
+	edit "deny-prefix-hop-sw4"
+            config rule
+                edit 1
+                    set prefix 4.4.4.4 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
+
+	edit "deny-prefix-hop-sw5"
+            config rule
+                edit 1
+                    set prefix 5.5.5.5 255.255.255.255
+                    sset action deny
+                next
+            end
+    	next
+
+
+	edit "deny-prefix-hop-sw6"
+            config rule
+                edit 1
+                    set prefix 6.6.6.6 255.255.255.255
+                    set action deny
+                next
+            end
+    	next
+
 	end
 
 	"""

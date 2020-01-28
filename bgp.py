@@ -12,11 +12,6 @@ import multiprocessing
 
 # Append paths to python APIs (Linux and Windows)
 
-sys.path.append('C:/Program Files (x86)/Ixia/hltapi/4.97.0.2/TclScripts/lib/hltapi/library/common/ixiangpf/python')
-sys.path.append('C:/Program Files (x86)/Ixia/IxNetwork/7.50.0.8EB/API/Python')
-
- 
-from ixia_ngfp_lib import *
 from utils import *
 import settings 
 from test_process import * 
@@ -33,7 +28,7 @@ from ixia_restpy_lib import *
 # Connection to the chassis, IxNetwork Tcl Server                 			   #
 ################################################################################
 
-CLEAN_ALL = True
+CLEAN_ALL = False
 
 sys.stdout = Logger("Log/bgp_testing.log")
 
@@ -41,6 +36,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-r", "--restore", help="restore config file from tftp server", action="store_true")
 parser.add_argument("-m", "--guide", help="print out simple user manual", action="store_true")
 parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
+parser.add_argument("-tc", "--test_config", help="For each test case,configure switches before starting testing", action="store_true")
 #parser.add_argument("-a", "--auto", help="Run in fully automated mode without manually unplugging cables", action="store_true")
 parser.add_argument("-u", "--fibercut", help="Run in manual mode when unplugging cables", action="store_true")
 parser.add_argument("-t", "--testbed", type=str, help="Specific which testbed to run this test. Valid options:\
@@ -137,6 +133,12 @@ if args.config:
 else:
 	setup = False   
 	tprint("** Skip setting up testbed and configuring devices")  
+if args.test_config:
+	test_config = True
+	tprint("** Before starting the test case, configure devices")
+else:
+	test_config = False   
+	 
 # if args.auto:
 # 	mode='auto'
 if args.log_mac:
@@ -232,7 +234,9 @@ if args.clean_up:
 else:
 	clean_up = False
 
-print(settings.ONBOARD_MSG)
+
+ 
+#print(settings.ONBOARD_MSG)
 #If in code development mode, skipping loging into switches 
 tprint("============================== Pre-test setup and configuration ===================")
 
@@ -950,15 +954,15 @@ if testcase == 16 or test_all:
 			file = f"{switch.cfg_file}_case_{testcase}.txt" 
 			switch.restore_config(file)
 
-	console_timer(300,msg="wait for 300s after restore config from tftp server")
-	for switch in switches:
-		switch.relogin()
+		console_timer(300,msg="wait for 300s after restore config from tftp server")
+		for switch in switches:
+			switch.relogin()
 
 	###################################################################
 	#   Step by Step setup 
 	###################################################################
 
-	if setup: 
+	if test_setup: 
 		# ########################################################
 		# #   Configure OSPF infratructure
 		# ########################################################
@@ -1044,6 +1048,8 @@ if testcase == 16 or test_all:
 	switch_2 = switches[1]
 	for switch in switches:
 		switch.router_bgp.get_neighbors_summary()
+		for nei in switch.router_bgp.bgp_neighbors_objs:
+			nei.remove_all_filters()
 	neighbors = switch_1.router_bgp.bgp_neighbors_objs
 	#find out switch_1's ixia neighbor
 	for nei in neighbors:
@@ -1288,7 +1294,7 @@ if testcase == 16 or test_all:
 	myixia.stop_traffic()
 
 	#########################################################################################################
-	#   Start testing route-map: set metric, set origin, set nexthop, set aspath, set weight, set local_pref
+	#   Start testing route-map-in: set metric, set origin, set nexthop, set aspath, set weight, set local_pref
 	#########################################################################################################
 	set_clause_list = [("change-med-1000","match-med-10000","permit-med-10000","set metric"),
 						("change-origin","match-origin-egp","permit-origin-egp","set origin"),
@@ -1324,7 +1330,7 @@ if testcase == 16 or test_all:
 				send_Message(msg)
 				step_1 = False
 		if step_1: 
-			msg = f"============= Step 1 Passed: BGP route-map-in: {clause[3]}, {networks} does NOT exist at {switches[i].rid} =========="
+			msg = f"============= Step 1 Passed: BGP route-map-in: {clause[3]}, {networks} does NOT exist at other switches =========="
 			tprint(msg)
 			send_Message(msg)
 
@@ -1357,6 +1363,741 @@ if testcase == 16 or test_all:
 		for neighbor_2 in other_switches_2_sw1:
 			neighbor_2.remove_route_map_in()
 		the_neighbor.remove_route_map_in()
+
+	########################################################################################################
+	# 	Start testing route-map-out: set metric, set origin, set nexthop, set aspath, set weight, set local_pref
+	########################################################################################################
+
+	switch_1 = switches[0]
+	switch_2 = switches[1]
+	for switch in switches:
+		switch.router_bgp.get_neighbors_summary()
+	neighbors = switch_1.router_bgp.bgp_neighbors_objs
+	#find out switch_1's ixia neighbor
+	for nei in neighbors:
+		if nei.id == switch_2.rid:
+			the_neighbor = nei
+			break
+	print(the_neighbor.id)
+
+	other_switches_2_sw1 = []
+	for i in range(1,7):
+		neighbors = switches[i].router_bgp.bgp_neighbors_objs
+		for nei in neighbors:
+			if nei.id == switch_1.rid:
+				other_switches_2_sw1.append(nei)
+				break
+
+	other_switches_ids = []
+	for i in range(1,7):
+		other_switches_ids.append(switches[i].rid)
+
+	switch1_2_others_neighbor_list = []
+	for nei in neighbors:
+		if nei.id in other_switches_ids:
+			switch1_2_others_neighbor_list.append(nei)
+
+	set_clause_list = [("change-med-1000","match-med-10000","permit-med-10000","set metric"),
+						("change-origin","match-origin-egp","permit-origin-egp","set origin"),
+						("change-next-hop-1","match-next-hop-sw1","permit-next-hop-sw1","set nexthop"),
+						("change-aspath-101","match-aspath-1001","permit-aspath-1001","set aspath"),
+						("change-weight-1","match-aspath-101","permit-aspath-101","set weight"),
+						("set-local-pref-1111","match-aspath-101","permit-aspath-101","set local perference"),
+						]
+	for clause in set_clause_list:	
+		 
+		for nei in switch1_2_others_neighbor_list:
+			nei.remove_route_map_out()
+			nei.remove_route_map_in()
+			nei.add_route_map_out(route_map=clause[0])
+		for neighbor_2 in other_switches_2_sw1:
+			neighbor_2.remove_route_map_out()
+			neighbor_2.remove_route_map_in()
+			neighbor_2.add_route_map_in(route_map=clause[1])
+
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+		 
+		console_timer(10,msg=f"After clearing BGP, wait for 10 sec")
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		networks = ["10.10.1.1"]
+
+		step_1 = True
+		for i in range(1,7):
+			if switches[i].check_route_exist(networks) or switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 1 Failed: BGP route-map-out: {clause[3]}.{networks} still exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_1 = False
+		if step_1: 
+			msg = f"============= Step 1 Passed: BGP route-map-out: {clause[3]}, {networks} does NOT exist at all other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+		myixia.stop_traffic()
+		#myixia.clear_stats()
+
+		for neighbor_2 in other_switches_2_sw1:
+			neighbor_2.remove_route_map_in()
+			neighbor_2.add_route_map_in(route_map=clause[2])
+
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		myixia.start_traffic()
+		myixia.collect_stats()
+		if myixia.check_traffic():
+			msg = f"============= Step 2 Passed: BGP route-map-out: {clause[3]} with IXIA traffic =========="
+			tprint(msg)
+			send_Message(msg)
+		else:
+			msg = f"============= Step 2 Passed: BGP route-map-out: {clause[3]} with IXIA traffic =========="
+			tprint(msg)
+			send_Message(msg)
+		myixia.stop_traffic()
+		#clean up all route-map in and out on all switches 
+		for neighbor_2 in other_switches_2_sw1:
+			neighbor_2.remove_route_map_out()
+			neighbor_2.remove_route_map_in()
+		for nei in switch1_2_others_neighbor_list:
+			nei.remove_route_map_out()
+			nei.remove_route_map_in()
+
+if testcase == 17 or test_all:
+	testcase = 17
+	description = "BGP distribute-list, prefix-list, aspath-filter-list: IN & OUT"
+	print_test_subject(testcase,description)
+
+	if restore_config:
+		if CLEAN_ALL:
+			switches_cleanup_4_restore(switches)
+		for switch in switches:
+			file = f"{switch.cfg_file}_case_{testcase}.txt" 
+			switch.restore_config(file)
+
+		console_timer(300,msg="wait for 300s after restore config from tftp server")
+		for switch in switches:
+			switch.relogin()
+
+	###################################################################
+	#   Step by Step setup 
+	###################################################################
+
+	if test_config: 
+		########################################################
+		#   Configure OSPF infratructure
+		########################################################
+		for switch in switches:
+			switch.show_switch_info()
+			switch.router_ospf.basic_config()
+		console_timer(20,msg="After configuring ospf, wait for 20 sec")
+
+		# ########################################################
+		# #   Configure iBGP mesh infratructure
+		# ########################################################
+		for switch in switches:
+			switch.router_ospf.neighbor_discovery()
+			switch.router_bgp.update_ospf_neighbors()
+			switch.router_bgp.clear_config()
+			switch.router_bgp.config_ibgp_mesh_loopback()
+
+		console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+		for switch in switches:
+			switch.router_ospf.show_ospf_neighbors()
+			switch.router_bgp.show_bgp_summary()
+
+		########################################################
+		#   configure ACL and Route-map
+		########################################################
+		 
+		for switch in switches:
+			switch.prefix_list.basic_config()
+			switch.aspath_list.basic_config()
+			switch.route_map.clean_up()
+			switch.access_list.basic_config()
+			# switch.route_map.basic_config()
+	
+		########################################################
+		#   Backup the switch's configuration
+		########################################################
+		tprint("============= Backing up configurations at the start of the test ============")
+
+		for switch in switches:
+			file = f"{switch.cfg_file}_case_{testcase}.txt" 
+			switch.backup_config(file)
+
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"]]
+
+	########################################################
+	#   Configure eBGP to IXIA ports  
+	########################################################
+	for switch,ixia_port_info in zip(switches,portList):
+		if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
+	
+	 
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+
+ 	
+	for topo in myixia.topologies:
+		topo.add_ipv4()
+	 
+	myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=10)
+	 
+	myixia.topologies[0].change_med(1000)
+	myixia.topologies[1].change_med(2000)
+	 
+	 
+
+	myixia.start_protocol(wait=50)
+
+	myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+	myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+	
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
+	myixia.stop_traffic()
+	#myixia.clear_stats()
+
+	switch_1 = switches[0]
+	switch_2 = switches[1]
+	for switch in switches:
+		switch.router_bgp.get_neighbors_summary()
+		for nei in switch.router_bgp.bgp_neighbors_objs:
+			nei.remove_all_filters()
+
+	neighbors = switch_1.router_bgp.bgp_neighbors_objs
+	#find out switch_1's ixia neighbor
+	for nei in neighbors:
+		if nei.id == seperate_ip_mask(portList[0][6])[0]:
+			neighbor_ixia_1 = nei
+			break
+	print(neighbor_ixia_1.id)
+
+
+	other_switches_2_sw1 = []
+	for i in range(1,7):
+		neighbors = switches[i].router_bgp.bgp_neighbors_objs
+		for nei in neighbors:
+			if nei.id == switch_1.rid:
+				other_switches_2_sw1.append(nei)
+				break
+	########################################################################################################
+	   
+	########################################################################################################
+	set_clause_list = [("prefix","deny-prefix-10-10","bgp prefix list in "),
+					("aspath","deny-as-101","bgp aspth list in "),
+					("distribute","deny-network-10-10","bgp distribute list in "),    
+					]
+	for clause in set_clause_list:
+		if clause[0] == "prefix":
+			neighbor_ixia_1.remove_all_filters()
+			neighbor_ixia_1.add_prefix_list_in(prefix=clause[1])
+		elif clause[0] == "aspath":
+			neighbor_ixia_1.remove_all_filters()
+			neighbor_ixia_1.add_aspath_in(aspath=clause[1])
+		elif clause[0] == "distribute":
+			neighbor_ixia_1.remove_all_filters()
+			neighbor_ixia_1.add_distribute_list_in(distribute=clause[1])
+	 
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+		 
+		console_timer(10,msg=f"After clearing BGP, wait for 10 sec")
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		networks = ["10.10.1.1"]
+
+		step_1 = True
+		for i in range(1,7):
+			if switches[i].check_route_exist(networks) or switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 1 Failed: BGP {clause[2]}: {networks} still exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_1 = False
+		if step_1: 
+			msg = f"============= Step 1 Passed: BGP {clause[2]}:{networks} does NOT exist at other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+		myixia.stop_traffic()
+		#myixia.clear_stats()
+
+		neighbor_ixia_1.remove_all_filters()
+		 
+
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		step_2 = True
+		for i in range(1,7):
+			if not switches[i].check_route_exist(networks) or not switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 2 Failed: BGP {clause[2]}: {networks} NOT exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_2 = False
+		if step_2: 
+			msg = f"============= Step 2 Passed: BGP {clause[2]}:{networks} exist at ALL other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+		myixia.start_traffic()
+		myixia.collect_stats()
+		if myixia.check_traffic():
+			msg = f"============= Step 3 Passed: {clause[2]} with IXIA traffic =========="
+			tprint(msg)
+			send_Message(msg)
+		else:
+			msg = f"============= Step 3 Failed:  {clause[2]} with IXIA traffic =========="
+			tprint(msg)
+			send_Message(msg)
+		myixia.stop_traffic()
+	
+
+	########################################################################################################
+	# distribute-list-out, prefix-list-out, aspath-filter-list-out
+	########################################################################################################
+	set_clause_list = [("prefix","deny-prefix-10-10","bgp prefix list out "),
+					("aspath","deny-as-101","bgp aspth list out "),
+					("distribute","deny-network-10-10","bgp distribute list out"),    
+					]
+
+	# set_clause_list = [ ("distribute","deny-network-10-10","bgp distribute list out")]
+
+	switch_1 = switches[0]
+	switch_2 = switches[1]
+	for switch in switches:
+		switch.router_bgp.get_neighbors_summary()
+	neighbors = switch_1.router_bgp.bgp_neighbors_objs
+	switch_1_neighbors = neighbors
+	#find out switch_1's ixia neighbor
+	for nei in neighbors:
+		if nei.id == switch_2.rid:
+			the_neighbor = nei
+			break
+	print(the_neighbor.id)
+
+	other_switches_2_sw1 = []
+	for i in range(1,7):
+		neighbors = switches[i].router_bgp.bgp_neighbors_objs
+		for nei in neighbors:
+			if nei.id == switch_1.rid:
+				other_switches_2_sw1.append(nei)
+				break
+
+	other_switches_ids = []
+	for i in range(1,7):
+		other_switches_ids.append(switches[i].rid)
+
+	switch1_2_others_neighbor_list = []
+	for nei in switch_1_neighbors:
+		if nei.id in other_switches_ids:
+			switch1_2_others_neighbor_list.append(nei)
+ 
+	for clause in set_clause_list:	
+		for nei in switch1_2_others_neighbor_list:
+			if clause[0] == "prefix":
+				nei.remove_all_filters()
+				nei.add_prefix_list_out(prefix=clause[1])
+			elif clause[0] == "aspath":
+				nei.remove_all_filters()
+				nei.add_aspath_out(aspath=clause[1])
+			elif clause[0] == "distribute":
+				nei.remove_all_filters()
+				nei.add_distribute_list_out(distribute=clause[1])
+		 
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+		 
+		console_timer(10,msg=f"After clearing BGP, wait for 10 sec")
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		networks = ["10.10.1.1"]
+
+		step_1 = True
+		for i in range(1,7):
+			if switches[i].check_route_exist(networks) or switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 1 Failed: {clause[2]}:{networks} still exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_1 = False
+		if step_1: 
+			msg = f"============= Step 1 Passed: {clause[2]}: {networks} does NOT exist at all other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+		myixia.stop_traffic()
+		#myixia.clear_stats()
+
+		for nei in switch1_2_others_neighbor_list:
+			nei.remove_all_filters()
+
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		step_2 = True
+		for i in range(1,7):
+			if not switches[i].check_route_exist(networks) or not switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 2 Failed: BGP {clause[2]}: {networks} NOT exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_2 = False
+		if step_2: 
+			msg = f"============= Step 2 Passed: BGP {clause[2]}:{networks} exist at ALL other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+if testcase == 18 or test_all:
+	testcase = 18
+	description = "BGP community no-advertise"
+	print_test_subject(testcase,description)
+
+	if restore_config:
+		if CLEAN_ALL:
+			switches_cleanup_4_restore(switches)
+		for switch in switches:
+			file = f"{switch.cfg_file}_case_{testcase}.txt" 
+			switch.restore_config(file)
+
+		console_timer(300,msg="wait for 300s after restore config from tftp server")
+		for switch in switches:
+			switch.relogin()
+
+	###################################################################
+	#   Step by Step setup 
+	###################################################################
+
+	if test_config: 
+		# ########################################################
+		# #   Configure OSPF infratructure
+		# ########################################################
+		# for switch in switches:
+		# 	switch.show_switch_info()
+		# 	switch.router_ospf.basic_config()
+		# console_timer(20,msg="After configuring ospf, wait for 20 sec")
+
+		# # ########################################################
+		# # #   Configure iBGP mesh infratructure
+		# # ########################################################
+		# for switch in switches:
+		# 	switch.router_ospf.neighbor_discovery()
+		# 	switch.router_bgp.update_ospf_neighbors()
+		# 	switch.router_bgp.clear_config()
+		# 	switch.router_bgp.config_ibgp_mesh_loopback()
+
+		# console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+		# for switch in switches:
+		# 	switch.router_ospf.show_ospf_neighbors()
+		# 	switch.router_bgp.show_bgp_summary()
+
+		# ########################################################
+		# #   configure ACL and Route-map
+		# ########################################################
+		 
+		for switch in switches:
+			# switch.prefix_list.basic_config()
+			# switch.aspath_list.basic_config()
+			# switch.access_list.basic_config()
+			switch.community_list.basic_config()
+			switch.route_map.clean_up()
+			switch.route_map.community_config()
+	
+		########################################################
+		#   Backup the switch's configuration
+		########################################################
+		tprint("============= Backing up configurations at the start of the test ============")
+
+		for switch in switches:
+			file = f"{switch.cfg_file}_case_{testcase}.txt" 
+			switch.backup_config(file)
+
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"]]
+
+	########################################################
+	#   Configure eBGP to IXIA ports  
+	########################################################
+	for switch,ixia_port_info in zip(switches,portList):
+		if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
+	
+	 
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+
+ 	
+	for topo in myixia.topologies:
+		topo.add_ipv4()
+	 
+	myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=10)
+	 
+	myixia.topologies[0].change_med(1000)
+	myixia.topologies[1].change_med(2000)
+	 
+	 
+
+	myixia.start_protocol(wait=50)
+
+	myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+	myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+	
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
+	myixia.stop_traffic()
+	#myixia.clear_stats()
+
+	switch_1 = switches[0]
+	switch_2 = switches[1]
+	for switch in switches:
+		switch.router_bgp.get_neighbors_summary()
+		for nei in switch.router_bgp.bgp_neighbors_objs:
+			nei.remove_all_filters()
+
+	neighbors = switch_1.router_bgp.bgp_neighbors_objs
+	#find out switch_1's ixia neighbor
+	for nei in neighbors:
+		if nei.id == seperate_ip_mask(portList[0][6])[0]:
+			neighbor_ixia_1 = nei
+			break
+	print(neighbor_ixia_1.id)
+
+
+	other_switches_2_sw1 = []
+	for i in range(1,7):
+		neighbors = switches[i].router_bgp.bgp_neighbors_objs
+		for nei in neighbors:
+			if nei.id == switch_1.rid:
+				other_switches_2_sw1.append(nei)
+				break
+	########################################################################################################
+	   
+	########################################################################################################
+	set_clause_list = [("prefix","deny-prefix-10-10","bgp prefix list in "),
+					("aspath","deny-as-101","bgp aspth list in "),
+					("distribute","deny-network-10-10","bgp distribute list in "),    
+					]
+	for clause in set_clause_list:
+		if clause[0] == "prefix":
+			neighbor_ixia_1.remove_all_filters()
+			neighbor_ixia_1.add_prefix_list_in(prefix=clause[1])
+		elif clause[0] == "aspath":
+			neighbor_ixia_1.remove_all_filters()
+			neighbor_ixia_1.add_aspath_in(aspath=clause[1])
+		elif clause[0] == "distribute":
+			neighbor_ixia_1.remove_all_filters()
+			neighbor_ixia_1.add_distribute_list_in(distribute=clause[1])
+	 
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+		 
+		console_timer(10,msg=f"After clearing BGP, wait for 10 sec")
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		networks = ["10.10.1.1"]
+
+		step_1 = True
+		for i in range(1,7):
+			if switches[i].check_route_exist(networks) or switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 1 Failed: BGP {clause[2]}: {networks} still exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_1 = False
+		if step_1: 
+			msg = f"============= Step 1 Passed: BGP {clause[2]}:{networks} does NOT exist at other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+		myixia.stop_traffic()
+		#myixia.clear_stats()
+
+		neighbor_ixia_1.remove_all_filters()
+		 
+
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		step_2 = True
+		for i in range(1,7):
+			if not switches[i].check_route_exist(networks) or not switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 2 Failed: BGP {clause[2]}: {networks} NOT exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_2 = False
+		if step_2: 
+			msg = f"============= Step 2 Passed: BGP {clause[2]}:{networks} exist at ALL other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+		myixia.start_traffic()
+		myixia.collect_stats()
+		if myixia.check_traffic():
+			msg = f"============= Step 3 Passed: {clause[2]} with IXIA traffic =========="
+			tprint(msg)
+			send_Message(msg)
+		else:
+			msg = f"============= Step 3 Failed:  {clause[2]} with IXIA traffic =========="
+			tprint(msg)
+			send_Message(msg)
+		myixia.stop_traffic()
+	
+
+	########################################################################################################
+	# distribute-list-out, prefix-list-out, aspath-filter-list-out
+	########################################################################################################
+	set_clause_list = [("prefix","deny-prefix-10-10","bgp prefix list out "),
+					("aspath","deny-as-101","bgp aspth list out "),
+					("distribute","deny-network-10-10","bgp distribute list out"),    
+					]
+
+	# set_clause_list = [ ("distribute","deny-network-10-10","bgp distribute list out")]
+
+	switch_1 = switches[0]
+	switch_2 = switches[1]
+	for switch in switches:
+		switch.router_bgp.get_neighbors_summary()
+	neighbors = switch_1.router_bgp.bgp_neighbors_objs
+	switch_1_neighbors = neighbors
+	#find out switch_1's ixia neighbor
+	for nei in neighbors:
+		if nei.id == switch_2.rid:
+			the_neighbor = nei
+			break
+	print(the_neighbor.id)
+
+	other_switches_2_sw1 = []
+	for i in range(1,7):
+		neighbors = switches[i].router_bgp.bgp_neighbors_objs
+		for nei in neighbors:
+			if nei.id == switch_1.rid:
+				other_switches_2_sw1.append(nei)
+				break
+
+	other_switches_ids = []
+	for i in range(1,7):
+		other_switches_ids.append(switches[i].rid)
+
+	switch1_2_others_neighbor_list = []
+	for nei in switch_1_neighbors:
+		if nei.id in other_switches_ids:
+			switch1_2_others_neighbor_list.append(nei)
+ 
+	for clause in set_clause_list:	
+		for nei in switch1_2_others_neighbor_list:
+			if clause[0] == "prefix":
+				nei.remove_all_filters()
+				nei.add_prefix_list_out(prefix=clause[1])
+			elif clause[0] == "aspath":
+				nei.remove_all_filters()
+				nei.add_aspath_out(aspath=clause[1])
+			elif clause[0] == "distribute":
+				nei.remove_all_filters()
+				nei.add_distribute_list_out(distribute=clause[1])
+		 
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+		 
+		console_timer(10,msg=f"After clearing BGP, wait for 10 sec")
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		networks = ["10.10.1.1"]
+
+		step_1 = True
+		for i in range(1,7):
+			if switches[i].check_route_exist(networks) or switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 1 Failed: {clause[2]}:{networks} still exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_1 = False
+		if step_1: 
+			msg = f"============= Step 1 Passed: {clause[2]}: {networks} does NOT exist at all other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+		myixia.stop_traffic()
+		#myixia.clear_stats()
+
+		for nei in switch1_2_others_neighbor_list:
+			nei.remove_all_filters()
+
+		for switch in switches:
+			switch.router_bgp.clear_bgp_all()
+
+		for switch in switches: 
+			switch.router_bgp.show_bgp_network()
+			switch.show_routing_table()
+
+		step_2 = True
+		for i in range(1,7):
+			if not switches[i].check_route_exist(networks) or not switches[i].router_bgp.check_network_exist(networks):
+				msg = f"============= Step 2 Failed: BGP {clause[2]}: {networks} NOT exist at {switches[i].rid} =========="
+				tprint(msg)
+				send_Message(msg)
+				step_2 = False
+		if step_2: 
+			msg = f"============= Step 2 Passed: BGP {clause[2]}:{networks} exist at ALL other switches =========="
+			tprint(msg)
+			send_Message(msg)
+
+		# myixia.start_traffic()
+		# myixia.collect_stats()
+		# if myixia.check_traffic():
+		# 	msg = f"============= Step 2 Passed: {clause[2]} with IXIA traffic =========="
+		# 	tprint(msg)
+		# 	send_Message(msg)
+		# else:
+		# 	msg = f"============= Step 2 Passed:  {clause[2]} with IXIA traffic =========="
+		# 	tprint(msg)
+		# 	send_Message(msg)
+		# myixia.stop_traffic()
+	 
 
 
 	# check_bgp_test_result(testcase,description,switches)
