@@ -15,6 +15,125 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 
+class BGP_networks:
+    def __init__(self,*args,**kwargs):
+        self.switches = args[0]
+        self.routers = []
+        for switch in self.switches:
+            self.routers.append(switch.router_bgp)
+
+    def clear_bgp_config(self):
+        for router in self.routers:
+            router.clear_config()
+
+
+    def build_ibgp_mesh(self):
+        for router in self.bgps:
+            router.config_ibgp_mesh_loopback()
+
+    def config_ibgp_session(self,bgp1,bgp2):
+        tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {bgp1.ibgp_as}
+            set router-id {bgp1.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.router_id}
+                    set remote-as {bgp2.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {bgp2.ibgp_as}
+            set router-id {bgp2.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.router_id}
+                    set remote-as {bgp1.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+    def config_ibgp_rr_session(self,rr,client):
+        tprint(f"============== Configurating iBGP Router Reflector and Client session between {rr.switch.name} and {client.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {rr.ibgp_as}
+            set router-id {rr.router_id }
+        end
+        end
+        """
+        config_cmds_lines(rr.switch.console,bgp_config)
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {client.router_id}
+                    set remote-as {client.ibgp_as}
+                    set update-source loop0
+                    set route-reflector-client enable
+                next
+            end
+        end
+        """
+        config_cmds_lines(rr.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {client.ibgp_as}
+            set router-id {client.router_id }
+        end
+        end
+        """
+        config_cmds_lines(client.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {rr.router_id}
+                    set remote-as {rr.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(client.switch.console,bgp_config)
+
+
+    def build_router_reflector_topo(self):
+        rr1 = self.routers[0]
+        rr2 = self.routers[1]
+
+        for i in range(2,7):
+            self.config_ibgp_rr_session(rr1,self.routers[i])
+        for i in range(2,7):
+            self.config_ibgp_rr_session(rr2,self.routers[i])
+
+        self.config_ibgp_session(rr1,rr2)
+
+
+
 class Router_community_list:
     def __init__(self, *args, **kwargs):
         self.switch = args[0]
@@ -617,6 +736,8 @@ class Router_BGP:
         self.ospf_neighbors = [n.id for n in self.switch.router_ospf.neighbor_list]
         self.ospf_neighbors_address = [n.address for n in self.switch.router_ospf.neighbor_list]
         self.router_id = self.switch.loop0_ip
+        self.ibgp_as = 65000
+        self.ebgp_as = self.switch.ebgp_as
         self.bgp_neighbors_objs = None
 
     def update_switch(self,switch):
@@ -914,7 +1035,28 @@ class Router_BGP:
             unset keepalive-timer
             unset holdtime-timer
             unset always-compare-med
-            unset bestpath-as-path-ignore  
+            unset bestpath-as-path-ignore 
+            unset bestpath-cmp-confed-aspath
+            unset bestpath-cmp-routerid
+            unset bestpath-med-confed
+            unset bestpath-med-missing-as-worst
+            unset client-to-client-reflection
+            unset dampening
+            unset deterministic-med
+            unset enforce-first-as
+            unset fast-external-failover
+            unset log-neighbor-changes
+            unset cluster-id
+            unset confederation-identifier
+            unset default-local-preference
+            unset scan-time
+            unset maximum-paths-ebgp
+            unset bestpath-aspath-multipath-relax
+            unset maximum-paths-ibgp
+            unset istance-external
+            unset distance-internal
+            unset distance-local
+            unset graceful-stalepath-time 
             end
         """
         config_cmds_lines(self.switch.console,bgp_config)

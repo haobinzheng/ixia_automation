@@ -2086,6 +2086,15 @@ if testcase == 18 or test_all:
 			tprint(msg)
 			send_Message(msg)
 
+
+if testcase == 19 or test_all:
+	testcase = 19
+	description = "BGP router reflector"
+	print_test_subject(testcase,description)
+
+	network = BGP_networks(switches)
+	network.clear_bgp_config()
+	network.build_router_reflector_topo()
 		# myixia.start_traffic()
 		# myixia.collect_stats()
 		# if myixia.check_traffic():
