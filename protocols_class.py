@@ -81,6 +81,29 @@ class Router_route_map:
     def basic_config(self):
         basic_config_route_map(self.switch.console)
 
+    def config_atomic_aggregate(self,*args,**kwargs):
+        name = kwargs['name']
+        agg_as = kwargs['agg_as']
+        ip = kwargs['ip']
+
+
+        config = f"""
+        config router route-map
+        edit {name}
+            set protocol bgp
+                config rule
+                    edit 1
+                        set set-aggregator-as {agg_as}
+                        set set-aggregator-ip {ip}
+                        set set-atomic-aggregate enable
+                    next
+                end
+        next
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+
     def find_clauses(self):
         result = collect_edit_items(self.switch.console,"config router route-map")
         print(result)
@@ -99,9 +122,6 @@ class Router_route_map:
         for c in self.clauses:
             switch_exec_cmd(self.switch.console, f"delete {c} " )
         switch_exec_cmd(self.switch.console,"end")
-
-
-
 
 
 class Ospf_Neighbor:
@@ -315,6 +335,50 @@ class BGP_Neighbor:
         tprint(f"Neighbor Egress Q: {self.outq}")
         tprint(f"Neighbor Up Timer: {self.up_timer}")
         tprint(f"Neighbor Prefix Received: {self.prefix_recieved}")
+
+
+    def set_weight_routes_neighbor(self,value):
+        self.remove_all_filters()
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set weight {value}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def config_md5_password(self):
+        self.remove_all_filters()
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set password lab
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def default_route_originated(self):
+        self.remove_all_filters()
+        config = f"""
+        config router bgp
+     
+        config neighbor
+            edit {self.id}
+                set capability-default-originate enable
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
 
     def add_prefix_list_in(self,*args,**kwargs):
         prefix = kwargs['prefix']
