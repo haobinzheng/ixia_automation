@@ -27,9 +27,12 @@ class BGP_networks:
             router.clear_config()
 
 
-    def build_ibgp_mesh(self):
-        for router in self.bgps:
-            router.config_ibgp_mesh_loopback()
+    def build_ibgp_mesh_topo(self):
+
+        for switch in self.switches:
+            switch.router_ospf.neighbor_discovery()
+            switch.router_bgp.update_ospf_neighbors()
+            switch.router_bgp.config_ibgp_mesh_loopback()
 
     def config_ibgp_session(self,bgp1,bgp2):
         tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
@@ -69,6 +72,49 @@ class BGP_networks:
                 edit {bgp1.router_id}
                     set remote-as {bgp1.ibgp_as}
                     set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+    def config_ebgp_session(self,bgp1,bgp2):
+        tprint(f"============== Configurating eBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {bgp1.ebgp_as}
+            set router-id {bgp1.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.switch.vlan1_ip}
+                    set remote-as {bgp2.ebgp_as}
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {bgp2.ebgp_as}
+            set router-id {bgp2.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.switch.vlan1_ip}
+                    set remote-as {bgp1.ebgp_as}
                 next
             end
         end
@@ -132,7 +178,76 @@ class BGP_networks:
 
         self.config_ibgp_session(rr1,rr2)
 
+    def config_all_confed_id(self):
+        for router in self.routers:
+            bgp_config = f"""
+            config router bgp
+                 set confederation-identifier {router.confed_id}   
+            end
+            """
+            config_cmds_lines(router.switch.console,bgp_config)
 
+    def config_confed_peers(self,router,peer_list):
+        id_list = " ".join(str(r.ebgp_as) for r in peer_list)
+        print(id_list)
+        
+        bgp_config = f"""
+        config router bgp
+             set confederation-peers {id_list}   
+        end
+        """
+        config_cmds_lines(router.switch.console,bgp_config)
+
+
+
+    def build_confed_topo_1(self):
+        fed_50_1 = self.routers[0]
+        fed_50_2 = self.routers[1]
+
+        fed_60_1 = self.routers[2]
+        fed_60_2 = self.routers[3]
+        fed_60_3 = self.routers[4]
+
+        fed_70_1 = self.routers[5]
+        fed_70_2 = self.routers[6]
+
+
+        fed_50_1.ibgp_as = 50
+        fed_50_2.ibgp_as = 50
+        fed_50_1.ebgp_as = 50
+        fed_50_2.ebgp_as = 50
+
+        fed_60_1.ibgp_as =60
+        fed_60_2.ibgp_as =60
+        fed_60_3.ibgp_as =60
+        fed_60_1.ebgp_as =60
+        fed_60_2.ebgp_as =60
+        fed_60_3.ebgp_as =60
+
+        fed_70_1.ibgp_as =70
+        fed_70_2.ibgp_as =70
+        fed_70_1.ebgp_as =70
+        fed_70_2.ebgp_as =70
+
+        self.config_ibgp_session(fed_50_1,fed_50_2)
+
+
+        self.config_ibgp_session(fed_60_1,fed_60_2)
+        self.config_ibgp_session(fed_60_1,fed_60_3)
+        self.config_ibgp_session(fed_60_2,fed_60_3)
+        
+        
+        self.config_ibgp_session(fed_70_1,fed_70_2)
+
+        self.config_ebgp_session(fed_50_2,fed_60_1)
+        self.config_ebgp_session(fed_50_2,fed_70_1)
+        self.config_ebgp_session(fed_60_1,fed_70_2)
+
+        self.config_all_confed_id()
+
+        self.config_confed_peers(fed_50_2,[fed_60_1,fed_70_1])
+        self.config_confed_peers(fed_60_1,[fed_70_2,fed_50_2])
+        self.config_confed_peers(fed_70_1,[fed_50_2])
 
 class Router_community_list:
     def __init__(self, *args, **kwargs):
@@ -738,6 +853,7 @@ class Router_BGP:
         self.router_id = self.switch.loop0_ip
         self.ibgp_as = 65000
         self.ebgp_as = self.switch.ebgp_as
+        self.confed_id = 5000
         self.bgp_neighbors_objs = None
 
     def update_switch(self,switch):
@@ -1008,6 +1124,7 @@ class Router_BGP:
         neighbor_list = get_switch_show_bgp(self.switch.console)
         print(neighbor_list)
         network_list = get_bgp_network_config(self.switch.console)
+        agg_list = get_bgp_aggregate_address_config(self.switch.console)
         for n in neighbor_list:
             config = f"""
             config router bgp
@@ -1028,9 +1145,18 @@ class Router_BGP:
             """
             config_cmds_lines(self.switch.console,config)
 
+        for n in agg_list:
+            config = f"""
+            config router bgp
+                config aggregate-address
+                delete {n}
+                end
+                end
+            """
+            config_cmds_lines(self.switch.console,config)
+
         bgp_config = f"""
         config router bgp
-            unset router-id
             unset as 
             unset keepalive-timer
             unset holdtime-timer
@@ -1053,7 +1179,7 @@ class Router_BGP:
             unset maximum-paths-ebgp
             unset bestpath-aspath-multipath-relax
             unset maximum-paths-ibgp
-            unset istance-external
+            unset distance-external
             unset distance-internal
             unset distance-local
             unset graceful-stalepath-time 

@@ -1799,36 +1799,36 @@ if testcase == 18 or test_all:
 	###################################################################
 
 	if test_config: 
-		# ########################################################
-		# #   Configure OSPF infratructure
-		# ########################################################
-		# for switch in switches:
-		# 	switch.show_switch_info()
-		# 	switch.router_ospf.basic_config()
-		# console_timer(20,msg="After configuring ospf, wait for 20 sec")
+		########################################################
+		#   Configure OSPF infratructure
+		########################################################
+		for switch in switches:
+			switch.show_switch_info()
+			switch.router_ospf.basic_config()
+		console_timer(20,msg="After configuring ospf, wait for 20 sec")
 
-		# # ########################################################
-		# # #   Configure iBGP mesh infratructure
-		# # ########################################################
-		# for switch in switches:
-		# 	switch.router_ospf.neighbor_discovery()
-		# 	switch.router_bgp.update_ospf_neighbors()
-		# 	switch.router_bgp.clear_config()
-		# 	switch.router_bgp.config_ibgp_mesh_loopback()
+		# ########################################################
+		# #   Configure iBGP mesh infratructure
+		# ########################################################
+		for switch in switches:
+			switch.router_ospf.neighbor_discovery()
+			switch.router_bgp.update_ospf_neighbors()
+			switch.router_bgp.clear_config()
+			switch.router_bgp.config_ibgp_mesh_loopback()
 
-		# console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
-		# for switch in switches:
-		# 	switch.router_ospf.show_ospf_neighbors()
-		# 	switch.router_bgp.show_bgp_summary()
+		console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+		for switch in switches:
+			switch.router_ospf.show_ospf_neighbors()
+			switch.router_bgp.show_bgp_summary()
 
 		# ########################################################
 		# #   configure ACL and Route-map
 		# ########################################################
 		 
 		for switch in switches:
-			# switch.prefix_list.basic_config()
-			# switch.aspath_list.basic_config()
-			# switch.access_list.basic_config()
+			switch.prefix_list.basic_config()
+			switch.aspath_list.basic_config()
+			switch.access_list.basic_config()
 			switch.community_list.basic_config()
 			switch.route_map.clean_up()
 			switch.route_map.community_config()
@@ -2092,9 +2092,278 @@ if testcase == 19 or test_all:
 	description = "BGP router reflector"
 	print_test_subject(testcase,description)
 
-	network = BGP_networks(switches)
-	network.clear_bgp_config()
-	network.build_router_reflector_topo()
+	if test_config:
+		network = BGP_networks(switches)
+		network.clear_bgp_config()
+		network.build_router_reflector_topo()
+
+
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList = [
+	[ixChassisIpList[0], 1, 1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.10.1.1",102,"10.1.1.102/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.20.1.1",103,"10.1.1.103/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.20.1.1",104,"10.1.1.104/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.20.1.1",105,"10.1.1.105/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.20.1.1",106,"10.1.1.106/24","10.1.1.1"]
+	]
+
+
+	for switch,ixia_port_info in zip(switches,portList):
+		if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
+	 
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+
+ 	
+	for topo in myixia.topologies:
+		topo.add_ipv4()
+	 
+	myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=100)
+	myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=100)
+	myixia.topologies[2].add_bgp(dut_ip='10.1.1.3',bgp_type='external',num=100)
+	myixia.topologies[3].add_bgp(dut_ip='10.1.1.4',bgp_type='external',num=100)
+	myixia.topologies[4].add_bgp(dut_ip='10.1.1.5',bgp_type='external',num=100)
+	myixia.topologies[5].add_bgp(dut_ip='10.1.1.6',bgp_type='external',num=100)
+
+	 
+	myixia.topologies[2].change_med(1000)
+	myixia.topologies[5].change_med(2000)
+	 
+	 
+
+	myixia.start_protocol(wait=50)
+
+	myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t1_to_t6",tracking_name="Tracking_1")
+	myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t6_to_t1",tracking_name="Tracking_2")
+
+	
+	myixia.start_traffic()
+	myixia.collect_stats()
+	if myixia.check_traffic():
+		msg = f"============= Passed: {description} with IXIA traffic =========="
+		tprint(msg)
+		send_Message(msg)
+	else:
+		msg = f"============= Failed:  {description} with IXIA traffic =========="
+		tprint(msg)
+		send_Message(msg)
+	myixia.stop_traffic()
+
+
+if testcase == 20 or test_all:
+	testcase = 20
+	description = "BGP confederation"
+	print_test_subject(testcase,description)
+
+	if test_config:
+		network = BGP_networks(switches)
+		network.clear_bgp_config()
+		network.build_confed_topo_1()
+
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList = [
+	[ixChassisIpList[0], 1, 1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.10.1.1",102,"10.1.1.102/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.20.1.1",103,"10.1.1.103/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.20.1.1",104,"10.1.1.104/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.20.1.1",105,"10.1.1.105/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.20.1.1",106,"10.1.1.106/24","10.1.1.1"]
+	]
+
+
+	for switch,ixia_port_info in zip(switches,portList):
+		if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
+	 
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+
+ 	
+	for topo in myixia.topologies:
+		topo.add_ipv4()
+	 
+	myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=100)
+	myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=100)
+	myixia.topologies[2].add_bgp(dut_ip='10.1.1.3',bgp_type='external',num=100)
+	myixia.topologies[3].add_bgp(dut_ip='10.1.1.4',bgp_type='external',num=100)
+	myixia.topologies[4].add_bgp(dut_ip='10.1.1.5',bgp_type='external',num=100)
+	myixia.topologies[5].add_bgp(dut_ip='10.1.1.6',bgp_type='external',num=100)
+
+	 
+	#myixia.topologies[2].change_med(1000)
+	myixia.topologies[5].add_aspath(5,65300)
+	 
+	 
+
+	myixia.start_protocol(wait=50)
+
+	myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t1_to_t6",tracking_name="Tracking_1")
+	myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t6_to_t1",tracking_name="Tracking_2")
+
+	
+	myixia.start_traffic()
+	myixia.collect_stats()
+	if myixia.check_traffic():
+		msg = f"============= Passed: {description} with IXIA traffic =========="
+		tprint(msg)
+		send_Message(msg)
+	else:
+		msg = f"============= Failed:  {description} with IXIA traffic =========="
+		tprint(msg)
+		send_Message(msg)
+	myixia.stop_traffic()
+
+
+if testcase == 21 or test_all:
+	testcase = 21
+	description = "BGP always compare MED"
+	print_test_subject(testcase,description)
+
+	if test_config:
+		network = BGP_networks(switches)
+		network.clear_bgp_config()
+		network.build_ibgp_mesh_topo()
+
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList = [
+	[ixChassisIpList[0], 1, 1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.10.1.1",102,"10.1.1.102/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.10.1.1",103,"10.1.1.103/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.10.1.1",104,"10.1.1.104/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.10.1.1",105,"10.1.1.105/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.10.1.1",106,"10.1.1.106/24","10.1.1.1"]
+	]
+
+	sw = switches[0]
+	for ixia_port_info in portList:
+		if sw.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
+	 
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+
+ 	
+	for topo in myixia.topologies:
+		topo.add_ipv4()
+	 
+	myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[1].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[2].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[3].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[4].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[5].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+
+	 
+	myixia.topologies[0].change_med(1000)
+	myixia.topologies[1].change_med(2000)
+	myixia.topologies[2].change_med(3000)
+	myixia.topologies[3].change_med(4000)
+	myixia.topologies[4].change_med(5000)
+	myixia.topologies[5].change_med(6000)
+	#myixia.topologies[5].add_aspath(5,65300)
+	 
+	myixia.start_protocol(wait=50)
+
+if testcase == 22 or test_all:
+	testcase = 22
+	description = "BGP ignore as path length and strip private AS"
+	print_test_subject(testcase,description)
+
+	if test_config:
+		network = BGP_networks(switches)
+		network.clear_bgp_config()
+		network.build_ibgp_mesh_topo()
+
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList = [
+	[ixChassisIpList[0], 1, 1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.10.1.1",102,"10.1.1.102/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.10.1.1",103,"10.1.1.103/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.10.1.1",104,"10.1.1.104/24","10.1.1.1"], 
+	[ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.10.1.1",105,"10.1.1.105/24","10.1.1.1"],
+	[ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.10.1.1",106,"10.1.1.106/24","10.1.1.1"]
+	]
+
+
+	sw = switches[0]
+	for ixia_port_info in portList:
+		if sw.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
+	 
+	 
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+
+ 	
+	for topo in myixia.topologies:
+		topo.add_ipv4()
+	 
+	myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[1].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[2].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[3].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[4].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+	myixia.topologies[5].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=10)
+
+	 
+	
+
+	# myixia.topologies[0].add_aspath(1,65010)
+	# myixia.topologies[1].add_aspath(2,65020)
+	# myixia.topologies[2].add_aspath(3,65030)
+	# myixia.topologies[3].add_aspath(4,65040)
+	# myixia.topologies[4].add_aspath(5,65050)
+	# myixia.topologies[5].add_aspath(6,65060)
+
+	# console_timer(20)
+	# myixia.topologies[0].change_med(6000)
+	# myixia.topologies[1].change_med(5000)
+	# myixia.topologies[2].change_med(4000)
+	# myixia.topologies[3].change_med(3000)
+	# myixia.topologies[4].change_med(2000)
+	# myixia.topologies[5].change_med(1000)
+
+	myixia.topologies[0].add_aspath_med(1,65010,6000)
+	myixia.topologies[1].add_aspath_med(2,65020,5000)
+	myixia.topologies[2].add_aspath_med(3,65030,4000)
+	myixia.topologies[3].add_aspath_med(4,65040,3000)
+	myixia.topologies[4].add_aspath_med(5,65050,2000)
+	myixia.topologies[5].add_aspath_med(6,65060,1000)
+	 
+	 
+
+	myixia.start_protocol(wait=50)
+
+	# myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t1_to_t6",tracking_name="Tracking_1")
+	# myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t6_to_t1",tracking_name="Tracking_2")
+
+	
+	# myixia.start_traffic()
+	# myixia.collect_stats()
+	# if myixia.check_traffic():
+	# 	msg = f"============= Passed: {description} with IXIA traffic =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# else:
+	# 	msg = f"============= Failed:  {description} with IXIA traffic =========="
+	# 	tprint(msg)
+	# 	send_Message(msg)
+	# myixia.stop_traffic()
+
 		# myixia.start_traffic()
 		# myixia.collect_stats()
 		# if myixia.check_traffic():
