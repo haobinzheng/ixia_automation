@@ -629,6 +629,19 @@ class BGP_Neighbor:
         """
         config_cmds_lines(self.switch.console,config)
 
+    def configure_orf_prefix(self,*args,**kwargs):
+        prefix = kwargs['prefix']
+        config = f"""
+        config router bgp
+            config neighbor
+             edit {self.id}
+             set capability-orf both
+             next
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+        self.add_prefix_list_in(prefix)
+
     def add_prefix_list_out(self,*args,**kwargs):
         prefix = kwargs['prefix']
 
@@ -1284,7 +1297,8 @@ class FortiSwitch:
         image = find_dut_image(dut)
         tprint(f"============================ {self.name} software image = {image} ============")
         switch_show_cmd(self.console,"get system status")
-
+        
+    @property
     def relogin_after_factory(self):
         tprint('-------------------- re-login switch after factory rest-----------------------')
         dut_com = self.dut_dir['comm'] 
@@ -1297,7 +1311,7 @@ class FortiSwitch:
         self.router_bgp = Router_BGP(self)
         # self.router_ospf.update_switch(self)
         # self.router_bgp.update_switch(self)
-
+    @property
     def show_switch_info(self):
         tprint("=====================================================================")
         tprint(f"   Comm Server = {self.comm}")

@@ -76,6 +76,66 @@ class IXIA_TOPOLOGY:
     def add_aspath_med(self,num,base,med_value):
         ixia_rest_change_route_properties(pool=self.ipv4_pool,num_path=num,as_base=base,med=med_value)
 
+    def change_bgp_routes_attributes(self,*args, **kwargs):
+        ipv4PrefixPool = self.ipv4_pool
+        testplatform = self.ixia.testPlatform
+
+    # bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty
+    # bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
+        bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add()
+        if "num_path" in kwargs:
+            num_path = kwargs['num_path']
+            as_start_num = kwargs['as_base']
+            bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
+            bgpiprouteproperty.EnableAsPathSegments.Single("True")
+             
+            bgpaspathsegmentlist = bgpiprouteproperty.BgpAsPathSegmentList.find()
+            bgpaspathsegmentlist.EnableASPathSegment.Single("True")
+            
+            #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+            i = 0
+            for seg in bgpaspathsegmentlist:
+                bgpasnumberlist = seg.BgpAsNumberList.find()
+                bgpasnumberlist.AsNumber.Single(as_start_num+i)
+                i += 1 
+        if "community" in kwargs:
+            typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
+            num_comm = kwargs['community']
+            comm_start_num = kwargs['comm_base']
+            bgpiprouteproperty.update(NoOfCommunities=num_comm)
+            bgpiprouteproperty.EnableCommunity.Single("True")
+             
+            bgpcommunitieslist = bgpiprouteproperty.BgpCommunitiesList.find()
+            #bgpcommunitieslist.EnableCommunity.Single("True")
+            
+            #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+            i = 0
+            for comm in bgpcommunitieslist:
+                i+=1
+                comm.AsNumber.Single(comm_start_num)
+                comm.LastTwoOctets.Single(i)
+                comm.Type.Single("manual")
+        if "med" in kwargs:
+            med = kwargs['med']
+            bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")
+            bgpiprouteproperty.MultiExitDiscriminator.Single(med)
+        if "local" in kwargs:
+            local = kwargs['local']
+            bgpiprouteproperty.EnableLocalPreference.Single("True")
+            bgpiprouteproperty.LocalPreference.Single(local)
+
+        if "origin" in kwargs:
+            origin = kwargs['origin']
+            bgpiprouteproperty.Origin.Single(origin)
+        if "flapping" in kwargs:
+            start_ip = kwargs["flapping"]
+            if start_ip.upper() == "RANDOM":
+                bgpiprouteproperty.EnableFlapping.Random()
+            else:
+                bgpiprouteproperty.EnableFlapping.Increment(start_value=start_ip, step_value='0.0.0.1')
+        if "weight" in kwargs:
+            value = kwargs['weight']
+            bgpiprouteproperty.Weight.Single(value)
          
         
     
@@ -592,32 +652,45 @@ def ixia_rest_add_as_path(*args,**kwargs):
         i += 1 
 
 def ixia_rest_change_route_properties(*args, **kwargs):
-
-
     ipv4PrefixPool = kwargs['pool']
-    num_path = kwargs['num_path']
-    as_start_num = kwargs['as_base']
-    med = kwargs['med']
 
     # bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty
     # bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
-    bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add(NoOfASPathSegmentsPerRouteRange=num_path)
-    bgpiprouteproperty.EnableAsPathSegments.Single("True")
-     
+    bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add()
+    if "num_path" in kwargs:
+        num_path = kwargs['num_path']
+        as_start_num = kwargs['as_base']
+        bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
+        bgpiprouteproperty.EnableAsPathSegments.Single("True")
+         
+        bgpaspathsegmentlist = bgpiprouteproperty.BgpAsPathSegmentList.find()
+        bgpaspathsegmentlist.EnableASPathSegment.Single("True")
+        
+        #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+        i = 0
+        for seg in bgpaspathsegmentlist:
+            bgpasnumberlist = seg.BgpAsNumberList.find()
+            bgpasnumberlist.AsNumber.Single(as_start_num+i)
+            i += 1 
+    if "med" in kwargs:
+        med = kwargs['med']
+        bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")
+        bgpiprouteproperty.MultiExitDiscriminator.Single(med)
+    if "local" in kwargs:
+        local = kwargs['local']
+        bgpiprouteproperty.EnableLocalPreference.Single("True")
+        bgpiprouteproperty.LocalPreference.Single(local)
 
-    bgpaspathsegmentlist = bgpiprouteproperty.BgpAsPathSegmentList.find()
-    bgpaspathsegmentlist.EnableASPathSegment.Single("True")
-    
-    #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
-    i = 0
-    for seg in bgpaspathsegmentlist:
-        bgpasnumberlist = seg.BgpAsNumberList.find()
-        bgpasnumberlist.AsNumber.Single(as_start_num+i)
-        i += 1 
-
-    bgpiprouteproperty2 = ipv4PrefixPool.BgpIPRouteProperty.add()
-    bgpiprouteproperty2.EnableMultiExitDiscriminator.Single("True")
-    bgpiprouteproperty2.MultiExitDiscriminator.Single(med)
+    if "origin" in kwargs:
+        origin = kwargs['origin']
+        bgpiprouteproperty.Origin.Single(origin)
+    if "flapping" in kwargs:
+        start_ip = kwargs["flapping"]
+        if start_ip.upper() == "RANDOM":
+            bgpiprouteproperty.EnableFlapping.Random()
+        else:
+            bgpiprouteproperty.EnableFlapping.Increment(start_value=start_ip, step_value='0.0.0.1')
+        
     #testplatform.info(bgpiprouteproperty2.MultiExitDiscriminator.Values)
  
 if __name__ == "__main__":
@@ -641,19 +714,31 @@ if __name__ == "__main__":
     myixia.topologies[5].add_ipv4()
 
 
-    myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=100)
-    myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=100)
-    myixia.topologies[2].add_bgp(dut_ip='10.1.1.3',bgp_type='external',num=100)
-    myixia.topologies[3].add_bgp(dut_ip='10.1.1.4',bgp_type='external',num=100)
-    myixia.topologies[4].add_bgp(dut_ip='10.1.1.5',bgp_type='external',num=100)
-    myixia.topologies[5].add_bgp(dut_ip='10.1.1.6',bgp_type='external',num=100)
+    myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    myixia.topologies[1].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    myixia.topologies[2].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    myixia.topologies[3].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    myixia.topologies[4].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    myixia.topologies[5].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
 
-    myixia.topologies[3].change_origin("egp")
-    myixia.topologies[4].change_origin("egp")
-    myixia.topologies[5].change_origin("egp")
+    # myixia.topologies[0].add_aspath_med(1,65010,6000)
+    # myixia.topologies[1].add_aspath_med(2,65020,5000)
+    # myixia.topologies[2].add_aspath_med(3,65030,4000)
+    # myixia.topologies[3].add_aspath_med(4,65040,3000)
+    # myixia.topologies[4].add_aspath_med(5,65050,2000)
+    # myixia.topologies[5].add_aspath_med(6,65060,1000)
+    # myixia.topologies[0].add_aspath_med(1,65010,6000)
+
+    myixia.topologies[0].change_bgp_routes_attributes(num_path=1,as_base=65010,med=6000,flapping="random",community=3,comm_base=101,weight=111)
+    myixia.topologies[1].change_bgp_routes_attributes(num_path=2,as_base=65020,med=5000,flapping="random",community=3,comm_base=102,weight=222)
+    myixia.topologies[2].change_bgp_routes_attributes(num_path=3,as_base=65030,med=4000,flapping="random",community=3,comm_base=103,weight=333)
+    myixia.topologies[3].change_bgp_routes_attributes(num_path=4,as_base=65040,med=3000,flapping="random",community=3,comm_base=104,weight=444)
+    myixia.topologies[4].change_bgp_routes_attributes(num_path=5,as_base=65050,med=2000,flapping="random",community=3,comm_base=105,weight=555)
+    myixia.topologies[5].change_bgp_routes_attributes(num_path=6,as_base=65060,med=1000,flapping="random",community=3,comm_base=106,weight=666)
+    
+    myixia.start_protocol(wait=40)
 
     exit()
-    myixia.start_protocol(wait=40)
 
     myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
     myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
