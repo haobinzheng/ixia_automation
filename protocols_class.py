@@ -21,12 +21,12 @@ class BGP_networks:
         self.routers = []
         for switch in self.switches:
             self.routers.append(switch.router_bgp)
-
+    @property
     def clear_bgp_config(self):
         for router in self.routers:
             router.clear_config()
 
-
+    @property
     def build_ibgp_mesh_topo(self):
 
         for switch in self.switches:
@@ -166,7 +166,7 @@ class BGP_networks:
         """
         config_cmds_lines(client.switch.console,bgp_config)
 
-
+    @property
     def build_router_reflector_topo(self):
         rr1 = self.routers[0]
         rr2 = self.routers[1]
@@ -199,7 +199,7 @@ class BGP_networks:
         config_cmds_lines(router.switch.console,bgp_config)
 
 
-
+    @property
     def build_confed_topo_1(self):
         fed_50_1 = self.routers[0]
         fed_50_2 = self.routers[1]
@@ -1092,6 +1092,7 @@ class Router_BGP:
         """
         config_cmds_lines(dut,bgp_config)
 
+    @property
     def clear_bgp_all(self):
         switch_exec_cmd(self.switch.console,"execute router clear bgp all")
 
