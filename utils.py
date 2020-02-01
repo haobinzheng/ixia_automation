@@ -2089,6 +2089,14 @@ if __name__ == "__main__":
 	#tprint(result)
 	#tprint(result)
 
+def find_subnet(ipaddr,mask_length):
+	import ipaddress
+	n = f"{ipaddr}/{mask_length}"
+	net = str(ipaddress.ip_network(n, strict=False))
+	subnet = (net.split('/'))[0]
+	print(subnet)
+	return subnet
+
 def print_test_subject(testcase,description):
 	print(f"======================= Testcase #{testcase}: {description} =============================")
 

@@ -118,6 +118,7 @@ def bgp_testbed_init():
     dut1_dir['loop0_ip']= dut1_loop0_ip  
     dut1_dir['vlan1_ip']= dut1_vlan1_ip 
     dut1_dir['vlan1_2nd'] = "1.1.1.254"
+    dut1_dir['internal'] = "1.1.1.100"
     dut1_dir['vlan1_subnet'] = dut1_vlan1_subnet
     dut1_dir['vlan1_mask']= dut1_vlan1_mask  
     dut1_dir['split_ports']= dut1_split_ports  
@@ -142,6 +143,7 @@ def bgp_testbed_init():
     dut2_dir['loop0_ip']= dut2_loop0_ip  
     dut2_dir['vlan1_ip']= dut2_vlan1_ip
     dut2_dir['vlan1_2nd'] = "2.2.2.254"  
+    dut2_dir['internal'] = "2.2.2.100"
     dut2_dir['vlan1_subnet'] = dut2_vlan1_subnet
     dut2_dir['vlan1_mask']= dut2_vlan1_mask  
     dut2_dir['split_ports']= dut2_split_ports  
@@ -165,6 +167,7 @@ def bgp_testbed_init():
     dut3_dir['loop0_ip']= dut3_loop0_ip  
     dut3_dir['vlan1_ip']= dut3_vlan1_ip
     dut3_dir['vlan1_2nd'] = "3.3.3.254"  
+    dut3_dir['internal'] = "3.3.3.100"
     dut3_dir['vlan1_subnet'] = dut3_vlan1_subnet
     dut3_dir['vlan1_mask']= dut3_vlan1_mask  
     dut3_dir['split_ports']= dut3_split_ports  
@@ -188,6 +191,7 @@ def bgp_testbed_init():
     dut4_dir['loop0_ip']= dut4_loop0_ip  
     dut4_dir['vlan1_ip']= dut4_vlan1_ip  
     dut4_dir['vlan1_2nd'] = "4.4.4.254"
+    dut4_dir['internal'] = "4.4.4.100"
     dut4_dir['vlan1_subnet'] = dut4_vlan1_subnet
     dut4_dir['vlan1_mask']= dut4_vlan1_mask  
     dut4_dir['split_ports']= dut4_split_ports  
@@ -211,6 +215,7 @@ def bgp_testbed_init():
     dut5_dir['loop0_ip']= dut5_loop0_ip  
     dut5_dir['vlan1_ip']= dut5_vlan1_ip  
     dut5_dir['vlan1_2nd'] = "5.5.5.254"
+    dut5_dir['internal'] = "5.5.5.100"
     dut5_dir['vlan1_subnet'] = dut5_vlan1_subnet
     dut5_dir['vlan1_mask']= dut5_vlan1_mask  
     dut5_dir['split_ports']= dut5_split_ports  
@@ -234,6 +239,7 @@ def bgp_testbed_init():
     dut6_dir['loop0_ip']= "6.6.6.6" 
     dut6_dir['vlan1_ip']= "10.1.1.6"  
     dut6_dir['vlan1_2nd'] = "6.6.6.254"
+    dut6_dir['internal'] = "6.6.6.100"
     dut6_dir['vlan1_subnet'] = "10.1.1.0"
     dut6_dir['vlan1_mask']= "255.255.255.0"  
     dut6_dir['split_ports']= []
@@ -257,6 +263,7 @@ def bgp_testbed_init():
     dut7_dir['loop0_ip']= "7.7.7.7" 
     dut7_dir['vlan1_ip']= "10.1.1.7"  
     dut7_dir['vlan1_2nd'] = "7.7.7.254"
+    dut7_dir['internal'] = "7.7.7.100"
     dut7_dir['vlan1_subnet'] = "10.1.1.0"
     dut7_dir['vlan1_mask']= "255.255.255.0" 
     dut7_dir['split_ports']= []  
@@ -366,6 +373,7 @@ def sw_init_config(*args, **kwargs):
     split_ports = dut_dir['split_ports'] 
     ports_40g = dut_dir['40g_ports'] 
     vlan1_2nd = dut_dir['vlan1_2nd']
+    internal = dut_dir['internal']
 
     config_global_hostname = f"""
     config system global
@@ -419,6 +427,12 @@ def sw_init_config(*args, **kwargs):
         set allowaccess ping https http ssh telnet
         set type loopback
         next
+
+     edit "internal"
+        set ip {internal} 255.255.255.255
+        set allowaccess ping https http ssh telnet
+        set type physical
+    next
     end
     """
     config_cmds_lines(dut,config_sys_interface)
@@ -497,5 +511,5 @@ def sw_init_config(*args, **kwargs):
 
     switch_show_cmd(dut,"show system interface")
     switch_show_cmd(dut,"get switch module summary")
-    switch_show_cmd(dut,"show router ospf")
+    # switch_show_cmd(dut,"show router ospf")
     switch_show_cmd(dut,"show router static")

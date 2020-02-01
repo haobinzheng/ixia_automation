@@ -21,18 +21,130 @@ class BGP_networks:
         self.routers = []
         for switch in self.switches:
             self.routers.append(switch.router_bgp)
-    @property
+
+    def show_summary(self):
+        for router in self.routers:
+            router.switch.show_bgp_summary()
+            router.check_neighbor_status()
+
     def clear_bgp_config(self):
         for router in self.routers:
             router.clear_config()
 
-    @property
+   
     def build_ibgp_mesh_topo(self):
-
         for switch in self.switches:
             switch.router_ospf.neighbor_discovery()
             switch.router_bgp.update_ospf_neighbors()
             switch.router_bgp.config_ibgp_mesh_loopback()
+
+    def biuld_ibgp_mesh_topo_sys_intf(self):
+        for router1 in self.routers: 
+            for router2 in self.routers:
+                if router1 is router2: 
+                    continue 
+                else:
+                    self.config_ibgp_session_all_interface(router1,router2) 
+
+    def config_ospf_networks(self):
+        for switch in self.switches:
+            switch.show_switch_info()
+            switch.router_ospf.basic_config()
+        console_timer(20,msg="Class BGP Network: After configuring ospf, wait for 20 sec")
+
+    def config_ibgp_session_all_interface(self,bgp1,bgp2):
+        tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {bgp1.ibgp_as}
+            set router-id {bgp1.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.router_id}
+                    set remote-as {bgp2.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.switch.internal}
+                    set remote-as {bgp2.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.switch.vlan1_2nd}
+                    set remote-as {bgp2.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {bgp2.ibgp_as}
+            set router-id {bgp2.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.router_id}
+                    set remote-as {bgp1.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.switch.internal}
+                    set remote-as {bgp1.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.switch.vlan1_2nd}
+                    set remote-as {bgp1.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
 
     def config_ibgp_session(self,bgp1,bgp2):
         tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
@@ -166,7 +278,7 @@ class BGP_networks:
         """
         config_cmds_lines(client.switch.console,bgp_config)
 
-    @property
+   
     def build_router_reflector_topo(self):
         rr1 = self.routers[0]
         rr2 = self.routers[1]
@@ -199,7 +311,6 @@ class BGP_networks:
         config_cmds_lines(router.switch.console,bgp_config)
 
 
-    @property
     def build_confed_topo_1(self):
         fed_50_1 = self.routers[0]
         fed_50_2 = self.routers[1]
@@ -314,6 +425,22 @@ class Router_route_map:
 
     def basic_config(self):
         basic_config_route_map(self.switch.console)
+
+    def aspath_map(self):
+        config = """
+        TBD
+        config router route-map
+         edit "unsuppress_map"
+            set protocol bgp
+            consoleonfig rule
+                  edit 1
+                    set set-aspath "101"                         
+                next
+            end
+        next
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
 
     def config_atomic_aggregate(self,*args,**kwargs):
         name = kwargs['name']
@@ -557,6 +684,20 @@ class BGP_Neighbor:
             self.prefix_recieved = int(neighbor_dict["State/PfxRcd"])
         except Exception as e:
             self.prefix_recieved = neighbor_dict["State/PfxRcd"]
+
+
+    def config_unsuppress_map(self):
+        config = f"""
+        TBD
+        config router bgp
+                config neighbor
+                   edit "7.7.7.7"
+                set remote-as 65000
+                set unsuppress-map "unsuppress_map"
+                set update-source "loop0"
+            next
+
+        """
 
     def show_details(self):
         tprint("====================================================")
@@ -868,6 +1009,49 @@ class Router_BGP:
         self.ebgp_as = self.switch.ebgp_as
         self.confed_id = 5000
         self.bgp_neighbors_objs = None
+        self.ixia_port_info = None
+
+
+    def config_aggregate_summary_only(self, mask_length):
+        #example find_subnet("10.1.1.1",24)
+        agg_net = find_subnet(self.ixia_network,mask)
+        config = """
+        config router bgp
+            config aggregate-address
+             edit 1
+                set prefix {agg_net} {mask}
+                set summary-only enable
+            next
+            end
+        end
+        """
+
+        config_cmds_lines(self.switch.console,config)
+
+    @property
+    def ixia_port_info(self):
+        return self.ixia_port_info
+
+    @ixia_port_info.setter 
+    def ixia_port_info(self,port_info):
+        self.ixia_port_info = port_info
+
+    @property
+    def ixia_network(self):
+        return self.ixia_port_info[4]
+
+    @ixia_network.setter 
+    def ixia_network(self,ip_net):
+        self.ixia_port_info[4] = ip_net
+
+    @property
+    def ixia_bgp_as(self):
+        return self.ixia_port_info[5]
+
+    @ixia_bgp_as.setter 
+    def ixia_network(self,bgp_as):
+        self.ixia_port_info[5] = bgp_as
+
 
     def update_switch(self,switch):
         self.switch = switch
@@ -1092,7 +1276,7 @@ class Router_BGP:
         """
         config_cmds_lines(dut,bgp_config)
 
-    @property
+ 
     def clear_bgp_all(self):
         switch_exec_cmd(self.switch.console,"execute router clear bgp all")
 
@@ -1201,6 +1385,38 @@ class Router_BGP:
         """
         config_cmds_lines(self.switch.console,bgp_config)
 
+
+class interface:
+    def __init__(self,*args, **kwargs):
+        
+        self.switch = args[0]
+        self.vid = None
+        self.second = None
+        self.second_ip = None
+        self.port_list = None
+        self.ip = kwargs['ip']
+        self.type = "vlan"
+
+        if "vid" in kwargs['vid']:
+            self.vid = kwargs['vid']
+       
+        if "second" in kwargs:
+            self.second = kwargs['second']
+        if "second_ip" in kwargs:
+            self.second_ip = kwargs['second_ip']
+        if "ports" in kwargs:
+            self.port_list = kwargs["ports"]
+        if "type" in kwargs:
+            self.type = kwargs['type']
+
+
+class system_interfaces:
+    def __init__(self,*args,**kwargs):
+        self.switch = args[0]
+
+    def create_interface(self,*args,**kwargs):
+
+
 class FortiSwitch:
     def __init__(self, *args,**kwargs):
         dut_dir = args[0]
@@ -1219,6 +1435,7 @@ class FortiSwitch:
         self.rid = self.loop0_ip
         self.vlan1_ip = dut_dir['vlan1_ip'] 
         self.vlan1_2nd = dut_dir['vlan1_2nd']
+        self.internal = dut_dir['internal']
         self.vlan1_subnet = dut_dir['vlan1_subnet']  
         self.vlan1_mask = dut_dir['vlan1_mask'] 
         self.split_ports = dut_dir['split_ports'] 
@@ -1298,8 +1515,10 @@ class FortiSwitch:
         image = find_dut_image(dut)
         tprint(f"============================ {self.name} software image = {image} ============")
         switch_show_cmd(self.console,"get system status")
-        
-    @property
+    
+    def show_log(self):
+        sw_display_log(self.console,lines=200)
+
     def relogin_after_factory(self):
         tprint('-------------------- re-login switch after factory rest-----------------------')
         dut_com = self.dut_dir['comm'] 
@@ -1312,7 +1531,7 @@ class FortiSwitch:
         self.router_bgp = Router_BGP(self)
         # self.router_ospf.update_switch(self)
         # self.router_bgp.update_switch(self)
-    @property
+
     def show_switch_info(self):
         tprint("=====================================================================")
         tprint(f"   Comm Server = {self.comm}")
