@@ -24,7 +24,7 @@ class BGP_networks:
 
     def show_summary(self):
         for router in self.routers:
-            router.switch.show_bgp_summary()
+            router.show_bgp_summary()
             router.check_neighbor_status()
 
     def clear_bgp_config(self):
@@ -418,7 +418,7 @@ class Router_access_list:
 
 class Router_route_map:
     def __init__(self,*args,**kwargs):
-         self.switch = args[0]
+        self.switch = args[0]
 
     def community_config(self):
         route_map_community(self.switch.console)
@@ -426,15 +426,16 @@ class Router_route_map:
     def basic_config(self):
         basic_config_route_map(self.switch.console)
 
-    def aspath_map(self):
-        config = """
-        TBD
+    def aspath_map(self,*args,**kwargs):
+        name = kwargs['name']
+        as_num = kwargs['as_num']
+        config = f"""
         config router route-map
-         edit "unsuppress_map"
+         edit {name}
             set protocol bgp
-            consoleonfig rule
+                config rule
                   edit 1
-                    set set-aspath "101"                         
+                    set set-aspath {as_num}                         
                 next
             end
         next
@@ -686,18 +687,19 @@ class BGP_Neighbor:
             self.prefix_recieved = neighbor_dict["State/PfxRcd"]
 
 
-    def config_unsuppress_map(self):
+    def nei_config_unsuppress(self,map_name):
         config = f"""
-        TBD
         config router bgp
                 config neighbor
-                   edit "7.7.7.7"
+                   edit {self.id}
                 set remote-as 65000
-                set unsuppress-map "unsuppress_map"
+                set unsuppress-map {map_name}
                 set update-source "loop0"
             next
-
+            end
+        end
         """
+        config_cmds_lines(self.switch.console,config)
 
     def show_details(self):
         tprint("====================================================")
@@ -1009,48 +1011,47 @@ class Router_BGP:
         self.ebgp_as = self.switch.ebgp_as
         self.confed_id = 5000
         self.bgp_neighbors_objs = None
-        self.ixia_port_info = None
+        self.ixia_port_info = []
+        #self.route_map = Router_route_map()
 
+    def bgp_config_unsuppress_map(self,map_name):
+        for neighbor in self.bgp_neighbors_objs:
+            neighbor.nei_config_unsuppress(map_name)
 
-    def config_aggregate_summary_only(self, mask_length):
+    def config_aggregate_summary_only(self, agge_net,mask_length):
         #example find_subnet("10.1.1.1",24)
-        agg_net = find_subnet(self.ixia_network,mask)
-        config = """
+        agg_net = find_subnet(self.ixia_network,mask_length)
+        config = f"""
         config router bgp
             config aggregate-address
              edit 1
-                set prefix {agg_net} {mask}
+                set prefix {agg_net}/{mask_length}
                 set summary-only enable
             next
             end
         end
         """
-
         config_cmds_lines(self.switch.console,config)
 
-    @property
-    def ixia_port_info(self):
-        return self.ixia_port_info
-
-    @ixia_port_info.setter 
-    def ixia_port_info(self,port_info):
-        self.ixia_port_info = port_info
+    def attach_ixia(self,ixia_port):
+        self.ixia_port_info = ixia_port
+        print(f"self.ixia_port_info = {self.ixia_port_info}")
 
     @property
     def ixia_network(self):
-        return self.ixia_port_info[4]
+        return (self.ixia_port_info)[4]
 
     @ixia_network.setter 
     def ixia_network(self,ip_net):
-        self.ixia_port_info[4] = ip_net
+        (self.ixia_port_info)[4] = ip_net
 
     @property
     def ixia_bgp_as(self):
-        return self.ixia_port_info[5]
+        return (self.ixia_port_info)[5]
 
     @ixia_bgp_as.setter 
-    def ixia_network(self,bgp_as):
-        self.ixia_port_info[5] = bgp_as
+    def ixia_bgp_as(self,bgp_as):
+        (self.ixia_port_info)[5] = bgp_as
 
 
     def update_switch(self,switch):
@@ -1224,11 +1225,11 @@ class Router_BGP:
             """
             config_cmds_lines(dut,bgp_config)
 
-    def config_ebgp_ixia(self,ixia_port_info):
+    def config_ebgp_ixia(self,ixia_port):
         tprint(f"============== Configurating eBGP peer relationship to ixia {self.switch.name} ")
 
-        ixia_ip,ixia_mask = seperate_ip_mask(ixia_port_info[6])
-        ixia_as = ixia_port_info[5]
+        ixia_ip,ixia_mask = seperate_ip_mask(ixia_port[6])
+        ixia_as = ixia_port[5]
         if ixia_ip == None:
             return False
         bgp_config = f"""
@@ -1415,6 +1416,7 @@ class system_interfaces:
         self.switch = args[0]
 
     def create_interface(self,*args,**kwargs):
+        pass
 
 
 class FortiSwitch:
@@ -1453,9 +1455,6 @@ class FortiSwitch:
         self.lldp_neighbor_list = get_switch_lldp_summary(self.console)
         self.neighbor_ip_list = []
         self.neighbor_switch_list = []
-
-
-        
 
     def backup_config(self,file_name):
         cmd = f"execute backup config tftp {file_name} 10.105.19.19"

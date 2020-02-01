@@ -30,7 +30,7 @@ from ixia_restpy_lib import *
 
 CLEAN_ALL = False
 
-sys.stdout = Logger("Log/bgp_testing.log")
+#sys.stdout = Logger("Log/bgp_testing.log")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-r", "--restore", help="restore config file from tftp server", action="store_true")
@@ -2338,6 +2338,7 @@ if testcase == 22 or test_all:
 
 if testcase == 23 or test_all:
 	testcase = 23
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP Longevity Test"
 	print_test_subject(testcase,description)
 
@@ -2402,15 +2403,13 @@ if testcase == 23 or test_all:
 
 	while True:
 		for router_bgp in network.routers:
-			router_bgp.clear_bgp_all
+			router_bgp.clear_bgp_all()
 
 		console_timer(30,msg="Wait for 30s to clear ip bgp all")
 
 		for router_bgp in network.routers:
-			try:
-				router_bgp.switch.show_log()
-			except Exception as e:
-				tprint(f"Can not show log display on {router_bgp.switch.name}")
+			router_bgp.switch.show_log()
+			 
 
 if testcase == 24 or test_all:
 	testcase = 24
@@ -2580,6 +2579,7 @@ if testcase == 25 or test_all:
 
 if testcase == 26 or test_all:
 	testcase = 26
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP aggregate route and suppress map"
 	print_test_subject(testcase,description)
 
@@ -2600,19 +2600,38 @@ if testcase == 26 or test_all:
 	[ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.30.1.1",103,"10.1.1.103/24","10.1.1.1"],
 	[ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1",104,"10.1.1.104/24","10.1.1.1"], 
 	[ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
-	[ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]
+	[ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"],
 	]
 
+	#Assign ixia port to BGP router 
 	for bgp_router,ixia_port in zip(network.routers,portList):
-		bgp_router.ixia_port_info = ixia_port
+		print(ixia_port)
+		# bgp_router.ixia_port_info = bgp_router.attach_ixia(ixia_port)
+		bgp_router.attach_ixia(ixia_port)
+
+	for router in network.routers:
+		try:
+			if router.ixia_port_info == None:
+				continue
+			mask_length = 16
+			agg_net = find_subnet(router.ixia_network,mask_length)
+			router.config_aggregate_summary_only(agg_net,mask)
+		except Exception as e:
+			pass
 
 	for switch,ixia_port_info in zip(switches,portList):
+		print(switch.router_bgp.ixia_port_info)
 		if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
 			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
 			exit()
 	
-	for router in network.routers:
-		router.config_aggregate_summary_only(16)
+	#configure aggregated address
+	
+	route_map_name = "unsuppress_1"
+	switches[0].route_map.clean_up()
+	switches[0].route_map.aspath_map(name=route_map_name,as_num = 101)
+
+	switches[0].router_bgp.bgp_config_unsuppress_map(route_map_name)
 		
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList)
 
