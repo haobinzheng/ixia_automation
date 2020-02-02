@@ -374,7 +374,7 @@ if testcase == 2 or test_all:
 	check_bgp_test_result(testcase,description,switches)
 
 	sys.stdout.close()
-	
+
 if testcase == 3 or test_all:
 	testcase = 3
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
@@ -2403,7 +2403,6 @@ if testcase == 22 or test_all:
 if testcase == 23 or test_all:
 	testcase = 23
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP Longevity Test"
 	print_test_subject(testcase,description)
 
@@ -2442,12 +2441,12 @@ if testcase == 23 or test_all:
 	myixia.topologies[4].add_bgp(dut_ip='10.1.1.5',bgp_type='external',num=1000)
 	myixia.topologies[5].add_bgp(dut_ip='10.1.1.6',bgp_type='external',num=1000)
 
-	myixia.topologies[0].change_bgp_routes_attributes(num_path=1,as_base=65010,med=6000,flapping="random",community=10,comm_base=101,weight=111)
-	myixia.topologies[1].change_bgp_routes_attributes(num_path=2,as_base=65020,med=5000,flapping="random",community=10,comm_base=102,weight=222)
-	myixia.topologies[2].change_bgp_routes_attributes(num_path=3,as_base=65030,med=4000,flapping="random",community=10,comm_base=103,weight=333)
-	myixia.topologies[3].change_bgp_routes_attributes(num_path=4,as_base=65040,med=3000,flapping="random",community=10,comm_base=104,weight=444)
-	myixia.topologies[4].change_bgp_routes_attributes(num_path=5,as_base=65050,med=2000,flapping="random",community=10,comm_base=105,weight=555)
-	myixia.topologies[5].change_bgp_routes_attributes(num_path=6,as_base=65060,med=1000,flapping="random",community=10,comm_base=106,weight=666)
+	myixia.topologies[0].change_bgp_routes_attributes(num_path=20,as_base=65010,med=6000,flapping="random",community=30,comm_base=101,weight=111)
+	myixia.topologies[1].change_bgp_routes_attributes(num_path=21,as_base=65020,med=5000,flapping="random",community=30,comm_base=102,weight=222)
+	myixia.topologies[2].change_bgp_routes_attributes(num_path=22,as_base=65030,med=4000,flapping="random",community=30,comm_base=103,weight=333)
+	myixia.topologies[3].change_bgp_routes_attributes(num_path=23,as_base=65040,med=3000,flapping="random",community=30,comm_base=104,weight=444)
+	myixia.topologies[4].change_bgp_routes_attributes(num_path=24,as_base=65050,med=2000,flapping="random",community=30,comm_base=105,weight=555)
+	myixia.topologies[5].change_bgp_routes_attributes(num_path=25,as_base=65060,med=1000,flapping="random",community=30,comm_base=106,weight=666)
 	 
 
 	myixia.start_protocol(wait=50)
