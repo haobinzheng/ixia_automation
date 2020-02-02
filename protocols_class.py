@@ -1011,7 +1011,7 @@ class Router_BGP:
         self.ebgp_as = self.switch.ebgp_as
         self.confed_id = 5000
         self.bgp_neighbors_objs = None
-        self.ixia_port_info = []
+        self.ixia_port_info = None
         #self.route_map = Router_route_map()
 
     def bgp_config_unsuppress_map(self,map_name):

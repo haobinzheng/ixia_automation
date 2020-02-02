@@ -305,9 +305,14 @@ if upgrade_sa:
 switches = [FortiSwitch(dut_dir) for dut_dir in dut_dir_list]
 if testcase == 1 or test_all:
 	testcase = 1
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Test iBGP via loopbacks"
 	print_test_subject(testcase,description)
-	switches_clean_up(switches)
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
 
 	for switch in switches:
 		switch.show_switch_info()
@@ -341,11 +346,18 @@ if testcase == 1 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
+	sys.stdout.close()
+
 if testcase == 2 or test_all:
 	testcase = 2
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "iBGP SVI interface"
 	print_test_subject(testcase,description)
-	switches_clean_up(switches)
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
 	for switch in switches:
 		switch.show_switch_info()
 		switch.router_ospf.basic_config()
@@ -360,11 +372,20 @@ if testcase == 2 or test_all:
 		switch.show_routing()
 
 	check_bgp_test_result(testcase,description,switches)
+
+	sys.stdout.close()
+	
 if testcase == 3 or test_all:
 	testcase = 3
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP Redistribute connected"
 	print_test_subject(testcase,description)
-	switches_clean_up(switches)
+
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
 
 	for switch in switches:
 		switch.show_switch_info()
@@ -390,9 +411,15 @@ if testcase == 3 or test_all:
 
 if testcase == 4 or test_all:
 	testcase = 4
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP Redistribute static"
 	print_test_subject(testcase,description)
-	switches_clean_up(switches)
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
+
 	for switch in switches:
 		switch.show_switch_info()
 		switch.router_ospf.basic_config()
@@ -413,9 +440,14 @@ if testcase == 4 or test_all:
 
 if testcase == 5 or test_all:
 	testcase = 5
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "iBGP via second interface" 
 	print_test_subject(testcase,description)
-	switches_clean_up(switches)
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
 	
 	for switch in switches:
 		switch.router_ospf.change_router_id(switch.vlan1_2nd)
@@ -439,9 +471,16 @@ if testcase == 5 or test_all:
 
 if testcase == 6 or test_all:
 	testcase = 6
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP direct connection"
 	print_test_subject(testcase,description)
-	switches_clean_up(switches)
+
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
+
 	for switch in switches:
 		switch.vlan_neighors(switches)
 		switch.show_vlan_neighbors()
@@ -452,9 +491,14 @@ if testcase == 6 or test_all:
 
 if testcase == 7 or test_all:
 	testcase = 7
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Redistrubuting ospf into BGP"
 	print_test_subject(testcase,description)
-	switches_clean_up(switches)
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
 	
 	# for switch in switches:
 	# 	switch.vlan_neighors(switches)
@@ -475,9 +519,15 @@ if testcase == 7 or test_all:
 
 if testcase == 8 or test_all:
 	testcase = 8
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP BFD neighbor"
 	print_test_subject(testcase,description)
-	switches_clean_up(switches)
+
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	else:
+		for switch in switches:
+			switch.router_bgp.clear_config()
 	 
 	for switch in switches:
 		switch.show_switch_info()
@@ -512,6 +562,7 @@ if testcase == 8 or test_all:
 
 if testcase == 9 or test_all:
 	testcase = 9
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Basic eBGP peered to IXIA and traffic forwarding"
 	print_test_subject(testcase,description)
 
@@ -588,6 +639,7 @@ if testcase == 9 or test_all:
 
 if testcase == 10 or test_all:
 	testcase = 10
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Large number of eBGP peered to IXIA and traffic forwarding"
 	print_test_subject(testcase,description)
 	if CLEAN_ALL:
@@ -665,6 +717,7 @@ if testcase == 10 or test_all:
 
 if testcase == 11 or test_all:
 	testcase = 11
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP multi-hop connection"
 	print_test_subject(testcase,description)
 	if CLEAN_ALL:
@@ -685,6 +738,7 @@ if testcase == 11 or test_all:
 
 if testcase == 12 or test_all:
 	testcase = 12
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP policy and route filtering:duplicated routes were injected from IXIA. "
 	print_test_subject(testcase,description)
 
@@ -747,6 +801,7 @@ if testcase == 12 or test_all:
 
 if testcase == 13 or test_all:
 	testcase = 13
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP policy and route filtering: Origin attribute. "
 	print_test_subject(testcase,description)
 
@@ -815,6 +870,7 @@ if testcase == 13 or test_all:
 
 if testcase == 14 or test_all:
 	testcase = 14
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP policy and route filtering: MED attribute. "
 	print_test_subject(testcase,description)
 
@@ -884,6 +940,7 @@ if testcase == 14 or test_all:
 
 if testcase == 15 or test_all:
 	testcase = 15
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP policy and route filtering: 'Local Preference' "
 	print_test_subject(testcase,description)
 
@@ -951,6 +1008,7 @@ if testcase == 15 or test_all:
 
 if testcase == 16 or test_all:
 	testcase = 16
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP Route_map: match actions:next_hop,as,network,origin,metric"
 	print_test_subject(testcase,description)
 
@@ -1480,6 +1538,7 @@ if testcase == 16 or test_all:
 
 if testcase == 17 or test_all:
 	testcase = 17
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP distribute-list, prefix-list, aspath-filter-list: IN & OUT"
 	print_test_subject(testcase,description)
 
@@ -1787,6 +1846,7 @@ if testcase == 17 or test_all:
 
 if testcase == 18 or test_all:
 	testcase = 18
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP community no-advertise"
 	print_test_subject(testcase,description)
 
@@ -2096,6 +2156,7 @@ if testcase == 18 or test_all:
 
 if testcase == 19 or test_all:
 	testcase = 19
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP router reflector"
 	print_test_subject(testcase,description)
 
@@ -2164,6 +2225,7 @@ if testcase == 19 or test_all:
 
 if testcase == 20 or test_all:
 	testcase = 20
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP confederation"
 	print_test_subject(testcase,description)
 
@@ -2231,6 +2293,7 @@ if testcase == 20 or test_all:
 
 if testcase == 21 or test_all:
 	testcase = 21
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP always compare MED"
 	print_test_subject(testcase,description)
 
@@ -2284,6 +2347,7 @@ if testcase == 21 or test_all:
 
 if testcase == 22 or test_all:
 	testcase = 22
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP ignore as path length and strip private AS"
 	print_test_subject(testcase,description)
 
@@ -2338,6 +2402,7 @@ if testcase == 22 or test_all:
 
 if testcase == 23 or test_all:
 	testcase = 23
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP Longevity Test"
 	print_test_subject(testcase,description)
@@ -2413,6 +2478,7 @@ if testcase == 23 or test_all:
 
 if testcase == 24 or test_all:
 	testcase = 24
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGP Dynamic Configuration Change"
 	print_test_subject(testcase,description)
 
@@ -2610,14 +2676,11 @@ if testcase == 26 or test_all:
 		bgp_router.attach_ixia(ixia_port)
 
 	for router in network.routers:
-		try:
-			if router.ixia_port_info == None:
-				continue
-			mask_length = 16
-			agg_net = find_subnet(router.ixia_network,mask_length)
-			router.config_aggregate_summary_only(agg_net,mask)
-		except Exception as e:
-			pass
+		if router.ixia_port_info == None:
+			continue
+		mask_length = 16
+		agg_net = find_subnet(router.ixia_network,mask_length)
+		router.config_aggregate_summary_only(agg_net,mask_length)
 
 	for switch,ixia_port_info in zip(switches,portList):
 		print(switch.router_bgp.ixia_port_info)
