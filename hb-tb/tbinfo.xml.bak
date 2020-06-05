@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testbed name="hb-tb">
+ <dev1 type="FSW" hostname="FS1E483Z17000008" model="1048E">
+   <console ip="10.105.240.44" line="2090"> </console>
+  <login username="admin" password=""> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+ </dev1>
+<dev2 type="FSW" hostname="FS3E32T419000006" model="3032E">
+  <console ip="10.105.241.144" line="2071"> </console>
+  <login username="admin" password=""> </login>
+  <mgmt ip="10.105.240.145" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+</dev2>
+ <dev3 type="FGT" hostname="FG2K5E3917900029-R20" model="FortiGate-2000D">
+  <console ip="10.105.240.44" line="2090"> </console>
+  <login username="admin" password=""> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.50.1" port="mgmt1"> </mgmt>
+  <tftp ip="10.105.0.126" local_ip="10.105.0.126" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <pdu model="APC" ip="10.105.253.55" port="9,10"> </pdu>
+  <vdom name="performance" interface="flink-sw" init_config="init-config-11212018"> </vdom>
+</dev3>
+<trafgen1 type="IXIA" model="IXIA" chassis_ip="10.160.12.5" tcl_server_ip="10.160.12.5" ixnetwork_server_ip="10.160.37.24:8030">
+ </trafgen1>
+ <connections>
+  <link1 link="dev1:port13,trafgen1:5/12" type="GigabitEthernet" mode="Copper"> </link1>
+  <link2 link="dev1:port14,trafgen1:5/13" type="GigabitEthernet" mode="Copper"> </link2>
+  <link3 link="dev1:port15,trafgen1:5/14" type="GigabitEthernet" mode="Copper"> </link3>
+  <link4 link="dev1:port16,trafgen1:5/9" type="GigabitEthernet" mode="Copper"> </link4>
+  <link5 link="dev1:port17,trafgen1:5/10" type="GigabitEthernet" mode="Copper"> </link5>
+  <link6 link="dev1:port18,trafgen1:5/11" type="GigabitEthernet" mode="Copper"> </link6>
+ </connections>
+</testbed>

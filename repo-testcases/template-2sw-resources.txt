@@ -1,0 +1,138 @@
+# -*- coding: robot -*-
+| *Setting* | *Value *|
+| Documentation | Template Resources File |
+| Resource | ${autopath}/lib/util/telnet.txt |
+| Resource | ${autopath}/lib/util/os.txt |
+| Resource | ${autopath}/lib/util/fsw.txt |
+| Resource  | ${autopath}/lib/util/adv_infra.txt |
+| Library  | ${autopath}/lib/util/tableparser.py |
+| Library | ${autopath}/lib/util/misc.py |
+| Library | Collections |
+
+| *Variables*  | *Value* |
+| ${tbinfo} | ${autopath}/cfg/${testbed}/tbinfo.xml |
+| ${tbtopo} | ${autopath}/cfg/virtual_topos/twoSwoneLink.xml |
+| ${Production} | ${EMPTY} |
+
+| *Keywords* |
+| Suite Setup Keyword | [Arguments] | ${testbed} | ${tbinfo} | ${tbtopo} |
+| | [Documentation] | Initialize an Envirioment for Suite test |
+| | Run Keyword | Test Topo Init | ${testbed} | ${tbinfo} | ${tbtopo} |
+
+| Suite Teardown Keyword | [Arguments] |
+| | [Documentation] | Suite Teardown Keyword |
+| | Log To Console With Timestamp | Suite Teardown |
+| | Run Keyword If | "${SUITE STATUS}" == "FAIL" | Show Switch Logs | ${Dut1 Hostname} | ${PREV TEST STATUS} |
+| | Run Keyword If | "${SUITE STATUS}" == "FAIL" | Show Switch Logs | ${Dut2 Hostname} | ${PREV TEST STATUS} |
+| | Configure FortiSwitch | ${Unset Dut1 Configure Dict} |
+| | Configure FortiSwitch | ${Unset Dut2 Configure Dict} |
+| | Configure the Port Status | ${Dut1 Hostname} | down | ${Dut1 Port1} |
+| | Configure the Port Status | ${Dut2 Hostname} | down | ${Dut2 Port1} |
+| | Release Test Topo Resource | ${testbed} |
+| | Close All Connections |
+| | Sleep With Message | 10 |
+
+| Test Setup Keyword | [Arguments] | ${Dut Hostname} | @{Testcase Configure data} |
+| | [Documentation] | Test Setup Keyword |
+| | Log To Console With Timestamp | Test Setup |
+| | ${Testcase Configure String} | List To String | @{Testcase Configure data} |
+| | ${Testcase Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Testcase Configure String} |
+| | FortiSwitch Delete All Logs From Memory | ${Dut Hostname} |
+| | Configure FortiSwitch | ${Testcase Configure Dict} |
+
+| Test Teardown Keyword For Two Switches | [Arguments] | ${Dut1 Hostname} | ${Dut2 Hostname} | ${DUT1 Testcase Unset Configure Data} | ${DUT2 Testcase Unset Configure Data} |
+| | [Documentation] | Test Teardown Keyword For Two Switches |
+| | Run Keyword If | "${TEST STATUS}" == "FAIL" | Show Switch Logs | ${Dut1 Hostname} |
+| | Run Keyword If | "${TEST STATUS}" == "FAIL" | Show Switch Logs | ${Dut2 Hostname} |
+| | ${DUT1 Testcase Unset Configure String} | List To String | @{DUT1 Testcase Unset Configure Data} |
+| | ${DUT2 Testcase Unset Configure String} | List To String | @{DUT2 Testcase Unset Configure Data} |
+| | ${Configure Dict} | Create Dictionary | ${Dut1 Hostname} | ${DUT1 Testcase Unset Configure String} | ${Dut2 Hostname} | ${DUT2 Testcase Unset Configure String} |
+| | Configure FortiSwitch | ${Configure Dict} |
+
+| Test Topo Init | [Arguments] | ${testbed} | ${tbinfo} | ${tbtopo} |
+| | [Documentation] | Test Topo Init Keyword |
+
+# Allocate Suite Test Resources |
+| | ${Test Topo Status}= | Test Topo Setup | ${testbed} | ${tbinfo} | ${tbtopo} | ${dutname} | ${Production} |
+| | ${Status}= | Get From Dictionary | ${Test Topo Status} | status |
+| | Run Keyword If | ${Status} != 1 | Fail With Timestamp | 'Allocate Suite Test Resources fail' |
+# Dut1
+| | ${Dut1 Hostname} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.hostname |
+| | ${Dut1 Username} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.login.username |
+| | ${Dut1 Password} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.login.password |
+| | ${Dut1 Console Ip} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.console.ip |
+| | ${Dut1 Console Port} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.console.line |
+# Dut2
+| | ${Dut2 Hostname} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.hostname |
+| | ${Dut2 Username} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.login.username |
+| | ${Dut2 Password} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.login.password |
+| | ${Dut2 Console Ip} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.console.ip |
+| | ${Dut2 Console Port} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.console.line |
+# Links
+| | ${link1_ports} | Get Nested Diction | ${Test Topo Status} | test_topo.connections.link1.link |
+
+# Parse port pairs
+| | ${Dut1 Port1} | ${Dut2 Port1} | parse_link | ${link1_ports} |
+
+| | Show Test Related Variables |
+
+# Make varaibles available in current suite
+# Make a few varaibles available in current suite
+| | Set Suite Variable | ${Dut1 Hostname} | ${Dut1 Hostname} |
+| | Set Suite Variable | ${Dut2 Hostname} | ${Dut2 Hostname} |
+| | Set Suite Variable | ${Dut1 Port1} | ${Dut1 Port1} |
+| | Set Suite Variable | ${Dut2 Port1} | ${Dut2 Port1} |
+
+# Telnet to Devices
+| | Log To Console With Timestamp | Telnet Login to ${Dut1 Hostname} |
+| | Telnet Login | ${Dut1 Console Ip} | ${Dut1 Hostname} | ${Dut1 Username} | ${Dut1 Password} | ${Dut1 Console Port} | ${Dut1 Hostname} |
+| | Log To Console With Timestamp | Telnet Login to ${Dut2 Hostname} |
+| | Telnet Login | ${Dut2 Console Ip} | ${Dut2 Hostname} | ${Dut2 Username} | ${Dut2 Password} | ${Dut2 Console Port} | ${Dut2 Hostname} |
+
+# set port status up
+| | Configure the Port Status | ${Dut1 Hostname} | up | ${Dut1 Port1} |
+| | Configure the Port Status | ${Dut2 Hostname} | up | ${Dut2 Port1} |
+
+# Configure Devices
+| | @{Unset Dut1 Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... |    edit ${Dut1 Port1}
+| | ... |        unset native-vlan
+| | ... |    next
+| | ... | end
+| | ... | config system interface
+| | ... |   delete vlan100
+| | ... | end
+| | @{Unset Dut2 Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... |    edit ${Dut2 Port1}
+| | ... |        unset native-vlan
+| | ... |    next
+| | ... | end
+| | ... | config system interface
+| | ... |   delete vlan100
+| | ... | end
+| | ${Unset Dut1 Configure String} | List To String | @{Unset Dut1 Configure Data} |
+| | ${Unset Dut2 Configure String} | List To String | @{Unset Dut2 Configure Data} |
+| | ${Unset Dut1 Configure Dict} | Create Dictionary | ${Dut1 Hostname} | ${Unset Dut1 Configure String} |
+| | ${Unset Dut2 Configure Dict} | Create Dictionary | ${Dut2 Hostname} | ${Unset Dut2 Configure String} |
+| | Set Suite Variable | ${Unset Dut1 Configure Dict} | ${Unset Dut1 Configure Dict} |
+| | Set Suite Variable | ${Unset Dut2 Configure Dict} | ${Unset Dut2 Configure Dict} |
+
+| Show Test Related Variables | [Documentation] | Show all variables using in this test, autopath and dut_id are passed via command line |
+| | Log To Console | \tautopath=${autopath} |
+| | Log To Console | \ttestbed=${testbed} |
+| | Log To Console | \ttbinfo=${tbinfo} |
+| | Log To Console | \ttbtopo=${tbtopo} |
+| | Log To Console | \tDut1 Hostname=${Dut1 Hostname} |
+| | Log To Console | \tDut1 Username=${Dut1 Username} |
+| | Log To Console | \tDut1 Password=${Dut1 Password} |
+| | Log To Console | \tDut1 Console Ip=${Dut1 Console Ip} |
+| | Log To Console | \tDut1 Console Port=${Dut1 Console Port} |
+| | Log To Console | \tDut2 Hostname=${Dut2 Hostname} |
+| | Log To Console | \tDut2 Username=${Dut2 Username} |
+| | Log To Console | \tDut2 Password=${Dut2 Password} |
+| | Log To Console | \tDut2 Console Ip=${Dut2 Console Ip} |
+| | Log To Console | \tDut2 Console Port=${Dut2 Console Port} |
+| | Log To Console | \tDut1 Port1=${Dut1 Port1} |
+| | Log To Console | \tDut2 Port1=${Dut2 Port1} |

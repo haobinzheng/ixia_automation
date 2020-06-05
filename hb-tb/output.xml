@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generated="20200504 19:07:37.989" generator="Robot 2.8.7 (Python 2.7.17 on linux2)">
+<suite source="/home/zhengh/git-repo/automation/testcases" id="s1" name="Testcases">
+<suite source="/home/zhengh/git-repo/automation/testcases/FSW" id="s1-s1" name="FSW">
+<suite source="/home/zhengh/git-repo/automation/testcases/FSW/Template" id="s1-s1-s1" name="Template">
+<suite source="/home/zhengh/git-repo/automation/testcases/FSW/Template/P2P_cases.txt" id="s1-s1-s1-s1" name="P2P cases">
+<kw type="setup" name="P2P-resources.Suite Setup Keyword">
+<doc>Initialize an Envirioment for Suite test</doc>
+<arguments>
+<arg>${testbed}</arg>
+<arg>${tbinfo}</arg>
+<arg>${tbtopo}</arg>
+</arguments>
+<kw type="kw" name="BuiltIn.Run Keyword">
+<doc>Executes the given keyword with the given arguments.</doc>
+<arguments>
+<arg>Test Topo Init</arg>
+<arg>${testbed}</arg>
+<arg>${tbinfo}</arg>
+<arg>${tbtopo}</arg>
+</arguments>
+<kw type="kw" name="P2P-resources.Test Topo Init">
+<doc>Test Topo Init Keyword</doc>
+<arguments>
+<arg>${testbed}</arg>
+<arg>${tbinfo}</arg>
+<arg>${tbtopo}</arg>
+</arguments>
+<msg timestamp="20200504 19:07:41.632" level="FAIL">User keyword 'Test Topo Init' contains no keywords.</msg>
+<status status="FAIL" endtime="20200504 19:07:41.632" starttime="20200504 19:07:41.631"></status>
+</kw>
+<status status="FAIL" endtime="20200504 19:07:41.632" starttime="20200504 19:07:41.630"></status>
+</kw>
+<status status="FAIL" endtime="20200504 19:07:41.632" starttime="20200504 19:07:41.629"></status>
+</kw>
+<test id="s1-s1-s1-s1-t1" timeout="20 minutes" name="Traffic Test Case 1">
+<doc>Traffic Test Case 1</doc>
+<tags>
+<tag>P2P_Test</tag>
+<tag>Traffic_Test_Case1</tag>
+</tags>
+<status status="FAIL" endtime="20200504 19:07:41.633" critical="yes" starttime="20200504 19:07:41.632">Parent suite setup failed:
+User keyword 'Test Topo Init' contains no keywords.</status>
+</test>
+<test id="s1-s1-s1-s1-t2" timeout="20 minutes" name="Traffic Test Case 2">
+<doc>Traffic Test Case 2
+
+1. Configure Switch interface allowed-vlan 10
+
+2. edit internal allowed-vlans 10
+
+3. Configure IXIA ports
+
+4. Verify not packets loss
+
+5. Remove configuration</doc>
+<tags>
+<tag>P2P_Test</tag>
+<tag>Traffic_Test_Case_2</tag>
+</tags>
+<status status="FAIL" endtime="20200504 19:07:41.635" critical="yes" starttime="20200504 19:07:41.634">Parent suite setup failed:
+User keyword 'Test Topo Init' contains no keywords.</status>
+</test>
+<kw type="teardown" name="P2P-resources.Suite Teardown Keyword">
+<doc>Suite Teardown Keyword</doc>
+<arguments>
+</arguments>
+<kw type="kw" name="fsw.Log To Console With Timestamp">
+<doc>Display log with timestamp</doc>
+<arguments>
+<arg>Suite Teardown After Test Done</arg>
+</arguments>
+<kw type="kw" name="${Date} = BuiltIn.Get Time">
+<doc>Returns the given time in the requested format.</doc>
+<arguments>
+</arguments>
+<msg timestamp="20200504 19:07:41.638" level="INFO">${Date} = 2020-05-04 19:07:41</msg>
+<status status="PASS" endtime="20200504 19:07:41.638" starttime="20200504 19:07:41.637"></status>
+</kw>
+<kw type="kw" name="${messages} = misc.Catenate Strings">
+<doc>This python code catenate all given string</doc>
+<arguments>
+<arg>${message1}</arg>
+<arg>${message2}</arg>
+<arg>${message3}</arg>
+<arg>${message4}</arg>
+</arguments>
+<msg timestamp="20200504 19:07:41.639" level="INFO">${messages} = Suite Teardown After Test Done
+		</msg>
+<status status="PASS" endtime="20200504 19:07:41.639" starttime="20200504 19:07:41.638"></status>
+</kw>
+<kw type="kw" name="BuiltIn.Log To Console">
+<doc>Logs the given message to the console.</doc>
+<arguments>
+<arg>\n\t${Date}:${messages}</arg>
+</arguments>
+<status status="PASS" endtime="20200504 19:07:41.639" starttime="20200504 19:07:41.639"></status>
+</kw>
+<status status="PASS" endtime="20200504 19:07:41.640" starttime="20200504 19:07:41.636"></status>
+</kw>
+<kw type="kw" name="BuiltIn.Run Keyword If">
+<doc>Runs the given keyword with the given arguments, if `condition` is true.</doc>
+<arguments>
+<arg>"${SUITE STATUS}" == "FAIL"</arg>
+<arg>Show Switch Logs</arg>
+<arg>${Dut Hostname}</arg>
+<arg>${PREV TEST STATUS}</arg>
+</arguments>
+<kw type="kw" name="fsw.Show Switch Logs">
+<doc>Show Switch Logs</doc>
+<arguments>
+<arg>${Dut Hostname}</arg>
+<arg>${PREV TEST STATUS}</arg>
+</arguments>
+<msg timestamp="20200504 19:07:41.642" level="FAIL">Variable '${Dut Hostname}' not found.</msg>
+<status status="FAIL" endtime="20200504 19:07:41.642" starttime="20200504 19:07:41.640"></status>
+</kw>
+<status status="FAIL" endtime="20200504 19:07:41.642" starttime="20200504 19:07:41.640"></status>
+</kw>
+<kw type="kw" name="fsw.Configure FortiSwitch">
+<doc>Configure FortiSwitch. The format of the argument of config_data_dict is a dictionary with device serial ID as key</doc>
+<arguments>
+<arg>${Unset Configure Dict}</arg>
+</arguments>
+<msg timestamp="20200504 19:07:41.644" level="FAIL">Variable '${Unset Configure Dict}' not found.</msg>
+<status status="FAIL" endtime="20200504 19:07:41.644" starttime="20200504 19:07:41.643"></status>
+</kw>
+<kw type="kw" name="ixia_lib.Ixia Unset">
+<doc>Unset ixia configurations including removes all the client side variable and handles. reboots the ports cpu to initial state</doc>
+<arguments>
+</arguments>
+<status status="PASS" endtime="20200504 19:07:41.669" starttime="20200504 19:07:41.645"></status>
+</kw>
+<kw type="kw" name="adv_infra.Release Test Topo Resource">
+<doc>Release Test Topo Resource Testbed=hb-tb</doc>
+<arguments>
+<arg>${testbed}</arg>
+</arguments>
+<kw type="kw" name="BuiltIn.Run Keyword If">
+<doc>Runs the given keyword with the given arguments, if `condition` is true.</doc>
+<arguments>
+<arg>"${CheckLeftover}" != "${EMPTY}"</arg>
+<arg>Infra Find Leftover Config</arg>
+</arguments>
+<status status="PASS" endtime="20200504 19:07:41.671" starttime="20200504 19:07:41.671"></status>
+</kw>
+<kw type="kw" name="${Release Status} = Infra.Release Test Topo">
+<doc>This python API release test topo resource</doc>
+<arguments>
+<arg>${Testbed}</arg>
+<arg>${Physical Topo}</arg>
+</arguments>
+<msg timestamp="20200504 19:07:41.673" level="FAIL">Variable '${Physical Topo}' not found.</msg>
+<msg timestamp="20200504 19:07:41.673" level="INFO">${Release Status} = None</msg>
+<status status="FAIL" endtime="20200504 19:07:41.673" starttime="20200504 19:07:41.672"></status>
+</kw>
+<kw type="kw" name="${Status} = Collections.Get From Dictionary">
+<doc>Returns a value from the given `dictionary` based on the given `key`.</doc>
+<arguments>
+<arg>${Release Status}</arg>
+<arg>status</arg>
+</arguments>
+<msg timestamp="20200504 19:07:41.674" level="FAIL">TypeError: 'NoneType' object has no attribute '__getitem__'</msg>
+<msg timestamp="20200504 19:07:41.674" level="INFO">${Status} = None</msg>
+<status status="FAIL" endtime="20200504 19:07:41.674" starttime="20200504 19:07:41.674"></status>
+</kw>
+<kw type="kw" name="BuiltIn.Should Be Equal">
+<doc>Fails if the given objects are unequal.</doc>
+<arguments>
+<arg>'${Status}'</arg>
+<arg>'1'</arg>
+<arg>\n\tRelease Status=${Release Status}</arg>
+</arguments>
+<msg timestamp="20200504 19:07:41.675" level="INFO">Argument types are:
+&lt;type 'unicode'&gt;
+&lt;type 'unicode'&gt;</msg>
+<msg timestamp="20200504 19:07:41.676" level="FAIL">
+	Release Status=None: 'None' != '1'</msg>
+<status status="FAIL" endtime="20200504 19:07:41.676" starttime="20200504 19:07:41.675"></status>
+</kw>
+<status status="FAIL" endtime="20200504 19:07:41.676" starttime="20200504 19:07:41.670"></status>
+</kw>
+<kw type="kw" name="Telnet.Close All Connections">
+<doc>Closes all open connections and empties the connection cache.</doc>
+<arguments>
+</arguments>
+<status status="PASS" endtime="20200504 19:07:41.677" starttime="20200504 19:07:41.677"></status>
+</kw>
+<kw type="kw" name="misc.Sleep With Message">
+<doc>sleep and display message</doc>
+<arguments>
+<arg>10</arg>
+</arguments>
+<status status="PASS" endtime="20200504 19:07:51.679" starttime="20200504 19:07:41.677"></status>
+</kw>
+<status status="FAIL" endtime="20200504 19:07:51.681" starttime="20200504 19:07:41.636">Several failures occurred:
+
+1) Variable '${Dut Hostname}' not found.
+
+2) Variable '${Unset Configure Dict}' not found.
+
+3) Variable '${Physical Topo}' not found.
+
+4) TypeError: 'NoneType' object has no attribute '__getitem__'
+
+5) 
+	Release Status=None: 'None' != '1'</status>
+</kw>
+<doc>Template Traffic Test</doc>
+<metadata>
+</metadata>
+<status status="FAIL" endtime="20200504 19:07:51.682" starttime="20200504 19:07:38.034">Suite setup failed:
+User keyword 'Test Topo Init' contains no keywords.
+
+Also suite teardown failed:
+Several failures occurred:
+
+1) Variable '${Dut Hostname}' not found.
+
+2) Variable '${Unset Configure Dict}' not found.
+
+3) Variable '${Physical Topo}' not found.
+
+4) TypeError: 'NoneType' object has no attribute '__getitem__'
+
+5) 
+	Release Status=None: 'None' != '1'</status>
+</suite>
+<doc></doc>
+<metadata>
+</metadata>
+<status status="FAIL" endtime="20200504 19:07:51.702" starttime="20200504 19:07:38.031"></status>
+</suite>
+<doc>All test cases in this dir and below belongs to Robot framework FSW module</doc>
+<metadata>
+</metadata>
+<status status="FAIL" endtime="20200504 19:07:51.706" starttime="20200504 19:07:38.028"></status>
+</suite>
+<doc>All test cases in this dir and below belong to robot framework automation module
+Select which test suite to run using Tag defines in script file or indivatual cases</doc>
+<metadata>
+</metadata>
+<status status="FAIL" endtime="20200504 19:07:51.711" starttime="20200504 19:07:37.998"></status>
+</suite>
+<statistics>
+<total>
+<stat fail="2" pass="0">Critical Tests</stat>
+<stat fail="2" pass="0">All Tests</stat>
+</total>
+<tag>
+<stat info="" links="" doc="" combined="" pass="0" fail="2">P2P_Test</stat>
+<stat info="" links="" doc="" combined="" pass="0" fail="1">Traffic_Test_Case1</stat>
+<stat info="" links="" doc="" combined="" pass="0" fail="1">Traffic_Test_Case_2</stat>
+</tag>
+<suite>
+<stat fail="2" pass="0" id="s1" name="Testcases">Testcases</stat>
+<stat fail="2" pass="0" id="s1-s1" name="FSW">Testcases.FSW</stat>
+<stat fail="2" pass="0" id="s1-s1-s1" name="Template">Testcases.FSW.Template</stat>
+<stat fail="2" pass="0" id="s1-s1-s1-s1" name="P2P cases">Testcases.FSW.Template.P2P cases</stat>
+</suite>
+</statistics>
+<errors>
+<msg timestamp="20200504 19:07:38.462" level="ERROR">Error in file '/home/zhengh/git-repo/automation/lib/util/fsw.txt': Importing test library '/home/zhengh/git-repo/automation/lib/pdu/apc.py' failed: ImportError: No module named easyprocess
+Traceback (most recent call last):
+  File "/home/zhengh/git-repo/automation/lib/pdu/apc.py", line 3, in &lt;module&gt;
+    from easyprocess import EasyProcess
+PYTHONPATH:
+  /usr/local/lib/python2.7/dist-packages/robot/libraries
+  /usr/local/lib/python2.7/dist-packages
+  /usr/local/bin
+  /home/zhengh/git-repo/automation/cfg/hb-tb
+  /home/zhengh/git-repo/automation/ixia/hlapi/8.50.1.13/library/common/ixiangpf/python
+  /home/zhengh/git-repo/automation/ixia/ixnetwork/8.50.1501.9/lib/PythonApi
+  /usr/lib/python2.7
+  /usr/lib/python2.7/plat-x86_64-linux-gnu
+  /usr/lib/python2.7/lib-tk
+  /usr/lib/python2.7/lib-old
+  /usr/lib/python2.7/lib-dynload
+  /home/zhengh/.local/lib/python2.7/site-packages
+  /usr/lib/python2.7/dist-packages
+  .</msg>
+<msg timestamp="20200504 19:07:38.545" level="ERROR">Error in file '/home/zhengh/git-repo/automation/lib/util/adv_infra.txt': Importing test library '/home/zhengh/git-repo/automation/lib/pdu/apc.py' failed: ImportError: No module named easyprocess
+Traceback (most recent call last):
+  File "/home/zhengh/git-repo/automation/lib/pdu/apc.py", line 3, in &lt;module&gt;
+    from easyprocess import EasyProcess
+PYTHONPATH:
+  /usr/local/lib/python2.7/dist-packages/robot/libraries
+  /usr/local/lib/python2.7/dist-packages
+  /usr/local/bin
+  /home/zhengh/git-repo/automation/cfg/hb-tb
+  /home/zhengh/git-repo/automation/ixia/hlapi/8.50.1.13/library/common/ixiangpf/python
+  /home/zhengh/git-repo/automation/ixia/ixnetwork/8.50.1501.9/lib/PythonApi
+  /usr/lib/python2.7
+  /usr/lib/python2.7/plat-x86_64-linux-gnu
+  /usr/lib/python2.7/lib-tk
+  /usr/lib/python2.7/lib-old
+  /usr/lib/python2.7/lib-dynload
+  /home/zhengh/.local/lib/python2.7/site-packages
+  /usr/lib/python2.7/dist-packages
+  .</msg>
+</errors>
+</robot>

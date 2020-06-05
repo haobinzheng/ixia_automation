@@ -1,0 +1,1 @@
+pybot --variable dutname:448E --argumentfile p2p_args /home/zhengh/git-repo/automation/testcases

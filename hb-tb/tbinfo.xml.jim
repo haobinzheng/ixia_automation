@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testbed name="hb-tb">
+ <dev1 type="FSW" hostname="S448EFTF20000021" model="448E">
+  <console ip="10.105.240.44" line="2093"> </console>
+  <login username="admin" password=""> </login>
+  <mgmt ip="10.105.240.128" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+ </dev1>
+ <dev2 type="FSW" hostname="S248EF3X17000518" model="248E">
+  <console ip="10.105.241.44" line="2085"> </console>
+  <login username="admin" password=""> </login>
+  <mgmt ip="10.105.241.15" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+ </dev2>
+ <dev3 type="FSW" hostname="S224EPTF18000630" model="224E">
+  <console ip="10.105.241.44" line="2089"> </console>
+  <login username="admin" password=""> </login>
+  <mgmt ip="10.105.241.11" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+ </dev3>
+ <dhcp2 type="FGT" hostname="FortiGate-1500D" model="FGT1500D">
+  <console ip="10.105.253.81" line="2073"> </console>
+  <login username="admin" password=""> </login>
+  <mgmt ip="10.105.199.10" username="admin" password="" vdom="fsw-tb1"> </mgmt>
+  <pdu model="APC" ip="10.105.253.73" port="5"> </pdu>
+ </dhcp2>
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.19:8004">
+ </trafgen1>
+ <connections>
+  <link1 link="dev1:port1,trafgen1:6/15" type="GigabitEthernet" mode="copper"> </link1>
+  <link2 link="dev1:port2,trafgen1:6/16" type="GigabitEthernet" mode="copper"> </link2>
+
+  <link100 link="dev1:port2,dhcp2:port2" type="GigabitEthernet" mode="copper"> </link100>
+  <link101 link="dev2:port2,dhcp2:port3" type="GigabitEthernet" mode="copper"> </link101>
+  <link102 link="dev3:port2,dhcp2:port4" type="GigabitEthernet" mode="copper"> </link102>
+ </connections>
+</testbed>

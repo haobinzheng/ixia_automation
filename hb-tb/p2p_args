@@ -1,0 +1,7 @@
+# This is the argument file for template tetsbed
+--variable autopath:/home/zhengh/git-repo/automation
+--variable testbed:hb-tb 
+--variable TopologySet:1
+# Tag
+--include P2P_Test
+#--include Template_Test

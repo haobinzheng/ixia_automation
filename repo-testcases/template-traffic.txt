@@ -1,0 +1,69 @@
+.# -*- coding: robot -*-
+| *Setting* | *Value *|
+| Documentation | Template Traffic Test |
+| Force Tags | Template_Traffic_Test |
+| Resource | template-traffic-resources.txt |
+| Suite Setup | Suite Setup Keyword |  ${testbed} | ${tbinfo} | ${tbtopo} |
+| Suite Teardown | Suite Teardown Keyword |
+| Test Timeout | 20 minutes |
+
+| *Variables*  | *Value* |
+
+| *Test Cases*  | *Value* | *Value* | *Value* |
+
+| Traffic Test Case 1 |
+| | [Documentation] | Traffic Test Case 1
+| | ... | \n1. Configure Switch interface allowed-vlan 10
+| | ... | \n2. edit internal allowed-vlans 10
+| | ... | \n3. Configure IXIA ports
+| | ... | \n4. Verify not packets loss
+| | ... | \n5. Remove configuration
+| | [Tags] | Traffic_Test_Case1 |
+| | @{Testcase Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... | end
+| | @{Testcase Unconfigure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... | end
+| | [Teardown] | Test Teardown Keyword | ${Dut Hostname} | @{Testcase Unconfigure Data} |
+| | Run Keyword | Test Setup Keyword | ${Dut Hostname} | @{Testcase Configure Data} |
+
+| | FortiSwitch Command | ${Dut Hostname} | get system status |
+
+| | Log To Console With Timestamp | Traffic Test Case 1 Complete |
+
+| Traffic Test Case 2 |
+| | [Documentation] | Traffic Test Case 2
+| | ... | \n1. Configure Switch interface allowed-vlan 10
+| | ... | \n2. edit internal allowed-vlans 10
+| | ... | \n3. Configure IXIA ports
+| | ... | \n4. Verify not packets loss
+| | ... | \n5. Remove configuration
+| | [Tags] | Traffic_Test_Case_2 |
+| | @{Testcase Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... |     edit ${Dut Port1}
+| | ... |        set allowed-vlan 10
+| | ... |    next
+| | ... |    edit ${Dut Port2}
+| | ... |        set allowed-vlan 10
+| | ... |    next
+| | ... |    edit internal
+| | ... |        set allowed-vlans 10
+| | ... |        set stp-state disabled
+| | ... |    next
+| | ... | end
+| | @{Testcase Unconfigure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... |     edit ${Dut Port1}
+| | ... |        unset allowed-vlan
+| | ... |    next
+| | ... |    edit ${Dut Port2}
+| | ... |        unset allowed-vlan
+| | ... |    next
+| | Run Keyword | Test Setup Keyword | ${Dut Hostname} | @{Testcase Configure Data} |
+| | [Teardown] | Test Teardown Keyword | ${Dut Hostname} | @{Testcase Unconfigure Data} |
+
+| | FortiSwitch Command | ${Dut Hostname} | get system status |
+
+| | Log To Console With Timestamp | Traffic Test Case 2 Complete |

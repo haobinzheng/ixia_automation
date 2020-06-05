@@ -1,0 +1,6 @@
+# This is the argument file for template tetsbed
+--variable autopath:/Users/mike.zheng2008/Python/fortinet/automation/testcases 
+#--variable virtual_topo:singleSw3Trafgens.xml
+--variable testbed:hb-tb 
+# Tag
+--include Template_Test

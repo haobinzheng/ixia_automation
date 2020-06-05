@@ -1,0 +1,390 @@
+# -*- coding: robot -*-
+| *Setting* | *Value *|
+| Documentation | Template Resources File |
+| Resource | ${autopath}/lib/util/telnet.txt |
+| Resource | ${autopath}/lib/util/os.txt |
+| Resource | ${autopath}/lib/util/fsw.txt |
+| Resource  | ${autopath}/lib/util/adv_infra.txt |
+| Library  | ${autopath}/lib/trafgen/ixia_lib.py |
+| Library  | ${autopath}/lib/util/tableparser.py |
+| Library | ${autopath}/lib/util/misc.py |
+| Library | Fortisw_Class.py 
+| Library | Fortisw_Class.fortisw | ${instance_1} | WITH NAME | fsw1
+| Library | Fortisw_Class.fortisw | ${instance_2} | WITH NAME | fsw2
+| Library | Fortisw_Class.fortisw | ${instance_3} | WITH NAME | fsw3
+| Library | Fortisw_Class.fortigate | ${instance_1} |   WITH NAME | ftg1
+| Library | Fortisw_Class.fortigate | ${instance_2} |  WITH NAME | ftg2
+| Library | Collections |
+
+| *Variables*  | *Value* |
+| ${tbinfo} | ${autopath}/cfg/${testbed}/tbinfo.xml |
+| ${tbtopo} | ${autopath}/cfg/virtual_topos/singleSw2Trafgens.xml |
+| ${Production} | ${EMPTY} |
+
+| ${Svi10 Gateway} | 10.1.1.1 |
+| ${Ixia Port1 Ip} | 10.1.1.2 |
+| ${Ixia Port2 Ip} | 10.1.1.3 |
+| ${Ixia Port1 Mac} | 00:11:01:00:00:01 |
+| ${Ixia Port2 Mac} | 00:11:01:00:00:02 |
+| ${instance_1} | 1 |
+| ${instance_2} | 2 |
+| ${instance_3} | 3 |
+| ${Netmask} | 24 |
+| ${Packets Loss Credetial} | 0.9 |
+
+
+| *Keywords* |
+| Suite Setup Keyword | [Arguments] | ${testbed} | ${tbinfo} | ${tbtopo} |
+| | [Documentation] | Initialize an Envirioment for Suite test |
+| | Run Keyword | Test Topo Init | ${testbed} | ${tbinfo} | ${tbtopo} |
+
+ 
+| Use FSW Class | 
+| | ${sys_status}= | FortiSwitch Command | ${Dut Hostname} | get system status |
+| | fsw1.CollectShowCmd | ${sys_status} |
+| | ftg1.CollectShowCmd | ${sys_status} |
+| | ftg1.ShowDeviceInfo |
+| | ftg2.CollectShowCmd | ${sys_status} |
+| | ftg2.ShowDeviceInfo |
+
+| Test Python2 Keyword | [Arguments] |
+| | [Documentation] | Testing python2 lib |
+| | ${result}= | Testing | age=30 | name=aaron | 
+| | Log To Console With Timestamp | Test Python2 result ${result} |
+| | ${sys_status}= | FortiSwitch Command | ${Dut Hostname} | get system status |
+| | ${lldp_sum}= | FortiSwitch Command | ${Dut Hostname} | get switch lldp neighbors-summary
+#| | Log To Console With Timestamp | System Status collected  ${sys_status} |
+#| | Log To Console With Timestamp | LLDP Info collected  ${lldp_sum} |
+#| | collect show cmd | ${lldp_sum} | 
+| | fsw1.CollectShowCmd | ${lldp_sum} | 
+| | ftg1.CollectShowCmd | ${lldp_sum} | 
+
+ 
+| Send IXIA Traffic | [Arguments] | ${testbed} | ${tbinfo} | ${tbtopo} |
+| | [Documentation] | Connect to IXIA chassis and Run Traffic Testing
+| | Log To Console With Timestamp | Starting to connect to IXIA and run traffic ...... | 
+ 
+# Connnect to IXIA
+| | ${Ixia Connect Stats}= | Ixia Connect | tcl_server=${Ixia Tcl Srv} | device=${Ixia Chasis} | ixnetwork_tcl_server=${Ixia IxNetwork Srv} | port_list=${Ixia ports} | reset=1 |
+
+# IXIA Configure Phy Mode
+| | Ixia Config Phy Mode | port_handle=${Ixia Port1} | phy_mode=${Ixia Port1 PhyMode} |
+| | Ixia Config Phy Mode | port_handle=${Ixia Port2} | phy_mode=${Ixia Port2 PhyMode} |
+
+# IXIA Configure Topology and Group for Ixia Port1
+| | ${Topology Config Result}= | Ixia Topology Config | port_handle=${Ixia Port1} |
+| | ${status} | Get From Dictionary | ${Topology Config Result} | status |
+| | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Topology 1 Config fails' |
+| | ${Topology 1 Handle} | Get From Dictionary | ${Topology Config Result} | topology_handle |
+| | ${DeviceGroup Config Result} | Ixia Devicegrp Config | topology_handle=${Topology 1 Handle} | device_group_name='group 1' |
+| | ${status} | Get From Dictionary | ${DeviceGroup Config Result} | status |
+| | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Devicegrp 1 Config fails' |
+| | ${DeviceGroup 1 Handle} | Get From Dictionary | ${DeviceGroup Config Result} | device_group_handle |
+| | Set Suite Variable | ${Topology 1 Handle} | ${Topology 1 Handle} |
+
+# Configure Topology and Group for Ixia Port2
+| | ${Topology Config Result} | Ixia Topology Config | port_handle=${Ixia Port2} |
+| | ${status} | Get From Dictionary | ${Topology Config Result} | status |
+| | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Topology 2 Config fails' |
+| | ${Topology 2 Handle} | Get From Dictionary | ${Topology Config Result} | topology_handle |
+| | ${DeviceGroup Config Result} | Ixia Devicegrp Config | topology_handle=${Topology 2 Handle} | device_group_name='group 2' | 
+| | ${status} | Get From Dictionary | ${DeviceGroup Config Result} | status |
+| | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Devicegrp 2 Config fails' |
+| | ${DeviceGroup 2 Handle} | Get From Dictionary | ${DeviceGroup Config Result} | device_group_handle |
+| | Set Suite Variable | ${Topology 2 Handle} | ${Topology 2 Handle} |
+
+# Configure L2 Interfaces
+| | ${Ethernet 1 Status} | Ixia L2 Interface Config | protocol_name='Ethernet 1' | protocol_handle=${DeviceGroup 1 Handle} | src_mac_addr=${Ixia Port1 Mac} | src_mac_addr_step=00.00.00.00.00.01 | vlan=1 | vlan_id_count=1 | vlan_id=10 |
+| | ${Ethernet 1 Handle} | Get From Dictionary | ${Ethernet 1 Status} | ethernet_handle |
+| | ${Ethernet 2 Status} | Ixia L2 Interface Config | protocol_name='Ethernet 2' | protocol_handle=${DeviceGroup 2 Handle} | src_mac_addr=${Ixia Port2 Mac} | src_mac_addr_step=00.00.00.00.00.01 | vlan=1 | vlan_id_count=1 | vlan_id=10 |
+| | ${Ethernet 2 Handle} | Get From Dictionary | ${Ethernet 2 Status} | ethernet_handle |
+
+# Configure L3 Interfaces
+| | ${Ipv4 1 Status} | Ixia L3 Interface Config | protocol_name='IPv4 1' | protocol_handle=${Ethernet 1 Handle} | gateway=${Svi10 Gateway} | intf_ip_addr=${Ixia Port1 Ip} | netmask=255.255.255.0 |
+| | ${Ipv4 1 Handle} | Get From Dictionary | ${Ipv4 1 Status} | ipv4_handle |
+| | Set Suite Variable | ${Ipv4 1 Handle} | ${Ipv4 1 Handle} |
+| | ${Ipv4 2 Status} | Ixia L3 Interface Config | protocol_name='IPv4 2' | protocol_handle=${Ethernet 2 Handle} | gateway=${Svi10 Gateway} | intf_ip_addr=${Ixia Port2 Ip} | netmask=255.255.255.0 | 
+| | ${Ipv4 2 Handle} | Get From Dictionary | ${Ipv4 2 Status} | ipv4_handle |
+
+# Ixia Start Protocols
+| | ${Start Protocols Status} | Ixia Start Protocols |
+
+# Configure Traffic
+| | ${Traffic Config Status} | Ixia Traffic Config | emulation_src_handle=${Topology 1 Handle} | emulation_dst_handle=${Topology 2 Handle} | frame_size=128 | name='Traffic_Item_1' | frame_rate=${Traffic Frame Rate} |
+| | ${status} | Get From Dictionary | ${Traffic Config Status} | status |
+| | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Traffic Config fails' |
+| | ${Traffic Stream Id} | Get From Dictionary | ${Traffic Config Status} | stream_id |
+| | Set Suite Variable | ${Traffic Stream1 Id} | ${Traffic Stream Id}
+
+# Send 30 seconds real traffic
+| | ${Start Traffic Status} | Ixia Start Traffic |
+| | Sleep With Message | 30 |
+| | ${Stop Traffic Status} | Ixia Stop Traffic |
+
+# Check packet loss
+| | ${Port1 Count} | Ixia Traffic Stats | ${Ixia Port1} |
+| | ${Port1 Tx} | Get From Dictionary | ${Port1 Count} | tx_count |
+| | ${Port1 Rx} | Get From Dictionary | ${Port1 Count} | rx_count |
+
+| | ${Port2 Count} | Ixia Traffic Stats | ${Ixia Port2} |
+| | ${Port2 Tx} | Get From Dictionary | ${Port2 Count} | tx_count |
+| | ${Port2 Rx} | Get From Dictionary | ${Port2 Count} | rx_count |
+
+| | Log To Console | \n\tExpects: Ixia Port1=${Ixia Port1} TX: ${Port1 Tx} -- Ixia Port2=${Ixia Port1} RX: ${Port1 Tx} |
+| | Log To Console | \n\tReality: Ixia Port1=${Ixia Port1} TX: ${Port1 Tx} -- Ixia Port2=${Ixia Port2} RX: ${Port2 Rx} |
+
+| | ${Check Packet Loss 1} | PacketDiff | ${Port1 Tx} | ${Port2 Rx} | ${Packets Loss Credetial} |
+| | ${Check Packet Loss 2} | PacketDiff | ${Port2 Tx} | ${Port1 Rx} | ${Packets Loss Credetial} |
+| | Run Keyword If | ${Check Packet Loss 1} != 1 and ${Check Packet Loss 2} != 1 | Log To Console With Timestamp | Check Packet Loss Fail |
+
+| Show Test Related Variables | [Documentation] | Show all variables using in this test, autopath and dut_id are passed via command line |
+| | Log To Console | \tautopath=${autopath} |
+| | Log To Console | \ttestbed=${testbed} |
+| | Log To Console | \ttbinfo=${tbinfo} |
+| | Log To Console | \ttbtopo=${tbtopo} |
+| | Log To Console | \tDut Hostname=${Dut Hostname} |
+| | Log To Console | \tDut Username=${Dut Username} |
+| | Log To Console | \tDut Password=${Dut Password} |
+| | Log To Console | \tDut Console Ip=${Dut Console Ip} |
+| | Log To Console | \tDut Console Port=${Dut Console Port} |
+| | Log To Console | \tIxia IxNetwork Srv=${Ixia IxNetwork Srv} |
+| | Log To Console | \tIxia Chasis=${Ixia Chasis} |
+| | Log To Console | \tIxia Tcl Srv=${Ixia Tcl Srv} |
+| | Log To Console | \tDut Port1=${Dut Port1},Ixia Port1=${Ixia Port1} |
+| | Log To Console | \tDut Port2=${Dut Port2},Ixia Port2=${Ixia Port2} |
+
+| Suite Teardown Keyword | [Arguments] |
+| | [Documentation] | Suite Teardown Keyword |
+| | Log To Console With Timestamp | Suite Teardown After Test Done |
+| | Run Keyword If | "${SUITE STATUS}" == "FAIL" | Show Switch Logs | ${Dut Hostname} | ${PREV TEST STATUS} |
+| | Configure FortiSwitch | ${Unset Configure Dict} |
+| | Ixia Unset |
+| | Release Test Topo Resource | ${testbed} |
+| | Close All Connections |
+| | Sleep With Message | 10 |
+
+| Test Setup Keyword | [Arguments] | ${Dut Hostname} | @{Testcase Configure data} |
+| | [Documentation] | Test Setup Keyword |
+| | Log To Console With Timestamp | Test Setup |
+| | ${Testcase Configure String} | List To String | @{Testcase Configure data} |
+| | ${Testcase Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Testcase Configure String} |
+| | FortiSwitch Delete All Logs From Memory | ${Dut Hostname} |
+| | Configure FortiSwitch | ${Testcase Configure Dict} |
+
+| Test Teardown Keyword | [Arguments] | ${Dut Hostname} | @{Testcase Unset Configure Data} |
+| | [Documentation] | Test Teardown Keyword |
+| | Log To Console With Timestamp | Test Teardown Keyword |
+| | ${Testcase Unset Configure String} | List To String | @{Testcase Unset Configure Data} |
+| | ${Testcase Unset Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Testcase Unset Configure String} |
+| | Run Keyword If | "${TEST STATUS}" == "FAIL" | Show Switch Logs | ${Dut Hostname} |
+| | Configure FortiSwitch | ${Testcase Unset Configure Dict} |
+
+#################################################################################
+#Test Topo Init - Define what Test Topology Initialization is 
+| Test Topo Init | [Arguments] | ${testbed} | ${tbinfo} | ${tbtopo} |
+| | [Documentation] | Test Topo Init Keyword |
+
+# Allocate Suite Test Resources |
+| | ${Test Topo Status}= | Test Topo Setup | ${testbed} | ${tbinfo} | ${tbtopo} | ${dutname} | ${Production} |
+| | ${Status}= | Get From Dictionary | ${Test Topo Status} | status |
+| | Run Keyword If | ${Status} != 1 | Fail With Timestamp | 'Allocate Suite Test Resources fail' |
+# Dut1
+| | ${Dut Hostname} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.hostname |
+| | ${Dut Username} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.login.username |
+| | ${Dut Password} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.login.password |
+| | ${Dut Console Ip} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.console.ip |
+| | ${Dut Console Port} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.console.line 
+
+# Dut2
+| | ${Dut2 Hostname} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.hostname |
+| | ${Dut2 Username} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.login.username |
+| | ${Dut2 Password} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.login.password |
+| | ${Dut2 Console Ip} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.console.ip |
+| | ${Dut2 Console Port} | Get Nested Diction | ${Test Topo Status} | test_topo.dev2.console.line |
+
+# Dut3
+| | ${Dut3 Hostname} | Get Nested Diction | ${Test Topo Status} | test_topo.dev3.hostname |
+| | ${Dut3 Username} | Get Nested Diction | ${Test Topo Status} | test_topo.dev3.login.username |
+| | ${Dut3 Password} | Get Nested Diction | ${Test Topo Status} | test_topo.dev3.login.password |
+| | ${Dut3 Console Ip} | Get Nested Diction | ${Test Topo Status} | test_topo.dev3.console.ip |
+| | ${Dut3 Console Port} | Get Nested Diction | ${Test Topo Status} | test_topo.dev3.console.line |
+
+# Dut4
+| | ${Dut4 Hostname} | Get Nested Diction | ${Test Topo Status} | test_topo.dev4.hostname |
+| | ${Dut4 Username} | Get Nested Diction | ${Test Topo Status} | test_topo.dev4.login.username |
+| | ${Dut4 Password} | Get Nested Diction | ${Test Topo Status} | test_topo.dev4.login.password |
+| | ${Dut4 Console Ip} | Get Nested Diction | ${Test Topo Status} | test_topo.dev4.console.ip |
+| | ${Dut4 Console Port} | Get Nested Diction | ${Test Topo Status} | test_topo.dev4.console.line |
+
+| | ${Traffic Frame Rate} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.trafic_rate.frame_rate |
+| | ${Ixia IxNetwork Srv} | Get Nested Diction | ${Test Topo Status} | test_topo.trafgen1.ixnetwork_server_ip |
+| | ${Ixia Chasis} | Get Nested Diction | ${Test Topo Status} | test_topo.trafgen1.chassis_ip |
+| | ${Ixia Tcl Srv} | Get Nested Diction | ${Test Topo Status} | test_topo.trafgen1.tcl_server_ip |
+
+# Links
+| | ${link1_ports} | Get Nested Diction | ${Test Topo Status} | test_topo.connections.link1.link |
+| | ${link2_ports} | Get Nested Diction | ${Test Topo Status} | test_topo.connections.link2.link |
+| | ${Ixia Port1 PhyMode} | Get Nested Diction | ${Test Topo Status} | test_topo.connections.link1.mode |
+| | ${Ixia Port2 PhyMode} | Get Nested Diction | ${Test Topo Status} | test_topo.connections.link2.mode |
+
+# Parse port pairs
+| | ${Dut Port1} | ${Ixia Port1} | parse_link | ${link1_ports} |
+| | ${Dut Port2} | ${Ixia Port2} | parse_link | ${link2_ports} |
+# List in List, format required by Ixia Connect Keyword
+| | @{Ixia ports} | Create List | ${Ixia Port1} | ${Ixia Port2} |
+| | Show Test Related Variables |
+
+# Make varaibles available in current suite
+| | Set Suite Variable | ${Dut Hostname} | ${Dut Hostname}
+| | Set Suite Variable | ${Dut Port1} | ${Dut Port1}
+| | Set Suite Variable | ${Dut Port2} | ${Dut Port2}
+| | Set Suite Variable | ${Ixia Port1} | ${Ixia Port1}
+| | Set Suite Variable | ${Ixia Port2} | ${Ixia Port2}
+
+| | Set Suite Variable | ${Traffic Frame Rate} | ${Traffic Frame Rate}
+| | Set Suite Variable | ${Ixia Tcl Srv} | ${Ixia Tcl Srv}
+| | Set Suite Variable | ${Ixia Chasis} |  ${Ixia Chasis}
+| | Set Suite Variable | ${Ixia IxNetwork Srv} | ${Ixia IxNetwork Srv}
+| | Set Suite Variable | ${Ixia ports} | ${Ixia ports}
+| | Set Suite Variable | ${Ixia Port1 PhyMode} | ${Ixia Port1 PhyMode}
+| | Set Suite Variable | ${Ixia Port2 PhyMode} | ${Ixia Port2 PhyMode}
+
+
+# Telnet to DUT
+| | Log To Console With Timestamp | Telnet Login to ${Dut Hostname} |
+| | Telnet Login | ${Dut Console Ip} | ${Dut Hostname} | ${Dut Username} | ${Dut Password} | ${Dut Console Port} | ${Dut Hostname} |
+
+| | Log To Console With Timestamp | Telnet Login to ${Dut2 Hostname} |
+| | Telnet Login | ${Dut2 Console Ip} | ${Dut2 Hostname} | ${Dut2 Username} | ${Dut2 Password} | ${Dut2 Console Port} | ${Dut2 Hostname} |
+
+| | Log To Console With Timestamp | Telnet Login to ${Dut3 Hostname} |
+| | Telnet Login | ${Dut3 Console Ip} | ${Dut3 Hostname} | ${Dut3 Username} | ${Dut3 Password} | ${Dut3 Console Port} | ${Dut3 Hostname} |
+
+| | Log To Console With Timestamp | Telnet Login to ${Dut4 Hostname} |
+| | Telnet Login | ${Dut4 Console Ip} | ${Dut4 Hostname} | ${Dut4 Username} | ${Dut4 Password} | ${Dut4 Console Port} | ${Dut4 Hostname} |
+
+# Configure DUT
+| | @{Init Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... |     edit ${Dut Port1}
+| | ... |        set allowed-vlan 10
+| | ... |    next
+| | ... |    edit ${Dut Port2}
+| | ... |        set allowed-vlan 10
+| | ... |    next
+| | ... | end
+| | ... | config system interface
+| | ... |    edit vlan10
+| | ... |        set ip ${Svi10 Gateway}/${Netmask}
+| | ... |        set vlanid 10
+| | ... |        set interface internal
+| | ... |        set allowaccess ping ssh telnet
+| | ... |    next
+| | ... | end
+| | @{Unset Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... |     edit ${Dut Port1}
+| | ... |        unset allowed-vlan
+| | ... |    next
+| | ... |    edit ${Dut Port2}
+| | ... |        unset allowed-vlan
+| | ... |    next
+| | ... | config system interface
+| | ... |    delete vlan10
+| | ... | end
+| | ${Init Configure String} | List To String | @{Init Configure Data} |
+| | ${Init Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Init Configure String} |
+| | ${Unset Configure String} | List To String | @{Unset Configure Data} |
+| | ${Unset Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Unset Configure String} |
+| | Set Suite Variable | ${Unset Configure Dict} | ${Unset Configure Dict} |
+| | Configure FortiSwitch | ${Init Configure Dict} |
+
+#| | Send IXIA Traffic | ${testbed} | ${tbinfo} | ${tbtopo} |
+# Connnect to IXIA
+# | | ${Ixia Connect Stats}= | Ixia Connect | tcl_server=${Ixia Tcl Srv} | device=${Ixia Chasis} | ixnetwork_tcl_server=${Ixia IxNetwork Srv} | port_list=${Ixia ports} | reset=1 |
+
+# # IXIA Configure Phy Mode
+# | | Ixia Config Phy Mode | port_handle=${Ixia Port1} | phy_mode=${Ixia Port1 PhyMode} |
+# | | Ixia Config Phy Mode | port_handle=${Ixia Port2} | phy_mode=${Ixia Port2 PhyMode} |
+
+# # IXIA Configure Topology and Group for Ixia Port1
+# | | ${Topology Config Result}= | Ixia Topology Config | port_handle=${Ixia Port1} |
+# | | ${status} | Get From Dictionary | ${Topology Config Result} | status |
+# | | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Topology 1 Config fails' |
+# | | ${Topology 1 Handle} | Get From Dictionary | ${Topology Config Result} | topology_handle |
+# | | ${DeviceGroup Config Result} | Ixia Devicegrp Config | topology_handle=${Topology 1 Handle} | device_group_name='group 1' |
+# | | ${status} | Get From Dictionary | ${DeviceGroup Config Result} | status |
+# | | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Devicegrp 1 Config fails' |
+# | | ${DeviceGroup 1 Handle} | Get From Dictionary | ${DeviceGroup Config Result} | device_group_handle |
+# | | Set Suite Variable | ${Topology 1 Handle} | ${Topology 1 Handle} |
+
+# # Configure Topology and Group for Ixia Port2
+# | | ${Topology Config Result} | Ixia Topology Config | port_handle=${Ixia Port2} |
+# | | ${status} | Get From Dictionary | ${Topology Config Result} | status |
+# | | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Topology 2 Config fails' |
+# | | ${Topology 2 Handle} | Get From Dictionary | ${Topology Config Result} | topology_handle |
+# | | ${DeviceGroup Config Result} | Ixia Devicegrp Config | topology_handle=${Topology 2 Handle} | device_group_name='group 2' | 
+# | | ${status} | Get From Dictionary | ${DeviceGroup Config Result} | status |
+# | | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Devicegrp 2 Config fails' |
+# | | ${DeviceGroup 2 Handle} | Get From Dictionary | ${DeviceGroup Config Result} | device_group_handle |
+# | | Set Suite Variable | ${Topology 2 Handle} | ${Topology 2 Handle} |
+
+# # Configure L2 Interfaces
+# | | ${Ethernet 1 Status} | Ixia L2 Interface Config | protocol_name='Ethernet 1' | protocol_handle=${DeviceGroup 1 Handle} | src_mac_addr=${Ixia Port1 Mac} | src_mac_addr_step=00.00.00.00.00.01 | vlan=1 | vlan_id_count=1 | vlan_id=10 |
+# | | ${Ethernet 1 Handle} | Get From Dictionary | ${Ethernet 1 Status} | ethernet_handle |
+# | | ${Ethernet 2 Status} | Ixia L2 Interface Config | protocol_name='Ethernet 2' | protocol_handle=${DeviceGroup 2 Handle} | src_mac_addr=${Ixia Port2 Mac} | src_mac_addr_step=00.00.00.00.00.01 | vlan=1 | vlan_id_count=1 | vlan_id=10 |
+# | | ${Ethernet 2 Handle} | Get From Dictionary | ${Ethernet 2 Status} | ethernet_handle |
+
+# # Configure L3 Interfaces
+# | | ${Ipv4 1 Status} | Ixia L3 Interface Config | protocol_name='IPv4 1' | protocol_handle=${Ethernet 1 Handle} | gateway=${Svi10 Gateway} | intf_ip_addr=${Ixia Port1 Ip} | netmask=255.255.255.0 |
+# | | ${Ipv4 1 Handle} | Get From Dictionary | ${Ipv4 1 Status} | ipv4_handle |
+# | | Set Suite Variable | ${Ipv4 1 Handle} | ${Ipv4 1 Handle} |
+# | | ${Ipv4 2 Status} | Ixia L3 Interface Config | protocol_name='IPv4 2' | protocol_handle=${Ethernet 2 Handle} | gateway=${Svi10 Gateway} | intf_ip_addr=${Ixia Port2 Ip} | netmask=255.255.255.0 | 
+# | | ${Ipv4 2 Handle} | Get From Dictionary | ${Ipv4 2 Status} | ipv4_handle |
+
+# # Ixia Start Protocols
+# | | ${Start Protocols Status} | Ixia Start Protocols |
+
+# # Configure Traffic
+# | | ${Traffic Config Status} | Ixia Traffic Config | emulation_src_handle=${Topology 1 Handle} | emulation_dst_handle=${Topology 2 Handle} | frame_size=128 | name='Traffic_Item_1' | frame_rate=${Traffic Frame Rate} |
+# | | ${status} | Get From Dictionary | ${Traffic Config Status} | status |
+# | | Run Keyword If | ${status} != 1 | Fail With Timestamp | 'Ixia Traffic Config fails' |
+# | | ${Traffic Stream Id} | Get From Dictionary | ${Traffic Config Status} | stream_id |
+# | | Set Suite Variable | ${Traffic Stream1 Id} | ${Traffic Stream Id}
+
+# # Send 30 seconds real traffic
+# | | ${Start Traffic Status} | Ixia Start Traffic |
+# | | Sleep With Message | 30 |
+# | | ${Stop Traffic Status} | Ixia Stop Traffic |
+
+# # Check packet loss
+# | | ${Port1 Count} | Ixia Traffic Stats | ${Ixia Port1} |
+# | | ${Port1 Tx} | Get From Dictionary | ${Port1 Count} | tx_count |
+# | | ${Port1 Rx} | Get From Dictionary | ${Port1 Count} | rx_count |
+
+# | | ${Port2 Count} | Ixia Traffic Stats | ${Ixia Port2} |
+# | | ${Port2 Tx} | Get From Dictionary | ${Port2 Count} | tx_count |
+# | | ${Port2 Rx} | Get From Dictionary | ${Port2 Count} | rx_count |
+
+# | | Log To Console | \n\tExpects: Ixia Port1=${Ixia Port1} TX: ${Port1 Tx} -- Ixia Port2=${Ixia Port1} RX: ${Port1 Tx} |
+# | | Log To Console | \n\tReality: Ixia Port1=${Ixia Port1} TX: ${Port1 Tx} -- Ixia Port2=${Ixia Port2} RX: ${Port2 Rx} |
+
+# | | ${Check Packet Loss 1} | PacketDiff | ${Port1 Tx} | ${Port2 Rx} | ${Packets Loss Credetial} |
+# | | ${Check Packet Loss 2} | PacketDiff | ${Port2 Tx} | ${Port1 Rx} | ${Packets Loss Credetial} |
+# | | Run Keyword If | ${Check Packet Loss 1} != 1 and ${Check Packet Loss 2} != 1 | Log To Console With Timestamp | Check Packet Loss Fail |
+
+# | Show Test Related Variables | [Documentation] | Show all variables using in this test, autopath and dut_id are passed via command line |
+# | | Log To Console | \tautopath=${autopath} |
+# | | Log To Console | \ttestbed=${testbed} |
+# | | Log To Console | \ttbinfo=${tbinfo} |
+# | | Log To Console | \ttbtopo=${tbtopo} |
+# | | Log To Console | \tDut Hostname=${Dut Hostname} |
+# | | Log To Console | \tDut Username=${Dut Username} |
+# | | Log To Console | \tDut Password=${Dut Password} |
+# | | Log To Console | \tDut Console Ip=${Dut Console Ip} |
+# | | Log To Console | \tDut Console Port=${Dut Console Port} |
+# | | Log To Console | \tIxia IxNetwork Srv=${Ixia IxNetwork Srv} |
+# | | Log To Console | \tIxia Chasis=${Ixia Chasis} |
+# | | Log To Console | \tIxia Tcl Srv=${Ixia Tcl Srv} |
+# | | Log To Console | \tDut Port1=${Dut Port1},Ixia Port1=${Ixia Port1} |
+# | | Log To Console | \tDut Port2=${Dut Port2},Ixia Port2=${Ixia Port2} |

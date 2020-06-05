@@ -1,0 +1,92 @@
+# -*- coding: robot -*-
+| *Setting* | *Value *|
+| Documentation | Template Resources File |
+| Resource | ${autopath}/lib/util/telnet.txt |
+| Resource | ${autopath}/lib/util/os.txt |
+| Resource | ${autopath}/lib/util/fsw.txt |
+| Resource  | ${autopath}/lib/util/adv_infra.txt |
+| Library  | ${autopath}/lib/util/tableparser.py |
+| Library | ${autopath}/lib/util/misc.py |
+| Library | Collections |
+
+| *Variables*  | *Value* |
+| ${tbinfo} | ${autopath}/cfg/${testbed}/tbinfo.xml |
+| ${tbtopo} | ${autopath}/cfg/virtual_topos/singleSw.xml |
+| ${Production} | ${EMPTY} |
+
+| *Keywords* |
+| Suite Setup Keyword | [Arguments] | ${testbed} | ${tbinfo} | ${tbtopo} |
+| | [Documentation] | Initialize an Envirioment for Suite test |
+| | Run Keyword | Test Topo Init | ${testbed} | ${tbinfo} | ${tbtopo} |
+
+| Suite Teardown Keyword | [Arguments] |
+| | [Documentation] | Suite Teardown Keyword |
+| | Log To Console With Timestamp | Suite Teardown |
+| | Run Keyword If | "${SUITE STATUS}" == "FAIL" | Show Switch Logs | ${Dut Hostname} | ${PREV TEST STATUS} |
+| | Configure FortiSwitch | ${Unset Configure Dict} |
+| | Release Test Topo Resource | ${testbed} |
+| | Close All Connections |
+| | Sleep With Message | 10 |
+
+| Test Setup Keyword | [Arguments] | ${Dut Hostname} | @{Testcase Configure data} |
+| | [Documentation] | Test Setup Keyword |
+| | Log To Console With Timestamp | Test Setup |
+| | ${Testcase Configure String} | List To String | @{Testcase Configure data} |
+| | ${Testcase Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Testcase Configure String} |
+| | FortiSwitch Delete All Logs From Memory | ${Dut Hostname} |
+| | Configure FortiSwitch | ${Testcase Configure Dict} |
+
+| Test Teardown Keyword | [Arguments] | ${Dut Hostname} | @{Testcase Unset Configure Data} |
+| | [Documentation] | Test Teardown Keyword |
+| | Log To Console With Timestamp | Test Teardown Keyword |
+| | Run Keyword If | "${TEST STATUS}" == "FAIL" | Show Switch Logs | ${Dut Hostname} |
+| | ${Testcase Unset Configure String} | List To String | @{Testcase Unset Configure Data} |
+| | ${Testcase Unset Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Testcase Unset Configure String} |
+| | Configure FortiSwitch | ${Testcase Unset Configure Dict} |
+
+| Test Topo Init | [Arguments] | ${testbed} | ${tbinfo} | ${tbtopo} |
+| | [Documentation] | Test Topo Init Keyword |
+
+# Allocate Suite Test Resources |
+| | ${Test Topo Status}= | Test Topo Setup | ${testbed} | ${tbinfo} | ${tbtopo} | ${dutname} | ${Production} |
+| | ${Status}= | Get From Dictionary | ${Test Topo Status} | status |
+| | Run Keyword If | ${Status} != 1 | Fail With Timestamp | 'Allocate Suite Test Resources fail' |
+| | ${Dut Hostname} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.hostname |
+| | ${Dut Username} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.login.username |
+| | ${Dut Password} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.login.password |
+| | ${Dut Console Ip} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.console.ip |
+| | ${Dut Console Port} | Get Nested Diction | ${Test Topo Status} | test_topo.dev1.console.line |
+
+| | Show Test Related Variables |
+
+# Make varaibles available in current suite
+| | Set Suite Variable | ${Dut Hostname} | ${Dut Hostname}
+
+# Telnet to DUT
+| | Log To Console With Timestamp | Telnet Login to ${Dut Hostname} |
+| | Telnet Login | ${Dut Console Ip} | ${Dut Hostname} | ${Dut Username} | ${Dut Password} | ${Dut Console Port} | ${Dut Hostname} |
+
+# Configure DUT
+| | @{Init Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... | end
+| | @{Unset Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... | end
+| | ${Init Configure String} | List To String | @{Init Configure Data} |
+| | ${Init Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Init Configure String} |
+| | ${Unset Configure String} | List To String | @{Unset Configure Data} |
+| | ${Unset Configure Dict} | Create Dictionary | ${Dut Hostname} | ${Unset Configure String} |
+| | Set Suite Variable | ${Unset Configure Dict} | ${Unset Configure Dict} |
+| | Configure FortiSwitch | ${Init Configure Dict} |
+
+| Show Test Related Variables | [Documentation] | Show all variables using in this test, autopath and dut_id are passed via command line |
+| | Log To Console | \tautopath=${autopath} |
+| | Log To Console | \ttestbed=${testbed} |
+| | Log To Console | \ttbinfo=${tbinfo} |
+| | Log To Console | \ttbtopo=${tbtopo} |
+| | Log To Console | \tDut Hostname=${Dut Hostname} |
+| | Log To Console | \tDut Username=${Dut Username} |
+| | Log To Console | \tDut Password=${Dut Password} |
+| | Log To Console | \tDut Console Ip=${Dut Console Ip} |
+| | Log To Console | \tDut Console Port=${Dut Console Port} |

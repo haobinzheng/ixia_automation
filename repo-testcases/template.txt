@@ -1,0 +1,49 @@
+.# -*- coding: robot -*-
+| *Setting* | *Value *|
+| Documentation | Template Test |
+| Force Tags | Template_Test |
+| Resource | template-resources.txt |
+| Suite Setup | Suite Setup Keyword |  ${testbed} | ${tbinfo} | ${tbtopo} |
+| Suite Teardown | Suite Teardown Keyword |
+| Test Timeout | 20 minutes |
+
+| *Variables*  | *Value* |
+
+| *Test Cases*  | *Value* | *Value* | *Value* |
+#Testcase 1
+| Template Test Case 1 |
+| | [Documentation] | Template Test Case 1 jim |
+| | ... | \n1. Configure Switch 
+| | ... | \n2. Remove configuration
+| | [Tags] | Test_Case1 |
+| | @{Testcase Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... | end
+| | @{Testcase Unconfigure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... | end
+| | [Teardown] | Test Teardown Keyword | ${Dut Hostname} | @{Testcase Unconfigure Data} |
+| | Run Keyword | Test Setup Keyword | ${Dut Hostname} | @{Testcase Configure Data} |
+
+| | FortiSwitch Command | ${Dut Hostname} | get system status |
+
+| | Log To Console With Timestamp | Template Test Case 1 Complete |
+
+| Template Test Case 2 |
+| | [Documentation] | Template Test Case 2 |
+| | ... | \n1. Configure Switch interface allowed-vlan 10
+| | ... | \n2. Remove configuration
+| | [Tags] | Test_Case_2 |
+| | @{Testcase Configure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... | end
+| | @{Testcase Unconfigure Data}= | Set Variable |
+| | ... | config switch interface
+| | ... | end
+| | [Teardown] | Test Teardown Keyword | ${Dut Hostname} | @{Testcase Unconfigure Data} |
+
+| | Run Keyword | Test Setup Keyword | ${Dut Hostname} | @{Testcase Configure Data} |
+
+| | FortiSwitch Command | ${Dut Hostname} | get system status |
+
+| | Log To Console With Timestamp | Template Test Case 2 Complete |
