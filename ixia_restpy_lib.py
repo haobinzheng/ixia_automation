@@ -19,16 +19,26 @@ class IXIA_TOPOLOGY:
         self.bgp_name = f"BGP_{self.name}"
         self.ip,self.mask = seperate_ip_mask(kwargs['ip'])
         self.gw= kwargs['gw']
+        self.ip_session = None #will be created at add_ipv4 method
+        self.ptp_name = self.name + "_ptp"
+        self.ether_name = kwargs['ether_name']
+        self.ip_name = kwargs['ip_name']
+        self.dhcp_client_name = kwargs['dhcp_client_name']
+        self.dhcp_server_name = kwargs['dhcp_server_name']
         self.ethernet,self.device_group,self.topology = ixia_rest_create_topology(
         platform = self.ixia.testPlatform, 
         session = self.ixia.Session,
         ixnet = self.ixia.ixNetwork,
         vport = self.port,
         topo_name = self.name,   
-        dg_name = self.dg_name,    
+        dg_name = self.dg_name,
+        ether_name = self.ether_name, 
+        ip_name = self.ip_name,
         multiplier = 1,    
         mac_start = self.mac_start,
         )     
+
+
 
     def add_ipv4(self,*args,**kwargs):
         # ip = kwargs['ip']
@@ -42,7 +52,71 @@ class IXIA_TOPOLOGY:
         gw_start_ip = self.gw,
         ethernet = self.ethernet,
         maskbits = self.mask,
+        ip_name = self.ip_name
     )
+
+    def add_ptp(self,*args,**kwargs):
+        self.ptp = ixia_rest_create_ptp(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = self.ptp_name,
+            ip = self.ip_session,
+        )
+
+    def add_dhcp_client(self,*args,**kwargs):
+        self.dhcp_client = ixia_rest_create_dhcp_client(
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            ethernet = self.ethernet,
+            name = self.dhcp_client_name
+            )
+
+    def add_dhcp_server(self,*args,**kwargs):
+        self.dhcp_server = ixia_rest_create_dhcp_server(
+            ip_session = self.ip_session,
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            ethernet = self.ethernet,
+            name = self.dhcp_server_name
+            )
+    def dhcp_server_gw(self,*args,**kwargs):
+        if "gateway" in kwargs:
+            gateway = kwargs['gateway']
+        else:
+            gateway = self.ip
+        ixia_rest_dhcp_server_gw(
+            dhcp_server = self.dhcp_server,
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,     
+            ip_gw = self.gateway
+        )
+
+    def dhcp_server_pool_size(self,*args,**kwargs):
+        pool_size = kwargs['pool_size']
+        ixia_rest_dhcp_server_pool_size(
+            dhcp_server = self.dhcp_server,
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,     
+            pool_size= pool_size
+        )
+
+    def dhcp_server_address(self,*args,**kwargs):
+        if "prefix" in kwargs:
+            prefix = kwargs['prefix']
+        else:
+            prefix = "24"
+        ixia_rest_dhcp_server_address(
+            dhcp_server = self.dhcp_server,
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,     
+            start_ip = kwargs['start_ip'],
+            prefix = prefix
+        )
 
     def add_bgp(self,*args,**kwargs):
         dut_ip = kwargs['dut_ip']
@@ -138,7 +212,8 @@ class IXIA_TOPOLOGY:
             bgpiprouteproperty.Weight.Single(value)
          
         
-    
+
+# portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","10.10.1.100/24","10.10.1.254"], 
 
 class IXIA:
     def __init__(self,*args,**kargs):
@@ -155,8 +230,19 @@ class IXIA:
         topo_list = []
         for port in self.vport_holder_list:
             print(self.portList[i][3])
-            topo = IXIA_TOPOLOGY(self,port,name=f"Topology_{i+1}",dg_name=f"DG{i}",
-                mac_start=self.portList[i][3],local_as = self.portList[i][5],network=self.portList[i][4],ip=self.portList[i][6],gw=self.portList[i][7])
+            topo = IXIA_TOPOLOGY(self,port,
+                name=f"Topology_{i+1}",
+                dg_name=f"DG{i+1}",
+                ether_name=f"Ethernet_{i+1}",
+                ip_name=f"IPv4_{i+1}",
+                dhcp_client_name=f"dhcp_client_{i+1}",
+                dhcp_server_name=f"dhcp_server_{i+1}",
+                mac_start=self.portList[i][3],
+                local_as = self.portList[i][5],
+                network=self.portList[i][4],
+                ip=self.portList[i][6],
+                gw=self.portList[i][7]
+            )
             topo_list.append(topo)
             i += 1
             bgp_as += 1 
@@ -253,7 +339,9 @@ def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
     #portList = [[ixChassisIpList[0], 1,8], [ixChassisIpList[0], 1, 7]]
     while True:
         try:
-            testPlatform = TestPlatform(ip_address=apiServerIp, log_file_name='restpy.log')
+            print(f"server ip = {apiServerIp}")
+            testPlatform = TestPlatform(ip_address=apiServerIp,log_file_name='restpy.log')
+            # testPlatform = TestPlatform(ip_address=apiServerIp,rest_port=62428,log_file_name='restpy.log')
 
             # Console output verbosity: 'none'|request|'request response'
             testPlatform.Trace = 'request_response'
@@ -268,7 +356,6 @@ def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
             ixNetwork.Globals.Licensing.LicensingServers = licenseServerIp
             ixNetwork.Globals.Licensing.Mode = licenseMode
             ixNetwork.Globals.Licensing.Tier = licenseTier
-
             # Create vports and name them so you could use .find() to filter vports by the name.
             #After this command is executed, ixnetwork will create two virtual ports with connection status "Unassigend"
             count = 0
@@ -295,7 +382,6 @@ def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
             if debugMode == False and 'session' in locals():
                 session.remove()
           
-
 def ixia_rest_create_topology(*args,**kwargs):
     debugMode = False
     try:
@@ -307,11 +393,13 @@ def ixia_rest_create_topology(*args,**kwargs):
         dg_name = kwargs['dg_name']
         multi = kwargs['multiplier']
         mac_start = kwargs['mac_start']
+        ether_name = kwargs['ether_name']
+        ip_name = kwargs['ip_name']
         #vlan_id = kwargs['vlan_id']       
         ixNetwork.info(f'Creating Topology Group {topo_name}')
         topology = ixNetwork.Topology.add(Name=topo_name, Ports=vport)
         deviceGroup = topology.DeviceGroup.add(Name=dg_name, Multiplier=multi)
-        ethernet = deviceGroup.Ethernet.add(Name=topo_name)
+        ethernet = deviceGroup.Ethernet.add(Name=ether_name)
         ethernet.Mac.Increment(start_value=mac_start, step_value='00:00:00:00:00:01')
         #vlan can not be used in FSW, dont know why. need to investigate
         # ethernet1.EnableVlans.Single(True)
@@ -326,6 +414,7 @@ def ixia_rest_create_topology(*args,**kwargs):
         return False
 
 
+
 def ixia_rest_create_ip(*args,**kwargs):
     debugMode = False
     try:
@@ -336,9 +425,10 @@ def ixia_rest_create_ip(*args,**kwargs):
         gw_start_ip = kwargs['gw_start_ip']
         ethernet = kwargs['ethernet']
         ip_prefix = kwargs['maskbits']
+        ip_name = kwargs['ip_name']
 
         ixNetwork.info('Configuring IPv4')
-        ipv4 = ethernet.Ipv4.add(Name='IPV4')
+        ipv4 = ethernet.Ipv4.add(Name=ip_name)
         ipv4.Address.Increment(start_value=start_ip, step_value='0.0.0.1')
         # ipv4.address.RandomMask(fixed_value=16)
         print(dir(ipv4.Address))
@@ -360,12 +450,13 @@ def ixia_rest_create_dhcp_client(*args,**kwargs):
         testPlatform = kwargs['platform']
         ixNetwork = kwargs['ixnet']
         ethernet = kwargs['ethernet']
+        name = kwargs['name']
          
 
         ixNetwork.info('Configuring IPv4 Dhcpv4client')
 
         #dhcpv4client = ethernet.Dhcpv4client.add(Multiplier=None, Name=None, StackedLayers=None)
-        dhcpv4client = ethernet.Dhcpv4client.add(Name="DHCP_client")
+        dhcpv4client = ethernet.Dhcpv4client.add(Name=name)
         testPlatform.info(dhcpv4client)
         
         # testPlatform.info(address.prefix)
@@ -376,11 +467,83 @@ def ixia_rest_create_dhcp_client(*args,**kwargs):
             session.remove()
         return False
 
-    #     ixNetwork.info('Configuring IGMP Host')
-    #     igmpHost = ipv4.IgmpHost.add(Name='igmpHost')
-  
-    #     ixNetwork.info('IGMP Querier')
-    #     bgp2 = ipv4.IgmpQuerier.add(Name='igmpQuerier')
+def ixia_rest_create_dhcp_server(*args,**kwargs):
+    debugMode = False
+    try:
+        ip_session = kwargs['ip_session']
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        ethernet = kwargs['ethernet']
+        name = kwargs['name']
+         
+
+        ixNetwork.info('Configuring IPv4 Dhcpv4client')
+
+        dhcpv4server = ip_session.Dhcpv4server.add(Name=name)
+        testPlatform.info(dhcpv4server)
+        
+        return dhcpv4server
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+def ixia_rest_dhcp_server_gw(*args,**kwargs):
+    debugMode = False
+    try:
+        dhcp_server = kwargs['dhcp_server']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        ip_gw = kwargs['ip_gw']
+
+        ixNetwork.info('Configuring IPv4 Dhcpv4sver IP Gateway')
+        dhcp_server.Dhcp4ServerSessions.IpGateway.Single(ip_gw)
+        testPlatform.info(dhcp_server.Dhcp4ServerSessions.IpGateway)
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+
+def ixia_rest_dhcp_server_address(*args,**kwargs):
+    debugMode = False
+    try:
+        dhcp_server = kwargs['dhcp_server']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        start_ip = kwargs['start_ip']
+        prefix = kwargs['prefix']
+
+        ixNetwork.info('Configuring IPv4 Dhcpv4sver IP Gateway')
+        dhcp_server.Dhcp4ServerSessions.IpAddress.Increment(start_value=start_ip, step_value="0.0.0.1")
+        testPlatform.info(dhcp_server.Dhcp4ServerSessions.IpAddress)
+        dhcp_server.Dhcp4ServerSessions.IpPrefix.Single(prefix)
+        testPlatform.info(dhcp_server.Dhcp4ServerSessions.IpPrefix)
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+def ixia_rest_dhcp_server_pool_size(*args,**kwargs):
+    debugMode = False
+    try:
+        dhcp_server = kwargs['dhcp_server']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        size = kwargs['pool_size']
+
+        ixNetwork.info('Configuring IPv4 Dhcpv4sver IP Pool Size')
+        dhcp_server.Dhcp4ServerSessions.PoolSize.Single(size)
+        testPlatform.info(dhcp_server.Dhcp4ServerSessions.PoolSize)
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
 
 def ixia_rest_start_protocols(*args,**kwargs):
     debugMode = False
@@ -563,6 +726,30 @@ def check_traffic(flow_stats_list):
     return True
 
 
+def ixia_rest_create_ptp(*args,**kwargs):
+
+# def add_ptp(self,*args,**kwargs):
+#         self.ptp,self,network_group = ixia_rest_create_ptp(
+#             platform = self.ixia.testPlatform,
+#             ixnet = self.ixia.ixNetwork,
+#             name = self.ptp_name,
+#             ip = self.ip_session,
+#         )
+    testplatform = kwargs['platform']
+    ptp_name = kwargs['name']
+    # device_group = kwargs['device_group']
+    ipv4 = kwargs['ip']
+    ixNetwork = kwargs['ixnet']
+
+    # network_group_name = f"{ptp_name}"
+    ixNetwork.info(f'Configuring PTP {ptp_name}')
+    ptp = ipv4.Ptp.add(Name=ptp_name)
+    #ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
+    #ixia_rest_set_origin(pool=ipv4PrefixPool,origin="egp",platform=testplatform)
+    #ixia_rest_set_med(pool=ipv4PrefixPool,med=1234,platform=testplatform)
+    return ptp
+ 
+
 def ixia_rest_create_bgp(*args,**kwargs):
     testplatform = kwargs['platform']
     bgp_name = kwargs['name']
@@ -696,63 +883,100 @@ def ixia_rest_change_route_properties(*args, **kwargs):
 if __name__ == "__main__":
     apiServerIp = '10.105.19.19'
     ixChassisIpList = ['10.105.241.234']
+
+    # apiServerIp = '10.105.0.119'
+    # ixChassisIpList = ['10.105.0.102']
     
     #chassis_ip, module,port,mac,bgp_network,bgp_as,ip_address/mask, gateway
-    portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
-    [ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
-    [ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.30.1.1",103,"10.1.1.103/24","10.1.1.1"],
-    [ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1",104,"10.1.1.104/24","10.1.1.1"], 
-    [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
-    [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
-    myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+    # portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+    # [ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
+    # [ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.30.1.1",103,"10.1.1.103/24","10.1.1.1"],
+    # [ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1",104,"10.1.1.104/24","10.1.1.1"], 
+    # [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
+    # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
+
+    bgp_portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","10.1.1.0",101,"10.10.1.100/24","10.10.1.254"], 
+    [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.254/24","10.10.1.254"],
+    [ixChassisIpList[0], 8, 15,"00:13:01:01:01:01","10.30.1.1.",102,"10.1.1.254/24","10.10.1.254"],
+    [ixChassisIpList[0], 8, 16,"00:14:01:01:01:01","10.40.1.1",102,"10.10.1.1/24","10.10.1.253"]]
+
+    myixia = IXIA(apiServerIp,ixChassisIpList,bgp_portList)
 
     myixia.topologies[0].add_ipv4()
-    myixia.topologies[1].add_ipv4()
-    myixia.topologies[2].add_ipv4()
+    myixia.topologies[0].add_dhcp_server()
+    myixia.topologies[0].dhcp_server_gw()
+    myixia.topologies[0].dhcp_server_pool_size(pool_size = 50)
+    myixia.topologies[0].dhcp_server_address(start_ip = "10.10.1.105")
+
+    myixia.topologies[1].add_dhcp_client()
+    myixia.topologies[2].add_dhcp_client()
+
     myixia.topologies[3].add_ipv4()
-    myixia.topologies[4].add_ipv4()
-    myixia.topologies[5].add_ipv4()
+    myixia.topologies[3].add_dhcp_server()
+    myixia.topologies[3].dhcp_server_gw()
+    myixia.topologies[3].dhcp_server_pool_size(pool_size = 50)
+    myixia.topologies[3].dhcp_server_address(start_ip = "10.10.1.5")
 
-
-    myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
-    myixia.topologies[1].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
-    myixia.topologies[2].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
-    myixia.topologies[3].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
-    myixia.topologies[4].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
-    myixia.topologies[5].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
-
-    # myixia.topologies[0].add_aspath_med(1,65010,6000)
-    # myixia.topologies[1].add_aspath_med(2,65020,5000)
-    # myixia.topologies[2].add_aspath_med(3,65030,4000)
-    # myixia.topologies[3].add_aspath_med(4,65040,3000)
-    # myixia.topologies[4].add_aspath_med(5,65050,2000)
-    # myixia.topologies[5].add_aspath_med(6,65060,1000)
-    # myixia.topologies[0].add_aspath_med(1,65010,6000)
-
-    myixia.topologies[0].change_bgp_routes_attributes(num_path=1,as_base=65010,med=6000,flapping="random",community=3,comm_base=101,weight=111)
-    myixia.topologies[1].change_bgp_routes_attributes(num_path=2,as_base=65020,med=5000,flapping="random",community=3,comm_base=102,weight=222)
-    myixia.topologies[2].change_bgp_routes_attributes(num_path=3,as_base=65030,med=4000,flapping="random",community=3,comm_base=103,weight=333)
-    myixia.topologies[3].change_bgp_routes_attributes(num_path=4,as_base=65040,med=3000,flapping="random",community=3,comm_base=104,weight=444)
-    myixia.topologies[4].change_bgp_routes_attributes(num_path=5,as_base=65050,med=2000,flapping="random",community=3,comm_base=105,weight=555)
-    myixia.topologies[5].change_bgp_routes_attributes(num_path=6,as_base=65060,med=1000,flapping="random",community=3,comm_base=106,weight=666)
-    
     myixia.start_protocol(wait=40)
+
+    #myixia.topologies[0].add_ipv4()
+    # myixia.topologies[1].add_ipv4()
+    # myixia.topologies[2].add_ipv4()
+    # myixia.topologies[3].add_ipv4()
+
+    # myixia.topologies[0].add_ptp()
+    # myixia.topologies[1].add_ptp()
 
     exit()
 
-    myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
-    myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
 
-    myixia.create_traffic(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3",tracking_name="Tracking_3")
-    myixia.create_traffic(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2",tracking_name="Tracking_4")
+    # myixia.topologies[0].add_ipv4()
+    # myixia.topologies[1].add_ipv4()
+    # myixia.topologies[2].add_ipv4()
+    # myixia.topologies[3].add_ipv4()
+    # myixia.topologies[4].add_ipv4()
+    # myixia.topologies[5].add_ipv4()
 
-    myixia.create_traffic(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5",tracking_name="Tracking_5")
-    myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4",tracking_name="Tracking_6")
+
+    myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    # myixia.topologies[1].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    # myixia.topologies[2].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    # myixia.topologies[3].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    # myixia.topologies[4].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+    # myixia.topologies[5].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=1000)
+
+    # # myixia.topologies[0].add_aspath_med(1,65010,6000)
+    # # myixia.topologies[1].add_aspath_med(2,65020,5000)
+    # # myixia.topologies[2].add_aspath_med(3,65030,4000)
+    # # myixia.topologies[3].add_aspath_med(4,65040,3000)
+    # # myixia.topologies[4].add_aspath_med(5,65050,2000)
+    # # myixia.topologies[5].add_aspath_med(6,65060,1000)
+    # # myixia.topologies[0].add_aspath_med(1,65010,6000)
+
+    # myixia.topologies[0].change_bgp_routes_attributes(num_path=1,as_base=65010,med=6000,flapping="random",community=3,comm_base=101,weight=111)
+    # myixia.topologies[1].change_bgp_routes_attributes(num_path=2,as_base=65020,med=5000,flapping="random",community=3,comm_base=102,weight=222)
+    # myixia.topologies[2].change_bgp_routes_attributes(num_path=3,as_base=65030,med=4000,flapping="random",community=3,comm_base=103,weight=333)
+    # myixia.topologies[3].change_bgp_routes_attributes(num_path=4,as_base=65040,med=3000,flapping="random",community=3,comm_base=104,weight=444)
+    # myixia.topologies[4].change_bgp_routes_attributes(num_path=5,as_base=65050,med=2000,flapping="random",community=3,comm_base=105,weight=555)
+    # myixia.topologies[5].change_bgp_routes_attributes(num_path=6,as_base=65060,med=1000,flapping="random",community=3,comm_base=106,weight=666)
+    
+    # myixia.start_protocol(wait=40)
+
+    # exit()
+
+    # myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+    # myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+    # myixia.create_traffic(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3",tracking_name="Tracking_3")
+    # myixia.create_traffic(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2",tracking_name="Tracking_4")
+
+    # myixia.create_traffic(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5",tracking_name="Tracking_5")
+    # myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4",tracking_name="Tracking_6")
 
 
-    myixia.start_traffic()
-    myixia.collect_stats()
-    myixia.check_traffic()
+    # myixia.start_traffic()
+    # myixia.collect_stats()
+    # myixia.check_traffic()
     
     # testPlatform,Session,ixNetwork,vport_holder_list = ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList)
     # if ixNetwork == False:
