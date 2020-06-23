@@ -91,7 +91,7 @@ class IXIA_TOPOLOGY:
             session = self.ixia.Session,
             platform = self.ixia.testPlatform,
             ixnet = self.ixia.ixNetwork,     
-            ip_gw = self.gateway
+            ip_gw = gateway
         )
 
     def dhcp_server_pool_size(self,*args,**kwargs):

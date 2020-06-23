@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     myixia.topologies[0].add_ipv4()
     myixia.topologies[0].add_dhcp_server()
-    myixia.topologies[0].dhcp_server_gw()
+    myixia.topologies[0].dhcp_server_gw(gateway="10.10.1.1")
     myixia.topologies[0].dhcp_server_pool_size(pool_size = 20000)
     myixia.topologies[0].dhcp_server_address(start_ip = "10.10.1.2",prefix=16)
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     myixia.topologies[3].add_ipv4()
     myixia.topologies[3].add_dhcp_server()
-    myixia.topologies[3].dhcp_server_gw()
+    myixia.topologies[3].dhcp_server_gw(gateway="10.20.1.1")
     myixia.topologies[3].dhcp_server_pool_size(pool_size = 20000)
     myixia.topologies[3].dhcp_server_address(start_ip = "10.20.1.2",prefix=16)
 
