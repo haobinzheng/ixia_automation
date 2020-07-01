@@ -804,7 +804,7 @@ def ixia_rest_stop_protocols(*args,**kwargs):
     while try_counter < 2:
         try:
             ixNetwork.info('Verify protocol sessions\n')
-            console_timer(wait_time,msg = f'wait for {wait_time} after protocol starts')
+            console_timer(wait_time,msg = f'wait for {wait_time} after protocol stopps')
             protocolsSummary = StatViewAssistant(ixNetwork, 'Protocols Summary')
             protocolsSummary.CheckCondition('Sessions Not Started', StatViewAssistant.EQUAL, 0)
             protocolsSummary.CheckCondition('Sessions Down', StatViewAssistant.EQUAL, 0)

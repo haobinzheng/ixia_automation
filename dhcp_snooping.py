@@ -93,6 +93,7 @@ if __name__ == "__main__":
     myixia.start_traffic()
     myixia.collect_stats()
     myixia.check_traffic()
+    myixia.stop_traffic()
 
     #myixia.topologies[0].add_ipv4()
     # myixia.topologies[1].add_ipv4()
