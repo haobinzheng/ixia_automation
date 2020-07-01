@@ -39,6 +39,20 @@ class IXIA_TOPOLOGY:
         )     
 
 
+    def add_ipv6(self,*args,**kwargs):
+        # ip = kwargs['ip']
+        # gw = kwargs['gw']
+        # mask = kwargs['mask']
+        self.ip_session = ixia_rest_create_ipv6(
+        platform = self.ixia.testPlatform, 
+        session = self.ixia.Session,
+        ixnet = self.ixia.ixNetwork,
+        start_ip = self.ip,
+        gw_start_ip = self.gw,
+        ethernet = self.ethernet,
+        maskbits = self.mask,
+        ip_name = self.ip_name
+    )
 
     def add_ipv4(self,*args,**kwargs):
         # ip = kwargs['ip']
@@ -110,6 +124,63 @@ class IXIA_TOPOLOGY:
         else:
             prefix = "24"
         ixia_rest_dhcp_server_address(
+            dhcp_server = self.dhcp_server,
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,     
+            start_ip = kwargs['start_ip'],
+            prefix = prefix
+        )
+
+
+    def dhcp_server_pool_size_v6(self,*args,**kwargs):
+        pool_size = kwargs['pool_size']
+        ixia_rest_dhcp_server_pool_size_v6(
+            dhcp_server = self.dhcp_server,
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,     
+            pool_size= pool_size
+        )
+
+    def add_dhcp_client_v6(self,*args,**kwargs):
+        self.dhcp_client = ixia_rest_create_dhcp_client_v6(
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            ethernet = self.ethernet,
+            name = self.dhcp_client_name
+            )
+    def add_dhcp_server_v6(self,*args,**kwargs):
+        self.dhcp_server = ixia_rest_create_dhcp_server_v6(
+            ip_session = self.ip_session,
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            ethernet = self.ethernet,
+            name = self.dhcp_server_name
+            )
+
+    def dhcp_server_gw_v6(self,*args,**kwargs):
+        if "gateway" in kwargs:
+            gateway = kwargs['gateway']
+        else:
+            gateway = self.ip
+        ixia_rest_dhcp_server_gw_v6(
+            dhcp_server = self.dhcp_server,
+            session = self.ixia.Session,
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,     
+            ip_gw = gateway
+        )
+
+
+    def dhcp_server_address_v6(self,*args,**kwargs):
+        if "prefix" in kwargs:
+            prefix = kwargs['prefix']
+        else:
+            prefix = "24"
+        ixia_rest_dhcp_server_address_v6(
             dhcp_server = self.dhcp_server,
             session = self.ixia.Session,
             platform = self.ixia.testPlatform,
@@ -216,10 +287,11 @@ class IXIA_TOPOLOGY:
 # portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","10.10.1.100/24","10.10.1.254"], 
 
 class IXIA:
-    def __init__(self,*args,**kargs):
+    def __init__(self,*args,**kwargs):
         self.apiServerIp = args[0]
         self.ixChassisIpList = args[1]
         self.portList = args[2]
+        self.protocol = kwargs["protocol"]
         self.testPlatform,self.Session,self.ixNetwork,self.vport_holder_list = ixia_rest_connect_chassis(self.apiServerIp,self.ixChassisIpList,self.portList)
         #self.create_topologies()
         self.topologies = self.create_topologies()
@@ -228,13 +300,17 @@ class IXIA:
         i = 0
         bgp_as = 101
         topo_list = []
+        if self.protocol == "IPv6":
+            ip_name_prefix = "IPv6"
+        else:
+            ip_name_prefix = "IPv4"
         for port in self.vport_holder_list:
             print(self.portList[i][3])
             topo = IXIA_TOPOLOGY(self,port,
                 name=f"Topology_{i+1}",
                 dg_name=f"DG{i+1}",
                 ether_name=f"Ethernet_{i+1}",
-                ip_name=f"IPv4_{i+1}",
+                ip_name=f"{ip_name_prefix}_{i+1}",
                 dhcp_client_name=f"dhcp_client_{i+1}",
                 dhcp_server_name=f"dhcp_server_{i+1}",
                 mac_start=self.portList[i][3],
@@ -443,6 +519,58 @@ def ixia_rest_create_ip(*args,**kwargs):
             session.remove()
         return False
 
+def ixia_rest_create_ipv6(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        start_ip = kwargs['start_ip']
+        gw_start_ip = kwargs['gw_start_ip']
+        ethernet = kwargs['ethernet']
+        ip_prefix = kwargs['maskbits']
+        ip_name = kwargs['ip_name']
+
+        ixNetwork.info('Configuring IPv6')
+        ipv6 = ethernet.Ipv6.add(Name=ip_name)
+        ipv6.Address.Increment(start_value=start_ip, step_value='::1')
+        # ipv4.address.RandomMask(fixed_value=16)
+        print(dir(ipv6.Address))
+        ipv6.GatewayIp.Increment(start_value=gw_start_ip, step_value='::1')
+        ipv6.Prefix.Single(ip_prefix)
+        address = ipv6.Address
+        # testPlatform.info(address.prefix)
+        return ipv6
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+def ixia_rest_create_dhcp_client_v6(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        ethernet = kwargs['ethernet']
+        name = kwargs['name']
+         
+
+        ixNetwork.info('Configuring IPv6 Dhcpv6client')
+
+        #dhcpv4client = ethernet.Dhcpv4client.add(Multiplier=None, Name=None, StackedLayers=None)
+        dhcpv6client = ethernet.Dhcpv6client.add(Name=name)
+        testPlatform.info(dhcpv6client)
+        
+        # testPlatform.info(address.prefix)
+        return dhcpv6client
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
 def ixia_rest_create_dhcp_client(*args,**kwargs):
     debugMode = False
     try:
@@ -467,6 +595,86 @@ def ixia_rest_create_dhcp_client(*args,**kwargs):
             session.remove()
         return False
 
+def ixia_rest_create_dhcp_server_v6(*args,**kwargs):
+    debugMode = False
+    try:
+        ip_session = kwargs['ip_session']
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        ethernet = kwargs['ethernet']
+        name = kwargs['name']
+         
+
+        ixNetwork.info('Configuring IPv6 Dhcpv6server')
+
+        dhcpv4server = ip_session.Dhcpv6server.add(Name=name)
+        testPlatform.info(dhcpv4server)
+        
+        return dhcpv4server
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+def ixia_rest_dhcp_server_gw_v6(*args,**kwargs):
+    debugMode = False
+    try:
+        dhcp_server = kwargs['dhcp_server']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        ip_gw = kwargs['ip_gw']
+
+        ixNetwork.info('Configuring IPv4 Dhcpv4sver IP Gateway')
+        dhcp_server.Dhcp6ServerSessions.IpGateway.Single(ip_gw)
+        testPlatform.info(dhcp_server.Dhcp6ServerSessions.IpGateway)
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+
+def ixia_rest_dhcp_server_address_v6(*args,**kwargs):
+    debugMode = False
+    try:
+        dhcp_server = kwargs['dhcp_server']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        start_ip = kwargs['start_ip']
+        prefix = kwargs['prefix']
+
+        ixNetwork.info('Configuring IPv6 Dhcpv6sver IP Gateway')
+        dhcp_server.Dhcp6ServerSessions.IpAddress.Increment(start_value=start_ip, step_value="::1")
+        testPlatform.info(dhcp_server.Dhcp6ServerSessions.IpAddress)
+        dhcp_server.Dhcp6ServerSessions.IpPrefix.Single(prefix)
+        testPlatform.info(dhcp_server.Dhcp6ServerSessions.IpPrefix)
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+
+def ixia_rest_dhcp_server_pool_size_v6(*args,**kwargs):
+    debugMode = False
+    try:
+        dhcp_server = kwargs['dhcp_server']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        size = kwargs['pool_size']
+
+        ixNetwork.info('Configuring IPv6 Dhcpv6sver IP Pool Size')
+        dhcp_server.Dhcp6ServerSessions.PoolSize.Single(size)
+        testPlatform.info(dhcp_server.Dhcp6ServerSessions.PoolSize)
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+
 def ixia_rest_create_dhcp_server(*args,**kwargs):
     debugMode = False
     try:
@@ -478,7 +686,7 @@ def ixia_rest_create_dhcp_server(*args,**kwargs):
         name = kwargs['name']
          
 
-        ixNetwork.info('Configuring IPv4 Dhcpv4client')
+        ixNetwork.info('Configuring IPv4 Dhcpv4server')
 
         dhcpv4server = ip_session.Dhcpv4server.add(Name=name)
         testPlatform.info(dhcpv4server)
@@ -544,6 +752,7 @@ def ixia_rest_dhcp_server_pool_size(*args,**kwargs):
         if debugMode == False and 'session' in locals():
             session.remove()
         return False
+
 
 def ixia_rest_start_protocols(*args,**kwargs):
     debugMode = False
@@ -894,6 +1103,31 @@ if __name__ == "__main__":
     # [ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1",104,"10.1.1.104/24","10.1.1.1"], 
     # [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
     # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
+
+    ipv6_portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254"], 
+    [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254"],
+    [ixChassisIpList[0], 8, 15,"00:13:01:01:01:01","2001:0010.0030.0001.0001.",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254"],
+    [ixChassisIpList[0], 8, 16,"00:14:01:01:01:01","2001:0010:0040.0001.0001::",102,"2001:0010:0010:0001::0001/64","2001:0010:0010:0001::253"]]
+
+    myixia = IXIA(apiServerIp,ixChassisIpList,ipv6_portList)
+
+    myixia.topologies[0].add_ipv6()
+    myixia.topologies[0].add_dhcp_server()
+    myixia.topologies[0].dhcp_server_gw()
+    myixia.topologies[0].dhcp_server_pool_size(pool_size = 50)
+    myixia.topologies[0].dhcp_server_address(start_ip = "10.10.1.105")
+
+    myixia.topologies[1].add_dhcp_client()
+    myixia.topologies[2].add_dhcp_client()
+
+    myixia.topologies[3].add_ipv4()
+    myixia.topologies[3].add_dhcp_server()
+    myixia.topologies[3].dhcp_server_gw()
+    myixia.topologies[3].dhcp_server_pool_size(pool_size = 50)
+    myixia.topologies[3].dhcp_server_address(start_ip = "10.10.1.5")
+
+    myixia.start_protocol(wait=40)
+    exit()
 
     bgp_portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","10.1.1.0",101,"10.10.1.100/24","10.10.1.254"], 
     [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.254/24","10.10.1.254"],

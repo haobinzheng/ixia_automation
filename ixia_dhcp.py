@@ -16,6 +16,33 @@ if __name__ == "__main__":
     # [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
     # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
 
+    ipv6_portList = [
+    [ixChassisIpList[0], 8, 13,"00:11:01:01:01:01","2001:10:1:0001::",101,"2001:10:10:1::100/64","2001:10:10:1::254"], 
+    [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","2001:0010:0020:0001:0001::",102,"2001:10:1:1::254/64","2001:10:10:1::254"],
+    [ixChassisIpList[0], 8, 15,"00:13:01:01:01:01","2001:0010:0030:0001:0001::",102,"2001:10:1:1::254/64","2001:10:10:1::254"],
+    [ixChassisIpList[0], 8, 16,"00:14:01:01:01:01","2001:0010:0040:0001:0001::",102,"2001:10:10:1::1/64","2001:10:10:1::253"]
+    ]
+
+    myixia = IXIA(apiServerIp,ixChassisIpList,ipv6_portList,protocol="IPv6")
+
+    myixia.topologies[0].add_ipv6()
+    myixia.topologies[0].add_dhcp_server_v6()
+    myixia.topologies[0].dhcp_server_gw_v6(gateway="2001:10:10:1::1")
+    myixia.topologies[0].dhcp_server_pool_size_v6(pool_size = 2000)
+    myixia.topologies[0].dhcp_server_address_v6(start_ip = "2001:10:10:1::2",prefix=64)
+
+    myixia.topologies[1].add_dhcp_client_v6()
+    myixia.topologies[2].add_dhcp_client_v6()
+
+    myixia.topologies[3].add_ipv6()
+    myixia.topologies[3].add_dhcp_server_v6()
+    myixia.topologies[3].dhcp_server_gw_v6(ggateway="2001:10:20:1::1")
+    myixia.topologies[3].dhcp_server_pool_size_v6(pool_size = 2000)
+    myixia.topologies[3].dhcp_server_address_v6(start_ip = "2001:10:20:1::2",prefix=64)
+
+    myixia.start_protocol(wait=40)
+    exit()
+
     bgp_portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","10.1.1.0",101,"10.10.1.100/24","10.10.1.254"], 
     [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.254/24","10.10.1.254"],
     [ixChassisIpList[0], 8, 15,"00:13:01:01:01:01","10.30.1.1.",102,"10.1.1.254/24","10.10.1.254"],
@@ -27,7 +54,7 @@ if __name__ == "__main__":
     myixia.topologies[0].add_dhcp_server()
     myixia.topologies[0].dhcp_server_gw(gateway="10.10.1.1")
     myixia.topologies[0].dhcp_server_pool_size(pool_size = 20000)
-    myixia.topologies[0].dhcp_server_address(start_ip = "10.10.1.2",prefix=16)
+    myixia.topologies[0].dhcp_server_address(start_ip = "10.10.1.2",prefix=8)
 
     myixia.topologies[1].add_dhcp_client()
     myixia.topologies[2].add_dhcp_client()
@@ -36,7 +63,7 @@ if __name__ == "__main__":
     myixia.topologies[3].add_dhcp_server()
     myixia.topologies[3].dhcp_server_gw(gateway="10.20.1.1")
     myixia.topologies[3].dhcp_server_pool_size(pool_size = 20000)
-    myixia.topologies[3].dhcp_server_address(start_ip = "10.20.1.2",prefix=16)
+    myixia.topologies[3].dhcp_server_address(start_ip = "10.20.1.2",prefix=8)
 
     myixia.start_protocol(wait=40)
 

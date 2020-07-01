@@ -1914,13 +1914,22 @@ def loop_command_output(dut,cmd,**kwargs):
 	return (result)
 
 def seperate_ip_mask(ip_addr):
-	regex = r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\/([0-9]+)'
-	matched = re.search(regex,ip_addr)
-	if matched:
-		ip = matched.group(1)
-		net = matched.group(2)
-		return ip,net
-	return None,None
+	if ":" in ip_addr:
+		regex = r'([0-9a-fA-F:]+)\/([0-9]+)'
+		matched = re.search(regex,ip_addr)
+		if matched:
+			ip = matched.group(1)
+			net = matched.group(2)
+			return ip,net
+		return None,None
+	else:
+		regex = r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\/([0-9]+)'
+		matched = re.search(regex,ip_addr)
+		if matched:
+			ip = matched.group(1)
+			net = matched.group(2)
+			return ip,net
+		return None,None
 
 def find_inactive_trunk_port(dut):
 	# print("========================= find_inactive_trunk port")
