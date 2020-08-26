@@ -92,8 +92,10 @@ def clear_console_line(url, port, login_pwd='fortinet123', exec_pwd='fortinet123
         tn = login_status['msg']
         #port = port.encode('ascii','ignore')
         #print("console_port before stripping off leading 20: {}".format(port))
-
-        console_port = re.sub('20', '', port)
+        if port == "2020":
+            console_port = "20"
+        else:
+            console_port = re.sub('20', '', port)
         #print("console_port after stripping off leading 20: {}".format(console_port))
         command_status = command(tn, prompt, console_port)
         if command_status['status'] != 1:

@@ -1047,6 +1047,8 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	switch_configure_cmd(tn,'set admintimeout 480')
 	switch_configure_cmd(tn,'end')
 	tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+	print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+	print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
 	return tn
 
 def config_admin_timeout(dut_list):
@@ -1988,6 +1990,17 @@ def find_dut_image(dut):
 			matched = re.search(r'v.+',image)
 			if matched:
 				return matched.group()
+	return None
+
+def find_dut_build(dut):
+	result = collect_show_cmd(dut,"get system status",t=5)
+	dprint(result)
+	for line in result:
+		if "Version" in line:
+			image = line.split(":")[1]
+			matched = re.search(r'v(\d+\.\d+\.\d+),build(\d+)',image)
+			if matched:
+				return matched.group(1),matched.group(2)
 	return None
 
 def eprint(*args, **kwargs):

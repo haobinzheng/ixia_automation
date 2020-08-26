@@ -11,12 +11,14 @@ class IXIA_TOPOLOGY:
     def __init__(self,*args,**kwargs):
         self.ixia = args[0]
         self.port = args[1]
-        self.name=kwargs['name']
+        self.name = kwargs['name']
         self.dg_name = kwargs['dg_name']
         self.mac_start = kwargs['mac_start']
-        # self.network = kwargs['network']
-        # self.bgp_as = kwargs['local_as']
-        # self.bgp_name = f"BGP_{self.name}"
+        self.bgpv4_network = None
+        self.bgpv6_network = None
+        self.bgp_as =  None
+        self.bgp_name = f"BGP_{self.name}"
+        self.bgp_name_v6 = f"BGPv6_{self.name}"
         self.ipv4,self.ipv4_mask = seperate_ip_mask(kwargs['ipv4'])
         self.ipv6,self.ipv6_mask = seperate_ip_mask(kwargs['ipv6'])
         self.ipv4_gw= kwargs['ipv4_gw']
@@ -211,8 +213,28 @@ class IXIA_TOPOLOGY:
             ip = self.ipv4_session,
         )
 
+    def add_bgp_v6(self,*args,**kwargs):
+        dut_ip = kwargs['dut_ip']
+        bgp_type = kwargs['bgp_type']
+        num = kwargs['prefix_num']
+        self.bgp,self.network_group, self.ipv6_pool = ixia_rest_create_bgp_v6(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = self.bgp_name_v6,
+            peer_ip = dut_ip,
+            type = bgp_type,
+            local_as = self.bgp_as,
+            networks_number = num,
+            networks_start_ip =self.bgpv6_network ,
+            device_group = self.device_group,
+            ip = self.ipv6_session,
+        )
+
     def change_origin(self,code):
         ixia_rest_set_origin(pool=self.ipv4_pool, origin=code,platform=self.ixia.testPlatform)
+
+    def change_origin_v6(self,code):
+        ixia_rest_set_origin_v6(pool=self.ipv6_pool, origin=code,platform=self.ixia.testPlatform)
 
     def change_med(self,med_value):
         ixia_rest_set_med(pool=self.ipv4_pool,med=med_value, platform=self.ixia.testPlatform)
@@ -290,6 +312,38 @@ class IXIA_TOPOLOGY:
         
 
 # portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","10.10.1.100/24","10.10.1.254"], 
+class BGPv4_IXIA_TOPOLOGY(IXIA_TOPOLOGY):
+    def __init__(self,*args,**kwargs):
+        self.ixia = args[0]
+        self.port = args[1]
+        self.name=kwargs['name']
+        self.dg_name = kwargs['dg_name']
+        self.mac_start = kwargs['mac_start']
+        self.network = kwargs['network']
+        self.bgp_as = kwargs['local_as']
+        self.bgp_name = f"BGP_{self.name}"
+        self.ipv4,self.ipv4_mask = seperate_ip_mask(kwargs['ip'])
+        self.ipv4_gw= kwargs['gw']
+        self.ip_session = None #will be created at add_ipv4 method
+        self.ptp_name = self.name + "_ptp"
+        self.ether_name = kwargs['ether_name']
+        self.ipv4_name = kwargs['ip_name']
+        # self.ipv4_name = kwargs['ipv4_name']
+        # self.ipv6_name = kwargs['ipv6_name']
+        self.dhcp_client_name = kwargs['dhcp_client_name']
+        self.dhcp_server_name = kwargs['dhcp_server_name']
+        self.ethernet,self.device_group,self.topology = ixia_rest_create_topology(
+        platform = self.ixia.testPlatform, 
+        session = self.ixia.Session,
+        ixnet = self.ixia.ixNetwork,
+        vport = self.port,
+        topo_name = self.name,   
+        dg_name = self.dg_name,
+        ether_name = self.ether_name, 
+        ip_name = self.ipv4_name,
+        multiplier = 1,    
+        mac_start = self.mac_start,
+        )     
 
 class IXIA:
     def __init__(self,*args,**kwargs):
@@ -301,6 +355,8 @@ class IXIA:
         #self.create_topologies()
         self.topologies = self.create_topologies()
          
+
+
     def create_topologies(self):
         i = 0
         bgp_as = 101
@@ -341,6 +397,20 @@ class IXIA:
         tracking_group = tracking_name,
     )
 
+    def create_traffic_v6(self,*args,**kwargs):
+        src_topo = kwargs['src_topo']
+        dst_topo = kwargs['dst_topo']
+        traffic_name = kwargs['traffic_name']
+        tracking_name = kwargs['tracking_name']
+        ixia_rest_create_traffic_v6(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork,
+        src = src_topo,
+        dst = dst_topo,
+        name= traffic_name,
+        tracking_group = tracking_name,
+    )
     def start_traffic(self):
 
         ixia_rest_start_traffic(
@@ -397,6 +467,47 @@ class IXIA:
             wait = 40,
         )
 
+
+class BGPv4_IXIA(IXIA):
+    def __init__(self,*args,**kwargs):
+        self.apiServerIp = args[0]
+        self.ixChassisIpList = args[1]
+        self.portList = args[2]
+        # self.protocol = kwargs["protocol"]
+        self.testPlatform,self.Session,self.ixNetwork,self.vport_holder_list = ixia_rest_connect_chassis(self.apiServerIp,self.ixChassisIpList,self.portList)
+        #self.create_topologies()
+        self.topologies = self.create_topologies()
+        
+    def create_topologies(self):
+        i = 0
+        bgp_as = 101
+        topo_list = []
+        # if self.protocol == "IPv6":
+        #     ip_name_prefix = "IPv6"
+        # else:
+        #     ip_name_prefix = "IPv4"
+        for port in self.vport_holder_list:
+            print(self.portList[i][3])
+            topo = BGPv4_IXIA_TOPOLOGY(self,port,
+                name=f"Topology_{i+1}",
+                dg_name=f"DG{i+1}",
+                ether_name=f"Ethernet_{i+1}",
+                ipv4_name=f"IPv4_{i+1}",
+                ipv6_name=f"IPv6_{i+1}",
+                ip_name=f"IPv4_{i+1}",
+                dhcp_client_name=f"dhcp_client_{i+1}",
+                dhcp_server_name=f"dhcp_server_{i+1}",
+                mac_start=self.portList[i][3],
+                local_as = self.portList[i][5],
+                network=self.portList[i][4],
+                ip=self.portList[i][6],
+                gw=self.portList[i][7]
+            )
+            topo_list.append(topo)
+            i += 1
+            bgp_as += 1 
+        return topo_list
+
 def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
 
     #apiServerIp = '10.105.19.19'
@@ -430,10 +541,13 @@ def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
             # testPlatform = TestPlatform(ip_address=apiServerIp,rest_port=62428,log_file_name='restpy.log')
 
             # Console output verbosity: 'none'|request|'request response'
+            #testPlatform.Trace = 'none'
             testPlatform.Trace = 'request_response'
 
             testPlatform.Authenticate(username, password)
             session = testPlatform.Sessions.add()
+            #Turn off trace
+            
             ixNetwork = session.Ixnetwork
             testPlatform.info(ixNetwork)
             
@@ -804,7 +918,7 @@ def ixia_rest_stop_protocols(*args,**kwargs):
     while try_counter < 2:
         try:
             ixNetwork.info('Verify protocol sessions\n')
-            console_timer(wait_time,msg = f'wait for {wait_time} after protocol stopps')
+            console_timer(wait_time,msg = f'wait for {wait_time} after protocol stops')
             protocolsSummary = StatViewAssistant(ixNetwork, 'Protocols Summary')
             protocolsSummary.CheckCondition('Sessions Not Started', StatViewAssistant.EQUAL, 0)
             protocolsSummary.CheckCondition('Sessions Down', StatViewAssistant.EQUAL, 0)
@@ -829,6 +943,62 @@ def ixia_rest_create_traffic(*args,**kwargs):
 
         ixNetwork.info('Create Traffic Item')
         trafficItem = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType='ipv4',TransmitMode='sequential')
+
+        ixNetwork.info('Add endpoint flow group')
+        trafficItem.EndpointSet.add(Sources=src_topo, Destinations=dst_topo)
+        # trafficItem.Tracking.find()[0].TrackBy = [tracking_group]
+        
+
+        # # Note: A Traffic Item could have multiple EndpointSets (Flow groups).
+        # #       Therefore, ConfigElement is a list.
+        ixNetwork.info('Configuring config elements')
+        configElement = trafficItem.ConfigElement.find()[0]
+        configElement.FrameRate.update(Type='percentLineRate', Rate=15)
+        #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+        configElement.TransmissionControl.update(Type='continuous')
+        configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
+        configElement.FrameSize.FixedSize = 1000
+        
+        trafficItem.Generate()
+        
+        # ixNetwork.Traffic.Apply()
+        # ixNetwork.Traffic.Start()
+
+        # StatViewAssistant could also filter by REGEX, LESS_THAN, GREATER_THAN, EQUAL. 
+        # Examples:
+        #    flowStatistics.AddRowFilter('Port Name', StatViewAssistant.REGEX, '^Port 1$')
+        #    flowStatistics.AddRowFilter('Tx Frames', StatViewAssistant.LESS_THAN, 50000)
+
+        # flowStatistics = StatViewAssistant(ixNetwork, 'Flow Statistics')
+        # ixNetwork.info('{}\n'.format(flowStatistics))
+
+        # for rowNumber,flowStat in enumerate(flowStatistics.Rows):
+        #     ixNetwork.info('\n\nSTATS: {}\n\n'.format(flowStat))
+        #     ixNetwork.info('\nRow:{}  TxPort:{}  RxPort:{}  TxFrames:{}  RxFrames:{}\n'.format(
+        #         rowNumber, flowStat['Tx Port'], flowStat['Rx Port'],
+        #         flowStat['Tx Frames'], flowStat['Rx Frames']))
+
+        # flowStatistics = StatViewAssistant(ixNetwork, 'Traffic Item Statistics')
+        # ixNetwork.info('{}\n'.format(flowStatistics))
+
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+
+def ixia_rest_create_traffic_v6(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        src_topo = kwargs['src']
+        dst_topo = kwargs['dst']
+        traffic_name = kwargs['name']
+        tracking_group = kwargs['tracking_group']
+
+        ixNetwork.info('Create Traffic Item')
+        trafficItem = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType='ipv6',TransmitMode='sequential')
 
         ixNetwork.info('Add endpoint flow group')
         trafficItem.EndpointSet.add(Sources=src_topo, Destinations=dst_topo)
@@ -1028,6 +1198,41 @@ def ixia_rest_create_bgp(*args,**kwargs):
     return bgp2,networkGroup,ipv4PrefixPool
 
     ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
+
+
+def ixia_rest_create_bgp_v6(*args,**kwargs):
+    testplatform = kwargs['platform']
+    bgp_name = kwargs['name']
+    bgp_peer_ip = kwargs['peer_ip']
+    bgp_type = kwargs['type']  #Either internal or external
+    local_as = kwargs['local_as'] 
+    network_group_number = kwargs['networks_number']
+    network_start_address = kwargs['networks_start_ip']
+    device_group = kwargs['device_group']
+    ipv6 = kwargs['ip']
+    ixNetwork = kwargs['ixnet']
+
+    dprint(f"bgp peer ip = {bgp_peer_ip}")
+
+    network_group_name = f"{bgp_name}-routes"
+    ixNetwork.info(f'Configuring BgpIpv4Peer {bgp_name}')
+    bgp2 = ipv6.BgpIpv6Peer.add(Name=bgp_name)
+    bgp2.DutIp.Increment(start_value=bgp_peer_ip, step_value='0:0:0:0:0:0:0:0')
+    bgp2.Type.Single(bgp_type)
+    #bgp2.Type.Single('external')
+    bgp2.LocalAs2Bytes.Increment(start_value=local_as, step_value=0)
+    # bgp2.RemoteAs2Bytes.Increment(start_value=65000, step_value=0)
+
+    ixNetwork.info(f'Configuring Network Group {bgp_name}')
+    networkGroup = device_group.NetworkGroup.add(Name=network_group_name, Multiplier=network_group_number)
+    ipv6PrefixPool = networkGroup.Ipv6PrefixPools.add(NumberOfAddresses='1')
+    ipv6PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0:0:0:0:0:0:0:1')
+    ipv6PrefixPool.PrefixLength.Single(128)
+
+    #ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
+    #ixia_rest_set_origin(pool=ipv4PrefixPool,origin="egp",platform=testplatform)
+    #ixia_rest_set_med(pool=ipv4PrefixPool,med=1234,platform=testplatform)
+    return bgp2,networkGroup,ipv6PrefixPool
     
 def ixia_rest_set_origin(*args,**kwargs):
     ipv4PrefixPool = kwargs['pool']
@@ -1035,6 +1240,16 @@ def ixia_rest_set_origin(*args,**kwargs):
     testplatform = kwargs['platform']
 
     bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add()
+    testplatform.info(bgpiprouteproperty.Origin.Values)
+    bgpiprouteproperty.Origin.Single(origin)
+    testplatform.info(bgpiprouteproperty.Origin.Values)
+
+def ixia_rest_set_origin_v6(*args,**kwargs):
+    ipv6PrefixPool = kwargs['pool']
+    origin = kwargs['origin']
+    testplatform = kwargs['platform']
+
+    bgpiprouteproperty = ipv6PrefixPool.BgpIPRouteProperty.add()
     testplatform.info(bgpiprouteproperty.Origin.Values)
     bgpiprouteproperty.Origin.Single(origin)
     testplatform.info(bgpiprouteproperty.Origin.Values)

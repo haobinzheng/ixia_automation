@@ -505,11 +505,31 @@ class Ospf_Neighbor:
         tprint(f"Neighbor Address: {self.address}")
         tprint(f"Neighbor Interface: {self.interface}")
 
+class Ospf_Neighbor_v6:
+    def __init__(self,*args,**kargs):
+        neighbor_dict = args[0]
+        self.id = neighbor_dict["id"]
+        self.pri = neighbor_dict["pri"]
+        self.state = neighbor_dict["state"]
+        self.duration = neighbor_dict['duration']
+        self.dead = neighbor_dict['dead']
+        self.interface = neighbor_dict["interface"]
+
+    def show_details(self):
+        tprint("====================================================")
+        tprint(f"Neighbor router id: {self.id}")
+        tprint(f"Neighbor OSPF Priority: {self.pri}")
+        tprint(f"Neighbor OSPF state: {self.state}")
+        tprint(f"Neighbor Dead Time: {self.dead}")
+        tprint(f"Neighbor Duration: {self.duration}")
+        tprint(f"Neighbor Interface: {self.interface}")
+
 class Router_OSPF:
     def __init__(self,*args,**kargs):
         self.switch = args[0]
         self.dut = self.switch.console
         self.neighbor_list = []
+        self.neighbor_list_v6 = []
         #self.change_router_id(self.switch.loop0_ip)
 
     def update_switch(self,switch):
@@ -517,35 +537,85 @@ class Router_OSPF:
         self.dut = switch.console
 
     def basic_config(self):
+        if self.switch.software_version == "6.2.0":
+            ospf_config = f"""
+            config router ospf
+            set router-id {self.switch.loop0_ip}
+                config area
+                    edit 0.0.0.0
+                    next
+                end
+                config ospf-interface
+                    edit "1"
+                        set interface "vlan1"
+                    next
+                end
+                config network
+                    edit 1
+                        set area 0.0.0.0
+                        set prefix {self.switch.vlan1_subnet} 255.255.255.0
+                    next
+                end
+                config network
+                    edit 2
+                        set area 0.0.0.0
+                        set prefix {self.switch.loop0_ip} 255.255.255.255
+                    next
+                end
+                config redistribute "connected"
+                    set status enable
+                end
+            end
+            """
+        else:
+            ospf_config = f"""
+            config router ospf
+            set router-id {self.switch.loop0_ip}
+                config area
+                    edit 0.0.0.0
+                    next
+                end
+                config interface
+                    edit vlan1
+                    next
+                end
+                 
+                config network
+                    edit 1
+                        set area 0.0.0.0
+                        set prefix {self.switch.vlan1_subnet} 255.255.255.0
+                    next
+                end
+                config network
+                    edit 2
+                        set area 0.0.0.0
+                        set prefix {self.switch.loop0_ip} 255.255.255.255
+                    next
+                end
+                config redistribute "connected"
+                    set status enable
+                end
+            end
+            """
+        config_cmds_lines(self.dut,ospf_config)
+
+    def basic_config_v6(self):
         ospf_config = f"""
-        config router ospf
-        set router-id {self.switch.loop0_ip}
-            config area
-                edit 0.0.0.0
-                next
+            config router ospf6
+            set router-id {self.switch.loop0_ip}
+                config area
+                    edit 0.0.0.0
+                    next
+                end
+                config interface
+                    edit vlan1
+                    next
+                end
+                config redistribute "connected"
+                    set status enable
+                end
             end
-            config ospf-interface
-                edit "1"
-                    set interface "vlan1"
-                next
-            end
-            config network
-                edit 1
-                    set area 0.0.0.0
-                    set prefix {self.switch.vlan1_subnet} 255.255.255.0
-                next
-            end
-            config network
-                edit 2
-                    set area 0.0.0.0
-                    set prefix {self.switch.loop0_ip} 255.255.255.255
-                next
-            end
-            config redistribute "connected"
-                set status enable
-            end
-        end
-        """
+            """
         config_cmds_lines(self.dut,ospf_config)
 
     def show_protocol_states(self):
@@ -602,6 +672,16 @@ class Router_OSPF:
             neighbor = Ospf_Neighbor(n)
             neighbor_list.append(neighbor)
         self.neighbor_list = neighbor_list
+        return neighbor_list
+
+    def neighbor_discovery_v6(self):
+        dut = self.dut
+        neighbor_dict_list = get_router_info_ospf_neighbor_v6(dut)
+        neighbor_list = []
+        for n in neighbor_dict_list:
+            neighbor = Ospf_Neighbor_v6(n)
+            neighbor_list.append(neighbor)
+        self.neighbor_list_v6 = neighbor_list
         return neighbor_list
 
     def show_ospf_neighbors(self):
@@ -1114,6 +1194,16 @@ class Router_BGP:
         self.ospf_neighbors = [n.id for n in self.switch.router_ospf.neighbor_list]
         self.ospf_neighbors_address = [n.address for n in self.switch.router_ospf.neighbor_list]
 
+    def update_ospf_neighbors_v6(self,*args,**kwargs):
+        if "sw_list" in kwargs:
+            switch_list = kwargs['sw_list']
+        else:
+            switch_list = []
+        self.ospf_neighbors_v6 = [n.id for n in self.switch.router_ospf.neighbor_list_v6]
+        #Need to re-write!!!!
+        self.ospf_neighbors_address_v6 = [s.vlan1_ip for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+
+
     def config_ibgp_mesh_direct(self):
         tprint(f"============== Configurating iBGP at {self.switch.name} ")
         dut=self.switch.console
@@ -1434,10 +1524,13 @@ class FortiSwitch:
         self.mgmt_ip = dut_dir['mgmt_ip'] 
         self.mgmt_mask = dut_dir['mgmt_mask']  
         self.loop0_ip = dut_dir['loop0_ip']  
+        self.loop0_ipv6 = dut_dir['loop0_ipv6']
         self.rid = self.loop0_ip
         self.vlan1_ip = dut_dir['vlan1_ip'] 
+        self.vlan1_ipv6= dut_dir['vlan1_ipv6']
         self.vlan1_2nd = dut_dir['vlan1_2nd']
         self.internal = dut_dir['internal']
+        self.internal_v6 = dut_dir['internal_v6']
         self.vlan1_subnet = dut_dir['vlan1_subnet']  
         self.vlan1_mask = dut_dir['vlan1_mask'] 
         self.split_ports = dut_dir['split_ports'] 
@@ -1445,6 +1538,9 @@ class FortiSwitch:
         self.static_route = dut_dir['static_route']
         self.static_route_mask = dut_dir['static_route_mask']
         self.ebgp_as = dut_dir['ebgp_as']
+        self.software_version = find_dut_build(self.console)[0]
+        self.software_build = find_dut_build(self.console)[1]
+        self.model = find_dut_model(self.console)
         self.router_ospf = Router_OSPF(self)
         self.router_bgp = Router_BGP(self)
         self.access_list= Router_access_list(self)

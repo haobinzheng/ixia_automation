@@ -2679,6 +2679,22 @@ def get_router_info_ospf_neighbor(dut):
 			neighbor_list.append(neighbor_dict) 
 	return neighbor_list
 
+def get_router_info_ospf_neighbor_v6(dut):
+    result = collect_show_cmd(dut,"get router info6 ospf neighbor")
+    neighbor_list = []
+    for line in result:
+        if "Twoway" in line or "Full" in line or "DR" in line or "BDR" in line or "DROther" in line:
+            items = re.split('\\s+',line)
+            neighbor_dict = {}
+            neighbor_dict["id"] = items[0]
+            neighbor_dict["pri"] = items[1]
+            neighbor_dict["dead"] = items[2]
+            neighbor_dict["state"] = items[3]
+            neighbor_dict['duration']= items[4]
+            neighbor_dict["interface"]= items[5]
+            neighbor_list.append(neighbor_dict) 
+    return neighbor_list
+
 def get_switch_show_bgp(dut):
 	result = collect_show_cmd(dut,"show router bgp")
 	neighbor_list = []
