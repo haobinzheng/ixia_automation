@@ -511,6 +511,9 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	#tprint(out_list)
 	# for i in out_str_list:
 	# 	tprint(i)
+	#Will revove these lines after bgp is done
+	if cmd == "get router info6 bgp summary":
+		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
 	return out_str_list
 
 def append_file_collect_show(filename,result):

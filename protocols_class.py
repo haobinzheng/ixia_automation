@@ -517,12 +517,12 @@ class Ospf_Neighbor_v6:
 
     def show_details(self):
         tprint("====================================================")
-        tprint(f"Neighbor router id: {self.id}")
-        tprint(f"Neighbor OSPF Priority: {self.pri}")
-        tprint(f"Neighbor OSPF state: {self.state}")
-        tprint(f"Neighbor Dead Time: {self.dead}")
-        tprint(f"Neighbor Duration: {self.duration}")
-        tprint(f"Neighbor Interface: {self.interface}")
+        tprint(f"Neighbor OSPFv3 router id: {self.id}")
+        tprint(f"Neighbor OSPFv3 Priority: {self.pri}")
+        tprint(f"Neighbor OSPFv3 state: {self.state}")
+        tprint(f"Neighbor OSPFv3 Dead Time: {self.dead}")
+        tprint(f"Neighbor OSPPv3 Duration: {self.duration}")
+        tprint(f"Neighbor OSPFv3 Interface: {self.interface}")
 
 class Router_OSPF:
     def __init__(self,*args,**kargs):
@@ -620,14 +620,22 @@ class Router_OSPF:
 
     def show_protocol_states(self):
         self.show_config()
-        self.show_neighbor()
+        self.show_ospf_neighbors()
+        self.show_hardware_l3()
+
+    def show_protocol_states_v6(self):
+        self.show_ospf_config_v6()
+        self.show_ospf_neighbor_v6()
         self.show_hardware_l3()
 
     def show_config(self):
         switch_show_cmd(self.switch.console,"show router ospf")
 
-    def show_neighbor(self):
-        switch_show_cmd(self.dut, "get router info ospf neighbor all")
+    def show_ospf_config_v6(self):
+        switch_show_cmd(self.switch.console,"show router ospf6")
+
+    def show_ospf_neighbor_v6(self):
+        switch_show_cmd(self.dut, "get router info6 ospf neighbor")
 
     def show_hardware_l3(self):
         switch_show_cmd(self.dut,"diagnose hardware switchinfo l3-summary")
@@ -684,8 +692,37 @@ class Router_OSPF:
         self.neighbor_list_v6 = neighbor_list
         return neighbor_list
 
+    def neighbor_discovery_all(self):
+        dut = self.dut
+
+        #discover IPv4 ospf neighbors
+        neighbor_dict_list = get_router_info_ospf_neighbor(dut)
+        neighbor_list = []
+        for n in neighbor_dict_list:
+            neighbor = Ospf_Neighbor(n)
+            neighbor_list.append(neighbor)
+        self.neighbor_list = neighbor_list
+
+        #discover IPv6 ospf neighbors
+        neighbor_dict_list = get_router_info_ospf_neighbor_v6(dut)
+        neighbor_list = []
+        for n in neighbor_dict_list:
+            neighbor = Ospf_Neighbor_v6(n)
+            neighbor_list.append(neighbor)
+        self.neighbor_list_v6 = neighbor_list
+
     def show_ospf_neighbors(self):
         for neighbor in self.neighbor_list:
+            neighbor.show_details()
+
+    def show_ospf_neighbors_v6(self):
+        for neighbor in self.neighbor_list_v6:
+            neighbor.show_details()
+
+    def show_ospf_neighbors_all(self):
+        for neighbor in self.neighbor_list:
+            neighbor.show_details()
+        for neighbor in self.neighbor_list_v6:
             neighbor.show_details()
 
     def add_network_entries(self,prefixes,masks):
@@ -746,6 +783,58 @@ class Router_OSPF:
         end
         """
         config_cmds_lines(self.dut,ospf_config)
+
+    def ospf_neighbor_all_up_v4(self,*args,**kwargs):
+        neighbor_num = 0
+        if "num" in kwargs:
+            expected_neighbor_nums = kwargs['num']
+        else:
+            expected_neighbor_nums = 0
+        for neighbor in self.neighbor_list:
+            if re.match(r'[0-9]+\.[0-9]+s',neighbor.dead):
+                neighbor_num += 1
+                print(f"ospf_neighbor_all_up_v4(): neighbor {neighbor.id} up")
+        
+        print(f"ospf_neighbor_all_up_v4: Total number of ospf neighbors found = {neighbor_num}")
+
+        if neighbor_num == expected_neighbor_nums:
+            return True
+        else:
+            return False
+
+     #    4 :: 3032D-R7-40 # get router info6 ospf neighbor
+     # 020-08-31 22:07:44 :: Neighbor ID     Pri    DeadTime    State/IfState         Duration I/F[State]
+     # 020-08-31 22:07:44 :: 1.1.1.1           1    00:00:38   Twoway/DROther       4d08:49:16 vlan1[DROther]
+     # 020-08-31 22:07:44 :: 3.3.3.3           1    00:00:39   Twoway/DROther       4d08:49:19 vlan1[DROther]
+     # 020-08-31 22:07:44 :: 4.4.4.4           1    00:00:38     Full/DR            4d08:49:22 vlan1[DROther]
+     # 020-08-31 22:07:44 :: 5.5.5.5           1    00:00:38     Full/BDR           3d09:34:01 vlan1[DROther]
+     # 020-08-31 22:07:44 :: 6.6.6.6           1    00:00:38   Twoway/DROther       3d09:33:35 vlan1[DROther]
+
+    def ospf_neighbor_all_up_v6(self,*args,**kwargs):
+        neighbor_num = 0
+        if "num" in kwargs:
+            expected_neighbor_nums = kwargs['num']
+        else:
+            expected_neighbor_nums = 0
+        for neighbor in self.neighbor_list_v6:
+            if re.match(r'[0-9a-z]+\:[0-9]+\:[0-9]',neighbor.duration):
+                neighbor_num += 1
+                print(f"ospf_neighbor_all_up_v6(): neighbor {neighbor.id} up")
+        
+        print(f"ospf_neighbor_all_up_v6: Total number of ospf neighbors found = {neighbor_num}")
+
+        if neighbor_num == expected_neighbor_nums:
+            return True
+        else:
+            return False
+
+     #    4 :: 3032D-R7-40 # get router info6 ospf neighbor
+     # 020-08-31 22:07:44 :: Neighbor ID     Pri    DeadTime    State/IfState         Duration I/F[State]
+     # 020-08-31 22:07:44 :: 1.1.1.1           1    00:00:38   Twoway/DROther       4d08:49:16 vlan1[DROther]
+     # 020-08-31 22:07:44 :: 3.3.3.3           1    00:00:39   Twoway/DROther       4d08:49:19 vlan1[DROther]
+     # 020-08-31 22:07:44 :: 4.4.4.4           1    00:00:38     Full/DR            4d08:49:22 vlan1[DROther]
+     # 020-08-31 22:07:44 :: 5.5.5.5           1    00:00:38     Full/BDR           3d09:34:01 vlan1[DROther]
+     # 020-08-31 22:07:44 :: 6.6.6.6           1    00:00:38   Twoway/DROther       3d09:33:35 vlan1[DROther]
 
 class BGP_Neighbor:
     def __init__(self,*args,**kargs):
@@ -1092,6 +1181,17 @@ class Router_BGP:
         self.confed_id = 5000
         self.bgp_neighbors_objs = None
         self.ixia_port_info = None
+         
+        self.ospf_neighbors = None
+        self.ospf_neighbors_address = None # this is the same as self.ospf_neighbors_address_vlan1_v4. Just keep it for backward compatibility
+        self.ospf_neighbors_address_vlan1_v4 = None
+        self.ospf_neighbors_address_loop0_v4 =  None
+        self.ospf_neighbors_swlist_v4 = None
+        #v6 neighbors
+        self.ospf_neighbors_v6 = None
+        self.ospf_neighbors_address_vlan1_v6 =  None
+        self.ospf_neighbors_address_loop0_v6 =  None
+        self.ospf_neighbors_swlist_v6 =  None
         #self.route_map = Router_route_map()
 
     def bgp_config_unsuppress_map(self,map_name):
@@ -1154,6 +1254,29 @@ class Router_BGP:
             #     neighbor.show_details()
         return result
 
+    def check_bgp_neighbor_status_v6(self):
+        self.get_bgp_neighbors_summary_v6()
+        result = True
+        if self.bgp_neighbors_objs is None:
+            Info(f"==================== {self.switch.name} has NO BGPv6 neighbors  =================== ")
+            return False
+        if len(self.bgp_neighbors_objs) == 0:
+            Info(f"==================== {self.switch.name} has NO BGPv6 neighbors  =================== ")
+            return False
+        for neighbor in self.bgp_neighbors_objs:
+            if type(neighbor.prefix_recieved) != int:
+                tprint(f"!!!!!! {self.switch.name} has BGPv6 neighbor {neighbor.id} Down")
+                result = False
+
+        if result == False:
+            Info(f"==================== {self.switch.name} has BGPv6 neighbors DOWN =================== ")
+            for neighbor in self.bgp_neighbors_objs:
+                neighbor.show_details()
+        else:
+            Info(f"==================== {self.switch.name} has all BGPv6 neighbors up =================== ")
+        return result
+
+
     def add_ebgp_peer(self,*args,**kwargs):
         ip = kwargs['ip']
         remote_as = kwargs['remote_as']
@@ -1173,13 +1296,22 @@ class Router_BGP:
         config_cmds_lines(self.switch.console,bgp_config)
 
     def show_protocol_states(self):
-        self.show_config()
+        self.show_bgp_config()
         self.show_bgp_summary()
         self.show_bgp_network()
+
+    def show_bgp_protocol_states_v6(self):
+        self.show_bgp_config_v6()
+        self.show_bgp_summary_v6()
+        self.show_bgp_network_v6()
 
     def show_bgp_network(self):
         dut = self.switch.dut
         switch_show_cmd(self.switch.console,"get router info bgp network")
+
+    def show_bgp_network_v6(self):
+        dut = self.switch.dut
+        switch_show_cmd(self.switch.console,"get router info bgp6 network")
 
     def get_neighbors_summary(self):
         bgp_neighor_list = get_router_bgp_summary(self.switch.console)
@@ -1190,7 +1322,25 @@ class Router_BGP:
         self.bgp_neighbors_objs = items_list
         return items_list   
 
-    def update_ospf_neighbors(self):
+    def get_bgp_neighbors_summary_v6(self):
+        items_list = []
+        bgp_neighor_list = get_router_bgp_summary_v6(self.switch.console)
+        if not bgp_neighor_list:
+            self.bgp_neighbors_objs = items_list
+            return items_list
+        
+        for n_dict in bgp_neighor_list:
+            n_obj = BGP_Neighbor(n_dict,self.switch)
+            n_obj.show_details()
+            items_list.append(n_obj)
+        self.bgp_neighbors_objs = items_list
+        return items_list   
+
+    def update_ospf_neighbors(self,*args,**kwargs):
+        if "sw_list" in kwargs:
+            switch_list = kwargs['sw_list']
+        else:
+            switch_list = []
         self.ospf_neighbors = [n.id for n in self.switch.router_ospf.neighbor_list]
         self.ospf_neighbors_address = [n.address for n in self.switch.router_ospf.neighbor_list]
 
@@ -1201,7 +1351,31 @@ class Router_BGP:
             switch_list = []
         self.ospf_neighbors_v6 = [n.id for n in self.switch.router_ospf.neighbor_list_v6]
         #Need to re-write!!!!
-        self.ospf_neighbors_address_v6 = [s.vlan1_ip for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+        self.ospf_neighbors_address_vlan1_v6 = [s.vlan1_ipv6.split('/')[0] for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+        self.ospf_neighbors_address_loop0_v6 = [s.loop0_ipv6.split('/')[0] for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+        self.ospf_neighbors_address_loop0_v4 = [s.loop0_ip for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+        print(f"ospf neighbors vlan1 ipv6 address = {self.ospf_neighbors_address_vlan1_v6}")
+        print(f"ospf neighbors loop0 ipv6 address = {self.ospf_neighbors_address_loop0_v6}")
+
+    def update_ospf_neighbors_all(self,*args,**kwargs):
+        if "sw_list" in kwargs:
+            switch_list = kwargs['sw_list']
+        else:
+            switch_list = []
+
+        #v4 neighbors     
+        self.ospf_neighbors = [n.id for n in self.switch.router_ospf.neighbor_list]
+        self.ospf_neighbors_address = [n.address for n in self.switch.router_ospf.neighbor_list]
+        self.ospf_neighbors_address_vlan1_v4 = self.ospf_neighbors_address
+        self.ospf_neighbors_swlist_v4 = [s for n in self.switch.router_ospf.neighbor_list for s in switch_list if n.id == s.loop0_ip ]
+        #v6 neighbors
+        self.ospf_neighbors_v6 = [n.id for n in self.switch.router_ospf.neighbor_list_v6]
+        self.ospf_neighbors_address_vlan1_v6 = [s.vlan1_ipv6.split('/')[0] for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+        self.ospf_neighbors_address_loop0_v6 = [s.loop0_ipv6.split('/')[0] for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+        self.ospf_neighbors_address_loop0_v4 = [s.loop0_ip for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+        self.ospf_neighbors_swlist_v6 = [s for n in self.switch.router_ospf.neighbor_list_v6 for s in switch_list if n.id == s.loop0_ip ]
+        print(f"ospf neighbors vlan1 ipv6 address = {self.ospf_neighbors_address_vlan1_v6}")
+        print(f"ospf neighbors loop0 ipv6 address = {self.ospf_neighbors_address_loop0_v6}")
 
 
     def config_ibgp_mesh_direct(self):
@@ -1228,11 +1402,57 @@ class Router_BGP:
             """
             config_cmds_lines(dut,bgp_config)
 
+
+    def config_ibgp_mesh_svi_v6(self):
+        tprint(f"============== Configurating iBGP at {self.switch.name} ")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as 65000
+            set router-id {self.router_id }
+        end
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for n in self.ospf_neighbors_address_vlan1_v6:
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {n}
+                    set remote-as 65000
+                    set update-source vlan1
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
+    #gradually remove this procedue
     def show_config(self):
+        switch_show_cmd(self.switch.console,"show router bgp")
+
+    #gradually use this procedure to replace show_config defined above this line
+    def show_bgp_config(self):
+        switch_show_cmd(self.switch.console,"show router bgp")
+
+    def show_bgp_config_v6(self):
         switch_show_cmd(self.switch.console,"show router bgp")
 
     def config_ibgp_loopback_bfd(self,action):
         for n in self.ospf_neighbors: 
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {n}
+                    set bfd {action}
+                next
+                end
+            end
+            """
+            config_cmds_lines(self.switch.console,bgp_config)
+
+    def config_ibgp_loopback_bfd_v6(self,action):
+        for n in self.ospf_neighbors_address_loop0_v6: 
             bgp_config = f"""
             config router bgp
                 config neighbor
@@ -1268,6 +1488,186 @@ class Router_BGP:
             """
             config_cmds_lines(dut,bgp_config)
 
+    def config_ibgp_mesh_loopback_v6(self):
+        tprint(f"============== Configurating iBGP at {self.switch.name} ")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as 65000
+            set router-id {self.router_id }
+        end
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for n in self.ospf_neighbors_address_loop0_v6: 
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {n}
+                    set remote-as 65000
+                    set update-source loop0
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
+    def activate_ibgp_mesh_loopback_v6(self,*args,**kwargs):
+        address_family = kwargs["address_family"]
+
+        tprint(f"============== Activating address family for iBGPv6 neighbor at {self.switch.name} ")
+        dut=self.switch.console
+        if address_family == "v4":
+            for n in self.ospf_neighbors_address_loop0_v6: 
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                    edit {n}
+                        set activate enable
+                        set activate6 disable
+                    next
+                    end
+                end
+                """
+                config_cmds_lines(dut,bgp_config)
+        elif address_family == "v6":
+            for n in self.ospf_neighbors_address_loop0_v6: 
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                    edit {n}
+                        set activate disable
+                        set activate6 enable
+                    next
+                    end
+                end
+                """
+                config_cmds_lines(dut,bgp_config)
+
+    def activate_bgp_address_family(self,*args,**kwargs):
+        address_family = kwargs["address_family"]
+        interface = kwargs["interface"]
+
+        tprint(f"============== Activating address family for iBGPv6 neighbor at {self.switch.name} ")
+        dut=self.switch.console
+        if address_family == "v4" and interface == "svi":
+            for n in self.ospf_neighbors_address_vlan1_v4: 
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                    edit {n}
+                        set activate enable
+                        set activate6 disable
+                    next
+                    end
+                end
+                """
+                config_cmds_lines(dut,bgp_config)
+        elif address_family == "v6" and interface == "svi":
+            for n in self.ospf_neighbors_address_vlan1_v6: 
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                    edit {n}
+                        set activate disable
+                        set activate6 enable
+                    next
+                    end
+                end
+                """
+                config_cmds_lines(dut,bgp_config)
+
+        elif address_family == "v6" and interface == "loopback":
+            for n in self.ospf_neighbors_address_loop0_v6: 
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                    edit {n}
+                        set activate disable
+                        set activate6 enable
+                    next
+                    end
+                end
+                """
+                config_cmds_lines(dut,bgp_config)
+
+        elif address_family == "v4" and interface == "loopback":
+            for n in self.ospf_neighbors_address_loop0_v4: 
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                    edit {n}
+                        set activate disable
+                        set activate6 enable
+                    next
+                    end
+                end
+                """
+                config_cmds_lines(dut,bgp_config)
+        else:
+            Info("Error: Did provide correct parameters for BGP address family activation")
+            Info("Parameters: address_family = 'v4' or 'v6, interface = 'svi' or 'loopback'")
+            Info("Please try again")
+
+
+    def activate_ibgp_mesh_svi_v6(self,*args,**kwargs):
+        address_family = kwargs["address_family"]
+
+        tprint(f"============== Activating address family for iBGPv6 neighbor at {self.switch.name} ")
+        dut=self.switch.console
+        if address_family == "v4":
+            for n in self.ospf_neighbors_address_vlan1_v6: 
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                    edit {n}
+                        set activate enable
+                        set activate6 disable
+                    next
+                    end
+                end
+                """
+                config_cmds_lines(dut,bgp_config)
+        elif address_family == "v6":
+            for n in self.ospf_neighbors_address_vlan1_v6: 
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                    edit {n}
+                        set activate disable
+                        set activate6 enable
+                    next
+                    end
+                end
+                """
+                config_cmds_lines(dut,bgp_config)
+
+     
+
+    def config_ibgp_mesh_loopback_v4(self):
+        tprint(f"============== Configurating iBGP at {self.switch.name} ")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as 65000
+            set router-id {self.router_id }
+        end
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for n in self.ospf_neighbors_address_loop0_v4: 
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {n}
+                    set remote-as 65000
+                    set update-source loop0
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
     def config_ebgp_mesh_direct(self):
         tprint(f"============== Configurating eBGP mesh at {self.switch.name} ")
         dut=self.switch.console
@@ -1284,6 +1684,52 @@ class Router_BGP:
                 config neighbor
                 edit {switch.vlan1_ip}
                     set remote-as {switch.ebgp_as}
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
+    def config_ebgp_mesh_svi_v6(self):
+        tprint(f"============== Configurating eBGP v6 mesh over SVI at {self.switch.name} ")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as {self.switch.ebgp_as}
+            set router-id {self.router_id }
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for sw in self.ospf_neighbors_swlist_v6:
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {sw.vlan1_ipv6.split('/')[0]}
+                    set remote-as {sw.ebgp_as}
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
+
+
+    def config_ebgp_mesh_svi_v4(self):
+        tprint(f"============== Configurating eBGP v4 mesh over SVI at {self.switch.name} ")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as {self.switch.ebgp_as}
+            set router-id {self.router_id }
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for sw in self.ospf_neighbors_swlist_v4:
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {sw.vlan1_ip}
+                    set remote-as {sw.ebgp_as}
                 next
                 end
             end
@@ -1315,6 +1761,58 @@ class Router_BGP:
             """
             config_cmds_lines(dut,bgp_config)
 
+    def config_ebgp_mesh_multihop_v6(self):
+        tprint(f"============== Configurating eBGP multihop v6 mesh over loopback at {self.switch.name} ")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as {self.switch.ebgp_as}
+            set router-id {self.router_id }
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for sw in self.ospf_neighbors_swlist_v6:
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {sw.loop0_ipv6.split('/')[0]}
+                    set remote-as {sw.ebgp_as}
+                    set ebgp-enforce-multihop enable
+                    set ebgp-multihop-ttl 3
+                    set update-source loop0
+                    set 
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
+    def config_ebgp_mesh_multihop_v4(self):
+        tprint(f"============== Configurating eBGP multihop v6 mesh over loopback at {self.switch.name} ")
+        dut=self.switch.console
+        bgp_config = f"""
+        config router bgp
+            set as {self.switch.ebgp_as}
+            set router-id {self.router_id }
+        end
+        """
+        config_cmds_lines(dut,bgp_config)
+        for sw in self.ospf_neighbors_swlist_v6:
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                edit {sw.loop0_ipv4}
+                    set remote-as {sw.ebgp_as}
+                    set ebgp-enforce-multihop enable
+                    set ebgp-multihop-ttl 3
+                    set update-source loop0
+                    set 
+                next
+                end
+            end
+            """
+            config_cmds_lines(dut,bgp_config)
+
     def config_ebgp_ixia(self,ixia_port):
         tprint(f"============== Configurating eBGP peer relationship to ixia {self.switch.name} ")
 
@@ -1333,6 +1831,26 @@ class Router_BGP:
         """
         config_cmds_lines(self.switch.console,bgp_config)
         return True
+
+    def config_ebgp_ixia_v6(self,*args,**kwargs):
+        tprint(f"============== Configurating eBGP peer relationship to ixia {self.switch.name} ")
+        ixia_port = kwargs["ixia_port"]
+        ixia_as = kwargs["ixia_as"]
+        ixia_ip,ixia_mask = seperate_ip_mask(ixia_port[6])
+        if ixia_ip == None:
+            return False
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+            edit {ixia_ip}
+                set remote-as {ixia_as}
+            next
+            end
+        end
+        """
+        config_cmds_lines(self.switch.console,bgp_config)
+        return True
+
 
     def config_redistribute_connected(self):
         tprint(f"============== Redistrubte connected to BGP at {self.switch.name} ")
@@ -1408,12 +1926,85 @@ class Router_BGP:
         dut=self.switch.console
         switch_show_cmd(dut,"get router info bgp summary")
 
+    def show_bgp_summary_v6(self):
+        dut=self.switch.console
+        switch_show_cmd(dut,"get router info6 bgp summary")
 
     def clear_config(self):
         neighbor_list = get_switch_show_bgp(self.switch.console)
         print(neighbor_list)
         network_list = get_bgp_network_config(self.switch.console)
         agg_list = get_bgp_aggregate_address_config(self.switch.console)
+        for n in neighbor_list:
+            config = f"""
+            config router bgp
+                config neighbor
+                delete {n}
+                end
+                end
+            """
+            config_cmds_lines(self.switch.console,config)
+
+        for n in network_list:
+            config = f"""
+            config router bgp
+                config network
+                delete {n}
+                end
+                end
+            """
+            config_cmds_lines(self.switch.console,config)
+
+        for n in agg_list:
+            config = f"""
+            config router bgp
+                config aggregate-address
+                delete {n}
+                end
+                end
+            """
+            config_cmds_lines(self.switch.console,config)
+
+        bgp_config = f"""
+        config router bgp
+            unset as 
+            unset keepalive-timer
+            unset holdtime-timer
+            unset always-compare-med
+            unset bestpath-as-path-ignore 
+            unset bestpath-cmp-confed-aspath
+            unset bestpath-cmp-routerid
+            unset bestpath-med-confed
+            unset bestpath-med-missing-as-worst
+            unset client-to-client-reflection
+            unset dampening
+            unset deterministic-med
+            unset enforce-first-as
+            unset fast-external-failover
+            unset log-neighbor-changes
+            unset cluster-id
+            unset confederation-identifier
+            unset default-local-preference
+            unset scan-time
+            unset maximum-paths-ebgp
+            unset bestpath-aspath-multipath-relax
+            unset maximum-paths-ibgp
+            unset distance-external
+            unset distance-internal
+            unset distance-local
+            unset graceful-stalepath-time 
+            end
+        """
+        config_cmds_lines(self.switch.console,bgp_config)
+
+    def clear_config_all(self):
+        self.clear_config_v6()
+
+    def clear_config_v6(self):
+        neighbor_list = get_switch_show_bgp_v6(self.switch.console)
+        print(neighbor_list)
+        network_list = get_bgp_network_config_v6(self.switch.console)
+        agg_list = get_bgp_aggregate_address_config_v6(self.switch.console)
         for n in neighbor_list:
             config = f"""
             config router bgp
@@ -1523,7 +2114,8 @@ class FortiSwitch:
         self.cfg_file = dut_dir['cfg'] 
         self.mgmt_ip = dut_dir['mgmt_ip'] 
         self.mgmt_mask = dut_dir['mgmt_mask']  
-        self.loop0_ip = dut_dir['loop0_ip']  
+        self.loop0_ip = dut_dir['loop0_ip'] 
+        self.loop0_ipv4 = dut_dir['loop0_ip']  #have a duplicate member just for convenience
         self.loop0_ipv6 = dut_dir['loop0_ipv6']
         self.rid = self.loop0_ip
         self.vlan1_ip = dut_dir['vlan1_ip'] 
@@ -1593,8 +2185,21 @@ class FortiSwitch:
         self.router_ospf.show_protocol_states()
         self.router_bgp.show_protocol_states()
 
+    def show_routing_v6(self):
+        self.show_routing_table_v6()
+        self.router_ospf.show_protocol_states_v6()
+        self.router_bgp.show_bgp_protocol_states_v6()
+
     def show_routing_table(self):
-        switch_show_cmd(self.console,"get router info routing-table all ")
+        switch_show_cmd(self.console,"get router info routing-table all")
+        switch_show_cmd(self.console,"get router info routing-table ospf")
+        switch_show_cmd(self.console,"get router info routing-table bgp ")
+
+    def show_routing_table_v6(self):
+        switch_show_cmd(self.console,"get router info6 routing-table")
+        switch_show_cmd(self.console,"get router info6 routing-table ospf")
+        switch_show_cmd(self.console,"get router info6 routing-table bgp")
+
 
     def factory_reset_nologin(self):
         switch_factory_reset_nologin(self.dut_dir)

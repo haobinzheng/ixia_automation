@@ -29,6 +29,7 @@ from ixia_restpy_lib_v2 import *
 ################################################################################
 
 CLEAN_ALL = False
+CLEAN_BGP = True
 
 #sys.stdout = Logger("Log/bgp_testing.log")
 
@@ -348,49 +349,187 @@ if testcase == 1 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 601 or test_all:
-	testcase = 601
+if testcase == 6011 or test_all:
+	testcase = 6011
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "Test IPv6 iBGP via loopbacks"
+	description = "Test IPv6 iBGP via loopbacks IPv6 address"
 	print_test_subject(testcase,description)
 	if CLEAN_ALL:
 		switches_clean_up(switches)
-	else:
+	elif CLEAN_BGP:
 		for switch in switches:
-			switch.router_bgp.clear_config()
+			switch.router_bgp.clear_config_v6()
+	else:
+		pass
 
 	for switch in switches:
 		switch.show_switch_info()
 		switch.router_ospf.basic_config_v6()
-	console_timer(20,msg="After configuring ospf, wait for 20 sec")
+		switch.router_ospf.basic_config()
+	console_timer(20,msg="After configuring ospfv6, wait for 20 sec")
 
 	for switch in switches:
 		switch.router_ospf.neighbor_discovery_v6()
 		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
 		switch.router_bgp.config_ibgp_mesh_loopback_v6() #stop here until code is available
 
-	console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+	console_timer(30,msg="After configuring iBGPv6 sessions via loopbacks, wait for 30s")
 	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+		switch.router_bgp.show_bgp_summary_v6()
+
+	for switch in switches:
+		switch.router_bgp.config_ibgp_loopback_bfd_v6('enable')
+
+	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && enable BFD, wait for 20s =====")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.show_routing_v6()
+
+	check_bgp_test_result_v6(testcase,description,switches)
+
+	for switch in switches:
+		switch.router_bgp.config_ibgp_loopback_bfd_v6('disable')
+
+	console_timer(20,msg="=======After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s ======")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.show_routing_v6()
+
+	check_bgp_test_result_v6(testcase,description,switches)
+
+
+if testcase == 6012 or test_all:
+	testcase = 6012
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Test IPv6 iBGP via loopbacks IPv4 and IPv6 addresses"
+	print_test_subject(testcase,description)
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_v6()
+	else:
+		pass
+
+	ospf_config = False
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery()
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		switch.router_bgp.update_ospf_neighbors(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config:
+		console_timer(20,msg="After configuring ospfv6, wait for 20 sec")
+
+	for switch in switches:  
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_ospf.neighbor_discovery()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		switch.router_bgp.update_ospf_neighbors(sw_list=switches)
+		switch.router_bgp.config_ibgp_mesh_loopback_v6() 
+		switch.router_bgp.config_ibgp_mesh_loopback_v4()  
+	console_timer(30,msg="After configuring iBGPv6 sessions via loopbacks, wait for 30s")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+		switch.router_bgp.show_bgp_summary_v6()
+
+	for switch in switches:
+		switch.router_bgp.config_ibgp_loopback_bfd_v6('enable')
+
+	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && enable BFD, wait for 20s =====")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.show_routing_v6()
+
+	check_bgp_test_result_v6(testcase,description,switches)
+
+	for switch in switches:
+		switch.router_bgp.config_ibgp_loopback_bfd_v6('disable')
+
+	console_timer(20,msg="=======After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s ======")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.show_routing_v6()
+
+	check_bgp_test_result_v6(testcase,description,switches)
+
+
+if testcase == 6013 or test_all:
+	testcase = 6013
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Test IPv6 iBGP via loopbacks IPv4 and IPv6 addresses, alternate activate and activate6"
+	print_test_subject(testcase,description)
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_v6()
+	else:
+		pass
+
+	ospf_config = False
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery()
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		switch.router_bgp.update_ospf_neighbors(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
 		switch.router_ospf.show_ospf_neighbors()
+
+	for switch in switches:  
+		switch.router_ospf.neighbor_discovery()
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		switch.router_bgp.update_ospf_neighbors(sw_list=switches)
+		switch.router_bgp.config_ibgp_mesh_loopback_v6() 
+		switch.router_bgp.config_ibgp_mesh_loopback_v4()  
+	console_timer(30,msg="After configuring iBGPv6 sessions via loopbacks, wait for 30s")
+
+	for switch in switches:  
+		switch.router_bgp.activate_ibgp_mesh_loopback_v6(address_family = "v4") 
+	console_timer(30,msg="After activing address_family on iBGPv6 sessions via loopbacks, wait for 30s")
+
+	for switch in switches:
 		switch.router_bgp.show_bgp_summary()
-
-	for switch in switches:
-		switch.router_bgp.config_ibgp_loopback_bfd('enable')
-
-	console_timer(20,msg="After configuring iBGP sessions via loopbacks, wait for 20s")
-	for switch in switches:
-		switch.router_ospf.show_ospf_neighbors()
-		switch.router_bgp.show_bgp_summary()
-
-	for switch in switches:
-		switch.router_bgp.config_ibgp_loopback_bfd('disable')
-
-	console_timer(20,msg="After configuring iBGP sessions via loopbacks, wait for 20s")
-	for switch in switches:
-		switch.show_routing()
-
 	check_bgp_test_result(testcase,description,switches)
 
+	for switch in switches:  
+		switch.router_bgp.activate_ibgp_mesh_loopback_v6(address_family = "v6") 
+	console_timer(30,msg="After activing address_family on iBGPv6 sessions via loopbacks, wait for 30s")
+
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+	check_bgp_test_result_v6(testcase,description,switches)
 
 	#sys.stdout.close()
 
@@ -419,7 +558,167 @@ if testcase == 2 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
+if testcase == 6021 or test_all:
+	testcase = 6021
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "iBGP v6 SVI interface"
+	print_test_subject(testcase,description)
+
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_v6()
+	else:
+		pass
+
+	ospf_config = False
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config = True
+
+		else:
+			Info(f"All OSPFve neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config:
+		console_timer(20,msg="After configuring ospfv6, wait for 20 sec")
+
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+
+
+	for switch in switches:  
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		switch.router_bgp.config_ibgp_mesh_svi_v6()
+
+	console_timer(60,msg="After configuring iBGP sessions, wait for 60s")
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+	check_bgp_test_result_v6(testcase,description,switches)
+
+
+if testcase == 6022 or test_all:
+	testcase = 6022
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "iBGP v6 and v4 SVI interface"
+	print_test_subject(testcase,description)
+
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_v6()
+	else:
+		pass
+
+	ospf_config = False
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config = True
+
+		else:
+			Info(f"All OSPFve neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config:
+		console_timer(20,msg="After configuring ospfv6, wait for 20 sec")
+
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+
+
+	for switch in switches:  
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		switch.router_bgp.config_ibgp_mesh_svi_v6()
+		switch.router_ospf.neighbor_discovery()
+		switch.router_bgp.config_ibgp_mesh_direct()
+
+	console_timer(60,msg="After configuring iBGP sessions, wait for 60s")
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+
+	check_bgp_test_result(testcase,description,switches)
+	check_bgp_test_result_v6(testcase,description,switches)
+
 	#sys.stdout.close()
+
+if testcase == 6023 or test_all:
+	testcase = 6023
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "iBGP on v6 and v4 SVI interface, alternate address faimily"
+	print_test_subject(testcase,description)
+
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_v6()
+	else:
+		pass
+
+	ospf_config = False
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery()
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		switch.router_bgp.update_ospf_neighbors(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+
+
+	for switch in switches:  
+		switch.router_ospf.neighbor_discovery_v6()
+		switch.router_ospf.neighbor_discovery()
+		switch.router_bgp.update_ospf_neighbors_v6(sw_list=switches)
+		switch.router_bgp.update_ospf_neighbors(sw_list=switches)
+		switch.router_bgp.config_ibgp_mesh_svi_v6()
+		switch.router_bgp.config_ibgp_mesh_direct()
+
+	console_timer(60,msg="After configuring iBGP sessions, wait for 60s")
+
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+
+	for switch in switches:  
+		switch.router_bgp.activate_ibgp_mesh_svi_v6(address_family = "v4") 
+	console_timer(30,msg="After activing address_family on iBGPv6 sessions via loopbacks, wait for 30s")
+
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary()
+	check_bgp_test_result(testcase,description,switches)
+
+	for switch in switches:  
+		switch.router_bgp.activate_ibgp_mesh_svi_v6(address_family = "v6") 
+	console_timer(30,msg="After activing address_family on iBGPv6 sessions via loopbacks, wait for 30s")
+
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+	check_bgp_test_result_v6(testcase,description,switches)
+
+	check_bgp_test_result(testcase,description,switches)
+
+	check_bgp_test_result_v6(testcase,description,switches)
 
 if testcase == 3 or test_all:
 	testcase = 3
@@ -523,9 +822,11 @@ if testcase == 6 or test_all:
 
 	if CLEAN_ALL:
 		switches_clean_up(switches)
-	else:
+	elif CLEAN_BGP:
 		for switch in switches:
-			switch.router_bgp.clear_config()
+			switch.router_bgp.clear_config_v6()
+	else:
+		pass
 
 	for switch in switches:
 		switch.vlan_neighors(switches)
@@ -534,6 +835,182 @@ if testcase == 6 or test_all:
 	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
 	for switch in switches:
 		switch.show_routing()
+
+if testcase == 6061 or test_all:
+	testcase = 6061
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "eBGP v6 direct connection via SVI interfaces"
+	print_test_subject(testcase,description)
+
+	# Clean up configuration before start testing
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_all()
+	else:
+		pass
+
+	ospf_config_v4 = False
+	ospf_config_v6 = False
+	#Config OSPF infra
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_all()
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config_v4 = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config_v6 = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config_v4 or ospf_config_v6:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+
+	#update IPv4 and IPv6 ospf neighbors after configuring ospf 
+	Info("=============== Updating OSPF Config and Neighbor Information ==========")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_all()
+		print("----------Discovering ospf neighbor ---------")
+		switch.router_ospf.neighbor_discovery_all()
+		print("----------Updating ospf neighbor database  ---------")
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+
+	for switch in switches:
+		switch.router_bgp.config_ebgp_mesh_svi_v6()
+	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+	# for switch in switches:
+	# 	switch.show_routing_v6()
+	check_bgp_test_result_v6(testcase,description,switches)
+
+if testcase == 6062 or test_all:
+	testcase = 6062
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "eBGP v4 and v6 direct connection via SVI interfaces"
+	print_test_subject(testcase,description)
+
+	# Clean up configuration before start testing
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_all()
+	else:
+		pass
+
+	ospf_config_v4 = False
+	ospf_config_v6 = False
+	#Config OSPF infra
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_all()
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config_v4 = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config_v6 = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config_v4 or ospf_config_v6:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+
+	#update IPv4 and IPv6 ospf neighbors after configuring ospf 
+	Info("=============== Updating OSPF Config and Neighbor Information ==========")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_all()
+		print("----------Discovering ospf neighbor ---------")
+		switch.router_ospf.neighbor_discovery_all()
+		print("----------Updating ospf neighbor database  ---------")
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+
+	for switch in switches:
+		switch.router_bgp.config_ebgp_mesh_svi_v4()
+		switch.router_bgp.config_ebgp_mesh_svi_v6()
+	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+	# for switch in switches:
+	# 	switch.show_routing_v6()
+	check_bgp_test_result_v6(testcase,description,switches)
+
+if testcase == 6063 or test_all:
+	testcase = 6063
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "eBGP v4 and v6 direct connection via SVI interfaces"
+	print_test_subject(testcase,description)
+
+	# Clean up configuration before start testing
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_all()
+	else:
+		pass
+
+	ospf_config_v4 = False
+	ospf_config_v6 = False
+	#Config OSPF infra
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_all()
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config_v4 = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config_v6 = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config_v4 or ospf_config_v6:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+
+	#update IPv4 and IPv6 ospf neighbors after configuring ospf 
+	Info("=============== Updating OSPF Config and Neighbor Information ==========")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_all()
+		print("----------Discovering ospf neighbor ---------")
+		switch.router_ospf.neighbor_discovery_all()
+		print("----------Updating ospf neighbor database  ---------")
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+
+	for switch in switches:
+		switch.router_bgp.config_ebgp_mesh_svi_v4()
+		switch.router_bgp.config_ebgp_mesh_svi_v6()
+	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+	for switch in switches:
+		switch.show_routing_v6()
+
+
+	for switch in switches:  
+		switch.router_bgp.activate_bgp_address_family(address_family = "v4",interface="svi") 
+	console_timer(30,msg="After activing address_family on iBGPv6 sessions via loopbacks, wait for 30s")
+
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary()
+	check_bgp_test_result(testcase,description,switches)
+	check_bgp_test_result_v6(testcase,description,switches)
+
+	for switch in switches:  
+		switch.router_bgp.activate_bgp_address_family(address_family = "v6",interface="svi") 
+	console_timer(30,msg="After activing address_family on iBGPv6 sessions via loopbacks, wait for 30s")
+
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+	check_bgp_test_result_v6(testcase,description,switches)
+	check_bgp_test_result(testcase,description,switches)
+
+	 
+
 
 if testcase == 7 or test_all:
 	testcase = 7
@@ -849,8 +1326,8 @@ if testcase == 10 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 610 or test_all:
-	testcase = 610
+if testcase == 6101 or test_all:
+	testcase = 6101
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Basic eBGP IPv6 peered to IXIA and traffic forwarding"
 	print_test_subject(testcase,description)
@@ -867,6 +1344,33 @@ if testcase == 610 or test_all:
     [ixChassisIpList[0], 2, 16,"00:15:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
     ]
 
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_all()
+	else:
+		pass
+
+	ospf_config_v4 = False
+	ospf_config_v6 = False
+	#Config OSPF infra
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_all()
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config_v4 = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config_v6 = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config_v4 or ospf_config_v6:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
 	 
 	# if CLEAN_ALL:
 	# 	switches_clean_up(switches)
@@ -889,10 +1393,12 @@ if testcase == 610 or test_all:
 	# 	switch.router_ospf.show_ospf_neighbors()
 	# 	switch.router_bgp.show_bgp_summary()
 	
-	# for switch,ixia_port_info in zip(switches,portList_v4_v6):
-	# 	if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
-	# 		tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
-	# 		exit()
+	ixia_ipv6_as_list = [101,102,103,104,105,106]
+	i = 0 
+	for switch,ixia_port_info,ixia_as in zip(switches,portList_v4_v6,ixia_ipv6_as_list):
+		if switch.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
 
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 
@@ -951,6 +1457,112 @@ if testcase == 11 or test_all:
 		switch.show_routing()
 
 	check_bgp_test_result(testcase,description,switches)
+
+
+if testcase == 6111 or test_all:
+	testcase = 6111
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "eBGP multi-hop v6 via loopback interfaces"
+	print_test_subject(testcase,description)
+
+	# Clean up configuration before start testing
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_all()
+	else:
+		pass
+
+	ospf_config_v4 = False
+	ospf_config_v6 = False
+	#Config OSPF infra
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_all()
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config_v4 = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config_v6 = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config_v4 or ospf_config_v6:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+
+	#update IPv4 and IPv6 ospf neighbors after configuring ospf 
+	Info("=============== Updating OSPF Config and Neighbor Information ==========")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_all()
+		print("----------Discovering ospf neighbor ---------")
+		switch.router_ospf.neighbor_discovery_all()
+		print("----------Updating ospf neighbor database  ---------")
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+
+	for switch in switches:
+		switch.router_bgp.config_ebgp_mesh_multihop_v6()
+	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+	# for switch in switches:
+	# 	switch.show_routing_v6()
+	check_bgp_test_result_v6(testcase,description,switches)
+
+if testcase == 6112 or test_all:
+	testcase = 6112
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "eBGP multi-hop v6 via loopback interfaces"
+	print_test_subject(testcase,description)
+
+	# Clean up configuration before start testing
+	if CLEAN_ALL:
+		switches_clean_up(switches)
+	elif CLEAN_BGP:
+		for switch in switches:
+			switch.router_bgp.clear_config_all()
+	else:
+		pass
+
+	ospf_config_v4 = False
+	ospf_config_v6 = False
+	#Config OSPF infra
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_all()
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=5):
+			switch.router_ospf.basic_config()
+			ospf_config_v4 = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=5):
+			switch.router_ospf.basic_config_v6()
+			ospf_config_v6 = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config_v4 or ospf_config_v6:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+
+	#update IPv4 and IPv6 ospf neighbors after configuring ospf 
+	Info("=============== Updating OSPF Config and Neighbor Information ==========")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_all()
+		print("----------Discovering ospf neighbor ---------")
+		switch.router_ospf.neighbor_discovery_all()
+		print("----------Updating ospf neighbor database  ---------")
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+
+	for switch in switches:
+		switch.router_bgp.config_ebgp_mesh_multihop_v6()
+		switch.router_bgp.config_ebgp_mesh_multihop_v4()
+	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+	# for switch in switches:
+	# 	switch.show_routing_v6()
+	check_bgp_test_result_v6(testcase,description,switches)
+
+
 
 if testcase == 12 or test_all:
 	testcase = 12
@@ -1325,6 +1937,95 @@ if testcase == 14 or test_all:
 	myixia.start_protocol(wait=40)
 
 	check_bgp_test_result(testcase,description,switches)
+
+if testcase == 614 or test_all:
+	testcase = 614
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "BGPv6 policy and route filtering: Origin attribute. "
+	print_test_subject(testcase,description)
+
+	apiServerIp = '10.105.19.19'
+	ixChassisIpList = ['10.105.241.234']
+
+	portList_v4_v6 = [
+	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 2, 16,"00:15:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+    ]
+
+	 
+	# if CLEAN_ALL:
+	# 	switches_clean_up(switches)
+	# else:
+	# 	for switch in switches:
+	# 		switch.router_bgp.clear_config()
+	 
+	# for switch in switches:
+	# 	switch.show_switch_info()
+	# 	switch.router_ospf.basic_config()
+	# console_timer(20,msg="After configuring ospf, wait for 20 sec")
+
+	# for switch in switches:
+	# 	switch.router_ospf.neighbor_discovery()
+	# 	switch.router_bgp.update_ospf_neighbors()
+	# 	switch.router_bgp.config_ibgp_mesh_loopback()
+
+	# console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+	# for switch in switches:
+	# 	switch.router_ospf.show_ospf_neighbors()
+	# 	switch.router_bgp.show_bgp_summary()
+	
+	# for switch,ixia_port_info in zip(switches,portList_v4_v6):
+	# 	if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+	# 		tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+	# 		exit()
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+ 	
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::211","2001:102:1:1::211","2001:102:1:1::1"]
+	i = 1
+	for topo,net in zip(myixia.topologies,ipv6_networks):
+		topo.bgpv6_network = net
+		topo.bgp_as =  100 + i
+		i += 1
+
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp_v6(dut_ip=switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=100)
+		i += 1
+ 
+	myixia.topologies[0].change_med_v6(1000)
+	myixia.topologies[1].change_med_v6(2000)
+	myixia.topologies[2].change_med_v6(3000)
+	myixia.topologies[3].change_med_v6(4000)
+	myixia.topologies[4].change_med_v6(5000)
+	myixia.topologies[5].change_med_v6(6000)
+
+	myixia.start_protocol(wait=40)
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3",tracking_name="Tracking_3")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2",tracking_name="Tracking_4")
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5",tracking_name="Tracking_5")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4",tracking_name="Tracking_6")
+
+
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
+	check_bgp_test_result(testcase,description,switches)
+
 
 if testcase == 15 or test_all:
 	testcase = 15

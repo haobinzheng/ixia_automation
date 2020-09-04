@@ -91,6 +91,24 @@ def check_bgp_test_result(testcase,description,switches,**kwargs):
 
     tprint(f"====================== Test case #{testcase}:{description} has been {final_result} ==========\n\n")   
 
+def check_bgp_test_result_v6(testcase,description,switches,**kwargs):
+    if "test1" in kwargs:
+        result1 = kwargs["test1"]
+    else:
+        result1 = True
+    result = True
+    for switch in switches:
+        #switch.router_bgp.get_neighbors_summary()
+        switch.router_bgp.show_bgp_config_v6()
+        if not switch.router_bgp.check_bgp_neighbor_status_v6():
+            result = False
+    if result1 and result:
+        final_result = "Passed"
+    else:
+        final_result = "Failed"
+
+    tprint(f"====================== Test case #{testcase}:{description} has been {final_result} ==========\n\n")   
+
 def basic_config_aspath_list(dut):
 	config = """
 	config router aspath-list
@@ -2663,6 +2681,46 @@ def get_router_bgp_summary(dut):
 	#print(items_list)
 	return items_list
 
+def get_router_bgp_summary_v6(dut):
+# IPv4 Unicast Summary:
+# BGP router identifier 1.1.1.1, local AS number 65000 vrf-id 0
+# BGP table version 0
+# RIB entries 0, using 0 bytes of memory
+# Peers 4, using 83 KiB of memory
+
+# 2020-08-31 17:48:38 :: Neighbor        V         AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd^M
+# 2020-08-31 17:48:38 :: 1.1.1.1         4      65000    2278     311        0    0    0 02:48:22 NoNeg^M
+# 2020-08-31 17:48:38 :: 2.2.2.2         4      65000    2205     309        0    0    0 02:48:21 NoNeg^M
+# 2020-08-31 17:48:38 :: 3.3.3.3         4      65000    2077     307        0    0    0 02:48:20 NoNeg^M
+# 2020-08-31 17:48:38 :: 4.4.4.4         4      65000    2061     305        0    0    0 02:48:19 NoNeg^M
+# 2020-08-31 17:48:38 :: 5.5.5.5         4      65000    2086     304        0    0    0 02:48:17            0^M
+# 2020-08-31 17:48:38 :: 2001:1:1:1::1   4      65000       0       0        0    0    0    never       Active^M
+# 2020-08-31 17:48:38 :: 2001:2:2:2::2   4      65000       0       0        0    0    0    never       Active^M
+# 2020-08-31 17:48:38 :: 2001:3:3:3::3   4      65000       0       0        0    0    0    never       Active^M
+# 2020-08-31 17:48:38 :: 2001:4:4:4::4   4      65000       0       0        0    0    0    never       Active^M
+# 2020-08-31 17:48:38 :: 2001:5:5:5::5   4      65000       0       0        0    0    0    never       Active^M
+
+# Total number of neighbors 4
+
+    result = collect_show_cmd(dut,"get router info6 bgp summary")
+    items_list = []
+    headline_found = False
+    for line in result:
+        line = line.strip()
+        if "Neighbor" in line and "AS" in line and "MsgRcvd" in line:
+            heads = re.split('\\s+',line)
+            headline_found = True
+        elif headline_found == True and re.match(r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)',line) or re.match(r'([0-9]+\:+[0-9]+\:+[0-9]+\:+[0-9]+[0-9:]+)',line):
+            port_line_dict = {}
+            items = re.split('\\s+',line)
+            for k,v in zip(heads,items):
+                port_line_dict[k] = v
+            items_list.append(port_line_dict)
+        else:
+            pass
+    #print(items_list)
+    return items_list
+
 def get_router_info_ospf_neighbor(dut):
 	result = collect_show_cmd(dut,"get router info ospf neighbor all")
 	neighbor_list = []
@@ -2715,6 +2773,33 @@ def get_switch_show_bgp(dut):
  
 	return neighbor_list
 
+def get_switch_show_bgp_v6(dut):
+    result = collect_show_cmd(dut,"show router bgp")
+    neighbor_list = []
+    found_neighbor = False
+    for line in result:
+        if "config neighbor" in line:
+            found_neighbor = True
+            continue
+        elif found_neighbor and "edit" in line:
+            line = line.replace('\"','')
+            regex4 = r'edit\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)'
+            regex6 = r'edit\s+(([a-f0-9:]+:+)+[a-f0-9]+)'
+            matched4 = re.search(regex4,line)
+            matched6 = re.search(regex6,line)
+            if matched4:
+                neighbor = matched4.group(1)
+                neighbor_list.append(neighbor)
+            elif matched6:
+                neighbor = matched6.group(1)
+                neighbor_list.append(neighbor) 
+            else:
+                pass
+        else:
+            pass
+ 
+    return neighbor_list
+
 def get_bgp_network_config(dut):
 	result = collect_show_cmd(dut,"show router bgp")
 	item_list = []
@@ -2734,6 +2819,25 @@ def get_bgp_network_config(dut):
  
 	return item_list
 
+def get_bgp_network_config_v6(dut):
+    result = collect_show_cmd(dut,"show router bgp")
+    item_list = []
+    found_item = False
+    for line in result:
+        if "config network" in line:
+            found_item = True
+            continue
+        elif found_item and "edit" in line:
+            regex = r'edit\s+([0-9]+)'
+            matched = re.search(regex,line)
+            if matched:
+                item = matched.group(1)
+                item_list.append(item)
+        else:
+            pass
+ 
+    return item_list
+
 def get_bgp_aggregate_address_config(dut):
 	result = collect_show_cmd(dut,"show router bgp")
 	item_list = []
@@ -2752,6 +2856,25 @@ def get_bgp_aggregate_address_config(dut):
 			pass
  
 	return item_list
+
+def get_bgp_aggregate_address_config_v6(dut):
+    result = collect_show_cmd(dut,"show router bgp")
+    item_list = []
+    found_item = False
+    for line in result:
+        if "config aggregate-address6" in line:
+            found_item = True
+            continue
+        elif found_item and "edit" in line:
+            regex = r'edit\s+([0-9]+)'
+            matched = re.search(regex,line)
+            if matched:
+                item = matched.group(1)
+                item_list.append(item)
+        else:
+            pass
+ 
+    return item_list
 
 def get_switch_lldp_summary(dut):
 	result = collect_show_cmd(dut,"get switch lldp neighbors-summary")

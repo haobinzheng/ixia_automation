@@ -239,6 +239,9 @@ class IXIA_TOPOLOGY:
     def change_med(self,med_value):
         ixia_rest_set_med(pool=self.ipv4_pool,med=med_value, platform=self.ixia.testPlatform)
 
+    def change_med_v6(self,med_value):
+        ixia_rest_set_med_v6(pool=self.ipv6_pool,med=med_value, platform=self.ixia.testPlatform)
+
     def change_local_pref(self,value):
         ixia_rest_set_local_pref(pool=self.ipv4_pool,local=value, platform=self.ixia.testPlatform)
 
@@ -1271,6 +1274,18 @@ def ixia_rest_set_med(*args,**kwargs):
     testplatform = kwargs['platform']
 
     bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add()
+    #bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty
+    testplatform.info(bgpiprouteproperty.MultiExitDiscriminator.Values)
+    bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")
+    bgpiprouteproperty.MultiExitDiscriminator.Single(med)
+    testplatform.info(bgpiprouteproperty.MultiExitDiscriminator.Values)
+
+def ixia_rest_set_med_v6(*args,**kwargs):
+    ipv6PrefixPool = kwargs['pool']
+    med = kwargs['med']
+    testplatform = kwargs['platform']
+
+    bgpiprouteproperty = ipv6PrefixPool.BgpIPRouteProperty.add()
     #bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty
     testplatform.info(bgpiprouteproperty.MultiExitDiscriminator.Values)
     bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")

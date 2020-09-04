@@ -660,6 +660,7 @@ def sw_init_config_v6(*args, **kwargs):
         set secondary-IP enable 
         config ipv6
                 set ip6-address {vlan1_ipv6}
+                set ip6-allowaccess ping https ssh telnet
             end
         next
         config secondaryip 
@@ -675,6 +676,7 @@ def sw_init_config_v6(*args, **kwargs):
         set type loopback
             config ipv6
                 set ip6-address {loop0_ipv6}
+                set ip6-allowaccess ping https ssh telnet
             end
         next
      edit "internal"
@@ -683,6 +685,7 @@ def sw_init_config_v6(*args, **kwargs):
         set type physical
         config ipv6
                 set ip6-address {internal_v6}
+                set ip6-allowaccess ping https ssh telnet
             end
         next
     next
