@@ -15,176 +15,12 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 
-class Router_BFD:   
-    def __init__(self,*args,**kwargs):
-        self.switch = args[0]
-        self.dut = args[0]
-        self.peer_list_v6 = None
-        self.peer_list_v4 = None
-        self.peers_v6 = self.discover_bfd6_neighbors()
-        self.peers_v4 = self.discover_bfd4_neighbors()
-        
-    def discover_bfd6_neighbors(self):
-        if self.switch.is_fortinet() == False:
-            return None
-        dut = self.switch
-        neighbor_dict_list = self.get_bfd_neighbors(version="v6")
-        neighbor_list = []
-        for n in neighbor_dict_list:
-            neighbor = BFD_Peer(n)
-            neighbor_list.append(neighbor)
-        self.peer_list_v6 = neighbor_list
-        return neighbor_list
-
-    def discover_bfd4_neighbors(self):
-        if self.switch.is_fortinet() == False:
-            return None
-        dut = self.switch
-        neighbor_dict_list = self.get_bfd_neighbors(verson="v4")
-        neighbor_list = []
-        for n in neighbor_dict_list:
-            neighbor = BFD_Peer(n)
-            neighbor_list.append(neighbor)
-        self.peer_list_v4 = neighbor_list
-        return neighbor_list
-
-    def counte_peers_v6(self):
-        if self.switch.is_fortinet() == False:
-            return
-        total_count = 0
-        up_count = 0
-        down_count = 0
-        down_peer_list = []
-        for p in self.peer_list_v6:
-            total_count += 1
-            if p.status == "up":
-                up_count += 1
-            else:
-                down_count += 1
-                down_peer_list.append(p.peer)
-
-        self.up_count = up_count
-        self.down_count = down_count
-        self.down_peer_list = down_peer_list
-        self.total_count = total_count
-        print(f" =============== BFD Checking IPv6 Peer Status for {self.switch.name} =======")
-        print(f"    Total Number of Peer Found: {self.total_count}")
-        print(f"    Total Number of Peer Up: {self.up_count}")
-        print(f"    Total Number of Peer Down: {self.down_count}")
-        print(f"    Peers Down: {self.down_peer_list}")
-
-    def counte_peers_v4(self): #dont do v4 for now. the get router info bfd nei output is empty
-        up_count = 0
-        down_count = 0
-        down_peer_list = []
-        for p in self.peer_list_v4:
-            if p.status == "up":
-                up_count += 1
-            else:
-                down_count += 1
-                down_peer_list.append(p.peer)
-
-        self.up_count = up_count
-        self.down_count = down_count
-        self.down_peer_list = down_peer_list
-        print(f" =============== BFD Checking IPv4 Peer Status for {self.switch.name} =======")
-        print(f"    Total Number of Peer Up: self.up_count")
-        print(f"    Total Number of Peer Down: self.down_count")
-        print(f"    Peers Down: self.down_peer_list")
-
-    def get_bfd_neighbors(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return
-
-        if "version" in kwargs:
-            ver = kwargs['version']
-        else:
-            ver = "v4"
-        Info(f"==== {self.switch.name}: Discovering BFD Neighbors for {ver}")
-        dut = self.switch.console
-        if ver == "v6":
-            result = collect_show_cmd(dut,"get router info6 bfd neighbor")
-        else:
-            result = collect_show_cmd(dut,"get router info bfd neighbor")
-        new_peer = False
-        peer_dict_list = []
-        for line in result:
-            if "peer" in line and "multihop" in line and "local-address" in line:
-                neighbor_dict = {}
-                items = line.split()
-                neighbor_dict["peer"] = items[1]
-                neighbor_dict["local_address"] = items[4]
-                new_peer = True
-            elif new_peer and "ID" in line and "Remote" not in line:
-                neighbor_dict["id"] = [i.strip() for i in line.split(":")][1]
-            elif new_peer and "Remote ID" in line:
-                neighbor_dict["remote_id"] = [i.strip() for i in line.split(":")][1]
-            elif new_peer and "Ifp" in line:
-                neighbor_dict["interface"] = [i.strip() for i in line.split(":")][1]
-            elif new_peer and "Status" in line:
-                neighbor_dict["status"] = [i.strip() for i in line.split(":")][1]
-            elif new_peer and "Transmission interval" in line:  #this is the end of peer info
-                print(f"{self.switch.name}: get_bfd_neighbors(): neighbor_dict={neighbor_dict}")
-                peer_dict_list.append(neighbor_dict)
-                new_peer = False # mark the end of the peer
-        return peer_dict_list
-
-class BFD_Peer:
-    def __init__(self,*args,**kwargs):
-        neighbor_dict = args[0]
-        self.id = neighbor_dict["id"]
-        self.peer = neighbor_dict["peer"]
-        self.local_address = neighbor_dict["local_address"]
-        self.remote_id = neighbor_dict["remote_id"]
-        self.interface = neighbor_dict["interface"]
-        self.status = neighbor_dict["status"]
-     # 020-09-11 16:58:17 ::  peer 2001:2:2:2::2 multihop local-address 2001:6:6:6::6
-     # 020-09-11 16:58:17 ::      ID: 251844542
-     # 020-09-11 16:58:17 ::      Remote ID: 1561134723
-     # 020-09-11 16:58:17 ::      Ifp : vlan1
-     # 020-09-11 16:58:17 ::      Status: up
-     # 020-09-11 16:58:17 ::      Uptime: 47 second(s)
-     # 020-09-11 16:58:17 ::      Diagnostics: ok
-     # 020-09-11 16:58:17 ::      Remote diagnostics: ok
-     # 020-09-11 16:58:17 ::      Local timers:
-     # 020-09-11 16:58:17 ::          Detection Multiplier: 3
-     # 020-09-11 16:58:17 ::          Receive interval: 250ms
-     # 020-09-11 16:58:17 ::          Transmission interval: 250ms
-     # 020-09-11 16:58:17 ::      Remote timers:
-     # 020-09-11 16:58:17 ::          Detection Multiplier: 3
-     # 020-09-11 16:58:17 ::          Receive interval: 250ms
-     # 020-09-11 16:58:17 ::          Transmission interval: 250ms
-
 class BGP_networks:
     def __init__(self,*args,**kwargs):
         self.switches = args[0]
         self.routers = []
         for switch in self.switches:
             self.routers.append(switch.router_bgp)
-
-    def show_address_mappings(self):
-        arp_list = []
-        lloc_list = []
-        for switch in self.switches:
-            arp_list.append(switch.discover_sys_arp())
-            lloc_list.append(switch.discover_ipv6_neighbors())
-        print(arp_list)
-        print(lloc_list)
-
-        arp_mapping = {}
-        lloc_mapping = {}
-        for a in arp_list:
-            arp_mapping.update(a)
-        for a in lloc_list:
-            lloc_mapping.update(a)
-
-        print("==================== network wide ipv4 and link local address mapping =================")
-        for k,v in arp_mapping.items():
-            print(f"MAC Address: {k}")
-            print(f"    IPv4 address: {v}")
-            lloc = lloc_mapping[k]
-            print(f"    Link Local Address: {lloc}")
-
 
     def show_summary(self):
         for router in self.routers:
@@ -701,8 +537,6 @@ class Router_OSPF:
         self.dut = switch.console
 
     def basic_config(self):
-        if self.switch.is_fortinet() == False:
-            return 
         if self.switch.software_version == "6.2.0":
             ospf_config = f"""
             config router ospf
@@ -766,8 +600,6 @@ class Router_OSPF:
         config_cmds_lines(self.dut,ospf_config)
 
     def basic_config_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         ospf_config = f"""
             config router ospf6
             set router-id {self.switch.loop0_ip}
@@ -841,8 +673,6 @@ class Router_OSPF:
         self.neighbor_list = self.neighbor_discovery()
 
     def neighbor_discovery(self):
-        if self.switch.is_fortinet() == False:
-            return
         dut = self.dut
         neighbor_dict_list = get_router_info_ospf_neighbor(dut)
         neighbor_list = []
@@ -853,8 +683,6 @@ class Router_OSPF:
         return neighbor_list
 
     def neighbor_discovery_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         dut = self.dut
         neighbor_dict_list = get_router_info_ospf_neighbor_v6(dut)
         neighbor_list = []
@@ -865,8 +693,6 @@ class Router_OSPF:
         return neighbor_list
 
     def neighbor_discovery_all(self):
-        if self.switch.is_fortinet() == False:
-            return 
         dut = self.dut
 
         #discover IPv4 ospf neighbors
@@ -886,20 +712,14 @@ class Router_OSPF:
         self.neighbor_list_v6 = neighbor_list
 
     def show_ospf_neighbors(self):
-        if self.switch.is_fortinet() == False:
-            return 
         for neighbor in self.neighbor_list:
             neighbor.show_details()
 
     def show_ospf_neighbors_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         for neighbor in self.neighbor_list_v6:
             neighbor.show_details()
 
     def show_ospf_neighbors_all(self):
-        if self.switch.is_fortinet() == False:
-            return 
         for neighbor in self.neighbor_list:
             neighbor.show_details()
         for neighbor in self.neighbor_list_v6:
@@ -965,8 +785,6 @@ class Router_OSPF:
         config_cmds_lines(self.dut,ospf_config)
 
     def ospf_neighbor_all_up_v4(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return 
         neighbor_num = 0
         if "num" in kwargs:
             expected_neighbor_nums = kwargs['num']
@@ -993,8 +811,6 @@ class Router_OSPF:
      # 020-08-31 22:07:44 :: 6.6.6.6           1    00:00:38   Twoway/DROther       3d09:33:35 vlan1[DROther]
 
     def ospf_neighbor_all_up_v6(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return
         neighbor_num = 0
         if "num" in kwargs:
             expected_neighbor_nums = kwargs['num']
@@ -1354,46 +1170,6 @@ class BGP_Neighbor:
         """
         config_cmds_lines(self.switch.console,config)
 
-
-
-class BGP_Network:
-
-    # 548D-R8-33 # get router info6 bgp network
-    # router_daemon_sync_timezone:43 not implemented
-    # BGP table version is 1130, local router ID is 6.6.6.6, vrf id 0
-    # Default local pref 100, local AS 65000
-    # Status codes:  s suppressed, d damped, h history, * valid, > best, = multipath,
-    #                i internal, r RIB-failure, S Stale, R Removed
-    # Nexthop codes: @NNN nexthop's vrf id, < announce-nh-self
-    # Origin codes:  i - IGP, e - EGP, ? - incomplete
-
-    #    Network          Next Hop            Metric LocPrf Weight Path
-    # *>i2001:101:1:1::1/128
-    #                     2001:10:1:1::213
-    #                                                   100      0 103 i
-    # *>i2001:101:1:1::2/128
-    #                     2001:10:1:1::213
-    #                                                   100      0 103 i
-    # *>i2001:101:1:1::3/128
-    #                     2001:10:1:1::213
-    #                                                   100      0 103 i
-    # *>i2001:101:1:1::4/128
-    #                     2001:10:1:1::213
-    #                                                   100      0 103 i
-    # *>i2001:101:1:1::5/128
-    #                     2001:10:1:1::213
-    #                                                   100      0 103 i
-    def __init__(self,*args,**kwargs):
-        self.router_bgp = kwargs["router_bgp"]
-        self.af = kwargs["af"]
-        self.network = None
-        self.next_hop = None
-        self.metric = None
-        self.local_preference = None
-        self.weight = None
-        self.path = None
-
-
 class Router_BGP:
     def __init__(self,*args,**kwargs):
         self.switch = args[0]
@@ -1416,195 +1192,7 @@ class Router_BGP:
         self.ospf_neighbors_address_vlan1_v6 =  None
         self.ospf_neighbors_address_loop0_v6 =  None
         self.ospf_neighbors_swlist_v6 =  None
-        self.bgp_config_neighbors = None #Need to be found by using find_bgp_config_neighbors(dut)
         #self.route_map = Router_route_map()
-
-    
-    def cisco_n9k_bgp(self):
-        config = """
-        router bgp 65000
-        router bgp 65000
-          router-id 10.10.10.10
-          address-family ipv4 unicast
-          neighbor 2001:1:1:1::1
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:2:2:2::2
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:3:3:3::3
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:4:4:4::4
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:5:5:5::5
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:6:6:6::6
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::1
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::2
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::3
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::4
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::5
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::6
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::213
-            remote-as 103
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::214
-            remote-as 104
-            address-family ipv6 unicast
-          neighbor fe80::6d5:90ff:fe2e:22a7
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::724c:a5ff:fea5:a219
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::926c:acff:fe0c:bceb
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::926c:acff:fe13:9575
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::926c:acff:fe6d:c951
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::ea1c:baff:fe88:d15f
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor 1.1.1.1
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 2.2.2.2
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 3.3.3.3
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 4.4.4.4
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 5.5.5.5
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 6.6.6.6
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 10.1.1.1
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.2
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.3
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.4
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.5
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.6
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.213
-            remote-as 103
-            address-family ipv4 unicast
-          neighbor 10.1.1.214
-            remote-as 104
-            address-family ipv4 unicast
-                        """
-        config_cmds_lines(self.switch.console,config)
-
-    def bgp_discover_networks(self,*args,**kwargs):  # Now it is just for V4
-        if "af" in kwargs:
-            af = kwargs['af']
-        else:
-            af = "v4"
-        dut = self.swwitch.console
-        if af == "v4":
-            result = collect_show_cmd(dut,"get router info bgp network")
-        elif af == "v6":
-            result = collect_show_cmd(dut,"get router info6 bgp network")
-        network_list = []
-        #    Network          Next Hop            Metric LocPrf Weight Path
-
-        network_regex = r"(^\*[\s=>i]+)(.+)"
-        line1_regex = r"BGP table version is ([0-9]+), local router ID is ([0-9\.]+[0-9]+), vrf id ([0-9]+)"
-        for line in result:
-            matched = re.match(line1_regex,line)
-            if matched:
-                table_version = matched.group(1)
-                router_id = matched.group(2)
-                vrf_id = matched.group(3)
-                continue
-            matched_network = re.matche(network_regex,line)
-            if matched_network:
-                net_or_nhop = matched.group(2)
-                net_or_nhop_list = net_or_nhop.split()
-                if len(net_of_nhop_list) == 6:
-                    if not network_dict == False:
-                        network_list.append(network_dict)
-                    network_dict = {}
-                    network_dict["path_list"] = []
-                    net_path_dict = {}
-                    network_dict["network"] = net_or_nhop_list[0]
-
-                    net_path_dict["nhop"] = net_or_nhop_list[1]
-                    net_path_dict["metric"] = net_or_nhop_list[2]
-                    net_path_dict["locprf"] = net_or_nhop_list[3]
-                    net_path_dict['weight']= net_or_nhop_list[4]
-                    net_path_dict["path"]= net_or_nhop_list[5]
-
-                    network_dict["path_list"].append(net_path_dict)
-
-                elif len(net_of_nhop_list) == 5:
-                    net_path_dict = {}
-
-                    net_path_dict["nhop"] = net_or_nhop_list[0]
-                    net_path_dict["metric"] = net_or_nhop_list[1]
-                    net_path_dict["locprf"] = net_or_nhop_list[2]
-                    net_path_dict['weight']= net_or_nhop_list[3]
-                    net_path_dict["path"]= net_or_nhop_list[4]
-
-                    network_dict["path_list"].append(net_path_dict)
-                else:
-                    return network_list
-        return network_list
-
 
     def bgp_config_unsuppress_map(self,map_name):
         for neighbor in self.bgp_neighbors_objs:
@@ -1654,8 +1242,6 @@ class Router_BGP:
 
 
     def check_neighbor_status(self):
-        if self.switch.is_fortinet() == False:
-            return 
         self.get_neighbors_summary()
         result = True
         for neighbor in self.bgp_neighbors_objs:
@@ -1710,44 +1296,24 @@ class Router_BGP:
         config_cmds_lines(self.switch.console,bgp_config)
 
     def show_protocol_states(self):
-        if self.switch.is_fortinet() == False:
-            return 
         self.show_bgp_config()
         self.show_bgp_summary()
         self.show_bgp_network()
-        self.show_bgp_routes()
-
-    def show_bgp_protocol_states_v4(self):
-        if self.switch.is_fortinet() == False:
-            return 
-        self.show_bgp_config()
-        self.show_bgp_summary()
-        self.show_bgp_network()
-        self.show_bgp_routes()
 
     def show_bgp_protocol_states_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         self.show_bgp_config_v6()
         self.show_bgp_summary_v6()
         self.show_bgp_network_v6()
-        self.show_bgp_routes_v6()
 
     def show_bgp_network(self):
-        if self.switch.is_fortinet() == False:
-            return 
         dut = self.switch.dut
         switch_show_cmd(self.switch.console,"get router info bgp network")
 
     def show_bgp_network_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         dut = self.switch.dut
-        switch_show_cmd(self.switch.console,"get router info6 bgp network")
+        switch_show_cmd(self.switch.console,"get router info bgp6 network")
 
     def get_neighbors_summary(self):
-        if self.switch.is_fortinet() == False:
-            return 
         bgp_neighor_list = get_router_bgp_summary(self.switch.console)
         items_list = []
         for n_dict in bgp_neighor_list:
@@ -1757,8 +1323,6 @@ class Router_BGP:
         return items_list   
 
     def get_bgp_neighbors_summary_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         items_list = []
         bgp_neighor_list = get_router_bgp_summary_v6(self.switch.console)
         if not bgp_neighor_list:
@@ -1773,8 +1337,6 @@ class Router_BGP:
         return items_list   
 
     def update_ospf_neighbors(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return
         if "sw_list" in kwargs:
             switch_list = kwargs['sw_list']
         else:
@@ -1783,8 +1345,6 @@ class Router_BGP:
         self.ospf_neighbors_address = [n.address for n in self.switch.router_ospf.neighbor_list]
 
     def update_ospf_neighbors_v6(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return 
         if "sw_list" in kwargs:
             switch_list = kwargs['sw_list']
         else:
@@ -1798,8 +1358,6 @@ class Router_BGP:
         print(f"ospf neighbors loop0 ipv6 address = {self.ospf_neighbors_address_loop0_v6}")
 
     def update_ospf_neighbors_all(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return 
         if "sw_list" in kwargs:
             switch_list = kwargs['sw_list']
         else:
@@ -1821,8 +1379,6 @@ class Router_BGP:
 
 
     def config_ibgp_mesh_direct(self):
-        if self.switch.is_fortinet() == False:
-            return 
         tprint(f"============== Configurating iBGP at {self.switch.name} ")
         dut=self.switch.console
         bgp_config = f"""
@@ -1847,8 +1403,6 @@ class Router_BGP:
 
 
     def config_ibgp_mesh_svi_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         tprint(f"============== Configurating iBGP at {self.switch.name} ")
         dut=self.switch.console
         bgp_config = f"""
@@ -1872,42 +1426,6 @@ class Router_BGP:
             """
             config_cmds_lines(dut,bgp_config)
 
-    def update_ipv6_neighbor_cache(self):
-        if self.switch.is_fortinet() == False:
-            return 
-        self.ipv6_neighbors = self.switch.ipv6_neighbors
-
-
-    def config_ibgp_mesh_link_local(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return 
-        tprint(f"============== Configurating iBGP via link local address at {self.switch.name} ")
-        if "interface" in kwargs:
-            interface = kwargs['interface']
-        else:
-            interface = "vlan1"
-        dut=self.switch.console
-        bgp_config = f"""
-        config router bgp
-            set as 65000
-            set router-id {self.router_id }
-        end
-        end
-        """
-        config_cmds_lines(dut,bgp_config)
-        for n in self.ipv6_neighbors:
-            bgp_config = f"""
-            config router bgp
-                config neighbor
-                edit {n}
-                    set remote-as 65000
-                    set interface {interface}
-                next
-                end
-            end
-            """
-            config_cmds_lines(dut,bgp_config)
-
     #gradually remove this procedue
     def show_config(self):
         switch_show_cmd(self.switch.console,"show router bgp")
@@ -1920,8 +1438,6 @@ class Router_BGP:
         switch_show_cmd(self.switch.console,"show router bgp")
 
     def config_ibgp_loopback_bfd(self,action):
-        if self.switch.is_fortinet() == False:
-            return 
         for n in self.ospf_neighbors: 
             bgp_config = f"""
             config router bgp
@@ -1933,30 +1449,8 @@ class Router_BGP:
             end
             """
             config_cmds_lines(self.switch.console,bgp_config)
-        switch_show_cmd(dut,"show router bgp")
-
-    def config_bgp_bfd_all_neighbors(self,action):
-        if self.switch.is_fortinet() == False:
-            return 
-
-        self.bgp_config_neighbors = find_bgp_config_neighbors(self.switch.console)
-        for n in self.bgp_config_neighbors: 
-            bgp_config = f"""
-            config router bgp
-                config neighbor
-                edit {n}
-                    set bfd {action}
-                next
-                end
-            end
-            """
-            config_cmds_lines(self.switch.console,bgp_config)
-
-        switch_show_cmd(self.switch.console,"show router bgp")
 
     def config_ibgp_loopback_bfd_v6(self,action):
-        if self.switch.is_fortinet() == False:
-            return 
         for n in self.ospf_neighbors_address_loop0_v6: 
             bgp_config = f"""
             config router bgp
@@ -1969,24 +1463,7 @@ class Router_BGP:
             """
             config_cmds_lines(self.switch.console,bgp_config)
 
-        switch_show_cmd(self.switch.console,"show router bgp")
-
-    def show_bfd_neighbor(self):
-        if self.switch.is_fortinet() == False:
-            return 
-        dut=self.switch.console
-        switch_show_cmd(dut,"get router info bfd neighbor")
-
-    def show_bfd_neighbor_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
-        dut=self.switch.console
-        switch_show_cmd(dut,"get router info6 bfd neighbor")
-            
-
     def config_ibgp_mesh_loopback(self):
-        if self.switch.is_fortinet() == False:
-            return 
         tprint(f"============== Configurating iBGP at {self.switch.name} ")
         dut=self.switch.console
         bgp_config = f"""
@@ -2004,8 +1481,6 @@ class Router_BGP:
                 edit {n}
                     set remote-as 65000
                     set update-source loop0
-                    set activate enable
-                    set activate6 enable
                 next
                 end
             end
@@ -2013,8 +1488,6 @@ class Router_BGP:
             config_cmds_lines(dut,bgp_config)
 
     def config_ibgp_mesh_loopback_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         tprint(f"============== Configurating iBGP at {self.switch.name} ")
         dut=self.switch.console
         bgp_config = f"""
@@ -2032,8 +1505,6 @@ class Router_BGP:
                 edit {n}
                     set remote-as 65000
                     set update-source loop0
-                    set activate enable
-                    set activate6 enable
                 next
                 end
             end
@@ -2041,8 +1512,6 @@ class Router_BGP:
             config_cmds_lines(dut,bgp_config)
 
     def activate_ibgp_mesh_loopback_v6(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return 
         address_family = kwargs["address_family"]
 
         tprint(f"============== Activating address family for iBGPv6 neighbor at {self.switch.name} ")
@@ -2077,14 +1546,10 @@ class Router_BGP:
     def activate_bgp_address_family(self,*args,**kwargs):
         address_family = kwargs["address_family"]
         interface = kwargs["interface"]
-        version = kwargs["version"]
-
-        if self.switch.is_fortinet() == False:
-            return 
 
         tprint(f"============== Activating address family for iBGPv6 neighbor at {self.switch.name} ")
         dut=self.switch.console
-        if address_family == "v4" and interface == "svi" and version == "v4" :
+        if address_family == "v4" and interface == "svi":
             for n in self.ospf_neighbors_address_vlan1_v4: 
                 bgp_config = f"""
                 config router bgp
@@ -2097,50 +1562,7 @@ class Router_BGP:
                 end
                 """
                 config_cmds_lines(dut,bgp_config)
-
-        elif address_family == "v4" and interface == "svi" and version == "v6" :
-            for n in self.ospf_neighbors_address_vlan1_v4: 
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                    edit {n}
-                        set activate disable
-                        set activate6 enable
-                    next
-                    end
-                end
-                """
-                config_cmds_lines(dut,bgp_config)
-
-        elif address_family == "v4" and interface == "svi" and version == "both" :
-            for n in self.ospf_neighbors_address_vlan1_v4: 
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                    edit {n}
-                        set activate enable
-                        set activate6 enable
-                    next
-                    end
-                end
-                """
-                config_cmds_lines(dut,bgp_config)
-
-        elif address_family == "v6" and interface == "svi" and version == "v4":
-            for n in self.ospf_neighbors_address_vlan1_v6: 
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                    edit {n}
-                        set activate enable
-                        set activate6 disable
-                    next
-                    end
-                end
-                """
-                config_cmds_lines(dut,bgp_config)
-
-        elif address_family == "v6" and interface == "svi" and version == "v6":
+        elif address_family == "v6" and interface == "svi":
             for n in self.ospf_neighbors_address_vlan1_v6: 
                 bgp_config = f"""
                 config router bgp
@@ -2154,22 +1576,7 @@ class Router_BGP:
                 """
                 config_cmds_lines(dut,bgp_config)
 
-        elif address_family == "v6" and interface == "svi" and version =="both":
-            for n in self.ospf_neighbors_address_vlan1_v6: 
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                    edit {n}
-                        set activate enable
-                        set activate6 enable
-                    next
-                    end
-                end
-                """
-                config_cmds_lines(dut,bgp_config)
-
-
-        elif address_family == "v6" and interface == "loopback" and version =="v6":
+        elif address_family == "v6" and interface == "loopback":
             for n in self.ospf_neighbors_address_loop0_v6: 
                 bgp_config = f"""
                 config router bgp
@@ -2183,69 +1590,13 @@ class Router_BGP:
                 """
                 config_cmds_lines(dut,bgp_config)
 
-        elif address_family == "v6" and interface == "loopback" and version =="v4":
-            for n in self.ospf_neighbors_address_loop0_v6: 
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                    edit {n}
-                        set activate enable
-                        set activate6 disable
-                    next
-                    end
-                end
-                """
-                config_cmds_lines(dut,bgp_config)
-
-        elif address_family == "v6" and interface == "loopback" and version == "both":
-            for n in self.ospf_neighbors_address_loop0_v6: 
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                    edit {n}
-                        set activate enable
-                        set activate6 enable
-                    next
-                    end
-                end
-                """
-                config_cmds_lines(dut,bgp_config)
-
-        elif address_family == "v4" and interface == "loopback" and version == "v4":
-            for n in self.ospf_neighbors_address_loop0_v4: 
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                    edit {n}
-                        set activate enable
-                        set activate6 disable
-                    next
-                    end
-                end
-                """
-                config_cmds_lines(dut,bgp_config)
-
-        elif address_family == "v4" and interface == "loopback" and version == "v6":
+        elif address_family == "v4" and interface == "loopback":
             for n in self.ospf_neighbors_address_loop0_v4: 
                 bgp_config = f"""
                 config router bgp
                     config neighbor
                     edit {n}
                         set activate disable
-                        set activate6 enable
-                    next
-                    end
-                end
-                """
-                config_cmds_lines(dut,bgp_config)
-
-        elif address_family == "v4" and interface == "loopback" and version == "both":
-            for n in self.ospf_neighbors_address_loop0_v4: 
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                    edit {n}
-                        set activate enable
                         set activate6 enable
                     next
                     end
@@ -2254,7 +1605,7 @@ class Router_BGP:
                 config_cmds_lines(dut,bgp_config)
         else:
             Info("Error: Did provide correct parameters for BGP address family activation")
-            Info("Parameters: address_family = 'v4/v6', interface = 'svi/loopback', version = 'v4/v6/both")
+            Info("Parameters: address_family = 'v4' or 'v6, interface = 'svi' or 'loopback'")
             Info("Please try again")
 
 
@@ -2293,8 +1644,6 @@ class Router_BGP:
      
 
     def config_ibgp_mesh_loopback_v4(self):
-        if self.switch.is_fortinet() == False:
-            return
         tprint(f"============== Configurating iBGP at {self.switch.name} ")
         dut=self.switch.console
         bgp_config = f"""
@@ -2312,8 +1661,6 @@ class Router_BGP:
                 edit {n}
                     set remote-as 65000
                     set update-source loop0
-                    set activate enable
-                    set activate6 enable
                 next
                 end
             end
@@ -2321,8 +1668,6 @@ class Router_BGP:
             config_cmds_lines(dut,bgp_config)
 
     def config_ebgp_mesh_direct(self):
-        if not switch.router_bgp.check_bgp_neighbor_status_v6():
-            result = False
         tprint(f"============== Configurating eBGP mesh at {self.switch.name} ")
         dut=self.switch.console
         bgp_config = f"""
@@ -2338,8 +1683,6 @@ class Router_BGP:
                 config neighbor
                 edit {switch.vlan1_ip}
                     set remote-as {switch.ebgp_as}
-                    set activate enable
-                    set activate6 enable
                 next
                 end
             end
@@ -2347,8 +1690,6 @@ class Router_BGP:
             config_cmds_lines(dut,bgp_config)
 
     def config_ebgp_mesh_svi_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         tprint(f"============== Configurating eBGP v6 mesh over SVI at {self.switch.name} ")
         dut=self.switch.console
         bgp_config = f"""
@@ -2364,8 +1705,6 @@ class Router_BGP:
                 config neighbor
                 edit {sw.vlan1_ipv6.split('/')[0]}
                     set remote-as {sw.ebgp_as}
-                    set activate enable
-                    set activate6 enable
                 next
                 end
             end
@@ -2390,8 +1729,6 @@ class Router_BGP:
                 config neighbor
                 edit {sw.vlan1_ip}
                     set remote-as {sw.ebgp_as}
-                    set activate enable
-                    set activate6 enable
                 next
                 end
             end
@@ -2417,8 +1754,6 @@ class Router_BGP:
                     set ebgp-enforce-multihop enable
                     set ebgp-multihop-ttl 3
                     set update-source loop0
-                    set activate enable
-                    set activate6 enable
                 next
                 end
             end
@@ -2444,8 +1779,6 @@ class Router_BGP:
                     set ebgp-enforce-multihop enable
                     set ebgp-multihop-ttl 3
                     set update-source loop0
-                    set activate enable
-                    set activate6 enable
                     set 
                 next
                 end
@@ -2472,8 +1805,6 @@ class Router_BGP:
                     set ebgp-enforce-multihop enable
                     set ebgp-multihop-ttl 3
                     set update-source loop0
-                    set activate enable
-                    set activate6 enable
                     set 
                 next
                 end
@@ -2580,26 +1911,6 @@ class Router_BGP:
         config_cmds_lines(dut,bgp_config)
         switch_show_cmd(dut,"show router bgp")
 
-    def config_redistribute_connected_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
-        tprint(f"============== Redistrubte connected to BGP at {self.switch.name} ")
-        switch = self.switch
-        dut = switch.console
-        #switch.config_sys_interface(10)
-    
-        sleep(10)
-        bgp_config = f"""
-        config router bgp
-            config redistribute6 connected 
-            set status enable
-            end
-        end
-        """
-        config_cmds_lines(dut,bgp_config)
-        switch_show_cmd(dut,"show router bgp")
-
-
     def config_redistribute_static(self):
         tprint(f"============== Redistrubte static routes to BGP at {self.switch.name} ")
         switch = self.switch
@@ -2654,29 +1965,14 @@ class Router_BGP:
 
 
     def show_bgp_summary(self):
-        if self.switch.is_fortinet() == False:
-            return 
         dut=self.switch.console
         switch_show_cmd(dut,"get router info bgp summary")
 
     def show_bgp_summary_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         dut=self.switch.console
         switch_show_cmd(dut,"get router info6 bgp summary")
 
-    def show_bgp_routes_v6(self):
-        dut=self.switch.console
-        switch_show_cmd(dut,"get router info6 routing-table bgp")
-
-    def show_bgp_routes(self):
-        dut=self.switch.console
-        switch_show_cmd(dut,"get router info routing-table bgp")
-
-
     def clear_config(self):
-        if self.switch.is_fortinet() == False:
-            return
         neighbor_list = get_switch_show_bgp(self.switch.console)
         print(neighbor_list)
         network_list = get_bgp_network_config(self.switch.console)
@@ -2747,8 +2043,6 @@ class Router_BGP:
         self.clear_config_v6()
 
     def clear_config_v6(self):
-        if self.switch.is_fortinet() == False:
-            return 
         neighbor_list = get_switch_show_bgp_v6(self.switch.console)
         print(neighbor_list)
         network_list = get_bgp_network_config_v6(self.switch.console)
@@ -2855,7 +2149,6 @@ class FortiSwitch:
         self.comm = dut_dir['comm']  
         self.comm_port = dut_dir['comm_port']  
         self.name = dut_dir['name'] 
-        self.show_basic_info()
         self.label = dut_dir['label'] 
         self.location = dut_dir['location'] 
         self.console = dut_dir['telnet'] 
@@ -2879,10 +2172,8 @@ class FortiSwitch:
         self.static_route = dut_dir['static_route']
         self.static_route_mask = dut_dir['static_route_mask']
         self.ebgp_as = dut_dir['ebgp_as']
-        self.vendor = dut_dir['vendor']
-        self.platform = dut_dir['platform']
-        self.software_version = find_dut_build(self.console,platform=self.platform)[0]
-        self.software_build = find_dut_build(self.console,platform=self.platform)[1]
+        self.software_version = find_dut_build(self.console)[0]
+        self.software_build = find_dut_build(self.console)[1]
         self.model = find_dut_model(self.console)
         self.router_ospf = Router_OSPF(self)
         self.router_bgp = Router_BGP(self)
@@ -2894,75 +2185,6 @@ class FortiSwitch:
         self.lldp_neighbor_list = get_switch_lldp_summary(self.console)
         self.neighbor_ip_list = []
         self.neighbor_switch_list = []
-        self.ipv6_neighbors = []  # this is IPv6 neighbor list for vlan1.  Must have in this setup
-        self.ipv4_neighbors = []  # this is IPv4 neighbor list for vlan1.  
-        self.mac_neighbors = [] # this is neighbor's MAC address for vlan1. 
-       
-
-    def show_basic_info(self):
-        Info(f"FortiSwitch _init_:Switch Name = {self.name}")
-
-    def discover_ipv6_neighbors(self,*args,**kwargs):
-        # 3032D-R7-40 # diagnose ipv6 neighbor-cache list | grep fe80
-        # ifindex=46 ifname=vlan1 fe80::6d5:90ff:fe2e:22a7 04:d5:90:2e:22:a7 state=00000002 use=1408794 confirm=1725 update=1408794 ref=1
-        # ifindex=46 ifname=vlan1 fe80::ea1c:baff:fe88:d15f e8:1c:ba:88:d1:5f state=00000002 use=1414615 confirm=2592 update=1414615 ref=1
-        # ifindex=5 ifname=mgmt fe80::8058:7190:cd95:e51a state=00000000 use=1294278 confirm=1330278 update=1294278 ref=0
-        # ifindex=46 ifname=vlan1 fe80::926c:acff:fe6d:c951 90:6c:ac:6d:c9:51 state=00000002 use=627073 confirm=799 update=627073 ref=1
-        # ifindex=5 ifname=mgmt fe80::926c:acff:fe15:2f98 90:6c:ac:15:2f:98 state=00000004 use=2622815 confirm=2658815 update=2622815 ref=0
-        # ifindex=46 ifname=vlan1 fe80::926c:acff:fe0c:bceb 90:6c:ac:0c:bc:eb state=00000002 use=1406945 confirm=5921 update=1406945 ref=1
-        # ifindex=46 ifname=vlan1 fe80::7e21:eff:fe39:a3e7 7c:21:0e:39:a3:e7 state=00000002 use=2637329 confirm=2097 update=2637329 ref=1
-        # ifindex=46 ifname=vlan1 fe80::724c:a5ff:fea5:a219 70:4c:a5:a5:a2:19 state=00000002 use=1406820 confirm=5275 update=1406819 ref=1
-
-        if "interface" in kwargs:
-            interface = kwargs['interface']
-        else:
-            interface = "vlan1"
-        dut = self.console
-        result = collect_show_cmd(dut,"diagnose ipv6 neighbor-cache list | grep fe80")
-        neighbor_list = []
-        for line in result:
-            if  interface in line:
-                items = re.split('\\s+',line)
-                neighbor_dict = {}
-                neighbor_dict[items[3]] = items[2]
-                neighbor_list.append(neighbor_dict) 
-                self.ipv6_neighbors.append(items[2])
-        return neighbor_list
-
-
-    
-    def discover_sys_arp(self,*args,**kwargs):
-        # 3032E-R7-19 # get system arp
-        # Address           Age(min)   Hardware Addr      Interface
-        # 10.1.1.10         0          7c:21:0e:39:a3:e7  vlan1
-        # 10.1.1.5          0          90:6c:ac:0c:bc:eb  vlan1
-        # 10.1.1.4          0          90:6c:ac:6d:c9:51  vlan1
-        # 10.1.1.6          0          70:4c:a5:a5:a2:19  vlan1
-        # 10.1.1.3          0          04:d5:90:2e:22:a7  vlan1
-        # 10.1.1.2          0          90:6c:ac:13:95:75  vlan1
-        # 10.105.241.254    1          90:6c:ac:15:2f:98  mgmt
-
-        if "interface" in kwargs:
-            interface = kwargs['interface']
-        else:
-            interface = "vlan1"
-        dut = self.console
-        result = collect_show_cmd(dut,"get system arp")
-        arp_dict = {}
-        for line in result:
-            if  interface in line:
-                items = re.split('\\s+',line)
-                arp_dict[items[2]] = items[0]
-                self.ipv4_neighbors.append(items[0].strip())
-                self.mac_neighbors.append(items[2].strip())
-        return arp_dict
-
-
-    def is_fortinet(self):
-        if self.platform == "fortinet":
-            return True
-        else:
-            return False
 
     def backup_config(self,file_name):
         cmd = f"execute backup config tftp {file_name} 10.105.19.19"
@@ -3001,15 +2223,11 @@ class FortiSwitch:
         self.neighbor_switch_list = neighbor_switch_list
 
     def show_routing(self):
-        if self.is_fortinet() == False:
-            return 
         self.show_routing_table()
         self.router_ospf.show_protocol_states()
         self.router_bgp.show_protocol_states()
 
     def show_routing_v6(self):
-        if self.is_fortinet() == False:
-            return 
         self.show_routing_table_v6()
         self.router_ospf.show_protocol_states_v6()
         self.router_bgp.show_bgp_protocol_states_v6()
@@ -3057,8 +2275,6 @@ class FortiSwitch:
         # self.router_bgp.update_switch(self)
 
     def show_switch_info(self):
-        if self.is_fortinet() == False:
-            return
         tprint("=====================================================================")
         tprint(f"   Comm Server = {self.comm}")
         tprint(f"   Comm Server Port = {self.comm_port}")

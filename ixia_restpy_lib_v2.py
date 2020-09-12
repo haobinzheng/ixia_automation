@@ -208,7 +208,7 @@ class IXIA_TOPOLOGY:
             type = bgp_type,
             local_as = self.bgp_as,
             networks_number = num,
-            networks_start_ip =self.network ,
+            networks_start_ip =self.bgpv4_network ,
             device_group = self.device_group,
             ip = self.ipv4_session,
         )
@@ -252,12 +252,23 @@ class IXIA_TOPOLOGY:
         ixia_rest_change_route_properties(pool=self.ipv4_pool,num_path=num,as_base=base,med=med_value)
 
     def change_bgp_routes_attributes(self,*args, **kwargs):
-        ipv4PrefixPool = self.ipv4_pool
+        if "address_family" in kwargs:
+            address_family = kwargs['address_family']
+        else:
+            address_family = "v4"
+        
+        if address_family == "v4":
+            ipPrefixPool = self.ipv4_pool
+            # bgpiprouteproperty = ipPrefixPool.BgpIPRouteProperty.add()
+        elif address_family == "v6":
+            ipPrefixPool = self.ipv6_pool
+            # bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
+
         testplatform = self.ixia.testPlatform
 
-    # bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty
     # bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
-        bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty.add()
+        bgpiprouteproperty = ipPrefixPool.BgpIPRouteProperty.add()
+
         if "num_path" in kwargs:
             num_path = kwargs['num_path']
             as_start_num = kwargs['as_base']
@@ -267,7 +278,7 @@ class IXIA_TOPOLOGY:
             bgpaspathsegmentlist = bgpiprouteproperty.BgpAsPathSegmentList.find()
             bgpaspathsegmentlist.EnableASPathSegment.Single("True")
             
-            #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+            print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
             i = 0
             for seg in bgpaspathsegmentlist:
                 bgpasnumberlist = seg.BgpAsNumberList.find()
@@ -284,12 +295,34 @@ class IXIA_TOPOLOGY:
             #bgpcommunitieslist.EnableCommunity.Single("True")
             
             #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+             #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
             i = 0
             for comm in bgpcommunitieslist:
                 i+=1
                 comm.AsNumber.Single(comm_start_num)
                 comm.LastTwoOctets.Single(i)
                 comm.Type.Single("manual")
+
+                
+        if "ext_community" in kwargs:
+            typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
+            num_comm = kwargs['ext_community']
+            comm_start_num = kwargs['comm_base']
+            com_type = kwargs['com_type']
+            bgpiprouteproperty.update(NoOfExternalCommunities=num_comm)
+            bgpiprouteproperty.EnableExtendedCommunity.Single("True")
+             
+            bgpcommunitieslist = bgpiprouteproperty.BgpExtendedCommunitiesList.find()
+            #bgpcommunitieslist.EnableCommunity.Single("True")
+            typecode = " 0=administratoras2octet 1=administratorip 2=administratoras4octet 3=opaque 6=evpn 64=administratoras2octetlinkbw"
+            i = 0
+            for comm in bgpcommunitieslist:
+                i+=1
+                comm.Type.Single("administratoras2octet")
+                comm.SubType.Single(com_type)
+                comm.AsNumber2Bytes.Single(comm_start_num)
+                comm.AssignedNumber4Bytes.Single(i)
+
         if "med" in kwargs:
             med = kwargs['med']
             bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")
@@ -310,7 +343,16 @@ class IXIA_TOPOLOGY:
                 bgpiprouteproperty.EnableFlapping.Increment(start_value=start_ip, step_value='0.0.0.1')
         if "weight" in kwargs:
             value = kwargs['weight']
+            bgpiprouteproperty.EnableWeight.Single("True")
             bgpiprouteproperty.Weight.Single(value)
+
+        if "aggregator" in kwargs:
+            value = kwargs['aggregator']
+            aggregator_as = kwargs['aggregator_as']
+            bgpiprouteproperty.EnableAtomicAggregate.Single("True")
+            bgpiprouteproperty.EnableAggregatorId.Single("True")
+            bgpiprouteproperty.AggregatorId.Single(value)
+            bgpiprouteproperty.AggregatorAs.Single(aggregator_as)
          
         
 
@@ -354,6 +396,7 @@ class IXIA:
         self.ixChassisIpList = args[1]
         self.portList = args[2]
         # self.protocol = kwargs["protocol"]
+        #self.bgp_start_as = kwargs["start_as"]
         self.testPlatform,self.Session,self.ixNetwork,self.vport_holder_list = ixia_rest_connect_chassis(self.apiServerIp,self.ixChassisIpList,self.portList)
         #self.create_topologies()
         self.topologies = self.create_topologies()
@@ -362,7 +405,7 @@ class IXIA:
 
     def create_topologies(self):
         i = 0
-        bgp_as = 101
+        bgp_as = None
         topo_list = []
         for port in self.vport_holder_list:
             print(self.portList[i][3])
@@ -1370,10 +1413,10 @@ if __name__ == "__main__":
     # [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
     # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
 
-    ipv6_portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254"], 
-    [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254"],
-    [ixChassisIpList[0], 8, 15,"00:13:01:01:01:01","2001:0010.0030.0001.0001.",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254"],
-    [ixChassisIpList[0], 8, 16,"00:14:01:01:01:01","2001:0010:0040.0001.0001::",102,"2001:0010:0010:0001::0001/64","2001:0010:0010:0001::253"]]
+    ipv6_portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
+    [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
+    [ixChassisIpList[0], 8, 15,"00:13:01:01:01:01","2001:0010.0030.0001.0001.",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
+    [ixChassisIpList[0], 8, 16,"00:14:01:01:01:01","2001:0010:0040.0001.0001::",102,"2001:0010:0010:0001::0001/64","2001:0010:0010:0001::253",1]]
 
     myixia = IXIA(apiServerIp,ixChassisIpList,ipv6_portList)
 
@@ -1395,10 +1438,10 @@ if __name__ == "__main__":
     myixia.start_protocol(wait=40)
     exit()
 
-    bgp_portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","10.1.1.0",101,"10.10.1.100/24","10.10.1.254"], 
-    [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.254/24","10.10.1.254"],
-    [ixChassisIpList[0], 8, 15,"00:13:01:01:01:01","10.30.1.1.",102,"10.1.1.254/24","10.10.1.254"],
-    [ixChassisIpList[0], 8, 16,"00:14:01:01:01:01","10.40.1.1",102,"10.10.1.1/24","10.10.1.253"]]
+    bgp_portList = [[ixChassisIpList[0], 2,11,"00:11:01:01:01:01","10.1.1.0",101,"10.10.1.100/24","10.10.1.254"], 
+    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.254/24","10.10.1.254"],
+    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.30.1.1.",102,"10.1.1.254/24","10.10.1.254"],
+    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.40.1.1",102,"10.10.1.1/24","10.10.1.253"]]
 
     myixia = IXIA(apiServerIp,ixChassisIpList,bgp_portList)
 

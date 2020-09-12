@@ -320,6 +320,36 @@ def bgpv6_testbed_init():
     dut_dir_list = []
     dut_list = []
 
+    dut7 = get_switch_telnet_connection_new("10.105.241.243",2045,platform="n9k")
+    dut7_dir['comm'] = "10.105.241.243"
+    dut7_dir['comm_port'] = 2045
+    dut7_dir['name'] = "cisco_n9k"
+    dut7_dir['label'] = 10
+    dut7_dir['location'] = "Rack7-41"
+    dut7_dir['telnet'] = dut7
+    dut7_dir['cfg'] = "cisco_n9k"
+    dut7_dir['mgmt_ip'] = "10.105.241.41"
+    dut7_dir['mgmt_mask']= "255.255.254.0"  
+    dut7_dir['loop0_ip']= "10.10.10.10" 
+    dut7_dir['loop0_ipv6'] = "2001:10:10:10::10/64" 
+    dut7_dir['vlan1_ip']= "10.1.1.10"  
+    dut7_dir['vlan1_ipv6']= "2001:10:1:1::10/64"
+    dut7_dir['vlan1_2nd'] = "10.10.10.254" # Doesn't matter
+    dut7_dir['internal'] = "1.1.1.100"  # Doesn't matter
+    dut7_dir['internal_v6'] = "2001:1:1::100/64"
+    dut7_dir['vlan1_subnet'] = "10.1.1.0"
+    dut7_dir['vlan1_mask']= "255.255.255.0"  
+    dut7_dir['split_ports']= [] 
+    dut7_dir['40g_ports']= []
+    dut7_dir['static_route'] = "172.16.10"
+    dut7_dir['static_route_mask'] = "255.255.255.0"
+    dut7_dir['ebgp_as']  = 65010
+    dut7_dir['vendor']  = "cisco"
+    dut7_dir['platform']  = "n9k"
+
+    dut_dir_list.append(dut7_dir) 
+    dut_list.append(dut7)
+
     dut1 = get_switch_telnet_connection_new("10.105.241.144",2071)
     dut1_dir['comm'] = "10.105.241.144"
     dut1_dir['comm_port'] = 2071
@@ -344,6 +374,8 @@ def bgpv6_testbed_init():
     dut1_dir['static_route'] = "172.16.1" 
     dut1_dir['static_route_mask'] = "255.255.255.0"
     dut1_dir['ebgp_as']  = 65001
+    dut1_dir['vendor']  = "fortinet"
+    dut1_dir['platform']  = "fortinet"
     
     dut_dir_list.append(dut1_dir)
     dut_list.append(dut1)
@@ -372,6 +404,8 @@ def bgpv6_testbed_init():
     dut2_dir['static_route'] = "172.16.2" 
     dut2_dir['static_route_mask'] = "255.255.255.0"
     dut2_dir['ebgp_as']  = 65002
+    dut2_dir['vendor']  = "fortinet"
+    dut2_dir['platform']  = "fortinet"
     dut_dir_list.append(dut2_dir)
     dut_list.append(dut2)
 
@@ -400,6 +434,8 @@ def bgpv6_testbed_init():
     dut3_dir['static_route'] = "172.16.3" 
     dut3_dir['static_route_mask'] = "255.255.255.0" 
     dut3_dir['ebgp_as']  = 65003
+    dut3_dir['vendor']  = "fortinet"
+    dut3_dir['platform']  = "fortinet"
     dut_dir_list.append(dut3_dir)
     dut_list.append(dut3)
 
@@ -427,6 +463,8 @@ def bgpv6_testbed_init():
     dut4_dir['static_route'] = "172.16.4" 
     dut4_dir['static_route_mask'] = "255.255.255.0" 
     dut4_dir['ebgp_as']  = 65004
+    dut4_dir['vendor']  = "fortinet"
+    dut4_dir['platform']  = "fortinet"
     dut_dir_list.append(dut4_dir)
     dut_list.append(dut4)
 
@@ -454,6 +492,8 @@ def bgpv6_testbed_init():
     dut5_dir['static_route'] = "172.16.5" 
     dut5_dir['static_route_mask'] = "255.255.255.0" 
     dut5_dir['ebgp_as']  = 65005
+    dut5_dir['vendor']  = "fortinet"
+    dut5_dir['platform']  = "fortinet"
     dut_dir_list.append(dut5_dir) 
     dut_list.append(dut5)
 
@@ -481,9 +521,37 @@ def bgpv6_testbed_init():
     dut6_dir['static_route'] = "172.16.6"
     dut6_dir['static_route_mask'] = "255.255.255.0"
     dut6_dir['ebgp_as']  = 65006
+    dut6_dir['vendor']  = "fortinet"
+    dut6_dir['platform']  = "fortinet"
     dut_dir_list.append(dut6_dir) 
     dut_list.append(dut6)
 
+    return dut_dir_list
+
+def cisco_testbed_init():
+    cisco_dir_list = []
+    cisco1_dir = {}
+    cisco1 = get_switch_telnet_connection_new("10.105.241.243",2045)
+    cisco1_dir['comm'] = "10.105.241.243"
+    cisco1_dir['comm_port'] = 2045
+    cisco1_dir['name'] = "cisco_n9k"
+    cisco1_dir['label'] = 10
+    cisco1_dir['location'] = "Rack7-41"
+    cisco1_dir['telnet'] = cisco1
+    cisco1_dir['cfg'] = "cisco_n9k"
+    cisco1_dir['mgmt_ip'] = "10.105.241.41"
+    cisco1_dir['mgmt_mask']= "255.255.254.0"  
+    cisco1_dir['loop0_ip']= "10.10.10.10" 
+    cisco1_dir['loop0_ipv6'] = "2001:10:10:10::10/64" 
+    cisco1_dir['vlan1_ip']= "10.1.1.10"  
+    cisco1_dir['vlan1_ipv6']= "2001:10:1:1::10/64"
+    cisco1_dir['vlan1_subnet'] = "10.1.1.0"
+    cisco1_dir['vlan1_mask']= "255.255.255.0"  
+    cisco1_dir['static_route'] = "172.16.10"
+    cisco1_dir['static_route_mask'] = "255.255.255.0"
+    cisco1_dir['ebgp_as']  = 65010
+    cisco_dir_list.append(dut6_dir) 
+    cisco_list.append(cisco)
     # dut7 = get_switch_telnet_connection_new("10.105.240.44",2002)
     # dut7_dir['comm'] = "10.105.240.44"
     # dut7_dir['comm_port'] = 2002
@@ -508,7 +576,7 @@ def bgpv6_testbed_init():
     # dut_dir_list.append(dut7_dir) 
     # dut_list.append(dut7)
 
-    return dut_dir_list
+    
 
 
 
@@ -517,6 +585,10 @@ def fsw_upgrade(*args,**kwargs):
     dut_dict = kwargs['dut_dict']
     dut_name = dut_dict['name']
     dut = dut_dict['telnet']
+
+    print(f'=============   Platform = dut_dict["platform"]')
+    if dut_dict['platform'] != "fortinet":
+        return
     
     tprint(f"=================== Upgrading FSW {dut_name} to build # {build} =================")
     model = find_dut_model(dut)
@@ -553,9 +625,9 @@ def fsw_upgrade(*args,**kwargs):
         else:
             image_name = f"FSW_1024D-v6-build0{build}-FORTINET.out"
     elif model == "FortiSwitch-548D-FPOE":
-            image_name = f"FSW_548D_FPOE-v6-build0{build}-FORTINET"
+            image_name = f"FSW_548D_FPOE-v6-build0{build}-FORTINET.out"
     elif model == "FortiSwitch-548D":
-            image_name = f"FSW_548D-v6-build0{build}-FORTINET"
+            image_name = f"FSW_548D-v6-build0{build}-FORTINET.out"
     else:
         tprint("!!!!!!!!! Not able to identify switch platform, upgrade fails")
         return False

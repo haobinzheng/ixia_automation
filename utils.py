@@ -940,6 +940,10 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		pwd = kwargs["password"]
 	else:
 		pwd = ''
+	if "platform" in kwargs:
+		platform = kwargs['platform']
+	else:
+		platform = "fortinet"
 	
 	console_port_int = int(console_port)
 	if settings.CLEAR_LINE:
@@ -1045,13 +1049,17 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('' + '\n').encode('ascii'))
 		sleep(1)
 		tn.read_until(("# ").encode('ascii'),timeout=10)
-	
-	switch_configure_cmd(tn,'config system global')
-	switch_configure_cmd(tn,'set admintimeout 480')
-	switch_configure_cmd(tn,'end')
-	tprint("get_switch_telnet_connection_new: Login sucessful!\n")
-	print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
-	print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+
+	if platform == "fortinet":
+		switch_configure_cmd(tn,'config system global')
+		switch_configure_cmd(tn,'set admintimeout 480')
+		switch_configure_cmd(tn,'end')
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
 	return tn
 
 def config_admin_timeout(dut_list):
@@ -1929,6 +1937,7 @@ def seperate_ip_mask(ip_addr):
 		return None,None
 	else:
 		regex = r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\/([0-9]+)'
+		regex = r'([0-9.]+[0-9]+)\/([0-9]+)'
 		matched = re.search(regex,ip_addr)
 		if matched:
 			ip = matched.group(1)
@@ -1995,16 +2004,24 @@ def find_dut_image(dut):
 				return matched.group()
 	return None
 
-def find_dut_build(dut):
-	result = collect_show_cmd(dut,"get system status",t=5)
-	dprint(result)
-	for line in result:
-		if "Version" in line:
-			image = line.split(":")[1]
-			matched = re.search(r'v(\d+\.\d+\.\d+),build(\d+)',image)
-			if matched:
-				return matched.group(1),matched.group(2)
-	return None
+def find_dut_build(dut,*args,**kwargs):
+	if "platform" in kwargs:
+		platform = kwargs['platform']
+	else:
+		platform = "fortinet"
+		
+	if platform == "fortinet":
+		result = collect_show_cmd(dut,"get system status",t=5)
+		dprint(result)
+		for line in result:
+			if "Version" in line:
+				image = line.split(":")[1]
+				matched = re.search(r'v(\d+\.\d+\.\d+),build(\d+)',image)
+				if matched:
+					return matched.group(1),matched.group(2)
+		return None, None
+	else:
+		return None, None
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)

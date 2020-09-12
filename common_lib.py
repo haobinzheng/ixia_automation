@@ -66,6 +66,8 @@ def switches_cleanup_4_restore(switches):
 
 def switches_clean_up(switches):
     for switch in switches:
+        if switch.platform != "fortinet":
+            return
         switch.factory_reset_nologin()
 
     console_timer(150,msg = "After factory reset, wait for 150 seconds")
@@ -82,6 +84,8 @@ def check_bgp_test_result(testcase,description,switches,**kwargs):
     result = True
     for switch in switches:
         #switch.router_bgp.get_neighbors_summary()
+        switch.router_bgp.show_bgp_protocol_states_v4()
+        switch.router_bgp.show_bgp_protocol_states_v6()
         if not switch.router_bgp.check_neighbor_status():
             result = False
     if result1 and result:
@@ -97,10 +101,19 @@ def check_bgp_test_result_v6(testcase,description,switches,**kwargs):
     else:
         result1 = True
     result = True
-    for switch in switches:
+    if type(switches) is list:
+        dut_switches = switches
+    else:
+        dut_switches = [switches]
+    for switch in dut_switches:
+        if switch.is_fortinet() == False:
+            return 
         #switch.router_bgp.get_neighbors_summary()
-        switch.router_bgp.show_bgp_config_v6()
+        switch.router_bgp.show_bgp_protocol_states_v4()
+        switch.router_bgp.show_bgp_protocol_states_v6()
         if not switch.router_bgp.check_bgp_neighbor_status_v6():
+            result = False
+        if not switch.router_bgp.check_bgp_neighbor_status():
             result = False
     if result1 and result:
         final_result = "Passed"
@@ -2721,6 +2734,7 @@ def get_router_bgp_summary_v6(dut):
     #print(items_list)
     return items_list
 
+
 def get_router_info_ospf_neighbor(dut):
 	result = collect_show_cmd(dut,"get router info ospf neighbor all")
 	neighbor_list = []
@@ -2773,6 +2787,7 @@ def get_switch_show_bgp(dut):
  
 	return neighbor_list
 
+
 def get_switch_show_bgp_v6(dut):
     result = collect_show_cmd(dut,"show router bgp")
     neighbor_list = []
@@ -2799,6 +2814,9 @@ def get_switch_show_bgp_v6(dut):
             pass
  
     return neighbor_list
+
+def find_bgp_config_neighbors(dut):
+    return get_switch_show_bgp_v6(dut)
 
 def get_bgp_network_config(dut):
 	result = collect_show_cmd(dut,"show router bgp")
