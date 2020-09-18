@@ -213,6 +213,23 @@ class IXIA_TOPOLOGY:
             ip = self.ipv4_session,
         )
 
+    def add_ibgp(self,*args,**kwargs):
+        dut_ip = kwargs['dut_ip']
+        bgp_type = kwargs['bgp_type']
+        num = kwargs['num']
+        self.bgp,self.network_group, self.ipv4_pool = ixia_rest_create_bgp(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = self.bgp_name,
+            peer_ip = dut_ip,
+            type = bgp_type,
+            local_as = 65000,
+            networks_number = num,
+            networks_start_ip =self.bgpv4_network ,
+            device_group = self.device_group,
+            ip = self.ipv4_session,
+        )
+
     def add_bgp_v6(self,*args,**kwargs):
         dut_ip = kwargs['dut_ip']
         bgp_type = kwargs['bgp_type']
@@ -224,6 +241,23 @@ class IXIA_TOPOLOGY:
             peer_ip = dut_ip,
             type = bgp_type,
             local_as = self.bgp_as,
+            networks_number = num,
+            networks_start_ip =self.bgpv6_network ,
+            device_group = self.device_group,
+            ip = self.ipv6_session,
+        )
+
+    def add_ibgp_v6(self,*args,**kwargs):
+        dut_ip = kwargs['dut_ip']
+        bgp_type = kwargs['bgp_type']
+        num = kwargs['prefix_num']
+        self.bgp,self.network_group, self.ipv6_pool = ixia_rest_create_bgp_v6(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = self.bgp_name_v6,
+            peer_ip = dut_ip,
+            type = bgp_type,
+            local_as = 65000,
             networks_number = num,
             networks_start_ip =self.bgpv6_network ,
             device_group = self.device_group,
@@ -307,7 +341,7 @@ class IXIA_TOPOLOGY:
         if "ext_community" in kwargs:
             typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
             num_comm = kwargs['ext_community']
-            comm_start_num = kwargs['comm_base']
+            comm_start_num = kwargs['excomm_base']
             com_type = kwargs['com_type']
             bgpiprouteproperty.update(NoOfExternalCommunities=num_comm)
             bgpiprouteproperty.EnableExtendedCommunity.Single("True")
@@ -327,6 +361,111 @@ class IXIA_TOPOLOGY:
             med = kwargs['med']
             bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")
             bgpiprouteproperty.MultiExitDiscriminator.Single(med)
+
+        if "local" in kwargs:
+            local = kwargs['local']
+            bgpiprouteproperty.EnableLocalPreference.Single("True")
+            bgpiprouteproperty.LocalPreference.Single(local)
+
+        if "origin" in kwargs:
+            origin = kwargs['origin']
+            bgpiprouteproperty.Origin.Single(origin)
+        if "flapping" in kwargs:
+            start_ip = kwargs["flapping"]
+            if start_ip.upper() == "RANDOM":
+                bgpiprouteproperty.EnableFlapping.Random()
+            else:
+                bgpiprouteproperty.EnableFlapping.Increment(start_value=start_ip, step_value='0.0.0.1')
+        if "weight" in kwargs:
+            value = kwargs['weight']
+            bgpiprouteproperty.EnableWeight.Single("True")
+            bgpiprouteproperty.Weight.Single(value)
+
+        if "aggregator" in kwargs:
+            value = kwargs['aggregator']
+            aggregator_as = kwargs['aggregator_as']
+            bgpiprouteproperty.EnableAtomicAggregate.Single("True")
+            bgpiprouteproperty.EnableAggregatorId.Single("True")
+            bgpiprouteproperty.AggregatorId.Single(value)
+            bgpiprouteproperty.AggregatorAs.Single(aggregator_as)
+
+    def change_bgp_routes_attributes_v6(self,*args, **kwargs):
+        if "address_family" in kwargs:
+            address_family = kwargs['address_family']
+        else:
+            address_family = "v4"
+        
+        if address_family == "v4":
+            ipPrefixPool = self.ipv4_pool
+            # bgpiprouteproperty = ipPrefixPool.BgpIPRouteProperty.add()
+        elif address_family == "v6":
+            ipPrefixPool = self.ipv6_pool
+            # bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
+
+        testplatform = self.ixia.testPlatform
+
+    # bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
+        bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
+
+        if "num_path" in kwargs:
+            num_path = kwargs['num_path']
+            as_start_num = kwargs['as_base']
+            bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
+            bgpiprouteproperty.EnableAsPathSegments.Single("True")
+             
+            bgpaspathsegmentlist = bgpiprouteproperty.BgpAsPathSegmentList.find()
+            bgpaspathsegmentlist.EnableASPathSegment.Single("True")
+            
+            print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+            i = 0
+            for seg in bgpaspathsegmentlist:
+                bgpasnumberlist = seg.BgpAsNumberList.find()
+                bgpasnumberlist.AsNumber.Single(as_start_num+i)
+                i += 1 
+        if "community" in kwargs:
+            typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
+            num_comm = kwargs['community']
+            comm_start_num = kwargs['comm_base']
+            bgpiprouteproperty.update(NoOfCommunities=num_comm)
+            bgpiprouteproperty.EnableCommunity.Single("True")
+             
+            bgpcommunitieslist = bgpiprouteproperty.BgpCommunitiesList.find()
+            #bgpcommunitieslist.EnableCommunity.Single("True")
+            
+            #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+             #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+            i = 0
+            for comm in bgpcommunitieslist:
+                i+=1
+                comm.AsNumber.Single(comm_start_num)
+                comm.LastTwoOctets.Single(i)
+                comm.Type.Single("manual")
+
+                
+        if "ext_community" in kwargs:
+            typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
+            num_comm = kwargs['ext_community']
+            comm_start_num = kwargs['excomm_base']
+            com_type = kwargs['com_type']
+            bgpiprouteproperty.update(NoOfExternalCommunities=num_comm)
+            bgpiprouteproperty.EnableExtendedCommunity.Single("True")
+             
+            bgpcommunitieslist = bgpiprouteproperty.BgpExtendedCommunitiesList.find()
+            #bgpcommunitieslist.EnableCommunity.Single("True")
+            typecode = " 0=administratoras2octet 1=administratorip 2=administratoras4octet 3=opaque 6=evpn 64=administratoras2octetlinkbw"
+            i = 0
+            for comm in bgpcommunitieslist:
+                i+=1
+                comm.Type.Single("administratoras2octet")
+                comm.SubType.Single(com_type)
+                comm.AsNumber2Bytes.Single(comm_start_num)
+                comm.AssignedNumber4Bytes.Single(i)
+
+        if "med" in kwargs:
+            med = kwargs['med']
+            bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")
+            bgpiprouteproperty.MultiExitDiscriminator.Single(med)
+
         if "local" in kwargs:
             local = kwargs['local']
             bgpiprouteproperty.EnableLocalPreference.Single("True")
@@ -1274,6 +1413,21 @@ def ixia_rest_create_bgp_v6(*args,**kwargs):
     ipv6PrefixPool = networkGroup.Ipv6PrefixPools.add(NumberOfAddresses='1')
     ipv6PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0:0:0:0:0:0:0:1')
     ipv6PrefixPool.PrefixLength.Single(128)
+    bgpiprouteproperty = ipv6PrefixPool.BgpIPRouteProperty.add()
+    print(f"Old IPv6 Next Hop Type Value = {bgpiprouteproperty.NextHopType.Values}")
+    print(f"Old IPv6 Next Hop <IP Type> Value = {bgpiprouteproperty.NextHopIPType.Values}")
+    print(f"Old IPv6 UseTraditionalNLRI Value = {bgpiprouteproperty.UseTraditionalNlri.Values}")
+    
+    #Valid enum values are 0=manual 1=sameaslocalip
+    bgpiprouteproperty.NextHopType.Single("sameaslocalip")
+    #Valid enum values are 0=ipv4 1=ipv6
+    bgpiprouteproperty.NextHopIPType.Single("ipv6")
+
+    bgpiprouteproperty.UseTraditionalNlri.Single("False")
+
+    print(f"New IPv6 Next Hop Type Value = {bgpiprouteproperty.NextHopType.Values}")
+    print(f"New IPv6 Next Hop IP Type Value = {bgpiprouteproperty.NextHopIPType.Values}")
+    print(f"New IPv6 UseTraditionalNLRI Value = {bgpiprouteproperty.UseTraditionalNlri.Values}")
 
     #ixia_rest_add_as_path(pool=ipv4PrefixPool,num_path=6, as_base=65000)
     #ixia_rest_set_origin(pool=ipv4PrefixPool,origin="egp",platform=testplatform)

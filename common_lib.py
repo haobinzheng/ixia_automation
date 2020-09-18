@@ -113,7 +113,7 @@ def check_bgp_test_result_v6(testcase,description,switches,**kwargs):
         switch.router_bgp.show_bgp_protocol_states_v6()
         if not switch.router_bgp.check_bgp_neighbor_status_v6():
             result = False
-        if not switch.router_bgp.check_bgp_neighbor_status():
+        if not switch.router_bgp.check_neighbor_status():
             result = False
     if result1 and result:
         final_result = "Passed"

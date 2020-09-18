@@ -265,7 +265,7 @@ def bgp_testbed_init():
     dut6_dir['location'] = "Rack8-34"
     dut6_dir['telnet'] = dut6
     dut6_dir['cfg'] = "548D-R8-34"
-    dut6_dir['mgmt_ip'] = "10.105.241.134"
+    dut6_dir['mgmt_ip'] = "10.105.241.133"
     dut6_dir['mgmt_mask']= "255.255.254.0"  
     dut6_dir['loop0_ip']= "6.6.6.6" 
     dut6_dir['vlan1_ip']= "10.1.1.6"  
@@ -335,7 +335,7 @@ def bgpv6_testbed_init():
     dut7_dir['vlan1_ip']= "10.1.1.10"  
     dut7_dir['vlan1_ipv6']= "2001:10:1:1::10/64"
     dut7_dir['vlan1_2nd'] = "10.10.10.254" # Doesn't matter
-    dut7_dir['internal'] = "1.1.1.100"  # Doesn't matter
+    dut7_dir['internal'] = "10.10.10.100"  # Doesn't matter
     dut7_dir['internal_v6'] = "2001:1:1::100/64"
     dut7_dir['vlan1_subnet'] = "10.1.1.0"
     dut7_dir['vlan1_mask']= "255.255.255.0"  
@@ -361,12 +361,12 @@ def bgpv6_testbed_init():
     dut1_dir['mgmt_ip'] =  "10.105.240.145"
     dut1_dir['mgmt_mask']= "255.255.254.0"
     dut1_dir['loop0_ip']= "1.1.1.1"
-    dut1_dir['loop0_ipv6'] = "2001:1:1:1::1/64"  
+    dut1_dir['loop0_ipv6'] = "2001:1:1:1::1/128"  
     dut1_dir['vlan1_ip']= "10.1.1.1" 
     dut1_dir['vlan1_ipv6']= "2001:10:1:1::1/64"
     dut1_dir['vlan1_2nd'] = "1.1.1.254"
     dut1_dir['internal'] = "1.1.1.100"
-    dut1_dir['internal_v6'] = "2001:1:1::100/64"
+    dut1_dir['internal_v6'] = "2001:1:1:1::100/128"
     dut1_dir['vlan1_subnet'] = "10.1.1.0"
     dut1_dir['vlan1_mask']= "255.255.255.0"  
     dut1_dir['split_ports']= ["port15"] 
@@ -391,12 +391,12 @@ def bgpv6_testbed_init():
     dut2_dir['mgmt_ip'] = "10.105.241.40"
     dut2_dir['mgmt_mask']= "255.255.254.0"  
     dut2_dir['loop0_ip']= "2.2.2.2"  
-    dut2_dir['loop0_ipv6'] = "2001:2:2:2::2/64" 
+    dut2_dir['loop0_ipv6'] = "2001:2:2:2::2/128" 
     dut2_dir['vlan1_ip']= "10.1.1.2"
     dut2_dir['vlan1_ipv6']= "2001:10:1:1::2/64"
     dut2_dir['vlan1_2nd'] = "2.2.2.254"  
     dut2_dir['internal'] = "2.2.2.100"
-    dut2_dir['internal_v6'] = "2001:2:2::100/64"
+    dut2_dir['internal_v6'] = "2001:2:2:2::100/128"
     dut2_dir['vlan1_subnet'] = "10.1.1.0"
     dut2_dir['vlan1_mask']= "255.255.255.0" 
     dut2_dir['split_ports']= []  
@@ -421,12 +421,12 @@ def bgpv6_testbed_init():
     dut3_dir['mgmt_ip'] = "10.105.240.41"
     dut3_dir['mgmt_mask']= "255.255.254.0" 
     dut3_dir['loop0_ip']= "3.3.3.3" 
-    dut3_dir['loop0_ipv6'] = "2001:3:3:3::3/64"  
+    dut3_dir['loop0_ipv6'] = "2001:3:3:3::3/128"  
     dut3_dir['vlan1_ip']= "10.1.1.3"
     dut3_dir['vlan1_ipv6']= "2001:10:1:1::3/64"
     dut3_dir['vlan1_2nd'] = "3.3.3.254"  
     dut3_dir['internal'] = "3.3.3.100"
-    dut3_dir['internal_v6'] = "2001:3:3::100/64"
+    dut3_dir['internal_v6'] = "2001:3:3:3::100/128"
     dut3_dir['vlan1_subnet'] = "10.1.1.0"
     dut3_dir['vlan1_mask']= "255.255.255.0"  
     dut3_dir['split_ports']= []
@@ -450,12 +450,12 @@ def bgpv6_testbed_init():
     dut4_dir['mgmt_ip'] = "10.105.240.40"
     dut4_dir['mgmt_mask']= "255.255.254.0" 
     dut4_dir['loop0_ip']= "4.4.4.4"  
-    dut4_dir['loop0_ipv6'] = "2001:4:4:4::4/64" 
+    dut4_dir['loop0_ipv6'] = "2001:4:4:4::4/128" 
     dut4_dir['vlan1_ip']= "10.1.1.4" 
     dut4_dir['vlan1_ipv6']= "2001:10:1:1::4/64"
     dut4_dir['vlan1_2nd'] = "4.4.4.254"
     dut4_dir['internal'] = "4.4.4.100"
-    dut4_dir['internal_v6'] = "2001:4:4::100/64"
+    dut4_dir['internal_v6'] = "2001:4:4:4::100/128"
     dut4_dir['vlan1_subnet'] = "10.1.1.0"
     dut4_dir['vlan1_mask']= "255.255.255.0" 
     dut4_dir['split_ports']= []
@@ -479,12 +479,12 @@ def bgpv6_testbed_init():
     dut5_dir['mgmt_ip'] = "10.105.240.133"
     dut5_dir['mgmt_mask']= "255.255.254.0" 
     dut5_dir['loop0_ip']= "5.5.5.5" 
-    dut5_dir['loop0_ipv6'] = "2001:5:5:5::5/64" 
+    dut5_dir['loop0_ipv6'] = "2001:5:5:5::5/128" 
     dut5_dir['vlan1_ip']= "10.1.1.5"  
     dut5_dir['vlan1_ipv6']= "2001:10:1:1::5/64"
     dut5_dir['vlan1_2nd'] = "5.5.5.254"
     dut5_dir['internal'] = "5.5.5.100"
-    dut5_dir['internal_v6'] = "2001:5:5::100/64"
+    dut5_dir['internal_v6'] = "2001:5:5:5::100/128"
     dut5_dir['vlan1_subnet'] = "10.1.1.0"
     dut5_dir['vlan1_mask']= "255.255.255.0"  
     dut5_dir['split_ports']= []  
@@ -508,12 +508,12 @@ def bgpv6_testbed_init():
     dut6_dir['mgmt_ip'] = "10.105.241.134"
     dut6_dir['mgmt_mask']= "255.255.254.0"  
     dut6_dir['loop0_ip']= "6.6.6.6" 
-    dut6_dir['loop0_ipv6'] = "2001:6:6:6::6/64" 
+    dut6_dir['loop0_ipv6'] = "2001:6:6:6::6/128" 
     dut6_dir['vlan1_ip']= "10.1.1.6"  
     dut6_dir['vlan1_ipv6']= "2001:10:1:1::6/64"
     dut6_dir['vlan1_2nd'] = "6.6.6.254"
     dut6_dir['internal'] = "6.6.6.100"
-    dut6_dir['internal_v6'] = "2001:6:6::100/64"
+    dut6_dir['internal_v6'] = "2001:6:6:6::100/128"
     dut6_dir['vlan1_subnet'] = "10.1.1.0"
     dut6_dir['vlan1_mask']= "255.255.255.0"  
     dut6_dir['split_ports']= []
@@ -739,22 +739,25 @@ def sw_init_config_v6(*args, **kwargs):
             edit 1
                 set ip {vlan1_2nd} 255.255.255.255
                 set allowaccess ping https ssh telnet
-            next
-            end
         next
     edit "loop0"
+        set type loopback
+        next
+
+    edit "loop0"
+        set type loopback
+        set mode static
         set ip {loop0_ip} 255.255.255.255
         set allowaccess ping https http ssh telnet
-        set type loopback
             config ipv6
                 set ip6-address {loop0_ipv6}
                 set ip6-allowaccess ping https ssh telnet
             end
         next
      edit "internal"
+        set type physical
         set ip {internal} 255.255.255.255
         set allowaccess ping https http ssh telnet
-        set type physical
         config ipv6
                 set ip6-address {internal_v6}
                 set ip6-allowaccess ping https ssh telnet
@@ -780,36 +783,7 @@ def sw_init_config_v6(*args, **kwargs):
     for port in ports_40g:
         sw_config_port_speed(dut,port,"40000cr4")
 
-    # ospf_config = f"""
-    # config router ospf
-    # set router-id {loop0_ip}
-    #     config area
-    #         edit 0.0.0.0
-    #         next
-    #     end
-    #     config ospf-interface
-    #         edit "1"
-    #             set interface "vlan1"
-    #         next
-    #     end
-    #     config network
-    #         edit 1
-    #             set area 0.0.0.0
-    #             set prefix {vlan1_subnet} 255.255.255.0
-    #         next
-    #     end
-    #     config network
-    #         edit 2
-    #             set area 0.0.0.0
-    #             set prefix {loop0_ip} 255.255.255.255
-    #         next
-    #     end
-    #     config redistribute "connected"
-    #         set status enable
-    #     end
-    # end
-    # """
-    # config_cmds_lines(dut,ospf_config)
+ 
     if config_split: 
         for port in split_ports:
             config_split_ports = f"""

@@ -768,7 +768,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
-	time.sleep(0.1)
+	time.sleep(0.2)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
 
 def switch_wait_enter_yes(tn,prompt):
@@ -2009,7 +2009,7 @@ def find_dut_build(dut,*args,**kwargs):
 		platform = kwargs['platform']
 	else:
 		platform = "fortinet"
-		
+
 	if platform == "fortinet":
 		result = collect_show_cmd(dut,"get system status",t=5)
 		dprint(result)
@@ -2094,7 +2094,7 @@ if __name__ == "__main__":
 	image = find_dut_image(dut)
 	print(image)
 	exit()
-	#switch_exec_reboot(dut1,device="DUT")
+	switch_exec_reboot(dut1,device="DUT")
 	# result = switch_show_cmd(dut,"diag switch physical linerate up")
 	# tprint(result)
 	settings.DEBUG = True
