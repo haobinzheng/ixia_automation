@@ -516,6 +516,17 @@ def collect_show_cmd(tn,cmd,**kwargs):
 		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
 	return out_str_list
 
+def process_show_command(output):
+	out_list = output.split('\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).rstrip(' ')
+		out_str_list.append(o_str)
+	if cmd == "get router info6 bgp summary":
+		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
+	return out_str_list
+
 def append_file_collect_show(filename,result):
 	singleline = "-------------------------------------------------------------------------------------\n"
 	with open(filename,'a+') as f:
@@ -692,6 +703,12 @@ def press_any_key():
 	print_dash_line()
 	keyin = input(f"Press any key to continue...")
 
+def config_cmds_lines_cisco(dut, cmdblock):
+	b= cmdblock.split("\n")
+	b = [x.strip() for x in b if x.strip()]
+	for cmd in b:
+		switch_configure_cmd_cisco(dut,cmd)
+
 def config_cmds_lines(dut, cmdblock):
 	b= cmdblock.split("\n")
 	b = [x.strip() for x in b if x.strip()]
@@ -726,6 +743,10 @@ def config_system_interface(dut,port,cmd):
 def switch_configure_cmd_name(dut_dir,cmd):
 	tn = dut_dir['telnet']
 	dut_name = dut_dir['name']
+	# swn9k-1: config t 2 :: configuring
+	# swn9k-1: line con 2 :: configuring
+	# swn9k-1(config): exec-timeout 300
+	# swn9k-1(config-console): end uring
 	tprint(f"configuring {dut_name}: {cmd}")
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
@@ -765,6 +786,26 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		pass
 	else:
 		dut_prompt = find_dut_prompt(tn)
+		tprint("configuring {}: {}".format(dut_prompt,cmd))
+	cmd = convert_cmd_ascii_n(cmd)
+	tn.write(cmd)
+	time.sleep(0.1)
+	tn.read_until(("# ").encode('ascii'),timeout=10)
+
+def switch_configure_cmd_cisco(tn,cmd,**kwargs):
+	if 'mode' in kwargs:
+		mode = kwargs['mode']
+	else:
+		mode = None
+
+	if mode == "silent":
+		pass
+	else:
+		dut_prompt = find_dut_prompt_cisco(tn)
+	# swn9k-1: config t 2 :: configuring
+	# swn9k-1: line con 2 :: configuring
+	# swn9k-1(config): exec-timeout 300
+	# swn9k-1(config-console): end uring
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
@@ -871,6 +912,20 @@ def switch_login(tn,*args,**kwargs):
 	switch_configure_cmd(tn,'set admintimeout 480',mode="silent")
 	switch_configure_cmd(tn,'end',mode="silent")
 	return tn
+
+def find_dut_prompt_cisco(tn):
+	tn.write(('' + '\n').encode('ascii'))
+	#print("Reading prompt and retrieve prompt......")
+	output = tn.read_until(("#").encode('ascii'))
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	for o in out_list:
+		o_str = o.decode(encoding).rstrip(' ')
+		if "#" in o_str:
+			prompt = o_str.strip(' ')
+			prompt = prompt.strip("#")
+	#print(prompt)
+	return prompt
 
 def find_dut_prompt(tn):
 	tn.write(('' + '\n').encode('ascii'))
@@ -1060,6 +1115,21 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
 		except Exception as e:
 			pass
+	elif platform == "n9k":
+		print("--------- TBD: utils.py get_switch_telnet_connection_new() | will configure some basic stuff like exec-timeout -----------")
+		# config = f"""
+		# config t
+		#     line con 
+		#         exec-timeout 300 
+		# end
+		# """
+		# config_cmds_lines_cisco(tn,config)
+		# switch_configure_cmd_cisco(tn,'config t')
+		# switch_configure_cmd_cisco(tn,'line con')
+		# switch_configure_cmd_cisco(tn,'exec-timeout 300')
+		# switch_configure_cmd_cisco(tn,'end')
+	else:
+		print("=========== This is a uncognized device platform ============")
 	return tn
 
 def config_admin_timeout(dut_list):

@@ -302,6 +302,11 @@ class IXIA_TOPOLOGY:
 
     # bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
         bgpiprouteproperty = ipPrefixPool.BgpIPRouteProperty.add()
+        if "next_hop" in kwargs:
+            next_hop_addr = kwargs["next_hop"]
+            bgpiprouteproperty.NextHopType.Single("manual")
+            bgpiprouteproperty.Ipv4NextHop.Single(next_hop_addr)
+            bgpiprouteproperty.NextHopIPType.Single("ipv4")
 
         if "num_path" in kwargs:
             num_path = kwargs['num_path']
@@ -406,6 +411,13 @@ class IXIA_TOPOLOGY:
 
     # bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
         bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
+
+        if "next_hop" in kwargs:
+            next_hop_addr = kwargs["next_hop"]
+            bgpiprouteproperty.NextHopType.Single("manual")
+            bgpiprouteproperty.Ipv6NextHop.Single(next_hop_addr)
+            bgpiprouteproperty.NextHopIPType.Single("ipv6")
+
 
         if "num_path" in kwargs:
             num_path = kwargs['num_path']
@@ -751,8 +763,8 @@ def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
                 #testPlatform.info(vport)
                 vport_holder_list.append(vport)
             vportList = [vport.href for vport in ixNetwork.Vport.find()]
-            vport1 = vport_holder_list[0]
-            vport2 = vport_holder_list[1]
+            # vport1 = vport_holder_list[0]
+            # vport2 = vport_holder_list[1]
             # Assign ports.  
             testPorts = []
             for item in portList:

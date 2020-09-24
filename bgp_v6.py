@@ -29,9 +29,22 @@ from ixia_restpy_lib_v2 import *
 ################################################################################
 
 CLEAN_ALL = False
-CLEAN_BGP = False
+CLEAN_BGP = True
 CONFIG_BGP = False
 OSPF_NEIGHBORS = 6
+
+apiServerIp = '10.105.19.19'
+#ixChassisIpList = ['10.105.241.234']
+ixChassisIpList = ['10.105.241.234']
+
+portList_v4_v6 = [
+[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+[ixChassisIpList[0], 1, 8,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+[ixChassisIpList[0], 1, 9,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+[ixChassisIpList[0], 1, 10,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+[ixChassisIpList[0], 1, 11,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+[ixChassisIpList[0], 1, 12,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+]
 
 #sys.stdout = Logger("Log/bgp_testing.log")
 
@@ -249,6 +262,37 @@ def test_clean_config(*args,**kwargs):
 			switch.router_bgp.clear_config_all()
 	else:
 		pass
+
+def test_config_igp_ipv6_fabric(*args,**kwargs):
+	ospf_config_v4 = False
+	ospf_config_v6 = False
+	#Config OSPF infra
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.neighbor_discovery_all()
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=OSPF_NEIGHBORS):
+			switch.router_ospf.basic_config_fabric()
+			ospf_config_v4 = True
+		else:
+			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=OSPF_NEIGHBORS):
+			switch.router_ospf.basic_config_v6_fabric()
+			ospf_config_v6 = True
+		else:
+			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
+	if ospf_config_v4 or ospf_config_v6:
+		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+
+	#update IPv4 and IPv6 ospf neighbors after configuring ospf 
+	Info("=============== Updating OSPF Config and Neighbor Information ==========")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_all()
+		print("----------Discovering ospf neighbor ---------")
+		switch.router_ospf.neighbor_discovery_all()
+		print("----------Updating ospf neighbor database  ---------")
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+
 
 def test_config_igp_ipv6(*args,**kwargs):
 	ospf_config_v4 = False
@@ -579,7 +623,6 @@ if upgrade_sa:
 			relogin_if_needed(dut)
 		image = find_dut_image(dut)
 		tprint(f"============================ {dut_name} software image = {image} ============")
-	exit()
 
 if Reboot:
 	for dut_dir in dut_dir_list:
@@ -600,6 +643,7 @@ if Reboot:
 			relogin_if_needed(dut)
 		image = find_dut_image(dut)
 		tprint(f"============================ {dut_name} software image = {image} ============")
+	exit()
 
 
 switches = [FortiSwitch(dut_dir) for dut_dir in dut_dir_list]
@@ -715,45 +759,35 @@ if testcase == 6012 or test_all:
 	testcase = 6012
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Test IPv6 iBGP via loopbacks IPv4 and IPv6 addresses"
+	tags = ["basic ibgp","basic bfd"]
 	print_test_subject(testcase,description)
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_v6()
-	else:
-		pass
 
-	ospf_config = False
-	for switch in switches:
-		switch.show_switch_info()
-		switch.router_ospf.neighbor_discovery_all()
-		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
-		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=OSPF_NEIGHBORS):
-			switch.router_ospf.basic_config()
-			ospf_config = True
-		else:
-			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
-		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=OSPF_NEIGHBORS):
-			switch.router_ospf.basic_config_v6()
-			ospf_config = True
-		else:
-			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
-	if ospf_config:
-		console_timer(20,msg="After configuring ospfv6, wait for 20 sec")
+	fsw_switches =switches[1:]
+
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+
+	test_config_igp_ipv6_fabric(switches =fsw_switches)
+
 
 	for switch in switches:  
-		switch.router_ospf.neighbor_discovery_all()
-		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
 		switch.router_bgp.config_ibgp_mesh_loopback_v6() 
 		switch.router_bgp.config_ibgp_mesh_loopback_v4()  
 	console_timer(30,msg="After configuring iBGPv6 sessions via loopbacks, wait for 30s")
 	for switch in switches:
-		switch.router_ospf.show_ospf_neighbors_v6()
 		switch.router_bgp.show_bgp_summary_v6()
 
 	for switch in switches:
-		switch.router_bgp.config_ibgp_loopback_bfd_v6('enable')
+		switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
+
+	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && enable BFD, wait for 20s =====")
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.router_bgp.show_bfd_neighbor_v6()
+		router_bfd = Router_BFD(switch)
+		router_bfd.counte_peers_v6()
+
+	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
 	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && enable BFD, wait for 20s =====")
 	for switch in switches:
@@ -761,18 +795,20 @@ if testcase == 6012 or test_all:
 		switch.router_bgp.show_bgp_summary_v6()
 		switch.show_routing_v6()
 
-	check_bgp_test_result_v6(testcase,description,switches)
+	#check_bgp_test_result_v6(testcase,description,switches)
 
-	for switch in switches:
-		switch.router_bgp.config_ibgp_loopback_bfd_v6('disable')
+	# Uncomment the following lines later
+	# for switch in switches:
+	# 	switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
 
-	console_timer(20,msg="=======After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s ======")
-	for switch in switches:
-		switch.router_ospf.show_ospf_neighbors_v6()
-		switch.router_bgp.show_bgp_summary_v6()
-		switch.show_routing_v6()
+	# console_timer(20,msg="=======After disable BFD, wait for 20s ======")
+	# for switch in switches:
+	# 	switch.router_bgp.show_bgp_summary_v6()
+	# 	switch.router_bgp.show_bfd_neighbor_v6()
+	# 	router_bfd = Router_BFD(switch)
+	# 	router_bfd.counte_peers_v6()
 
-	check_bgp_test_result_v6(testcase,description,switches)
+	# check_bgp_test_result_v6(testcase,description,switches)
 
 
 if testcase == 6013 or test_all: #template for basic ipv4 and ipv6 iBGP
@@ -1076,7 +1112,8 @@ if testcase == 6023 or test_all:
 if testcase == 6024 or test_all:
 	testcase = 6024
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "iBGP on Link Local Address"
+	description = "iBGP on Link Local Address + iBGP over SVI + BFD"
+	tags ["basic link local", "bfd"]
 	print_test_subject(testcase,description)
 
 	if CLEAN_ALL:
@@ -1151,41 +1188,24 @@ if testcase == 6025 or test_all:
 	testcase = 6025
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Negative Testing: iBGP on all interfaces: loopback,SVI And Link Local Address, Enable BFD"
+	tags = ["link local bfd","all interfaces bfd"]
 	print_test_subject(testcase,description)
 
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
 
-	ospf_config = False
-	for switch in switches:
-		switch.show_switch_info()
-		switch.router_ospf.neighbor_discovery_all()
-		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
-		if not switch.router_ospf.ospf_neighbor_all_up_v4(num=OSPF_NEIGHBORS):
-			switch.router_ospf.basic_config()
-			ospf_config = True
-		else:
-			Info(f"All OSPFv4 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
-		if not switch.router_ospf.ospf_neighbor_all_up_v6(num=OSPF_NEIGHBORS):
-			switch.router_ospf.basic_config_v6()
-			ospf_config = True
-		else:
-			Info(f"All OSPFv6 neighbors are up on switch {switch.loop0_ip}, No need to config OSPF ")
-	if ospf_config:
-		console_timer(20,msg="After building ospfv4 and ospf6 routing infra, wait for 20 sec")
+	fsw_switches =switches[1:]
+
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+
+	test_config_igp_ipv6(switches =fsw_switches)
 
 	for switch in switches:
 		switch.router_ospf.show_ospf_neighbors_v6()
 
 
 	for switch in switches:  
-		switch.router_ospf.neighbor_discovery_all()
-		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		# switch.router_ospf.neighbor_discovery_all()
+		# switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
 		switch.discover_ipv6_neighbors()
 		switch.router_bgp.config_ibgp_mesh_svi_v6() #config IPv6 over svi 
 		switch.router_bgp.config_ibgp_mesh_direct() #config IPv4 over svi 
@@ -1206,7 +1226,7 @@ if testcase == 6025 or test_all:
 		router_bfd = Router_BFD(switch)
 		router_bfd.counte_peers_v6()
 
-	check_bgp_test_result_v6(testcase,description,switches)
+	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
 	# for switch in switches:
 	# 	switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
@@ -1222,7 +1242,6 @@ if testcase == 6025 or test_all:
 	# 	switch.router_bgp.show_bgp_summary_v6()
 	# 	switch.show_routing_v6()
 
-	check_bgp_test_result_v6(testcase,description,switches)
 	
 if testcase == 3 or test_all:
 	testcase = 3
@@ -1387,7 +1406,7 @@ if testcase == 6 or test_all:
 if testcase == 6061 or test_all:
 	testcase = 6061
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "eBGP v6 direct connection via SVI interfaces"
+	description = "eBGP v6 only direct connection via SVI interfaces"
 	print_test_subject(testcase,description)
 
 	# Clean up configuration before start testing
@@ -1439,6 +1458,7 @@ if testcase == 6062 or test_all:
 	testcase = 6062
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP v4 and v6 direct connection via SVI interfaces"
+	tag = "ebgp mesh"
 	print_test_subject(testcase,description)
 
 	# Clean up configuration before start testing
@@ -1486,6 +1506,7 @@ if testcase == 6062 or test_all:
 	# for switch in switches:
 	# 	switch.show_routing_v6()
 	check_bgp_test_result_v6(testcase,description,switches)
+
 
 if testcase == 6063 or test_all:
 	testcase = 6063
@@ -1557,7 +1578,352 @@ if testcase == 6063 or test_all:
 	check_bgp_test_result_v6(testcase,description,switches)
 	check_bgp_test_result(testcase,description,switches)
 
+if testcase == 6064 or test_all:
+	testcase = 6064
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "eBGP v6 direct connection via SVI interfaces, remove private AS, delete community"
+	tag1 = ["remove private as","change community","delete community"]
+	print_test_subject(testcase,description)
+
+	# apiServerIp = '10.105.19.19'
+	# ixChassisIpList = ['10.105.241.234']
+
+	portList_v4_v6 = [
+	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+    [ixChassisIpList[0], 1, 8,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 1, 9,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+    [ixChassisIpList[0], 1, 10,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 1, 11,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 1, 12,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+    ]
+
+	ixia_ipv6_as_list = [65101,65102,65103,65104,65105,65106]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::1","2001:106:1:1::1"]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
+
+	fsw_switches =switches[1:]
+
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+
+	test_config_igp_ipv6(switches =fsw_switches)
+	for switch in fsw_switches:
+		switch.router_bgp.config_ebgp_mesh_svi_v4()
+		switch.router_bgp.config_ebgp_mesh_svi_v6()
+	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+	# for switch in switches:
+	# 	switch.show_routing_v6()
+	for switch, ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
+		if switch.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as,sw_as=switch.ebgp_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if switch.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as,sw_as=switch.ebgp_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
 	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=1)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		i += 1
+
+	#This is DUT #5, don't get confused!!!!
+	ixia_topology = myixia.topologies[4]
+	dut_switch = fsw_switches[4]
+	ixia_topology.change_bgp_routes_attributes(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=66660,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="200.200.200.200")
+	# myixia.topologies[1].change_bgp_routes_attributes(origin="incomplete",med=6222,community=5,comm_base=6200,num_path=5,as_base=65012,aggregator="106.106.106.107",aggregator_as=66661,ext_community=6,excomm_base=2,com_type="routetarget",address_family="v4")
+	# myixia.topologies[2].change_bgp_routes_attributes(origin="egp",med=6333,community=6,comm_base=6300,num_path=6,as_base=65013,aggregator="106.106.106.108",aggregator_as=66662,ext_community=6,excomm_base=3,com_type="routetarget",address_family="v4")
+	# myixia.topologies[3].change_bgp_routes_attributes(origin="incomplete",med=6444,community=5,comm_base=6400,num_path=6,as_base=65014,aggregator="106.106.106.109",aggregator_as=66663,ext_community=6,excomm_base=4,com_type="routetarget",address_family="v4")
+	# myixia.topologies[4].change_bgp_routes_attributes(origin="egp",med=6555,community=6,comm_base=6500,num_path=6,as_base=6500,aggregator="106.106.106.110",aggregator_as=66662,ext_community=6,excomm_base=5,com_type="routetarget",address_family="v4")
+	# myixia.topologies[5].change_bgp_routes_attributes(origin="incomplete",med=6666,community=5,comm_base=6600,num_path=6,as_base=65015,aggregator="106.106.106.112",aggregator_as=66663,ext_community=6,excomm_base=6,com_type="routetarget",address_family="v4")
+
+
+	ixia_topology.change_bgp_routes_attributes_v6(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=64101,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::200")
+	# myixia.topologies[1].change_bgp_routes_attributes_v6(origin="incomplete",med=6222,community=5,comm_base=6200,num_path=5,as_base=66012,aggregator="106.106.106.107",aggregator_as=64102,ext_community=6,excomm_base=2,com_type="routetarget",address_family="v6")
+	# myixia.topologies[2].change_bgp_routes_attributes_v6(origin="egp",med=6333,community=6,comm_base=6300,num_path=6,as_base=66013,aggregator="106.106.106.108",aggregator_as=64103,ext_community=6,excomm_base=3,com_type="routetarget",address_family="v6")
+	# myixia.topologies[3].change_bgp_routes_attributes_v6(origin="incomplete",med=6444,community=5,comm_base=6400,num_path=6,as_base=65014,aggregator="106.106.106.109",aggregator_as=64014,ext_community=6,excomm_base=4,com_type="routetarget",address_family="v6")
+	# myixia.topologies[4].change_bgp_routes_attributes_v6(origin="egp",med=6333,community=6,comm_base=6300,num_path=6,as_base=65015,aggregator="106.106.106.110",aggregator_as=64105,ext_community=6,excomm_base=5,com_type="routetarget",address_family="v6")
+	# myixia.topologies[5].change_bgp_routes_attributes_v6(origin="incomplete",med=6444,community=5,comm_base=6400,num_path=6,as_base=65016,aggregator="106.106.106.112",aggregator_as=64106,ext_community=6,excomm_base=6,com_type="routetarget",address_family="v6")
+	 
+
+	myixia.start_protocol(wait=40)
+
+	print("Test Instruction: Manually configure route-map-in add-com and add-community-1 to neighbor 2001:10:1:1::211 and 10.1.1.211")
+	
+	config = """
+	config router community-list
+	    edit "com_list_1"
+	            config rule
+	                edit 1
+	                    set action permit
+	                    set match "6100:1 6100:2 6100:3 6100:4 6100:5 6100:6"
+	                next
+	            end
+	    next
+	    edit "6100-1"
+	            config rule
+	                edit 1
+	                    set action permit
+	                    set match "6100:1"
+	                next
+	            end
+	    next
+	    edit "7000-1"
+	            config rule
+	                edit 1
+	                    set action permit
+	                    set match "7000:1"
+	                next
+	            end
+	    next
+	    edit "6100-6"
+	            config rule
+	                edit 1
+	                    set action permit
+	                    set match "6100:6"
+	                next
+	            end
+	    next
+	    edit "6100-5-6100-6"
+	            config rule
+	                edit 1
+	                    set action permit
+	                    set match "6100:5 6100:6"
+	                next
+	            end
+	    next
+	end
+
+	config router route-map
+	    edit "dele-community"
+	        set protocol bgp
+	            config rule
+	                edit 1
+	                    set match-community "com_list_1"
+	                    set set-community-delete "6100-6"
+	                next
+	            end
+	    next
+	    edit "change-community"
+	        set protocol bgp
+	            config rule
+	                edit 1
+	                    set match-community "com_list_1"
+	                        set set-community "8000:1"
+	                next
+	            end
+	    next
+	    edit "add-community"
+	        set protocol bgp
+	            config rule
+	                edit 1
+	                    set match-community "com_list_1"
+	                        set set-community "8100:1"
+	                    set set-community-additive enable
+	                next
+	            end
+	    next
+	end
+		"""
+	dut_switch.config_commands(config)
+
+if testcase == 6065 or test_all:
+	testcase = 6065
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "eBGP v6  allow-as-in as-override6"
+	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
+	tag1 = "allow as in"
+	tag2 = "as override"
+	print_test_subject(testcase,description)
+
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+	test_config_igp_ipv6(switches =fsw_switches)
+
+	bgp1 = network.routers[0]
+	bgp2 = network.routers[1]
+	bgp3 = network.routers[2]
+	bgp4 = network.routers[3]
+
+	network.build_bgp_peer(bgp1,65001,bgp2,1)
+	network.build_bgp_peer(bgp2,1,bgp3,1)
+	network.build_bgp_peer(bgp3,1,bgp4,65001)
+
+	ixia_ipv6_as_list = [65101,65102,65103,65104,65105,65106]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::1","2001:106:1:1::1"]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
+
+	fsw_switches =switches[1:]
+
+
+if testcase == 6066 or test_all:
+	testcase = 6066
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "4 nodes topology + 1 IXAA"
+	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
+	tag1 = "4 nodes topology 1 IXIA"
+	print_test_subject(testcase,description)
+
+	ixia_port_info = [
+	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1]
+	]
+
+	ixia_ipv6_as_list = [65104]
+	ipv6_networks = ["2001:104:1:1::1"]
+	ipv4_networks = ["10.10.4.1"]
+
+
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+	test_config_igp_ipv6_fabric(switches =fsw_switches)
+
+	bgp1 = network.routers[0]
+	bgp2 = network.routers[1]
+	bgp3 = network.routers[2]
+	bgp4 = network.routers[3]
+
+	sw1 = fsw_switches[0]
+	sw2 = fsw_switches[1]
+	sw3 = fsw_switches[2]
+	sw4 = fsw_switches[3]
+
+	network.build_bgp_peer(bgp1,65001,bgp2,1)
+	network.build_bgp_peer(bgp2,1,bgp3,1)
+	network.build_bgp_peer(bgp3,1,bgp4,65001)
+
+	if bgp4.config_ebgp_ixia_v6(ixia_port=ixia_port_info[0],ixia_as=ixia_ipv6_as_list[0],sw_as=65001) == False:
+		tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+		exit()
+	if bgp4.config_ebgp_ixia_v4(ixia_port=ixia_port_info[0],ixia_as=ixia_ipv6_as_list[0],sw_as=65001) == False:
+		tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+		exit()
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,ixia_port_info)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=sw4.vlan1_ip,bgp_type='external',num=1)
+		topo.add_bgp_v6(dut_ip=sw4.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		i += 1
+
+	#This is DUT #5, don't get confused!!!!
+	ixia_topology = myixia.topologies[0]
+	dut_switch = sw4
+	ixia_topology.change_bgp_routes_attributes(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=66660,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="200.200.200.200") 
+
+	ixia_topology.change_bgp_routes_attributes_v6(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=64101,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::200")
+	 
+	myixia.start_protocol(wait=40)
+
+if testcase == 6067 or test_all:
+	testcase = 6067
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Next Hop Self"
+	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
+	tag1 = "next hop self"
+	print_test_subject(testcase,description)
+
+	ixia_port_info = [
+	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1]
+	]
+
+	ixia_ipv6_as_list = [65104]
+	ipv6_networks = ["2001:104:1:1::1"]
+	ipv4_networks = ["10.10.4.1"]
+
+
+	fsw_switches =switches[1:]
+
+	network = BGP_networks(fsw_switches)
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+
+	for sw in fsw_switches:
+		sw.router_ospf.remove_ospf_v4()
+		sw.router_ospf.remove_ospf_v6()
+	for sw in fsw_switches:
+		sw.delete_all_vlan_interfaces()
+
+	bgp1 = network.routers[0]
+	bgp2 = network.routers[1]
+	bgp3 = network.routers[2]
+	bgp4 = network.routers[3]
+
+	sw1 = fsw_switches[0]
+	sw2 = fsw_switches[1]
+	sw3 = fsw_switches[2]
+	sw4 = fsw_switches[3]
+
+	sw1.config_stp(root=True)  # In this topology, it is a MUST to config this switch as a ROOT
+
+	sw1.add_vlan_interface(vlan=10,vlan_name="vlan10",ipv4_addr="200.10.1.1",ipv6_addr="2001:200:10:1::1/64")
+	sw2.add_vlan_interface(vlan=10,vlan_name="vlan10",ipv4_addr="200.10.1.2",ipv6_addr="2001:200:10:1::2/64")
+	sw2.add_vlan_interface(vlan=20,vlan_name="vlan20",ipv4_addr="200.20.1.1",ipv6_addr="2001:200:20:1::1/64")
+	sw3.add_vlan_interface(vlan=20,vlan_name="vlan20",ipv4_addr="200.20.1.2",ipv6_addr="2001:200:20:1::2/64")
+	sw3.add_vlan_interface(vlan=30,vlan_name="vlan30",ipv4_addr="200.30.1.1",ipv6_addr="2001:200:30:1::1/64")
+	sw4.add_vlan_interface(vlan=30,vlan_name="vlan30",ipv4_addr="200.30.1.2",ipv6_addr="2001:200:30:1::2/64")
+	
+
+	network.build_bgp_peer_address(bgp1,65001,"2001:200:10:1::1",bgp2,1,"2001:200:10:1::2")
+	network.build_bgp_peer_address(bgp2,1,"2001:200:20:1::1",bgp3,1,"2001:200:20:1::2")
+	network.build_bgp_peer_address(bgp3,1,"2001:200:30:1::1",bgp4,65001,"2001:200:30:1::2")
+
+	# if bgp4.config_ebgp_ixia_v6(ixia_port=ixia_port_info[0],ixia_as=ixia_ipv6_as_list[0],sw_as=65001) == False:
+	# 	tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+	# 	exit()
+	# if bgp4.config_ebgp_ixia_v4(ixia_port=ixia_port_info[0],ixia_as=ixia_ipv6_as_list[0],sw_as=65001) == False:
+	# 	tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+	# 	exit()
+
+	# myixia = IXIA(apiServerIp,ixChassisIpList,ixia_port_info)
+
+	# for topo in myixia.topologies:
+	# 	topo.add_ipv6()
+	# 	topo.add_ipv4()
+	 
+	# for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+	# 	topo.bgpv6_network = net6
+	# 	topo.bgpv4_network = net4
+	# 	topo.bgp_as = as_num
+
+	# i = 0
+	# for topo in myixia.topologies:
+	# 	topo.add_bgp(dut_ip=sw4.vlan1_ip,bgp_type='external',num=1)
+	# 	topo.add_bgp_v6(dut_ip=sw4.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+	# 	i += 1
+
+	# #This is DUT #5, don't get confused!!!!
+	# ixia_topology = myixia.topologies[0]
+	# dut_switch = sw4
+	# ixia_topology.change_bgp_routes_attributes(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=66660,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="200.200.200.200") 
+
+	# ixia_topology.change_bgp_routes_attributes_v6(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=64101,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::200")
+	 
+	# myixia.start_protocol(wait=40)
 
 
 if testcase == 7 or test_all:
@@ -1709,21 +2075,32 @@ if testcase == 9 or test_all:
 if testcase == 6091 or test_all:
 	testcase = 6091
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "Basic eBGP IPv4 And IPv6 peered to IXIA and traffic forwarding"
+	description = "Basic eBGP traffic forwarding - IPv4 And IPv6 peered to IXIA and traffic forwarding"
+	tag = "basic traffic forwarding"
 	print_test_subject(testcase,description)
 
 	# IXIA and switch information
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
+	# apiServerIp = '10.105.19.19'
+	# ixChassisIpList = ['10.105.241.234']
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+	# portList_v4_v6 = [
+	# [ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 1, 8,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 1, 9,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 1, 10,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 1, 11,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 1, 12,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+ #    ]
+
+
+	# portList_v4_v6 = [
+	# [ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+ #    ]
 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
@@ -1732,14 +2109,14 @@ if testcase == 6091 or test_all:
 	fsw_switches =switches[1:]
 	network = BGP_networks(switches)
 
-	# Infra configuration
-	if test_config:
-		test_clean_config(switches =fsw_switches)
-		test_config_igp_ipv6(switches =fsw_switches)
-		network.biuld_ibgp_mesh_topo_sys_intf_v6()
-		network.biuld_ibgp_mesh_topo_sys_intf()
-		console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
-		network.show_summary_v6()
+	# #Infra configuration
+	# if test_config:
+	# 	test_clean_config(switches =fsw_switches)
+	# test_config_igp_ipv6_fabric(switches =fsw_switches)
+	# network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	# network.biuld_ibgp_mesh_topo_sys_intf()
+	# console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	# network.show_summary_v6()
 	
 	# FSW configuration
 	for switch, ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
@@ -1805,8 +2182,7 @@ if testcase == 6092 or test_all:
 	print_test_subject(testcase,description)
 
 	# IXIA and switch information
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
+	
 
 	portList_v4_v6 = [
 	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
@@ -1905,7 +2281,6 @@ if testcase == 10 or test_all:
 		switch.router_bgp.show_bgp_summary()
 		
 	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
 
 	portList = [[ixChassisIpList[0], 2,11,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
 	[ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
@@ -1961,9 +2336,6 @@ if testcase == 6101 or test_all:
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Basic eBGP IPv6 peered to IXIA and traffic forwarding"
 	print_test_subject(testcase,description)
-
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
 
 	portList_v4_v6 = [
 	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
@@ -2202,7 +2574,6 @@ if testcase == 12 or test_all:
 		switch.router_bgp.show_bgp_summary()
 		
 	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
 
 	portList = [[ixChassisIpList[0], 2,11,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
 	[ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
@@ -2241,9 +2612,6 @@ if testcase == 6121 or test_all:
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 policy and route filtering:duplicated routes were injected from IXIA."
 	print_test_subject(testcase,description)
-
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
 
 	portList_v4_v6 = [
 	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
@@ -2308,8 +2676,7 @@ if testcase == 13 or test_all:
 	# 		tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
 	# 		exit()
 		
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
+	
 
 	portList = [[ixChassisIpList[0], 2,11,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
 	[ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
@@ -3234,20 +3601,35 @@ if testcase == 6149 or test_all:
 	testcase = 6149
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Put all attributes together. Run the test at the last switch: switches[-1] "
+	tag = "all attributes"
 	print_test_subject(testcase,description)
+
+	# apiServerIp = '10.105.19.19'
+	# ixChassisIpList = ['10.105.241.234']
+
+	# portList_v4_v6 = [
+	# [ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+ #    ]
+	
 
 	apiServerIp = '10.105.19.19'
 	ixChassisIpList = ['10.105.241.234']
 
 	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+    [ixChassisIpList[0], 1, 8,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 1, 9,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+    [ixChassisIpList[0], 1, 10,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 1, 11,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+    [ixChassisIpList[0], 1, 12,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
     ]
-	
+
+
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1"]
@@ -3274,12 +3656,14 @@ if testcase == 6149 or test_all:
 	if test_config:
 		test_clean_config(switches =fsw_switches)
 		test_config_igp_ipv6(switches =fsw_switches)
-		network.biuld_ibgp_mesh_topo_sys_intf_v6()
+		#network.biuld_ibgp_mesh_topo_sys_intf_v6()
+		network.biuld_ibgp_mesh_topo_sys_intf_one()
+		network.biuld_ibgp_mesh_topo_sys_intf_v6_one()
 		console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
 	network.show_summary_v6()
 
-	test_config_single_switch2ixia_all(switch=sw6_switch,ixia_ports=sw6_ixia_ports,as_lists=sw6_as_lists)
-
+	# test_config_single_switch2ixia_all(switch=sw6_switch,ixia_ports=sw6_ixia_ports,as_lists=sw6_as_lists)
+	cisco_switch.cisco_config_ebgp_ixia()
 
 	myixia = IXIA(apiServerIp,ixChassisIpList,my_ixia_ports)
 

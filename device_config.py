@@ -37,275 +37,281 @@ def _parse_xml(file):
     #     print(result)
     #     exit()
 
-def bgp_testbed_init():
-    dut1_com = "10.105.241.144"
-    dut1_location = "Rack7-19"
-    dut1_port = 2071
-    dut1_name = "3032E-R7-19"
-    dut1_cfg = "3032E-R7-19"
-    dut1_cfg_basic = "3032E_R7_19_basic.cfg"
-    dut1_mgmt_ip = "10.105.240.145"
-    dut1_mgmt_mask = "255.255.254.0"
-    dut1_loop0_ip = "1.1.1.1"
-    dut1_vlan1_ip = "10.1.1.1"
-    dut1_vlan1_subnet = "10.1.1.0"
-    dut1_vlan1_mask = "255.255.255.0"
-    dut1_split_ports = ["port3"]
-    dut1_40g_ports = ["port9","port19"]
-    dut1_static_route_base = "172.16.1"
-    dut1_static_route_mask = "255.255.255.0"
+# def bgp_testbed_init():
+#     dut1_com = "10.105.241.144"
+#     dut1_location = "Rack7-19"
+#     dut1_port = 2071
+#     dut1_name = "3032E-R7-19"
+#     dut1_cfg = "3032E-R7-19"
+#     dut1_cfg_basic = "3032E_R7_19_basic.cfg"
+#     dut1_mgmt_ip = "10.105.240.145"
+#     dut1_mgmt_mask = "255.255.254.0"
+#     dut1_loop0_ip = "1.1.1.1"
+#     dut1_vlan1_ip = "10.1.1.1"
+#     dut1_vlan1000_ip = "100.1.1.1"
+#     dut1_vlan1_subnet = "10.1.1.0"
+#     dut1_vlan1_mask = "255.255.255.0"
+#     dut1_split_ports = ["port3"]
+#     dut1_40g_ports = ["port9","port19"]
+#     dut1_static_route_base = "172.16.1"
+#     dut1_static_route_mask = "255.255.255.0"
 
-    dut2_com = "10.105.241.44"
-    dut2_location = "Rack7-40"
-    dut2_port = 2066
-    dut2_name = "3032D-R7-40"
-    dut2_cfg = "3032D-R7-40"
-    dut2_cfg_basic = "3032D_R7_40_basic.cfg"
-    dut2_mgmt_ip = "10.105.241.40"
-    dut2_mgmt_mask = "255.255.254.0"
-    dut2_loop0_ip = "2.2.2.2"
-    dut2_vlan1_ip = "10.1.1.2"
-    dut2_vlan1_subnet = "10.1.1.0"
-    dut2_vlan1_mask = "255.255.255.0"
-    dut2_split_ports = ["port1","port5","port7"]
-    dut2_40g_ports = ["port9","port13"]
-    dut2_static_route_base = "172.16.2"
-    dut2_static_route_mask = "255.255.255.0"
+#     dut2_com = "10.105.241.44"
+#     dut2_location = "Rack7-40"
+#     dut2_port = 2066
+#     dut2_name = "3032D-R7-40"
+#     dut2_cfg = "3032D-R7-40"
+#     dut2_cfg_basic = "3032D_R7_40_basic.cfg"
+#     dut2_mgmt_ip = "10.105.241.40"
+#     dut2_mgmt_mask = "255.255.254.0"
+#     dut2_loop0_ip = "2.2.2.2"
+#     dut2_vlan1_ip = "10.1.1.2"
+#     dut2_vlan1000_ip = "100.1.1.2"
+#     dut2_vlan1_subnet = "10.1.1.0"
+#     dut2_vlan1_mask = "255.255.255.0"
+#     dut2_split_ports = ["port1","port5","port7"]
+#     dut2_40g_ports = ["port9","port13"]
+#     dut2_static_route_base = "172.16.2"
+#     dut2_static_route_mask = "255.255.255.0"
 
-    dut3_com = "10.105.240.44"
-    dut3_location = "Rack4-41"
-    dut3_port = 2090
-    dut3_name = "1048E-R4-41"
-    dut3_cfg = "1048E-R4-41"
-    dut3_cfg_basic = "1048E_R4_41_basic.cfg"
-    dut3_mgmt_ip = "10.105.240.41"
-    dut3_mgmt_mask = "255.255.254.0"
-    dut3_loop0_ip = "3.3.3.3"
-    dut3_vlan1_ip = "10.1.1.3"
-    dut3_vlan1_subnet = "10.1.1.0"
-    dut3_vlan1_mask = "255.255.255.0"
-    dut3_split_ports = []
-    dut3_40g_ports = []
-    dut3_static_route_base = "172.16.3"
-    dut3_static_route_mask = "255.255.255.0"
+#     dut3_com = "10.105.240.44"
+#     dut3_location = "Rack4-41"
+#     dut3_port = 2090
+#     dut3_name = "1048E-R4-41"
+#     dut3_cfg = "1048E-R4-41"
+#     dut3_cfg_basic = "1048E_R4_41_basic.cfg"
+#     dut3_mgmt_ip = "10.105.240.41"
+#     dut3_mgmt_mask = "255.255.254.0"
+#     dut3_loop0_ip = "3.3.3.3"
+#     dut3_vlan1_ip = "10.1.1.3"
+#     dut3_vlan1_ip = "100.1.1.3"
+#     dut3_vlan1_subnet = "10.1.1.0"
+#     dut3_vlan1_mask = "255.255.255.0"
+#     dut3_split_ports = []
+#     dut3_40g_ports = []
+#     dut3_static_route_base = "172.16.3"
+#     dut3_static_route_mask = "255.255.255.0"
 
-    dut4_com = "10.105.240.44"
-    dut4_location = "Rack4-40"
-    dut4_port = 2007
-    dut4_name = "1048D-R4-40"
-    dut4_cfg = "1048D-R4-40"
-    dut4_cfg_basic = "1048D_R4_40_basic.cfg"
-    dut4_mgmt_ip = "10.105.240.40"
-    dut4_mgmt_mask = "255.255.254.0"
-    dut4_loop0_ip = "4.4.4.4"
-    dut4_vlan1_ip = "10.1.1.4"
-    dut4_vlan1_subnet = "10.1.1.0"
-    dut4_vlan1_mask = "255.255.255.0"
-    dut4_split_ports = []
-    dut4_40g_ports = []
-    dut4_static_route_base = "172.16.4"
-    dut4_static_route_mask = "255.255.255.0"
+#     dut4_com = "10.105.240.44"
+#     dut4_location = "Rack4-40"
+#     dut4_port = 2007
+#     dut4_name = "1048D-R4-40"
+#     dut4_cfg = "1048D-R4-40"
+#     dut4_cfg_basic = "1048D_R4_40_basic.cfg"
+#     dut4_mgmt_ip = "10.105.240.40"
+#     dut4_mgmt_mask = "255.255.254.0"
+#     dut4_loop0_ip = "4.4.4.4"
+#     dut4_vlan1_ip = "10.1.1.4"
+#     dut4_vlan1_ip = "100.1.1.4"
+#     dut4_vlan1_subnet = "10.1.1.0"
+#     dut4_vlan1_mask = "255.255.255.0"
+#     dut4_split_ports = []
+#     dut4_40g_ports = []
+#     dut4_static_route_base = "172.16.4"
+#     dut4_static_route_mask = "255.255.255.0"
 
-    dut5_com = "10.105.240.144"
-    dut5_location = "Rack5-38"
-    dut5_port = 2068
-    dut5_name = "1024D-R5-38"
-    dut5_cfg = "1024D-R5-38"
-    dut5_cfg_basic = "1024D_R5_38_basic.cfg"
-    dut5_mgmt_ip = "10.105.240.138"
-    dut5_mgmt_mask = "255.255.254.0"
-    dut5_loop0_ip = "5.5.5.5"
-    dut5_vlan1_ip = "10.1.1.5"
-    dut5_vlan1_subnet = "10.1.1.0"
-    dut5_vlan1_mask = "255.255.255.0"
-    dut5_split_ports = []
-    dut5_40g_ports = []
-    dut5_static_route_base = "172.16.5"
-    dut5_static_route_mask = "255.255.255.0"
+#     dut5_com = "10.105.240.144"
+#     dut5_location = "Rack5-38"
+#     dut5_port = 2068
+#     dut5_name = "1024D-R5-38"
+#     dut5_cfg = "1024D-R5-38"
+#     dut5_cfg_basic = "1024D_R5_38_basic.cfg"
+#     dut5_mgmt_ip = "10.105.240.138"
+#     dut5_mgmt_mask = "255.255.254.0"
+#     dut5_loop0_ip = "5.5.5.5"
+#     dut5_vlan1_ip = "10.1.1.5"
+#     dut5_vlan1_ip = "100.1.1.5"
+#     dut5_vlan1_subnet = "10.1.1.0"
+#     dut5_vlan1_mask = "255.255.255.0"
+#     dut5_split_ports = []
+#     dut5_40g_ports = []
+#     dut5_static_route_base = "172.16.5"
+#     dut5_static_route_mask = "255.255.255.0"
 
 
-    dut1_dir = {}
-    dut2_dir = {}
-    dut3_dir = {} 
-    dut4_dir = {}
-    dut5_dir = {}
-    dut6_dir = {}
-    dut7_dir = {}
-    dut8_dir = {}
+#     dut1_dir = {}
+#     dut2_dir = {}
+#     dut3_dir = {} 
+#     dut4_dir = {}
+#     dut5_dir = {}
+#     dut6_dir = {}
+#     dut7_dir = {}
+#     dut8_dir = {}
 
-    dut_dir_list = []
-    dut_list = []
+#     dut_dir_list = []
+#     dut_list = []
 
-    dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
-    dut1_dir['comm'] = dut1_com
-    dut1_dir['comm_port'] = dut1_port
-    dut1_dir['name'] = dut1_name
-    dut1_dir['label'] = 1
-    dut1_dir['location'] = dut1_location
-    dut1_dir['telnet'] = dut1
-    dut1_dir['cfg'] = dut1_cfg
-    dut1_dir['mgmt_ip'] = dut1_mgmt_ip
-    dut1_dir['mgmt_mask']= dut1_mgmt_mask  
-    dut1_dir['loop0_ip']= dut1_loop0_ip  
-    dut1_dir['vlan1_ip']= dut1_vlan1_ip 
-    dut1_dir['vlan1_2nd'] = "1.1.1.254"
-    dut1_dir['internal'] = "1.1.1.100"
-    dut1_dir['vlan1_subnet'] = dut1_vlan1_subnet
-    dut1_dir['vlan1_mask']= dut1_vlan1_mask  
-    dut1_dir['split_ports']= dut1_split_ports  
-    dut1_dir['40g_ports']= dut1_40g_ports
-    dut1_dir['static_route'] = dut1_static_route_base 
-    dut1_dir['static_route_mask'] = dut1_static_route_mask 
-    dut1_dir['ebgp_as']  = 65001
+#     dut1 = get_switch_telnet_connection_new(dut1_com,dut1_port)
+#     dut1_dir['comm'] = "10.105.241.144"
+#     dut1_dir['comm_port'] = 2071
+#     dut1_dir['name'] = dut1_name
+#     dut1_dir['label'] = 1
+#     dut1_dir['location'] = dut1_location
+#     dut1_dir['telnet'] = dut1
+#     dut1_dir['cfg'] = dut1_cfg
+#     dut1_dir['mgmt_ip'] = dut1_mgmt_ip
+#     dut1_dir['mgmt_mask']= dut1_mgmt_mask  
+#     dut1_dir['loop0_ip']= dut1_loop0_ip  
+#     dut1_dir['vlan1_ip']= dut1_vlan1_ip 
+#     dut1_dir['vlan100_ip']= dut1_vlan100_ip 
+#     dut1_dir['vlan1_2nd'] = "1.1.1.254"
+#     dut1_dir['internal'] = "1.1.1.100"
+#     dut1_dir['vlan1_subnet'] = dut1_vlan1_subnet
+#     dut1_dir['vlan1_mask']= dut1_vlan1_mask  
+#     dut1_dir['split_ports']= dut1_split_ports  
+#     dut1_dir['40g_ports']= dut1_40g_ports
+#     dut1_dir['static_route'] = dut1_static_route_base 
+#     dut1_dir['static_route_mask'] = dut1_static_route_mask 
+#     dut1_dir['ebgp_as']  = 1
     
-    dut_dir_list.append(dut1_dir)
-    dut_list.append(dut1)
+#     dut_dir_list.append(dut1_dir)
+#     dut_list.append(dut1)
      
-    dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
-    dut2_dir['comm'] = dut2_com
-    dut2_dir['comm_port'] = dut2_port
-    dut2_dir['name'] = dut2_name
-    dut2_dir['label'] = 2
-    dut2_dir['location'] = dut2_location
-    dut2_dir['telnet'] = dut2
-    dut2_dir['cfg'] = dut2_cfg
-    dut2_dir['mgmt_ip'] = dut2_mgmt_ip
-    dut2_dir['mgmt_mask']= dut2_mgmt_mask  
-    dut2_dir['loop0_ip']= dut2_loop0_ip  
-    dut2_dir['vlan1_ip']= dut2_vlan1_ip
-    dut2_dir['vlan1_2nd'] = "2.2.2.254"  
-    dut2_dir['internal'] = "2.2.2.100"
-    dut2_dir['vlan1_subnet'] = dut2_vlan1_subnet
-    dut2_dir['vlan1_mask']= dut2_vlan1_mask  
-    dut2_dir['split_ports']= dut2_split_ports  
-    dut2_dir['40g_ports']= dut2_40g_ports 
-    dut2_dir['static_route'] = dut2_static_route_base 
-    dut2_dir['static_route_mask'] = dut2_static_route_mask 
-    dut2_dir['ebgp_as']  = 65002
-    dut_dir_list.append(dut2_dir)
-    dut_list.append(dut2)
+#     dut2 = get_switch_telnet_connection_new(dut2_com,dut2_port)
+#     dut2_dir['comm'] = dut2_com
+#     dut2_dir['comm_port'] = dut2_port
+#     dut2_dir['name'] = dut2_name
+#     dut2_dir['label'] = 2
+#     dut2_dir['location'] = dut2_location
+#     dut2_dir['telnet'] = dut2
+#     dut2_dir['cfg'] = dut2_cfg
+#     dut2_dir['mgmt_ip'] = dut2_mgmt_ip
+#     dut2_dir['mgmt_mask']= dut2_mgmt_mask  
+#     dut2_dir['loop0_ip']= dut2_loop0_ip  
+#     dut2_dir['vlan1_ip']= dut2_vlan1_ip
+#     dut2_dir['vlan1_2nd'] = "2.2.2.254"  
+#     dut2_dir['internal'] = "2.2.2.100"
+#     dut2_dir['vlan1_subnet'] = dut2_vlan1_subnet
+#     dut2_dir['vlan1_mask']= dut2_vlan1_mask  
+#     dut2_dir['split_ports']= dut2_split_ports  
+#     dut2_dir['40g_ports']= dut2_40g_ports 
+#     dut2_dir['static_route'] = dut2_static_route_base 
+#     dut2_dir['static_route_mask'] = dut2_static_route_mask 
+#     dut2_dir['ebgp_as']  = 2
+#     dut_dir_list.append(dut2_dir)
+#     dut_list.append(dut2)
 
-    dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
-    dut3_dir['comm'] = dut3_com
-    dut3_dir['comm_port'] = dut3_port
-    dut3_dir['name'] = dut3_name
-    dut3_dir['label'] = 3
-    dut3_dir['location'] = dut3_location
-    dut3_dir['telnet'] = dut3
-    dut3_dir['cfg'] = dut3_cfg
-    dut3_dir['mgmt_ip'] = dut3_mgmt_ip
-    dut3_dir['mgmt_mask']= dut3_mgmt_mask  
-    dut3_dir['loop0_ip']= dut3_loop0_ip  
-    dut3_dir['vlan1_ip']= dut3_vlan1_ip
-    dut3_dir['vlan1_2nd'] = "3.3.3.254"  
-    dut3_dir['internal'] = "3.3.3.100"
-    dut3_dir['vlan1_subnet'] = dut3_vlan1_subnet
-    dut3_dir['vlan1_mask']= dut3_vlan1_mask  
-    dut3_dir['split_ports']= dut3_split_ports  
-    dut3_dir['40g_ports']= dut3_40g_ports 
-    dut3_dir['static_route'] = dut3_static_route_base 
-    dut3_dir['static_route_mask'] = dut3_static_route_mask 
-    dut3_dir['ebgp_as']  = 65003
-    dut_dir_list.append(dut3_dir)
-    dut_list.append(dut3)
+#     dut3 = get_switch_telnet_connection_new(dut3_com,dut3_port)
+#     dut3_dir['comm'] = dut3_com
+#     dut3_dir['comm_port'] = dut3_port
+#     dut3_dir['name'] = dut3_name
+#     dut3_dir['label'] = 3
+#     dut3_dir['location'] = dut3_location
+#     dut3_dir['telnet'] = dut3
+#     dut3_dir['cfg'] = dut3_cfg
+#     dut3_dir['mgmt_ip'] = dut3_mgmt_ip
+#     dut3_dir['mgmt_mask']= dut3_mgmt_mask  
+#     dut3_dir['loop0_ip']= dut3_loop0_ip  
+#     dut3_dir['vlan1_ip']= dut3_vlan1_ip
+#     dut3_dir['vlan1_2nd'] = "3.3.3.254"  
+#     dut3_dir['internal'] = "3.3.3.100"
+#     dut3_dir['vlan1_subnet'] = dut3_vlan1_subnet
+#     dut3_dir['vlan1_mask']= dut3_vlan1_mask  
+#     dut3_dir['split_ports']= dut3_split_ports  
+#     dut3_dir['40g_ports']= dut3_40g_ports 
+#     dut3_dir['static_route'] = dut3_static_route_base 
+#     dut3_dir['static_route_mask'] = dut3_static_route_mask 
+#     dut3_dir['ebgp_as']  = 3
+#     dut_dir_list.append(dut3_dir)
+#     dut_list.append(dut3)
 
-    dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
-    dut4_dir['comm'] = dut4_com
-    dut4_dir['comm_port'] = dut4_port
-    dut4_dir['name'] = dut4_name
-    dut4_dir['label'] = 4
-    dut4_dir['location'] = dut4_location
-    dut4_dir['telnet'] = dut4
-    dut4_dir['cfg'] = dut4_cfg
-    dut4_dir['mgmt_ip'] = dut4_mgmt_ip
-    dut4_dir['mgmt_mask']= dut4_mgmt_mask  
-    dut4_dir['loop0_ip']= dut4_loop0_ip  
-    dut4_dir['vlan1_ip']= dut4_vlan1_ip  
-    dut4_dir['vlan1_2nd'] = "4.4.4.254"
-    dut4_dir['internal'] = "4.4.4.100"
-    dut4_dir['vlan1_subnet'] = dut4_vlan1_subnet
-    dut4_dir['vlan1_mask']= dut4_vlan1_mask  
-    dut4_dir['split_ports']= dut4_split_ports  
-    dut4_dir['40g_ports']= dut4_40g_ports 
-    dut4_dir['static_route'] = dut4_static_route_base 
-    dut4_dir['static_route_mask'] = dut4_static_route_mask 
-    dut4_dir['ebgp_as']  = 65004
-    dut_dir_list.append(dut4_dir)
-    dut_list.append(dut4)
+#     dut4 = get_switch_telnet_connection_new(dut4_com,dut4_port)
+#     dut4_dir['comm'] = dut4_com
+#     dut4_dir['comm_port'] = dut4_port
+#     dut4_dir['name'] = dut4_name
+#     dut4_dir['label'] = 4
+#     dut4_dir['location'] = dut4_location
+#     dut4_dir['telnet'] = dut4
+#     dut4_dir['cfg'] = dut4_cfg
+#     dut4_dir['mgmt_ip'] = dut4_mgmt_ip
+#     dut4_dir['mgmt_mask']= dut4_mgmt_mask  
+#     dut4_dir['loop0_ip']= dut4_loop0_ip  
+#     dut4_dir['vlan1_ip']= dut4_vlan1_ip  
+#     dut4_dir['vlan1_2nd'] = "4.4.4.254"
+#     dut4_dir['internal'] = "4.4.4.100"
+#     dut4_dir['vlan1_subnet'] = dut4_vlan1_subnet
+#     dut4_dir['vlan1_mask']= dut4_vlan1_mask  
+#     dut4_dir['split_ports']= dut4_split_ports  
+#     dut4_dir['40g_ports']= dut4_40g_ports 
+#     dut4_dir['static_route'] = dut4_static_route_base 
+#     dut4_dir['static_route_mask'] = dut4_static_route_mask 
+#     dut4_dir['ebgp_as']  = 4
+#     dut_dir_list.append(dut4_dir)
+#     dut_list.append(dut4)
 
-    dut5 = get_switch_telnet_connection_new(dut5_com,dut5_port)
-    dut5_dir['comm'] = dut5_com
-    dut5_dir['comm_port'] = dut5_port
-    dut5_dir['name'] = dut5_name
-    dut5_dir['label'] = 5
-    dut5_dir['location'] = dut5_location
-    dut5_dir['telnet'] = dut5
-    dut5_dir['cfg'] = dut5_cfg
-    dut5_dir['mgmt_ip'] = dut5_mgmt_ip
-    dut5_dir['mgmt_mask']= dut5_mgmt_mask  
-    dut5_dir['loop0_ip']= dut5_loop0_ip  
-    dut5_dir['vlan1_ip']= dut5_vlan1_ip  
-    dut5_dir['vlan1_2nd'] = "5.5.5.254"
-    dut5_dir['internal'] = "5.5.5.100"
-    dut5_dir['vlan1_subnet'] = dut5_vlan1_subnet
-    dut5_dir['vlan1_mask']= dut5_vlan1_mask  
-    dut5_dir['split_ports']= dut5_split_ports  
-    dut5_dir['40g_ports']= dut5_40g_ports 
-    dut5_dir['static_route'] = dut5_static_route_base 
-    dut5_dir['static_route_mask'] = dut5_static_route_mask 
-    dut5_dir['ebgp_as']  = 65005
-    dut_dir_list.append(dut5_dir) 
-    dut_list.append(dut5)
+#     dut5 = get_switch_telnet_connection_new(dut5_com,dut5_port)
+#     dut5_dir['comm'] = dut5_com
+#     dut5_dir['comm_port'] = dut5_port
+#     dut5_dir['name'] = dut5_name
+#     dut5_dir['label'] = 5
+#     dut5_dir['location'] = dut5_location
+#     dut5_dir['telnet'] = dut5
+#     dut5_dir['cfg'] = dut5_cfg
+#     dut5_dir['mgmt_ip'] = dut5_mgmt_ip
+#     dut5_dir['mgmt_mask']= dut5_mgmt_mask  
+#     dut5_dir['loop0_ip']= dut5_loop0_ip  
+#     dut5_dir['vlan1_ip']= dut5_vlan1_ip  
+#     dut5_dir['vlan1_2nd'] = "5.5.5.254"
+#     dut5_dir['internal'] = "5.5.5.100"
+#     dut5_dir['vlan1_subnet'] = dut5_vlan1_subnet
+#     dut5_dir['vlan1_mask']= dut5_vlan1_mask  
+#     dut5_dir['split_ports']= dut5_split_ports  
+#     dut5_dir['40g_ports']= dut5_40g_ports 
+#     dut5_dir['static_route'] = dut5_static_route_base 
+#     dut5_dir['static_route_mask'] = dut5_static_route_mask 
+#     dut5_dir['ebgp_as']  = 5
+#     dut_dir_list.append(dut5_dir) 
+#     dut_list.append(dut5)
 
-    dut6 = get_switch_telnet_connection_new("10.105.241.144",2079)
-    dut6_dir['comm'] = "10.105.241.144"
-    dut6_dir['comm_port'] = 2079
-    dut6_dir['name'] = "548D-R8-34"
-    dut6_dir['label'] = 6
-    dut6_dir['location'] = "Rack8-34"
-    dut6_dir['telnet'] = dut6
-    dut6_dir['cfg'] = "548D-R8-34"
-    dut6_dir['mgmt_ip'] = "10.105.241.133"
-    dut6_dir['mgmt_mask']= "255.255.254.0"  
-    dut6_dir['loop0_ip']= "6.6.6.6" 
-    dut6_dir['vlan1_ip']= "10.1.1.6"  
-    dut6_dir['vlan1_2nd'] = "6.6.6.254"
-    dut6_dir['internal'] = "6.6.6.100"
-    dut6_dir['vlan1_subnet'] = "10.1.1.0"
-    dut6_dir['vlan1_mask']= "255.255.255.0"  
-    dut6_dir['split_ports']= []
-    dut6_dir['40g_ports']= []
-    dut6_dir['static_route'] = "172.16.6"
-    dut6_dir['static_route_mask'] = "255.255.255.0"
-    dut6_dir['ebgp_as']  = 65006
-    dut_dir_list.append(dut6_dir) 
-    dut_list.append(dut6)
+#     dut6 = get_switch_telnet_connection_new("10.105.241.144",2079)
+#     dut6_dir['comm'] = "10.105.241.144"
+#     dut6_dir['comm_port'] = 2079
+#     dut6_dir['name'] = "548D-R8-34"
+#     dut6_dir['label'] = 6
+#     dut6_dir['location'] = "Rack8-34"
+#     dut6_dir['telnet'] = dut6
+#     dut6_dir['cfg'] = "548D-R8-34"
+#     dut6_dir['mgmt_ip'] = "10.105.241.133"
+#     dut6_dir['mgmt_mask']= "255.255.254.0"  
+#     dut6_dir['loop0_ip']= "6.6.6.6" 
+#     dut6_dir['vlan1_ip']= "10.1.1.6"  
+#     dut6_dir['vlan1_2nd'] = "6.6.6.254"
+#     dut6_dir['internal'] = "6.6.6.100"
+#     dut6_dir['vlan1_subnet'] = "10.1.1.0"
+#     dut6_dir['vlan1_mask']= "255.255.255.0"  
+#     dut6_dir['split_ports']= []
+#     dut6_dir['40g_ports']= []
+#     dut6_dir['static_route'] = "172.16.6"
+#     dut6_dir['static_route_mask'] = "255.255.255.0"
+#     dut6_dir['ebgp_as']  = 6
+#     dut_dir_list.append(dut6_dir) 
+#     dut_list.append(dut6)
 
-    dut7 = get_switch_telnet_connection_new("10.105.240.44",2002)
-    dut7_dir['comm'] = "10.105.240.44"
-    dut7_dir['comm_port'] = 2002
-    dut7_dir['name'] = "1048D-R4-39"
-    dut7_dir['label'] = 7
-    dut7_dir['location'] = "Rack4-39"
-    dut7_dir['telnet'] = dut7
-    dut7_dir['cfg'] = "1048D-R4-39"
-    dut7_dir['mgmt_ip'] = "10.105.240.39"
-    dut7_dir['mgmt_mask']= "255.255.254.0" 
-    dut7_dir['loop0_ip']= "7.7.7.7" 
-    dut7_dir['vlan1_ip']= "10.1.1.7"  
-    dut7_dir['vlan1_2nd'] = "7.7.7.254"
-    dut7_dir['internal'] = "7.7.7.100"
-    dut7_dir['vlan1_subnet'] = "10.1.1.0"
-    dut7_dir['vlan1_mask']= "255.255.255.0" 
-    dut7_dir['split_ports']= []  
-    dut7_dir['40g_ports']= [] 
-    dut7_dir['static_route'] = "172.16.7"
-    dut7_dir['static_route_mask'] = "255.255.255.0" 
-    dut7_dir['ebgp_as']  = 65007
-    dut_dir_list.append(dut7_dir) 
-    dut_list.append(dut7)
+#     dut7 = get_switch_telnet_connection_new("10.105.240.44",2002)
+#     dut7_dir['comm'] = "10.105.240.44"
+#     dut7_dir['comm_port'] = 2002
+#     dut7_dir['name'] = "1048D-R4-39"
+#     dut7_dir['label'] = 7
+#     dut7_dir['location'] = "Rack4-39"
+#     dut7_dir['telnet'] = dut7
+#     dut7_dir['cfg'] = "1048D-R4-39"
+#     dut7_dir['mgmt_ip'] = "10.105.240.39"
+#     dut7_dir['mgmt_mask']= "255.255.254.0" 
+#     dut7_dir['loop0_ip']= "7.7.7.7" 
+#     dut7_dir['vlan1_ip']= "10.1.1.7"  
+#     dut7_dir['vlan1_2nd'] = "7.7.7.254"
+#     dut7_dir['internal'] = "7.7.7.100"
+#     dut7_dir['vlan1_subnet'] = "10.1.1.0"
+#     dut7_dir['vlan1_mask']= "255.255.255.0" 
+#     dut7_dir['split_ports']= []  
+#     dut7_dir['40g_ports']= [] 
+#     dut7_dir['static_route'] = "172.16.7"
+#     dut7_dir['static_route_mask'] = "255.255.255.0" 
+#     dut7_dir['ebgp_as']  = 7
+#     dut_dir_list.append(dut7_dir) 
+#     dut_list.append(dut7)
 
-    return dut_dir_list
+#     return dut_dir_list
 
 def bgpv6_testbed_init():
     dut1_dir = {}
@@ -332,18 +338,23 @@ def bgpv6_testbed_init():
     dut7_dir['mgmt_mask']= "255.255.254.0"  
     dut7_dir['loop0_ip']= "10.10.10.10" 
     dut7_dir['loop0_ipv6'] = "2001:10:10:10::10/64" 
-    dut7_dir['vlan1_ip']= "10.1.1.10"  
+    dut7_dir['vlan1_ip']= "10.1.1.10" 
+    dut7_dir['vlan1000_ip']= "100.1.1.10"  
     dut7_dir['vlan1_ipv6']= "2001:10:1:1::10/64"
+    dut7_dir['vlan1000_ipv6']= "2001:100:1:1::10/64"
     dut7_dir['vlan1_2nd'] = "10.10.10.254" # Doesn't matter
+    dut7_dir['vlan1000_2nd'] = "10.10.10.253"
     dut7_dir['internal'] = "10.10.10.100"  # Doesn't matter
     dut7_dir['internal_v6'] = "2001:1:1::100/64"
     dut7_dir['vlan1_subnet'] = "10.1.1.0"
-    dut7_dir['vlan1_mask']= "255.255.255.0"  
+    dut7_dir['vlan1000_subnet'] = "100.1.1.0"
+    dut7_dir['vlan1_mask']= "255.255.255.0" 
+    dut7_dir['vlan1000_mask']= "255.255.255.0"  
     dut7_dir['split_ports']= [] 
     dut7_dir['40g_ports']= []
     dut7_dir['static_route'] = "172.16.10"
     dut7_dir['static_route_mask'] = "255.255.255.0"
-    dut7_dir['ebgp_as']  = 65010
+    dut7_dir['ebgp_as']  = 10
     dut7_dir['vendor']  = "cisco"
     dut7_dir['platform']  = "n9k"
 
@@ -363,17 +374,22 @@ def bgpv6_testbed_init():
     dut1_dir['loop0_ip']= "1.1.1.1"
     dut1_dir['loop0_ipv6'] = "2001:1:1:1::1/128"  
     dut1_dir['vlan1_ip']= "10.1.1.1" 
+    dut1_dir['vlan1000_ip']= "100.1.1.1" 
     dut1_dir['vlan1_ipv6']= "2001:10:1:1::1/64"
+    dut1_dir['vlan1000_ipv6']= "2001:100:1:1::1/64"
     dut1_dir['vlan1_2nd'] = "1.1.1.254"
+    dut1_dir['vlan1000_2nd'] = "1.1.1.253"
     dut1_dir['internal'] = "1.1.1.100"
     dut1_dir['internal_v6'] = "2001:1:1:1::100/128"
     dut1_dir['vlan1_subnet'] = "10.1.1.0"
+    dut1_dir['vlan1000_subnet'] = "100.1.1.0"
     dut1_dir['vlan1_mask']= "255.255.255.0"  
+    dut1_dir['vlan1000_mask']= "255.255.255.0"  
     dut1_dir['split_ports']= ["port15"] 
     dut1_dir['40g_ports']= ["port1"]
     dut1_dir['static_route'] = "172.16.1" 
     dut1_dir['static_route_mask'] = "255.255.255.0"
-    dut1_dir['ebgp_as']  = 65001
+    dut1_dir['ebgp_as']  = 1
     dut1_dir['vendor']  = "fortinet"
     dut1_dir['platform']  = "fortinet"
     
@@ -393,17 +409,22 @@ def bgpv6_testbed_init():
     dut2_dir['loop0_ip']= "2.2.2.2"  
     dut2_dir['loop0_ipv6'] = "2001:2:2:2::2/128" 
     dut2_dir['vlan1_ip']= "10.1.1.2"
+    dut2_dir['vlan1000_ip']= "100.1.1.2" 
     dut2_dir['vlan1_ipv6']= "2001:10:1:1::2/64"
+    dut2_dir['vlan1000_ipv6']= "2001:100:1:1::2/64"
     dut2_dir['vlan1_2nd'] = "2.2.2.254"  
+    dut2_dir['vlan1000_2nd'] = "2.2.2.253"
     dut2_dir['internal'] = "2.2.2.100"
     dut2_dir['internal_v6'] = "2001:2:2:2::100/128"
     dut2_dir['vlan1_subnet'] = "10.1.1.0"
+    dut2_dir['vlan1000_subnet'] = "100.1.1.0"
     dut2_dir['vlan1_mask']= "255.255.255.0" 
+    dut2_dir['vlan1000_mask']= "255.255.255.0"  
     dut2_dir['split_ports']= []  
     dut2_dir['40g_ports']= ["port1"] 
     dut2_dir['static_route'] = "172.16.2" 
     dut2_dir['static_route_mask'] = "255.255.255.0"
-    dut2_dir['ebgp_as']  = 65002
+    dut2_dir['ebgp_as']  = 2
     dut2_dir['vendor']  = "fortinet"
     dut2_dir['platform']  = "fortinet"
     dut_dir_list.append(dut2_dir)
@@ -423,17 +444,22 @@ def bgpv6_testbed_init():
     dut3_dir['loop0_ip']= "3.3.3.3" 
     dut3_dir['loop0_ipv6'] = "2001:3:3:3::3/128"  
     dut3_dir['vlan1_ip']= "10.1.1.3"
+    dut3_dir['vlan1000_ip']= "100.1.1.3" 
     dut3_dir['vlan1_ipv6']= "2001:10:1:1::3/64"
-    dut3_dir['vlan1_2nd'] = "3.3.3.254"  
+    dut3_dir['vlan1000_ipv6']= "2001:100:1:1::3/64"
+    dut3_dir['vlan1_2nd'] = "3.3.3.254" 
+    dut3_dir['vlan1000_2nd'] = "3.3.3.253"
     dut3_dir['internal'] = "3.3.3.100"
     dut3_dir['internal_v6'] = "2001:3:3:3::100/128"
     dut3_dir['vlan1_subnet'] = "10.1.1.0"
-    dut3_dir['vlan1_mask']= "255.255.255.0"  
+    dut3_dir['vlan1000_subnet'] = "100.1.1.0"
+    dut3_dir['vlan1_mask']= "255.255.255.0" 
+    dut3_dir['vlan1000_mask']= "255.255.255.0"   
     dut3_dir['split_ports']= []
     dut3_dir['40g_ports']= []
     dut3_dir['static_route'] = "172.16.3" 
     dut3_dir['static_route_mask'] = "255.255.255.0" 
-    dut3_dir['ebgp_as']  = 65003
+    dut3_dir['ebgp_as']  = 3
     dut3_dir['vendor']  = "fortinet"
     dut3_dir['platform']  = "fortinet"
     dut_dir_list.append(dut3_dir)
@@ -452,17 +478,22 @@ def bgpv6_testbed_init():
     dut4_dir['loop0_ip']= "4.4.4.4"  
     dut4_dir['loop0_ipv6'] = "2001:4:4:4::4/128" 
     dut4_dir['vlan1_ip']= "10.1.1.4" 
+    dut4_dir['vlan1000_ip']= "100.1.1.4" 
     dut4_dir['vlan1_ipv6']= "2001:10:1:1::4/64"
+    dut4_dir['vlan1000_ipv6']= "2001:100:1:1::4/64"
     dut4_dir['vlan1_2nd'] = "4.4.4.254"
+    dut4_dir['vlan1000_2nd'] = "4.4.4.253"
     dut4_dir['internal'] = "4.4.4.100"
     dut4_dir['internal_v6'] = "2001:4:4:4::100/128"
     dut4_dir['vlan1_subnet'] = "10.1.1.0"
+    dut4_dir['vlan1000_subnet'] = "100.1.1.0"
     dut4_dir['vlan1_mask']= "255.255.255.0" 
+    dut4_dir['vlan1000_mask']= "255.255.255.0"  
     dut4_dir['split_ports']= []
     dut4_dir['40g_ports']= []
     dut4_dir['static_route'] = "172.16.4" 
     dut4_dir['static_route_mask'] = "255.255.255.0" 
-    dut4_dir['ebgp_as']  = 65004
+    dut4_dir['ebgp_as']  = 4
     dut4_dir['vendor']  = "fortinet"
     dut4_dir['platform']  = "fortinet"
     dut_dir_list.append(dut4_dir)
@@ -481,17 +512,22 @@ def bgpv6_testbed_init():
     dut5_dir['loop0_ip']= "5.5.5.5" 
     dut5_dir['loop0_ipv6'] = "2001:5:5:5::5/128" 
     dut5_dir['vlan1_ip']= "10.1.1.5"  
+    dut5_dir['vlan1000_ip']= "100.1.1.5" 
     dut5_dir['vlan1_ipv6']= "2001:10:1:1::5/64"
+    dut5_dir['vlan1000_ipv6']= "2001:100:1:1::5/64"
     dut5_dir['vlan1_2nd'] = "5.5.5.254"
+    dut5_dir['vlan1000_2nd'] = "5.5.5.253"
     dut5_dir['internal'] = "5.5.5.100"
     dut5_dir['internal_v6'] = "2001:5:5:5::100/128"
     dut5_dir['vlan1_subnet'] = "10.1.1.0"
-    dut5_dir['vlan1_mask']= "255.255.255.0"  
+    dut5_dir['vlan1000_subnet'] = "100.1.1.0"
+    dut5_dir['vlan1_mask']= "255.255.255.0" 
+    dut5_dir['vlan1000_mask']= "255.255.255.0"   
     dut5_dir['split_ports']= []  
     dut5_dir['40g_ports']= []
     dut5_dir['static_route'] = "172.16.5" 
     dut5_dir['static_route_mask'] = "255.255.255.0" 
-    dut5_dir['ebgp_as']  = 65005
+    dut5_dir['ebgp_as']  = 5
     dut5_dir['vendor']  = "fortinet"
     dut5_dir['platform']  = "fortinet"
     dut_dir_list.append(dut5_dir) 
@@ -510,17 +546,22 @@ def bgpv6_testbed_init():
     dut6_dir['loop0_ip']= "6.6.6.6" 
     dut6_dir['loop0_ipv6'] = "2001:6:6:6::6/128" 
     dut6_dir['vlan1_ip']= "10.1.1.6"  
+    dut6_dir['vlan1000_ip']= "100.1.1.6" 
     dut6_dir['vlan1_ipv6']= "2001:10:1:1::6/64"
+    dut6_dir['vlan1000_ipv6']= "2001:100:1:1::6/64"
     dut6_dir['vlan1_2nd'] = "6.6.6.254"
+    dut6_dir['vlan1000_2nd'] = "6.6.6.253"
     dut6_dir['internal'] = "6.6.6.100"
     dut6_dir['internal_v6'] = "2001:6:6:6::100/128"
     dut6_dir['vlan1_subnet'] = "10.1.1.0"
+    dut6_dir['vlan1000_subnet'] = "100.1.1.0"
     dut6_dir['vlan1_mask']= "255.255.255.0"  
+    dut6_dir['vlan1000_mask']= "255.255.255.0"  
     dut6_dir['split_ports']= []
     dut6_dir['40g_ports']= []
     dut6_dir['static_route'] = "172.16.6"
     dut6_dir['static_route_mask'] = "255.255.255.0"
-    dut6_dir['ebgp_as']  = 65006
+    dut6_dir['ebgp_as']  = 6
     dut6_dir['vendor']  = "fortinet"
     dut6_dir['platform']  = "fortinet"
     dut_dir_list.append(dut6_dir) 
@@ -543,10 +584,16 @@ def cisco_testbed_init():
     cisco1_dir['mgmt_mask']= "255.255.254.0"  
     cisco1_dir['loop0_ip']= "10.10.10.10" 
     cisco1_dir['loop0_ipv6'] = "2001:10:10:10::10/64" 
-    cisco1_dir['vlan1_ip']= "10.1.1.10"  
+    cisco1_dir['vlan1_ip']= "10.1.1.10" 
+    cisco1_dir['vlan1000_ip']= "100.1.1.10"  
     cisco1_dir['vlan1_ipv6']= "2001:10:1:1::10/64"
+    cisco1_dir['vlan1000_ipv6']= "2001:100:1:1::10/64"
+    cisco1_dir['vlan1000_ipv6']= "2001:100:1:1::6/64"
+    cisco1_dir['vlan1_2nd'] = "10.10.10.254"
+    cisco1_dir['vlan1000_2nd'] = "10.10.10.253"
     cisco1_dir['vlan1_subnet'] = "10.1.1.0"
     cisco1_dir['vlan1_mask']= "255.255.255.0"  
+    cisco1_dir['vlan1000_mask']= "255.255.255.0"  
     cisco1_dir['static_route'] = "172.16.10"
     cisco1_dir['static_route_mask'] = "255.255.255.0"
     cisco1_dir['ebgp_as']  = 65010
@@ -676,14 +723,30 @@ def sw_init_config_v6(*args, **kwargs):
     loop0_ip = dut_dir['loop0_ip'] 
     loop0_ipv6 = dut_dir['loop0_ipv6']   
     vlan1_ip = dut_dir['vlan1_ip']
+    vlan1000_ip = dut_dir['vlan1000_ip']
     vlan1_ipv6 = dut_dir['vlan1_ipv6']
+    vlan1000_ipv6 = dut_dir['vlan1000_ipv6']
     vlan1_subnet = dut_dir['vlan1_subnet']
-    vlan1_mask = dut_dir['vlan1_mask']  
+    vlan1000_subnet = dut_dir['vlan1000_subnet']
+    vlan1_mask = dut_dir['vlan1_mask'] 
+    vlan1000_mask = dut_dir['vlan1000_mask']  
     split_ports = dut_dir['split_ports'] 
     ports_40g = dut_dir['40g_ports'] 
     vlan1_2nd = dut_dir['vlan1_2nd']
+    vlan1000_2nd = dut_dir['vlan1000_2nd']
     internal = dut_dir['internal']
     internal_v6 = dut_dir['internal_v6']
+    platform = dut_dir['platform']
+
+    if platform == "n9k":
+        config = f"""
+        config t
+            line con 
+                exec-timeout 300 
+        end
+        """
+        config_cmds_lines_cisco(dut,config)
+        return
 
     if "config_split" in kwargs:
         config_split = kwargs["config_split"]
@@ -738,6 +801,22 @@ def sw_init_config_v6(*args, **kwargs):
         config secondaryip 
             edit 1
                 set ip {vlan1_2nd} 255.255.255.255
+                set allowaccess ping https ssh telnet
+        next
+    edit vlan1000
+        set ip {vlan1000_ip} {vlan1000_mask}
+        set allowaccess ping https ssh telnet
+        set vlanid 1000
+        set interface internal
+        set secondary-IP enable 
+        config ipv6
+                set ip6-address {vlan1000_ipv6}
+                set ip6-allowaccess ping https ssh telnet
+            end
+        next
+        config secondaryip 
+            edit 1
+                set ip {vlan1000_2nd} 255.255.255.255
                 set allowaccess ping https ssh telnet
         next
     edit "loop0"
