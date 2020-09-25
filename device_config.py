@@ -357,7 +357,6 @@ def bgpv6_testbed_init():
     dut7_dir['ebgp_as']  = 10
     dut7_dir['vendor']  = "cisco"
     dut7_dir['platform']  = "n9k"
-
     dut_dir_list.append(dut7_dir) 
     dut_list.append(dut7)
 
@@ -420,7 +419,7 @@ def bgpv6_testbed_init():
     dut2_dir['vlan1000_subnet'] = "100.1.1.0"
     dut2_dir['vlan1_mask']= "255.255.255.0" 
     dut2_dir['vlan1000_mask']= "255.255.255.0"  
-    dut2_dir['split_ports']= []  
+    dut2_dir['split_ports']= ["port2"]  
     dut2_dir['40g_ports']= ["port1"] 
     dut2_dir['static_route'] = "172.16.2" 
     dut2_dir['static_route_mask'] = "255.255.255.0"
@@ -872,7 +871,7 @@ def sw_init_config_v6(*args, **kwargs):
             """
             config_cmds_lines(dut,config_split_ports)
             switch_enter_yes(dut)
-            console_timer(200,msg="switch is being rebooted after configuring split port, wait for 200s")
+            console_timer(300,msg="switch is being rebooted after configuring split port, wait for 300s")
             try:
                 relogin_if_needed(dut)
             except Exception as e:
@@ -889,7 +888,6 @@ def sw_init_config_v6(*args, **kwargs):
                     end 
                 """
                 config_cmds_lines(dut,config)
-
     switch_show_cmd(dut,"show system interface")
     switch_show_cmd(dut,"get switch module summary")
     # switch_show_cmd(dut,"show router ospf")

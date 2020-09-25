@@ -453,6 +453,59 @@ class IXIA_TOPOLOGY:
                 comm.LastTwoOctets.Single(i)
                 comm.Type.Single("manual")
 
+        if "well-known-community" in kwargs:
+            typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
+            community = kwargs['well-known-community']
+            bgpiprouteproperty.update(NoOfCommunities=1)
+            bgpiprouteproperty.EnableCommunity.Single("True")
+             
+            bgpcommunitieslist = bgpiprouteproperty.BgpCommunitiesList.find()
+            #bgpcommunitieslist.EnableCommunity.Single("True")
+            
+            #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+             #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+            well_known_list = ["NO_EXPORT_SUBCONFED", "NO_ADVERTISE", "NO_EXPORT"]
+
+            if community == "NO_EXPORT":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(65281)
+                comm.Type.Single("manual")
+
+            elif community == "NO_ADVERTISE":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(65282)
+                comm.Type.Single("manual")
+
+            elif community == "NO_EXPORT_SUBCONFED":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(65283)
+                comm.Type.Single("manual")
+            else:
+                pass
+
+            # if community == "NO_EXPORT":
+            #     comm = bgpcommunitieslist[0]
+            #     comm.AsNumber.Single(65535)
+            #     comm.LastTwoOctets.Single(65281)
+            #     comm.Type.Single("noexport")
+
+            # elif community == "NO_ADVERTISE":
+            #     comm = bgpcommunitieslist[0]
+            #     comm.AsNumber.Single(65535)
+            #     comm.LastTwoOctets.Single(65282)
+            #     comm.Type.Single("noadvertised")
+
+            # elif community == "NO_EXPORT_SUBCONFED":
+            #     comm = bgpcommunitieslist[0]
+            #     comm.AsNumber.Single(65535)
+            #     comm.LastTwoOctets.Single(65283)
+            #     comm.Type.Single("noexport_subconfed")
+            # else:
+            #     pass
+
                 
         if "ext_community" in kwargs:
             typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
@@ -1150,7 +1203,7 @@ def ixia_rest_create_traffic(*args,**kwargs):
         # #       Therefore, ConfigElement is a list.
         ixNetwork.info('Configuring config elements')
         configElement = trafficItem.ConfigElement.find()[0]
-        configElement.FrameRate.update(Type='percentLineRate', Rate=15)
+        configElement.FrameRate.update(Type='percentLineRate', Rate=3)
         #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
         configElement.TransmissionControl.update(Type='continuous')
         configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
@@ -1206,7 +1259,7 @@ def ixia_rest_create_traffic_v6(*args,**kwargs):
         # #       Therefore, ConfigElement is a list.
         ixNetwork.info('Configuring config elements')
         configElement = trafficItem.ConfigElement.find()[0]
-        configElement.FrameRate.update(Type='percentLineRate', Rate=15)
+        configElement.FrameRate.update(Type='percentLineRate', Rate=3)
         #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
         configElement.TransmissionControl.update(Type='continuous')
         configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'

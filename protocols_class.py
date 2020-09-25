@@ -1016,12 +1016,16 @@ class Router_OSPF:
         self.neighbor_list_v6 = []
         #self.change_router_id(self.switch.loop0_ip)
 
+    def remove_ospf_all(self):
+        self.remove_ospf_v4()
+        self.remove_ospf_v6()
+
     def remove_ospf_v4(self):
         vlans = self.switch.find_vlan_interfaces()
         for v in vlans:
             ospf_config = f"""
             config router ospf 
-                config interfaces
+                config interface
                     delete {v}
                 end
             end
@@ -1054,14 +1058,14 @@ class Router_OSPF:
         for v in vlans:
             ospf_config = f"""
             config router ospf6 
-                config interfaces
+                config interface
                     delete {v}
                 end 
             end
             """
             config_cmds_lines(self.dut,ospf_config)
 
-        redistributed_list = ["connected6","static","bgp","ripng","isis"]
+        redistributed_list = ["connected","static","bgp","ripng","isis"]
         for d in redistributed_list:
             ospf_config = f"""
                 config router ospf6 
@@ -1266,6 +1270,13 @@ class Router_OSPF:
 
     def show_ospf_neighbor_v6(self):
         switch_show_cmd(self.dut, "get router info6 ospf neighbor")
+
+    def show_ospf_neighbor_v4(self):
+        switch_show_cmd(self.dut, "get router info6 ospf neighbor")
+
+    def show_ospf_neighbor_v64(self):
+        switch_show_cmd(self.dut, "get router info6 ospf neighbor")
+        switch_show_cmd(self.dut, "get router info ospf neighbor")
 
     def show_hardware_l3(self):
         switch_show_cmd(self.dut,"diagnose hardware switchinfo l3-summary")
@@ -1874,7 +1885,25 @@ class Router_BGP:
         self.bgp_config_neighbors = None #Need to be found by using find_bgp_config_neighbors(dut)
         #self.route_map = Router_route_map()
 
-    
+    def clear_bgp_all(self):
+        config = "execute router clear bgp all"
+        config_cmds_lines(self.switch.console,config)
+
+    def config_neighbor_command(self,*args,**kwargs):
+        neighbor = kwargs['neighbor']
+        command = kwargs['command']
+
+        config = f"""
+        config router bgp
+            config neighbor
+                edit {neighbor}
+                {command}
+            end
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+
     def cisco_n9k_bgp(self):
         config = """
         router bgp 65000
@@ -2200,6 +2229,13 @@ class Router_BGP:
             return 
         dut = self.switch.dut
         switch_show_cmd(self.switch.console,"get router info6 bgp network")
+
+    def show_bgp_network_v64(self):
+        if self.switch.is_fortinet() == False:
+            return 
+        dut = self.switch.dut
+        switch_show_cmd(self.switch.console,"get router info6 bgp network")
+        switch_show_cmd(self.switch.console,"get router info bgp network")
 
     def get_neighbors_summary(self):
         if self.switch.is_fortinet() == False:
@@ -3088,10 +3124,6 @@ class Router_BGP:
         return True
 
 
-
- 
-
-
     def config_ibgp_ixia_v4(self,*args,**kwargs):
         tprint(f"============== Configurating eBGP peer relationship to ixia {self.switch.name} ")
         ixia_port = kwargs["ixia_port"]
@@ -3520,6 +3552,23 @@ class FortiSwitch:
         self.discover_lldp_neighbors()
         self.config_lldp_neighbor_ports()
         self.vlan_interfaces = []
+
+    def reboot(self):
+        if self.is_fortinet() == False:
+            return 
+        else:
+            switch_exec_reboot(self.console,device=self.name)
+
+    # def relogin_(self):
+    #     dut = self.console
+    #     Info(f"================= Re-login device: {self.name} =============")
+    #     try:
+    #         relogin_if_needed(dut)
+    #     except Exception as e:
+    #         debug("something is wrong with rlogin_if_needed at bgp, try again")
+    #         relogin_if_needed(dut)
+    #     image = find_dut_image(dut)
+    #     tprint(f"============================ {dut_name} software image = {image} ============")
  
     def config_stp(self,*args,**kwargs):
         if "root" in kwargs:
@@ -3532,6 +3581,7 @@ class FortiSwitch:
             config switch stp instance
                 edit 0
                 set priority 8192
+            end
             """
         config_cmds_lines(self.console,config)
 
@@ -4036,6 +4086,10 @@ class FortiSwitch:
         switch_show_cmd(self.console,"get router info6 routing-table ospf")
         switch_show_cmd(self.console,"get router info6 routing-table bgp")
 
+    def show_routing_table_v64(self):
+        self.show_routing_table()
+        self.show_routing_table_v6()
+
 
     def factory_reset_nologin(self):
         switch_factory_reset_nologin(self.dut_dir)
@@ -4046,7 +4100,7 @@ class FortiSwitch:
         try:
             relogin_if_needed(dut)
         except Exception as e:
-            debug("something is wrong with rlogin_if_needed at bgp, try again")
+            debug("something is wrong with rlogin_if_needed at bgp test cases, try again")
             relogin_if_needed(dut)
         image = find_dut_image(dut)
         tprint(f"============================ {self.name} software image = {image} ============")
