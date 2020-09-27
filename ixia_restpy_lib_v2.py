@@ -394,6 +394,64 @@ class IXIA_TOPOLOGY:
             bgpiprouteproperty.AggregatorId.Single(value)
             bgpiprouteproperty.AggregatorAs.Single(aggregator_as)
 
+        if "known_community" in kwargs:
+            typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
+            community = kwargs['known_community']
+            bgpiprouteproperty.update(NoOfCommunities=1)
+            bgpiprouteproperty.EnableCommunity.Single("True")
+             
+            bgpcommunitieslist = bgpiprouteproperty.BgpCommunitiesList.find()
+            #bgpcommunitieslist.EnableCommunity.Single("True")
+            
+            #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+             #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
+            well_known_list = ["NO_EXPORT_SUBCONFED", "NO_ADVERTISE", "NO_EXPORT"]
+
+            if community == "NO_EXPORT":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(65281)
+                comm.Type.Single("manual")
+
+            elif community == "NO_ADVERTISE":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(65282)
+                comm.Type.Single("manual")
+
+            elif community == "NO_EXPORT_SUBCONFED":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(65283)
+                comm.Type.Single("manual")
+            elif community == "NOPEER":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(65284)
+                comm.Type.Single("manual")
+            else:
+                pass
+
+            # if community == "NO_EXPORT":
+            #     comm = bgpcommunitieslist[0]
+            #     comm.AsNumber.Single(65535)
+            #     comm.LastTwoOctets.Single(65281)
+            #     comm.Type.Single("noexport")
+
+            # elif community == "NO_ADVERTISE":
+            #     comm = bgpcommunitieslist[0]
+            #     comm.AsNumber.Single(65535)
+            #     comm.LastTwoOctets.Single(65282)
+            #     comm.Type.Single("noadvertised")
+
+            # elif community == "NO_EXPORT_SUBCONFED":
+            #     comm = bgpcommunitieslist[0]
+            #     comm.AsNumber.Single(65535)
+            #     comm.LastTwoOctets.Single(65283)
+            #     comm.Type.Single("noexport_subconfed")
+            # else:
+            #     pass
+
     def change_bgp_routes_attributes_v6(self,*args, **kwargs):
         if "address_family" in kwargs:
             address_family = kwargs['address_family']
@@ -453,9 +511,9 @@ class IXIA_TOPOLOGY:
                 comm.LastTwoOctets.Single(i)
                 comm.Type.Single("manual")
 
-        if "well-known-community" in kwargs:
+        if "known_community" in kwargs:
             typecode = "ixnetwork_restpy.errors.BadRequestError: Valid enum values are 0=noexport 1=noadvertised 2=noexport_subconfed 3=manual 4=llgr_stale 5=no_llgr"
-            community = kwargs['well-known-community']
+            community = kwargs['known_community']
             bgpiprouteproperty.update(NoOfCommunities=1)
             bgpiprouteproperty.EnableCommunity.Single("True")
              
@@ -464,9 +522,93 @@ class IXIA_TOPOLOGY:
             
             #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
              #print(f"type of bgpaspathsegmentlist = {type(bgpaspathsegmentlist)}")
-            well_known_list = ["NO_EXPORT_SUBCONFED", "NO_ADVERTISE", "NO_EXPORT"]
 
-            if community == "NO_EXPORT":
+            well_known_list = [
+                        "GRACEFUL_SHUTDOWN", "ACCEPT_OWN", "ROUTE_FILTER_TRANSLATED_v4", "NO_EXPORT_SUBCONFED", "ROUTE_FILTER_v4", "ROUTE_FILTER_TRANSLATED_v6",
+                        "ROUTE_FILTER_v6", "LLGR_STALE","NO_LLGR","accept-own-nexthop","BLACKHOLE",
+                        "NO_ADVERTISE", "NO_EXPORT", "NOPEER"
+                        ]
+            IANA_WELL_KNOWNS = """
+                0xFFFF0000  GRACEFUL_SHUTDOWN   [RFC8326]
+                0xFFFF0001  ACCEPT_OWN  [RFC7611]
+                0xFFFF0002  ROUTE_FILTER_TRANSLATED_v4  [draft-l3vpn-legacy-rtc]
+                0xFFFF0003  ROUTE_FILTER_v4 [draft-l3vpn-legacy-rtc]
+                0xFFFF0004  ROUTE_FILTER_TRANSLATED_v6  [draft-l3vpn-legacy-rtc]
+                0xFFFF0005  ROUTE_FILTER_v6 [draft-l3vpn-legacy-rtc]
+                0xFFFF0006  LLGR_STALE  [draft-uttaro-idr-bgp-persistence]
+                0xFFFF0007  NO_LLGR [draft-uttaro-idr-bgp-persistence]
+                0xFFFF0008  accept-own-nexthop  [draft-agrewal-idr-accept-own-nexthop]
+                0xFFFF0009-0xFFFF0299   Unassigned  
+                0xFFFF029A  BLACKHOLE   [RFC7999]
+                0xFFFF029B-0xFFFFFF00   Unassigned  
+                0xFFFFFF01  NO_EXPORT   [RFC1997]
+                0xFFFFFF02  NO_ADVERTISE    [RFC1997]
+                0xFFFFFF03  NO_EXPORT_SUBCONFED [RFC1997]
+                0xFFFFFF04  NOPEER  [RFC3765]
+
+            """
+
+            if community == "GRACEFUL_SHUTDOWN":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(0)
+                comm.Type.Single("manual")
+
+            elif community == "ACCEPT_OWN":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(1)
+                comm.Type.Single("manual")
+
+            elif community == "ROUTE_FILTER_TRANSLATED_v4":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(2)
+                comm.Type.Single("manual")
+
+            elif community == "ROUTE_FILTER_v4":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(3)
+                comm.Type.Single("manual")
+
+            elif community == "ROUTE_FILTER_TRANSLATED_v6":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(4)
+                comm.Type.Single("manual")
+
+            elif community == "ROUTE_FILTER_v6":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(5)
+                comm.Type.Single("manual")
+
+            elif community == "LLGR_STALE":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(6)
+                comm.Type.Single("manual")
+
+            elif community == "NO_LLGR":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(7)
+                comm.Type.Single("manual")
+
+            elif community == "accept-own-nexthop":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(8)
+                comm.Type.Single("manual")
+
+            elif community == "BLACKHOLE":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(666)
+                comm.Type.Single("manual")
+
+            elif community == "NO_EXPORT":
                 comm = bgpcommunitieslist[0]
                 comm.AsNumber.Single(65535)
                 comm.LastTwoOctets.Single(65281)
@@ -482,6 +624,11 @@ class IXIA_TOPOLOGY:
                 comm = bgpcommunitieslist[0]
                 comm.AsNumber.Single(65535)
                 comm.LastTwoOctets.Single(65283)
+                comm.Type.Single("manual")
+            elif community == "NOPEER":
+                comm = bgpcommunitieslist[0]
+                comm.AsNumber.Single(65535)
+                comm.LastTwoOctets.Single(65284)
                 comm.Type.Single("manual")
             else:
                 pass

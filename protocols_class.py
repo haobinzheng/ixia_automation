@@ -3065,6 +3065,8 @@ class Router_BGP:
         return True
 
     def config_ebgp_ixia_v6(self,*args,**kwargs):
+        if self.switch.is_fortinet() == False:
+            return 
         tprint(f"============== Configurating eBGP peer relationship to ixia {self.switch.name} ")
         ixia_port = kwargs["ixia_port"]
         ixia_as = kwargs["ixia_as"]
@@ -4345,3 +4347,7 @@ class FortiSwitch:
             end
             """
             config_cmds_lines(dut,config)
+    def fsw_show_cmd(self,cmd):
+        dut = self.console
+        result = collect_show_cmd(dut,cmd,t=3)
+        print_collect_show(result)

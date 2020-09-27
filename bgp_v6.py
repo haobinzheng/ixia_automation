@@ -3500,17 +3500,17 @@ if testcase == 6145 or test_all:
 	description = "BGPv6 Best Routes Selection: Community. Run the test at the last switch: switches[-1] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
+	# apiServerIp = '10.105.19.19'
+	# ixChassisIpList = ['10.105.241.234']
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+	# portList_v4_v6 = [
+	# [ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+ #    ]
 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
@@ -4066,24 +4066,24 @@ if testcase == 61411 or test_all:
 if testcase == 61412 or test_all:
 	testcase = 61412
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "BGPv6 Best Routes Selection: Well-known Community. Run the test at the first switch: switches[1] "
+	description = "BGPv6 Best Routes Selection: Well-known Community. Run the test at the first FSW switch: switches[1] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
+	# apiServerIp = '10.105.19.19'
+	# ixChassisIpList = ['10.105.241.234']
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+	# portList_v4_v6 = [
+	# [ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
+ #    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
+ #    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
+ #    ]
 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
-	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
-	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:103:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::1","2001:106:1:1::1"]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
 
 	cisco_switch = switches[0]
 	sw6_switch = switches[1]
@@ -4122,27 +4122,60 @@ if testcase == 61412 or test_all:
 	test_config_ixia_bgp_all_one_switch_compare(myixia.topologies[-2:],sw6_ipv6_networks,sw6_ipv4_networks,sw6_switch,sw6_as_lists)
 
 
-	myixia.topologies[0].change_bgp_routes_attributes(community=6,comm_base=6100,address_family="v6")
-	myixia.topologies[1].change_bgp_routes_attributes(community=5,comm_base=6200,address_family="v6")
-	myixia.topologies[2].change_bgp_routes_attributes(community=6,comm_base=6300,address_family="v6")
-	myixia.topologies[3].change_bgp_routes_attributes(community=5,comm_base=6400,address_family="v6")
+	# myixia.topologies[0].change_bgp_routes_attributes(community=6,comm_base=6100,address_family="v6")
+	# myixia.topologies[1].change_bgp_routes_attributes(community=5,comm_base=6200,address_family="v6")
+	# myixia.topologies[2].change_bgp_routes_attributes(community=6,comm_base=6300,address_family="v6")
+	# myixia.topologies[3].change_bgp_routes_attributes(community=5,comm_base=6400,address_family="v6")
 
-	myixia.topologies[0].change_bgp_routes_attributes(community=4,comm_base=4100,address_family="v4")
-	myixia.topologies[1].change_bgp_routes_attributes(community=3,comm_base=4200,address_family="v4")
-	myixia.topologies[2].change_bgp_routes_attributes(community=4,comm_base=4300,address_family="v4")
-	myixia.topologies[3].change_bgp_routes_attributes(community=3,comm_base=4400,address_family="v4")
-
-	myixia.topologies[0].change_bgp_routes_attributes_v6(community=6,comm_base=6100,address_family="v6")
-	myixia.topologies[1].change_bgp_routes_attributes_v6(community=5,comm_base=6200,address_family="v6")
-	myixia.topologies[2].change_bgp_routes_attributes_v6(community=6,comm_base=6300,address_family="v6")
-	myixia.topologies[3].change_bgp_routes_attributes_v6(community=5,comm_base=6400,address_family="v6")
-
-	myixia.topologies[0].change_bgp_routes_attributes_v6(community=4,comm_base=4100,address_family="v4")
-	myixia.topologies[1].change_bgp_routes_attributes_v6(community=3,comm_base=4200,address_family="v4")
-	myixia.topologies[2].change_bgp_routes_attributes_v6(community=4,comm_base=4300,address_family="v4")
-	myixia.topologies[3].change_bgp_routes_attributes_v6(community=3,comm_base=4400,address_family="v4")
-	 
 	myixia.start_protocol(wait=40)
+
+	IANA_WELL_KNOWNS = """
+		0xFFFF0000	GRACEFUL_SHUTDOWN	[RFC8326]
+		0xFFFF0001	ACCEPT_OWN	[RFC7611]
+		0xFFFF0002	ROUTE_FILTER_TRANSLATED_v4	[draft-l3vpn-legacy-rtc]
+		0xFFFF0003	ROUTE_FILTER_v4	[draft-l3vpn-legacy-rtc]
+		0xFFFF0004	ROUTE_FILTER_TRANSLATED_v6	[draft-l3vpn-legacy-rtc]
+		0xFFFF0005	ROUTE_FILTER_v6	[draft-l3vpn-legacy-rtc]
+		0xFFFF0006	LLGR_STALE	[draft-uttaro-idr-bgp-persistence]
+		0xFFFF0007	NO_LLGR	[draft-uttaro-idr-bgp-persistence]
+		0xFFFF0008	accept-own-nexthop	[draft-agrewal-idr-accept-own-nexthop]
+		0xFFFF0009-0xFFFF0299	Unassigned	
+		0xFFFF029A	BLACKHOLE	[RFC7999]
+		0xFFFF029B-0xFFFFFF00	Unassigned	
+		0xFFFFFF01	NO_EXPORT	[RFC1997]
+		0xFFFFFF02	NO_ADVERTISE	[RFC1997]
+		0xFFFFFF03	NO_EXPORT_SUBCONFED	[RFC1997]
+		0xFFFFFF04	NOPEER	[RFC3765]
+
+	"""
+
+	well_known_list = [
+						"GRACEFUL_SHUTDOWN", "ACCEPT_OWN", "ROUTE_FILTER_TRANSLATED_v4", "NO_EXPORT_SUBCONFED", "ROUTE_FILTER_v4", "ROUTE_FILTER_TRANSLATED_v6",
+						"ROUTE_FILTER_v6", "LLGR_STALE","NO_LLGR","accept-own-nexthop","BLACKHOLE",
+						"NO_ADVERTISE", "NO_EXPORT", "NOPEER"
+						]
+	for comm in well_known_list:
+		myixia.stop_protocol(wait=40)
+
+		myixia.topologies[0].change_bgp_routes_attributes(known_community=comm,address_family="v4")
+		myixia.topologies[1].change_bgp_routes_attributes(known_community=comm,address_family="v4")
+		myixia.topologies[2].change_bgp_routes_attributes(known_community=comm,address_family="v4")
+		myixia.topologies[3].change_bgp_routes_attributes(cknown_community=comm,address_family="v4")
+
+		myixia.topologies[0].change_bgp_routes_attributes_v6(known_community=comm,address_family="v6")
+		myixia.topologies[1].change_bgp_routes_attributes_v6(known_community=comm,address_family="v6")
+		myixia.topologies[2].change_bgp_routes_attributes_v6(known_community=comm,address_family="v6")
+		myixia.topologies[3].change_bgp_routes_attributes_v6(known_community=comm,address_family="v6")
+		 
+		myixia.start_protocol(wait=60)
+		
+		sw6_switch.fsw_show_cmd("get router info6 bgp network 2001:106:1:1::a/128")
+
+	cisco_config = """
+	route-map known-community permit 10
+  		match ipv6 address prefix-list loop2
+  		set community 1001:100 local-AS additive
+	"""
 
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
