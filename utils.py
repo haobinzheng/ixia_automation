@@ -709,6 +709,11 @@ def config_cmds_lines_cisco(dut, cmdblock):
 	for cmd in b:
 		switch_configure_cmd_cisco(dut,cmd)
 
+def split_f_string_lines(cmdblock):
+	b= cmdblock.split("\n")
+	b = [x.strip() for x in b if x.strip()]
+	return b
+
 def config_cmds_lines(dut, cmdblock):
 	b= cmdblock.split("\n")
 	b = [x.strip() for x in b if x.strip()]
@@ -1258,6 +1263,7 @@ def relogin_if_needed(tn):
 		switch_configure_cmd(tn,'config system global',mode='silent')
 		switch_configure_cmd(tn,'set admintimeout 480',mode='silent')
 		switch_configure_cmd(tn,'end',mode='silent')
+		return 
 		
 def switch_need_change_password(tn):
 	TIMEOUT = 2

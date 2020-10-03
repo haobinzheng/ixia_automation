@@ -740,7 +740,7 @@ def basic_config_access_list(dut):
 	"""
 	config_cmds_lines(dut,config)
 
-def basic_config_prefix_list(dut):
+def large_config_prefix_list_v4(dut):
 
 	config = """
 	config router prefix-list

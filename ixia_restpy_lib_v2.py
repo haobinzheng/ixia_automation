@@ -467,8 +467,9 @@ class IXIA_TOPOLOGY:
 
         testplatform = self.ixia.testPlatform
 
-    # bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
-        bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
+        #bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
+        #bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
+        bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.find()
 
         if "next_hop" in kwargs:
             next_hop_addr = kwargs["next_hop"]
@@ -1625,7 +1626,8 @@ def ixia_rest_create_bgp_v6(*args,**kwargs):
     ipv6PrefixPool = networkGroup.Ipv6PrefixPools.add(NumberOfAddresses='1')
     ipv6PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0:0:0:0:0:0:0:1')
     ipv6PrefixPool.PrefixLength.Single(128)
-    bgpiprouteproperty = ipv6PrefixPool.BgpIPRouteProperty.add()
+    #bgpiprouteproperty = ipv6PrefixPool.BgpIPRouteProperty.add()
+    bgpiprouteproperty = ipv6PrefixPool.BgpV6IPRouteProperty.add()
     print(f"Old IPv6 Next Hop Type Value = {bgpiprouteproperty.NextHopType.Values}")
     print(f"Old IPv6 Next Hop <IP Type> Value = {bgpiprouteproperty.NextHopIPType.Values}")
     print(f"Old IPv6 UseTraditionalNLRI Value = {bgpiprouteproperty.UseTraditionalNlri.Values}")
@@ -1694,7 +1696,7 @@ def ixia_rest_set_med_v6(*args,**kwargs):
     med = kwargs['med']
     testplatform = kwargs['platform']
 
-    bgpiprouteproperty = ipv6PrefixPool.BgpIPRouteProperty.add()
+    bgpiprouteproperty = ipv6PrefixPool.BgpRouteProperty.add()
     #bgpiprouteproperty = ipv4PrefixPool.BgpIPRouteProperty
     testplatform.info(bgpiprouteproperty.MultiExitDiscriminator.Values)
     bgpiprouteproperty.EnableMultiExitDiscriminator.Single("True")

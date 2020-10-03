@@ -533,6 +533,7 @@ def bgpv6_testbed_init():
     dut_list.append(dut5)
 
     dut6 = get_switch_telnet_connection_new("10.105.241.144",2090)
+    #dut6 = get_switch_telnet_connection_new("10.105.241.144",2075)  # new device is coming 
     dut6_dir['comm'] = "10.105.241.144"
     dut6_dir['comm_port'] = 2090
     dut6_dir['name'] = "548D-R8-33"
@@ -540,7 +541,7 @@ def bgpv6_testbed_init():
     dut6_dir['location'] = "Rack8-33"
     dut6_dir['telnet'] = dut6
     dut6_dir['cfg'] = "548D-R8-33"
-    dut6_dir['mgmt_ip'] = "10.105.241.134"
+    dut6_dir['mgmt_ip'] = "10.105.241.133"   
     dut6_dir['mgmt_mask']= "255.255.254.0"  
     dut6_dir['loop0_ip']= "6.6.6.6" 
     dut6_dir['loop0_ipv6'] = "2001:6:6:6::6/128" 

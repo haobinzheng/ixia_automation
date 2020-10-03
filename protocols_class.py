@@ -674,6 +674,50 @@ class BGP_networks:
         """
         config_cmds_lines(bgp2.switch.console,bgp_config)
 
+    def config_ibgp_session_loopback_v6(self,bgp1,bgp2):
+        tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {bgp1.ibgp_as}
+            set router-id {bgp1.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.switch.loop0_ipv6.split("/")[0]}
+                    set remote-as {bgp2.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {bgp2.ibgp_as}
+            set router-id {bgp2.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.switch.loop0_ipv6.split("/")[0]}
+                    set remote-as {bgp1.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
     def config_ebgp_session(self,bgp1,bgp2):
         tprint(f"============== Configurating eBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
         bgp_config = f"""
@@ -762,6 +806,52 @@ class BGP_networks:
         """
         config_cmds_lines(client.switch.console,bgp_config)
 
+    def config_ibgp_rr_session_v6(self,rr,client):
+        tprint(f"============== Configurating iBGP v6 Router Reflector and Client session between {rr.switch.name} and {client.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {rr.ibgp_as}
+            set router-id {rr.router_id }
+        end
+        end
+        """
+        config_cmds_lines(rr.switch.console,bgp_config)         
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {client.switch.loop0_ipv6.split("/")[0]}
+                    set remote-as {client.ibgp_as}
+                    set update-source loop0
+                    set route-reflector-client enable
+                next
+            end
+        end
+        """
+        config_cmds_lines(rr.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {client.ibgp_as}
+            set router-id {client.router_id }
+        end
+        end
+        """
+        config_cmds_lines(client.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {rr.switch.loop0_ipv6.split("/")[0]})
+                    set remote-as {rr.ibgp_as}
+                    set update-source loop0
+                next
+            end
+        end
+        """
+        config_cmds_lines(client.switch.console,bgp_config)
+
    
     def build_router_reflector_topo(self):
         rr1 = self.routers[0]
@@ -773,6 +863,17 @@ class BGP_networks:
             self.config_ibgp_rr_session(rr2,self.routers[i])
 
         self.config_ibgp_session(rr1,rr2)
+
+    def build_router_reflector_topo_v6(self):
+        rr1 = self.routers[0]
+        rr2 = self.routers[1]
+
+        for i in range(2,6):
+            self.config_ibgp_rr_session_v6(rr1,self.routers[i])
+        for i in range(2,6):
+            self.config_ibgp_rr_session_v6(rr2,self.routers[i])
+
+        self.config_ibgp_session_loopback_v6(rr1,rr2)
 
     def config_all_confed_id(self):
         for router in self.routers:
@@ -844,6 +945,55 @@ class BGP_networks:
         self.config_confed_peers(fed_60_1,[fed_70_2,fed_50_2])
         self.config_confed_peers(fed_70_1,[fed_50_2])
 
+def build_confed_topo_1_v6(self):
+        fed_50_1 = self.routers[0]
+        fed_50_2 = self.routers[1]
+
+        fed_60_1 = self.routers[2]
+        fed_60_2 = self.routers[3]
+        fed_60_3 = self.routers[4]
+
+        fed_70_1 = self.routers[5]
+        fed_70_2 = self.routers[6]
+
+
+        fed_50_1.ibgp_as = 50
+        fed_50_2.ibgp_as = 50
+        fed_50_1.ebgp_as = 50
+        fed_50_2.ebgp_as = 50
+
+        fed_60_1.ibgp_as =60
+        fed_60_2.ibgp_as =60
+        fed_60_3.ibgp_as =60
+        fed_60_1.ebgp_as =60
+        fed_60_2.ebgp_as =60
+        fed_60_3.ebgp_as =60
+
+        fed_70_1.ibgp_as =70
+        fed_70_2.ibgp_as =70
+        fed_70_1.ebgp_as =70
+        fed_70_2.ebgp_as =70
+
+        self.config_ibgp_session(fed_50_1,fed_50_2)
+
+
+        self.config_ibgp_session(fed_60_1,fed_60_2)
+        self.config_ibgp_session(fed_60_1,fed_60_3)
+        self.config_ibgp_session(fed_60_2,fed_60_3)
+        
+        
+        self.config_ibgp_session(fed_70_1,fed_70_2)
+
+        self.config_ebgp_session(fed_50_2,fed_60_1)
+        self.config_ebgp_session(fed_50_2,fed_70_1)
+        self.config_ebgp_session(fed_60_1,fed_70_2)
+
+        self.config_all_confed_id()
+
+        self.config_confed_peers(fed_50_2,[fed_60_1,fed_70_1])
+        self.config_confed_peers(fed_60_1,[fed_70_2,fed_50_2])
+        self.config_confed_peers(fed_70_1,[fed_50_2])
+
 class Router_community_list:
     def __init__(self, *args, **kwargs):
         self.switch = args[0]
@@ -858,10 +1008,92 @@ class Router_prefix_list:
     def __init__(self,*args, **kwargs):
         self.switch = args[0]
 
-    def basic_config(self):
-        basic_config_prefix_list(self.switch.console)
+    def prefix_large_config_v4(self):
+        large_config_prefix_list_v4(self.switch.console)
 
-    def clean_up(self):
+    def prefix_orf_v4(self):
+        config = """
+        config router prefix-list
+        edit "orf-list"
+            config rule
+                edit 1
+                    set prefix 10.0.0.0 255.0.0.0
+                    unset ge
+                    unset le
+                next
+                edit 2
+                    set action deny
+                    set prefix 169.254.0.0 255.255.0.0
+                    unset ge
+                    unset le
+                next
+                edit 3
+                    set prefix 100.0.0.0 255.0.0.0
+                    set ge 9
+                    set le 24
+                next
+                edit 4
+                    set prefix 200.0.0.0 255.0.0.0
+                    set ge 9
+                    set le 24
+                next
+                edit 5
+                    set action deny
+                    set prefix 255.0.0.0 255.0.0.0
+                    set ge 9
+                    set le 32
+                next
+            end
+            next
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+
+    def prefix_orf_v6(self):
+        config = """
+        config router prefix-list6
+        edit "orf-list-v6"
+            config rule
+                edit 1
+                    set prefix6 "2001:10::0/32"
+                    set ge 33
+                    set le 128
+                next
+                edit 2
+                    set prefix6 "2001:20::0/32"
+                    set ge 33
+                    set le 128
+                next
+                edit 3
+                    set prefix6 "2001:30::0/32"
+                    set ge 33
+                    set le 128
+                next
+                edit 4
+                    set action deny
+                    set prefix6 "fe80::0/16"
+                    set ge 17
+                    set le 128
+                next
+                edit 5
+                    set prefix6 "2001:40::0/32"
+                    set ge 33
+                    set le 128
+                next
+                edit 6
+                    set prefix6 "2001:50::0/32"
+                    set ge 33
+                    set le 128
+                next
+            end
+            next
+        end
+
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def prefix_clean_up(self):
         pass
 
 class Router_aspath_list:
@@ -878,7 +1110,7 @@ class Router_access_list:
     def __init__(self,*args,**kargs):
         self.switch = args[0]
 
-    def basic_config(self):
+    def acl_basic_config(self):
         basic_config_access_list(self.switch.console)
 
     def acl_find_clauses(self):
@@ -907,7 +1139,7 @@ class Router_route_map:
     def community_config(self):
         route_map_community(self.switch.console)
 
-    def basic_config(self):
+    def routemap_basic_config(self):
         basic_config_route_map(self.switch.console)
 
     def aspath_map(self,*args,**kwargs):
@@ -962,7 +1194,7 @@ class Router_route_map:
         return clauses
 
 
-    def clean_up(self):
+    def routemap_clean_up(self):
         self.find_clauses()
         switch_exec_cmd(self.switch.console,"config router route-map")
         for c in self.clauses:
@@ -1889,6 +2121,21 @@ class Router_BGP:
         config = "execute router clear bgp all"
         config_cmds_lines(self.switch.console,config)
 
+    def config_all_neighbor_commands(self,cmds):
+        self.update_bgp_config_neighbors()
+        commands = split_f_string_lines(cmds)
+        for n in self.bgp_config_neighbors:
+            for command in commands:
+                config = f"""
+                  config router bgp
+                    config neighbor
+                        edit {n}
+                        {command}
+                    end
+                 end
+                """
+                config_cmds_lines(self.switch.console,config)
+
     def config_neighbor_command(self,*args,**kwargs):
         neighbor = kwargs['neighbor']
         command = kwargs['command']
@@ -2451,6 +2698,11 @@ class Router_BGP:
             """
             config_cmds_lines(self.switch.console,bgp_config)
         switch_show_cmd(dut,"show router bgp")
+
+
+    def update_bgp_config_neighbors(self):
+        self.bgp_config_neighbors = find_bgp_config_neighbors(self.switch.console)
+
 
     def config_bgp_bfd_all_neighbors(self,action):
         if self.switch.is_fortinet() == False:
@@ -3554,6 +3806,13 @@ class FortiSwitch:
         self.discover_lldp_neighbors()
         self.config_lldp_neighbor_ports()
         self.vlan_interfaces = []
+
+
+    def find_crash(self):
+        cmd = "diag debug crashlog read" 
+        result = collect_show_cmd(self.console,cmd)
+
+
 
     def reboot(self):
         if self.is_fortinet() == False:
