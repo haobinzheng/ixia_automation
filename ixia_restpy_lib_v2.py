@@ -460,16 +460,22 @@ class IXIA_TOPOLOGY:
         
         if address_family == "v4":
             ipPrefixPool = self.ipv4_pool
+            bgpiprouteproperty = ipPrefixPool.BgpIPRouteProperty.add()
             # bgpiprouteproperty = ipPrefixPool.BgpIPRouteProperty.add()
         elif address_family == "v6":
             ipPrefixPool = self.ipv6_pool
+            bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
+            bgpiprouteproperty.NextHopType.Single("sameaslocalip")
+            bgpiprouteproperty.NextHopIPType.Single("ipv6")
             # bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
 
         testplatform = self.ixia.testPlatform
 
         #bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
         #bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
-        bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.find()
+        #bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.find()
+        bgpiprouteproperty.NextHopType.Single("sameaslocalip")
+        bgpiprouteproperty.NextHopIPType.Single("ipv6")
 
         if "next_hop" in kwargs:
             next_hop_addr = kwargs["next_hop"]
@@ -800,6 +806,10 @@ class IXIA:
         dst_topo = kwargs['dst_topo']
         traffic_name = kwargs['traffic_name']
         tracking_name = kwargs['tracking_name']
+        if "rate" in kwargs:
+            rate = kwargs['rate']
+        else:
+            rate = 3
         ixia_rest_create_traffic_v6(
         platform = self.testPlatform, 
         session = self.Session,
@@ -808,6 +818,7 @@ class IXIA:
         dst = dst_topo,
         name= traffic_name,
         tracking_group = tracking_name,
+        rate = rate,
     )
     def start_traffic(self):
 
@@ -1394,6 +1405,10 @@ def ixia_rest_create_traffic_v6(*args,**kwargs):
         dst_topo = kwargs['dst']
         traffic_name = kwargs['name']
         tracking_group = kwargs['tracking_group']
+        if "rate" in kwargs:
+            rate = kwargs['rate']
+        else:
+            rate = 3
 
         ixNetwork.info('Create Traffic Item')
         trafficItem = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType='ipv6',TransmitMode='sequential')
@@ -1407,7 +1422,7 @@ def ixia_rest_create_traffic_v6(*args,**kwargs):
         # #       Therefore, ConfigElement is a list.
         ixNetwork.info('Configuring config elements')
         configElement = trafficItem.ConfigElement.find()[0]
-        configElement.FrameRate.update(Type='percentLineRate', Rate=3)
+        configElement.FrameRate.update(Type='percentLineRate', Rate=rate)
         #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
         configElement.TransmissionControl.update(Type='continuous')
         configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'

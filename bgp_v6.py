@@ -13,7 +13,7 @@ import multiprocessing
 # Append paths to python APIs (Linux and Windows)
 
 from utils import *
-import settings 
+#import settings 
 from test_process import * 
 from common_lib import *
 from common_codes import *
@@ -50,6 +50,7 @@ portList_v4_v6 = [
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-r", "--restore", help="restore config file from tftp server", action="store_true")
+parser.add_argument("-cb", "--clear_bgp", help="Clear BGP configuration", action="store_true")
 parser.add_argument("-m", "--guide", help="print out simple user manual", action="store_true")
 parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
 parser.add_argument("-tc", "--test_config", help="For each test case,configure switches before starting testing", action="store_true")
@@ -74,9 +75,6 @@ parser.add_argument("-e", "--config_host_sw", help="Configure host switches conn
 parser.add_argument("-y", "--clean_up", help="Clean up IXIA after test is done. Default = No", action="store_true")
 parser.add_argument("-sw", "--upgrade", type = int,help="FSW software upgrade via FGT,image build number at settings.py, example: 193")
 parser.add_argument("-ug", "--sa_upgrade", type = int,help="FSW software upgrade in standlone mode. For debug image enter -1. Example: 193,-1(debug image)")
-
-
-
 
 global DEBUG
 # if len(sys.argv) > 1:
@@ -119,41 +117,45 @@ python mclag_v2.py -t 448D -mac 1000-10000-1000 -e -test 1 -lm
 """
 	print(guide)
 	exit()
+if args.clear_bgp:
+	clear_bgp = True
+	CLEAN_BGP = True
+	print_title("Clear BGP Configuration Before Test Starts")
+else:
+	clear_bgp = False
 if args.restore:
 	restore_config = True
-	tprint(" **Restore config from tftp server")
+	print_title("Restore config from tftp server")
 else:
 	restore_config = False
 
 if args.sa_upgrade:
 	upgrade_sa = True
 	sw_build = args.sa_upgrade
-	tprint(f"**Upgrade FSW software in standalone mode to build {sw_build}")
+	print_title(f"**Upgrade FSW software in standalone mode to build {sw_build}")
 else:
 	upgrade_sa = False
 if args.upgrade:
 	upgrade_fgt = True
 	sw_build = args.upgrade
-	tprint(f"**Upgrade FSW software via via Fortigate to build {sw_build}")
+	print_title(f"Upgrade FSW software via via Fortigate to build {sw_build}")
 else:
 	upgrade_fgt = False
 if args.verbose:
 	settings.DEBUG = True
-	tprint("** Running the test in verbose mode")
+	print_title("Running the test in verbose mode")
 else:
 	settings.DEBUG = False
-	tprint("** Running the test in silent mode") 
+	print_title("Running the test in silent mode") 
 if args.config:
 	setup = True
-	tprint("** Before starting testing, configure devices")
+	print_title("Before starting testing, configure devices")
 else:
 	setup = False   
-	tprint("** Skip setting up testbed and configuring devices")  
+	print_title("Skip setting up testbed and configuring devices")  
 if args.test_config:
 	test_config = True
-	CLEAN_BGP = True
-	tprint(" !!!!!!!!!!!!!!!!!!!!!!!! All BGP Config Will Be Cleared  !!!!!!!!!!!!!!!!!!!!")
-	tprint("** Before starting each test case, configure devices based on each test case scenario")
+	print_title("Before starting each test case, configure devices based on each test case scenario")
 else:
 	test_config = False 
 	CLEAN_BGP = False  
@@ -162,51 +164,51 @@ else:
 # 	mode='auto'
 if args.log_mac:
 	log_mac_event = True
-	tprint("** Running test with port log-mac-event enabled")
+	print_title("Running test with port log-mac-event enabled")
 else:
-	tprint("** Running test with port log-mac-event disable")
+	print_title("Running test with port log-mac-event disable")
 	log_mac_event = False
 if args.factory:
 	factory = True
-	tprint("** Will factory reset each FSW ")
+	print_title("Will factory reset each FSW ")
 else:
 	factory = False
-	tprint("** Will NOT factory reset each FSW")
+	print_title("Will NOT factory reset each FSW")
 if args.fibercut:
 	mode='manual'
-	tprint("** Fiber cut test will be in manual mode")
+	print_title("Fiber cut test will be in manual mode")
 else:
 	mode = 'auto'
-	tprint("** Fiber cut test will be in automated mode")
+	print_title("Fiber cut test will be in automated mode")
 if args.testbed:
 	test_setup = args.testbed
-	tprint("** Test Bed = {}".format(test_setup))
+	print_title("Test Bed = {}".format(test_setup))
 else:
-	tprint("** Not test bed is needed for this run" )
+	print_title("Not test bed is needed for this run" )
 	test_setup = None
 if args.ixia:
 	ixia_topo = args.ixia
-	tprint("** IXIA ports will be allocated IP address via DHCP server ")
+	print_title("IXIA ports will be allocated IP address via DHCP server ")
 else:
 	ixia_topo = "static"
-	tprint("** IXIA ports will be allocated IP address statically ")
+	print_title("IXIA ports will be allocated IP address statically ")
 if args.file:
 	file_appendix = args.file
-	tprint("** Export test ressult to file with appendix: {}".format(file_appendix))
+	print_title("Export test ressult to file with appendix: {}".format(file_appendix))
 if args.run_time:
 	Run_time = args.run_time
-	tprint("** Test iterate numbers = {}".format(Run_time))
+	print_title("Test iterate numbers = {}".format(Run_time))
 else:
-	Run_time = 2
-	tprint("** Test iterate numbers = {}".format(Run_time))
+	Run_time = 1
+	print_title("Test iterate numbers = {}".format(Run_time))
 if args.testcase:
 	testcase = args.testcase
 	test_all = False
-	tprint("** Test Case To Run: #{}".format(testcase))
+	print_title("Test Case To Run: #{}".format(testcase))
 else:
 	test_all = True
 	testcase = 0
-	tprint("** All Test Case To Be Run:{}".format(test_all))
+	print_title("All Test Case To Be Run:{}".format(test_all))
 if args.mac:
 	mac_input = args.mac
 	if "-" in mac_input:
@@ -257,12 +259,9 @@ def test_clean_config(*args,**kwargs):
 	switches = kwargs["switches"]
 	if CLEAN_ALL:
 		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-			switch.router_ospf.remove_ospf_all()
-	else:
-		pass
+		switch.router_ospf.remove_ospf_all()
+	for switch in switches:
+		switch.router_bgp.clear_config_all()
 
 def test_config_igp_ipv6_fabric(*args,**kwargs):
 	ospf_config_v4 = False
@@ -606,6 +605,10 @@ if factory == True:
 			image = find_dut_image(dut)
 			tprint(f"============================ {dut_name} software image = {image}")
 			sw_init_config_v6(device=dut_dir,config_split =True)
+
+	if testcase == 0:
+		exit()
+
 if setup: 
 	for dut_dir in dut_dir_list:
 		dut = dut_dir['telnet']
@@ -615,6 +618,8 @@ if setup:
 			image = find_dut_image(dut)
 			tprint(f"============================ {dut_name} software image = {image}")
 			sw_init_config_v6(device=dut_dir)
+	if testcase == 0:
+		exit()
 
 	# console_timer(30,msg="After intial configuration, show switch related information")
 	# switches = [FortiSwitch(dut_dir) for dut_dir in dut_dir_list]
@@ -644,6 +649,8 @@ if upgrade_sa:
 			relogin_if_needed(dut)
 		image = find_dut_image(dut)
 		tprint(f"============================ {dut_name} software image = {image} ============")
+	if testcase == 0:
+		exit()
 
 if Reboot:
 	for dut_dir in dut_dir_list:
@@ -664,8 +671,9 @@ if Reboot:
 			relogin_if_needed(dut)
 		image = find_dut_image(dut)
 		tprint(f"============================ {dut_name} software image = {image} ============")
-	exit()
-
+	
+	if testcase == 0:
+		exit()
 
 switches = [FortiSwitch(dut_dir) for dut_dir in dut_dir_list]
 if testcase == 1 or test_all:
@@ -1273,16 +1281,15 @@ if testcase == 6025 or test_all:
 
 	fsw_switches =switches[1:]
 
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6(switches =fsw_switches)
 
-	test_config_igp_ipv6(switches =fsw_switches)
-
-	for switch in switches:
+	for switch in fsw_switches:
 		switch.router_ospf.show_ospf_neighbors_v6()
 
-
-	for switch in switches:  
+	for switch in fsw_switches:  
 		# switch.router_ospf.neighbor_discovery_all()
 		# switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
 		switch.discover_ipv6_neighbors()
@@ -1295,11 +1302,11 @@ if testcase == 6025 or test_all:
 
 	console_timer(60,msg="After configuring iBGP sessions over loopback, svi and link local address, wait for 60s")
 
-	for switch in switches:
+	for switch in fsw_switches:
 		switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
 
 	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks, svi and LLOC intf && enable BFD, wait for 20s =====")
-	for switch in switches:
+	for switch in fsw_switches:
 		switch.router_bgp.show_bgp_summary_v6()
 		switch.router_bgp.show_bfd_neighbor_v6()
 		router_bfd = Router_BFD(switch)
@@ -1307,19 +1314,71 @@ if testcase == 6025 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
-	# for switch in switches:
-	# 	switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+	for switch in switches:
+		switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
 
-	# console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
-	# for switch in switches:
-	# 	switch.router_bgp.show_bgp_summary_v6()
-	# 	switch.router_bgp.show_bfd_neighbor_v6()
+	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.router_bgp.show_bfd_neighbor_v6()
 
-	# console_timer(20,msg="=======After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s ======")
-	# for switch in switches:
-	# 	switch.router_ospf.show_ospf_neighbors_v6()
-	# 	switch.router_bgp.show_bgp_summary_v6()
-	# 	switch.show_routing_v6()
+	console_timer(20,msg="=======After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s ======")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.show_routing_v6()
+
+if testcase == 6026 or test_all:
+	testcase = 6026
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Negative Testing: iBGP on all interfaces: loopback,SVI And Link Local Address, Enable BFD and Flap"
+	tags = ["link local bfd","all interfaces bfd", "bfd flapping"]
+	print_test_subject(testcase,description)
+
+
+	fsw_switches =switches[1:]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6(switches =fsw_switches)
+
+	for switch in fsw_switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+
+	for switch in fsw_switches:  
+		# switch.router_ospf.neighbor_discovery_all()
+		# switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		switch.discover_ipv6_neighbors()
+		switch.router_bgp.config_ibgp_mesh_svi_v6() #config IPv6 over svi 
+		switch.router_bgp.config_ibgp_mesh_direct() #config IPv4 over svi 
+		switch.router_bgp.update_ipv6_neighbor_cache()
+		switch.router_bgp.config_ibgp_mesh_link_local() #config link local
+		switch.router_bgp.config_ibgp_mesh_loopback_v6() #config IPv6 over loopback
+		switch.router_bgp.config_ibgp_mesh_loopback_v4()  #config IPv4 over loopback
+
+	console_timer(60,msg="After configuring iBGP sessions over loopback, svi and link local address, wait for 60s")
+
+	for _ in range(10):
+
+		for switch in fsw_switches:
+			switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
+
+		console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks, svi and LLOC intf && enable BFD, wait for 20s =====")
+		for switch in fsw_switches:
+			switch.router_bgp.show_bgp_summary_v6()
+			switch.router_bgp.show_bfd_neighbor_v6()
+			router_bfd = Router_BFD(switch)
+			router_bfd.counte_peers_v6()
+
+		for switch in switches:
+			switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+
+		console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
+		for switch in switches:
+			switch.router_bgp.show_bgp_summary_v6()
+			switch.find_crash()
+
 
 	
 if testcase == 3 or test_all:
@@ -1959,7 +2018,7 @@ if testcase == 6067 or test_all:
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Next Hop Self"
 	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
-	tag1 = "next hop self"
+	tag1 = "4 nodes, next hop self"
 	print_test_subject(testcase,description)
 
 	ixia_port_info = [
@@ -2090,7 +2149,7 @@ if testcase == 6068 or test_all:
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "prefix list"
 	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
-	tag1 = "prefix list"
+	tag1 = " 4 nodes,prefix list"
 	print_test_subject(testcase,description)
 
 	ixia_port_info = [
@@ -2237,7 +2296,7 @@ if testcase == 6069 or test_all:
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "distribute list"
 	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
-	tag1 = "distribute list"
+	tag1 = "4 nodes,distribute list"
 	print_test_subject(testcase,description)
 
 	ixia_port_info = [
@@ -2372,9 +2431,9 @@ end
 if testcase == 60610 or test_all:
 	testcase = 60610
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "4 nodes topology + 1 IXAA, aggregate"
+	description = "4 nodes topology + 1 IXAA, aggregate,next_hop,policy, unsuppress"
 	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
-	tag1 = "4 nodes topology 1 IXIA, filter-list, aggregate, next_hop, policy"
+	tag1 = "4 nodes topology 1 IXIA, filter-list, aggregate6, next_hop, policy,unsuppress"
 	print_test_subject(testcase,description)
 
 	ixia_port_info = [
@@ -2389,7 +2448,7 @@ if testcase == 60610 or test_all:
 
 	fsw_switches =switches[1:]
 	network = BGP_networks(fsw_switches)
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
 	test_config_igp_ipv6_fabric(switches =fsw_switches)
 
@@ -2404,6 +2463,12 @@ if testcase == 60610 or test_all:
 	sw2 = fsw_switches[1]
 	sw3 = fsw_switches[2]
 	sw4 = fsw_switches[3]
+
+
+	for sw in fsw_switches:
+		sw.prefix_list.prefix_unsuppress_v4()
+		sw.prefix_list.prefix_unsuppress_v6()
+		sw.route_map.unsuppress_map()
 
 	network.build_bgp_peer(bgp1,65001,bgp2,1)
 	network.build_bgp_peer(bgp2,1,bgp3,1)
@@ -2532,10 +2597,17 @@ if testcase == 60610 or test_all:
 	#This is DUT #5, don't get confused!!!!
 	ixia_topology = myixia.topologies[0]
 	dut_switch = sw4
+	# topos[0].change_bgp_routes_attributes(origin="egp",med=4111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=66660,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v4") 
+	# topos[0].change_bgp_routes_attributes_v6(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=64101,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v6")
+	 
+
+	# topos[1].change_bgp_routes_attributes(origin="egp",med=4211,community=5,comm_base=6200,num_path=5,as_base=65021,aggregator="107.107.107.107",aggregator_as=66661,ext_community=5,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="201.201.201.201") 
+	# topos[1].change_bgp_routes_attributes_v6(origin="egp",med=6211,community=5,comm_base=6200,num_path=5,as_base=65021,aggregator="107.107.107.107",aggregator_as=64102,ext_community=5,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:201:201:201::201")
+	 
+
 	topos[0].change_bgp_routes_attributes(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=66660,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="200.200.200.200") 
 	topos[0].change_bgp_routes_attributes_v6(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=64101,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::200")
 	 
-
 	topos[1].change_bgp_routes_attributes(origin="egp",med=6211,community=5,comm_base=6200,num_path=5,as_base=65021,aggregator="107.107.107.107",aggregator_as=66661,ext_community=5,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="201.201.201.201") 
 	topos[1].change_bgp_routes_attributes_v6(origin="egp",med=6211,community=5,comm_base=6200,num_path=5,as_base=65021,aggregator="107.107.107.107",aggregator_as=64102,ext_community=5,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:201:201:201::201")
 	 
@@ -2788,14 +2860,14 @@ if testcase == 6091 or test_all:
 	myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4",tracking_name="Tracking_6")
 
 
-	myixia.create_traffic_v6(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1_v6")
-	myixia.create_traffic_v6(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2_v6",tracking_name="Tracking_1_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1_v6",tracking_name="Tracking_2_v6")
 
-	myixia.create_traffic_v6(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3",tracking_name="Tracking_3_v6")
-	myixia.create_traffic_v6(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2",tracking_name="Tracking_4_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3_v6",tracking_name="Tracking_3_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2_v6",tracking_name="Tracking_4_v6")
 
-	myixia.create_traffic_v6(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5",tracking_name="Tracking_5_v6")
-	myixia.create_traffic_v6(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4",tracking_name="Tracking_6_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5_v6",tracking_name="Tracking_5_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4_v6",tracking_name="Tracking_6_v6")
 
 
 	myixia.start_traffic()
@@ -3976,6 +4048,7 @@ if testcase == 6146 or test_all:
 	testcase = 6146
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: AS Path. Run the test at the last switch: switches[-1] "
+	tags = "IPv6 as path, multipath-relax"
 	print_test_subject(testcase,description)
 
 	apiServerIp = '10.105.19.19'
@@ -4013,8 +4086,9 @@ if testcase == 6146 or test_all:
 	fsw_switches =switches[1:]
 	network = BGP_networks(fsw_switches)
 
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
+	if test_config:
 		test_config_igp_ipv6(switches =fsw_switches)
 		network.biuld_ibgp_mesh_topo_sys_intf_v6()
 		console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
@@ -5862,23 +5936,23 @@ if testcase == 6190 or test_all:
 	testcase = 6190
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "IPv6 BGP router reflector"
-	tag = "IPv6 router reflector"
+	tag = "IPv6 router reflector,client_to_client"
 	print_test_subject(testcase,description)
 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
-	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
-	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::211","2001:101:1:1::1"]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::1","2001:106:1:1::1"]
 
 	fsw_switches =switches[1:]
 	network = BGP_networks(fsw_switches)
-
 	#Infra configuration
 
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
-	test_config_igp_ipv6_fabric(switches =fsw_switches)
-	network.biuld_ibgp_mesh_topo_sys_intf_v6()
-	network.biuld_ibgp_mesh_topo_sys_intf_one()
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+	# network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	# network.biuld_ibgp_mesh_topo_sys_intf_one()
 	network.build_router_reflector_topo_v6()
 	console_timer(20,msg=f"Test case {testcase}: After configuring fully IPv6 router reflector in the BGP network, wait....")
 	network.show_summary_v6()
@@ -5893,42 +5967,175 @@ if testcase == 6190 or test_all:
 			exit()
 	 
 
-	# myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 
- 	
-	# for topo in myixia.topologies:
-	# 	topo.add_ipv4()
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
 	 
-	# myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=100)
-	# myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=100)
-	# myixia.topologies[2].add_bgp(dut_ip='10.1.1.3',bgp_type='external',num=100)
-	# myixia.topologies[3].add_bgp(dut_ip='10.1.1.4',bgp_type='external',num=100)
-	# myixia.topologies[4].add_bgp(dut_ip='10.1.1.5',bgp_type='external',num=100)
-	# myixia.topologies[5].add_bgp(dut_ip='10.1.1.6',bgp_type='external',num=100)
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=100)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=100)
+		i += 1
 
+	myixia.start_protocol(wait=40)
+
+	for i in range(0,5):
+		for j in range(i+1,6):
+			myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i}_to_t{j}_v6",tracking_name=f"Tracking_{i}_{j}_v6",rate=1)
+			myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j}_to_t{i}_v6",tracking_name=f"Tracking_{j}_{i}_v6",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i}_to_t{j}_v4",tracking_name=f"Tracking_{i}_{j}_v4",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j}_to_t{i}_v4",tracking_name=f"Tracking_{j}_{i}_v4",rate=1)
+
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
+if testcase == 6191 or test_all:
+	testcase = 6191
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "IPv6 BGP route server reflector"
+	tag = "IPv6 route server reflector,route server client"
+	print_test_subject(testcase,description)
+
+	ixia_ipv6_as_list = [101,102,103,104,105,106]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::1","2001:106:1:1::1"]
+
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+	#Infra configuration
+
+	# if clear_bgp:
+	# 	test_clean_config(switches =fsw_switches)
+	# if test_config:
+	# 	test_config_igp_ipv6_fabric(switches =fsw_switches)
+	# # network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	# # network.biuld_ibgp_mesh_topo_sys_intf_one()
+	# network.build_route_server_topo_v6()
+	# console_timer(20,msg=f"Test case {testcase}: After configuring IPv6 route server in the BGP network, wait....")
+	# network.show_summary_v6()
+
+	# FSW configuration
+
+	for sw,ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
+		if sw.router_bgp.config_ebgp_ixia_v6(sw_as = None,ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if sw.router_bgp.config_ebgp_ixia_v4(sw_as = None,ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+
+	# for sw,ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
+	# 	if sw.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+	# 		tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+	# 		exit()
+	# 	if sw.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+	# 		tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+	# 		exit()
 	 
-	# myixia.topologies[2].change_med(1000)
-	# myixia.topologies[5].change_med(2000)
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
 	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=100)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=100)
+		i += 1
+
+	myixia.start_protocol(wait=40)
+
+	for i in range(0,5):
+		for j in range(i+1,6):
+			myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i}_to_t{j}_v6",tracking_name=f"Tracking_{i}_{j}_v6",rate=1)
+			myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j}_to_t{i}_v6",tracking_name=f"Tracking_{j}_{i}_v6",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i}_to_t{j}_v4",tracking_name=f"Tracking_{i}_{j}_v4",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j}_to_t{i}_v4",tracking_name=f"Tracking_{j}_{i}_v4",rate=1)
+
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
+if testcase == 6192 or test_all:
+	testcase = 6192
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "IPv4 BGP route server reflector"
+	tag = "IPv4 route server reflector,route server client"
+	print_test_subject(testcase,description)
+
+	ixia_ipv6_as_list = [101,102,103,104,105,106]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::1","2001:106:1:1::1"]
+
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+	#Infra configuration
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+	# network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	# network.biuld_ibgp_mesh_topo_sys_intf_one()
+	network.build_route_server_topo()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully IPv6 router reflector in the BGP network, wait....")
+	network.show_summary_v6()
+
+	# FSW configuration
+	for sw,ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
+		if sw.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if sw.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
 	 
 
-	# myixia.start_protocol(wait=50)
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 
-	# myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t1_to_t6",tracking_name="Tracking_1")
-	# myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t6_to_t1",tracking_name="Tracking_2")
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=100)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=100)
+		i += 1
 
-	
-	# myixia.start_traffic()
-	# myixia.collect_stats()
-	# if myixia.check_traffic():
-	# 	msg = f"============= Passed: {description} with IXIA traffic =========="
-	# 	tprint(msg)
-	# 	send_Message(msg)
-	# else:
-	# 	msg = f"============= Failed:  {description} with IXIA traffic =========="
-	# 	tprint(msg)
-	# 	send_Message(msg)
-	# myixia.stop_traffic()
+	myixia.start_protocol(wait=40)
+
+	for i in range(0,5):
+		for j in range(i+1,6):
+			myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i}_to_t{j}_v6",tracking_name=f"Tracking_{i}_{j}_v6",rate=1)
+			myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j}_to_t{i}_v6",tracking_name=f"Tracking_{j}_{i}_v6",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i}_to_t{j}_v4",tracking_name=f"Tracking_{i}_{j}_v4",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j}_to_t{i}_v4",tracking_name=f"Tracking_{j}_{i}_v4",rate=1)
+
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
 
 
 if testcase == 20 or test_all:
@@ -6002,14 +6209,14 @@ if testcase == 20 or test_all:
 if testcase == 6200 or test_all:
 	testcase = 6200
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "IPv6 BGP confederation"
-	tags = "IPv6 BGP confederation"
+	description = "IPv6 BGP basic confederation"
+	tags = "IPv6 BGP basic confederation"
 	print_test_subject(testcase,description)
 
 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
-	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
-	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::211","2001:101:1:1::1"]
+	ipv4_networks = ["10.10.1.1","10.20.1.1","10.30.1.1","10.40.1.1","10.50.1.1","10.60.1.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::211","2001:106:1:1::1"]
 
 	fsw_switches =switches[1:]
 	network = BGP_networks(fsw_switches)
@@ -6019,58 +6226,143 @@ if testcase == 6200 or test_all:
 	if test_config:
 		test_clean_config(switches =fsw_switches)
 	test_config_igp_ipv6_fabric(switches =fsw_switches)
-	network.biuld_ibgp_mesh_topo_sys_intf_v6()
-	network.biuld_ibgp_mesh_topo_sys_intf_one()
-	network.bbuild_confed_topo_1_v6()
+	# network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	# network.biuld_ibgp_mesh_topo_sys_intf_one()
+	network.build_confed_topo_1_v6()
 	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
 	network.show_summary_v6()
 
 	
 	# FSW configuration
 	for sw,ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
-		if sw.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+		if sw.router_bgp.config_ebgp_ixia_v6(sw_as = None,ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
 			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
 			exit()
-		if sw.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+		if sw.router_bgp.config_ebgp_ixia_v4(sw_as = None,ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
 			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
 			exit()
 
-	# myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 
- 	
-	# for topo in myixia.topologies:
-	# 	topo.add_ipv4()
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
 	 
-	# myixia.topologies[0].add_bgp(dut_ip='10.1.1.1',bgp_type='external',num=100)
-	# myixia.topologies[1].add_bgp(dut_ip='10.1.1.2',bgp_type='external',num=100)
-	# myixia.topologies[2].add_bgp(dut_ip='10.1.1.3',bgp_type='external',num=100)
-	# myixia.topologies[3].add_bgp(dut_ip='10.1.1.4',bgp_type='external',num=100)
-	# myixia.topologies[4].add_bgp(dut_ip='10.1.1.5',bgp_type='external',num=100)
-	# myixia.topologies[5].add_bgp(dut_ip='10.1.1.6',bgp_type='external',num=100)
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=100)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1000)
+		i += 1
 
-	 
-	# #myixia.topologies[2].change_med(1000)
-	# myixia.topologies[5].add_aspath(5,65300)
-	 
-	 
+	myixia.start_protocol(wait=40)
 
-	# myixia.start_protocol(wait=50)
 
-	# myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t1_to_t6",tracking_name="Tracking_1")
-	# myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t6_to_t1",tracking_name="Tracking_2")
+	myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+	myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+	myixia.create_traffic(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3",tracking_name="Tracking_3")
+	myixia.create_traffic(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2",tracking_name="Tracking_4")
+
+	myixia.create_traffic(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5",tracking_name="Tracking_5")
+	myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4",tracking_name="Tracking_6")
+
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2_v6",tracking_name="Tracking_1_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1_v6",tracking_name="Tracking_2_v6")
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3_v6",tracking_name="Tracking_3_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2_v6",tracking_name="Tracking_4_v6")
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5_v6",tracking_name="Tracking_5_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4_v6",tracking_name="Tracking_6_v6")
+
+
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
+if testcase == 6201 or test_all:
+	testcase = 6201
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "IPv6 BGP confederation as_path and med "
+	tags = "IPv6 BGP basic confederation as_path and med"
+	print_test_subject(testcase,description)
+
+
+	ixia_ipv6_as_list = [101,101,101,101,101,101]
+	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
+
+	fsw_switches =switches[1:]
+	dut_switch = fsw_switches[0]  # At the switch_1, create 6 ebgp sessions with IXIA
+
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+
+	#Infra configuration
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+	network.build_confed_topo_1_v6()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary_v6()
 
 	
-	# myixia.start_traffic()
-	# myixia.collect_stats()
-	# if myixia.check_traffic():
-	# 	msg = f"============= Passed: {description} with IXIA traffic =========="
-	# 	tprint(msg)
-	# 	send_Message(msg)
-	# else:
-	# 	msg = f"============= Failed:  {description} with IXIA traffic =========="
-	# 	tprint(msg)
-	# 	send_Message(msg)
-	# myixia.stop_traffic()
+	# FSW configuration
+
+	# for ixia_port_info, ixia_as in zip(portList_v4_v6,ixia_ipv6_as_list):
+	# 	if dut_switch.router_bgp.config_ebgp_ixia_v6(sw_as = None,ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+	# 		tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+	# 		exit()
+	# 	if dut_switch.router_bgp.config_ebgp_ixia_v4(sw_as = None,ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+	# 		tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+	# 		exit()
+
+
+	for sw,ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
+		if sw.router_bgp.config_ebgp_ixia_v6(sw_as = None,ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if sw.router_bgp.config_ebgp_ixia_v4(sw_as = None,ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+
+	# i = 0
+	# for topo in myixia.topologies:
+	# 	topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='external',num=1)
+	# 	topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+	# 	i += 1
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=2)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=2)
+		i += 1
+
+
+	for i in range(6):
+		myixia.topologies[i].change_bgp_routes_attributes(med=4111+i, num_path=6-i,as_base=45010,address_family="v4")
+		myixia.topologies[i].change_bgp_routes_attributes_v6(med=6111+i,num_path=6-i,as_base=35010,address_family="v6")
+
+	myixia.start_protocol(wait=40)
 
 
 if testcase == 21 or test_all:
@@ -6139,7 +6431,7 @@ if testcase == 6210 or test_all:
  
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
-	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::211","2001:101:1:1::1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
 
 	fsw_switches =switches[1:]
 	dut_switch = fsw_switches[0]  # At the switch_1, create 6 ebgp sessions with IXIA
@@ -6178,8 +6470,8 @@ if testcase == 6210 or test_all:
 		 
 	i = 0
 	for topo in myixia.topologies:
-		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=1)
-		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='external',num=1)
+		topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
 		i += 1
 
 	for i in range(6):
@@ -6200,7 +6492,7 @@ if testcase == 6211 or test_all:
  
 	ixia_ipv6_as_list = [101,101,101,101,101,101]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
-	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::211","2001:101:1:1::1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
 
 	fsw_switches =switches[1:]
 	dut_switch = fsw_switches[0]  # At the switch_1, create 6 ebgp sessions with IXIA
@@ -6239,8 +6531,8 @@ if testcase == 6211 or test_all:
 		 
 	i = 0
 	for topo in myixia.topologies:
-		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=1)
-		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='external',num=1)
+		topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
 		i += 1
 
 	for i in range(6):
@@ -6262,7 +6554,7 @@ if testcase == 6212 or test_all:
  
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
-	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::211","2001:101:1:1::1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
 
 	fsw_switches =switches[1:]
 	dut_switch = fsw_switches[0]  # At the switch_1, create 6 ebgp sessions with IXIA
@@ -6270,17 +6562,17 @@ if testcase == 6212 or test_all:
 
 	#Infra configuration
 
-	# if test_config:
-	# 	test_clean_config(switches =fsw_switches)
-	# test_config_igp_ipv6_fabric(switches =fsw_switches)
-	# network.biuld_ibgp_mesh_topo_sys_intf_v6()
-	# network.biuld_ibgp_mesh_topo_sys_intf_one()
-	# console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
-	# network.show_summary_v6()
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+	test_config_igp_ipv6_fabric(switches =fsw_switches)
+	network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	network.biuld_ibgp_mesh_topo_sys_intf_one()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary_v6()
 	
-	# for sw in fsw_switches:
-	# 	sw.prefix_list.prefix_orf_v4()
-	# 	sw.prefix_list.prefix_orf_v6()
+	for sw in fsw_switches:
+		sw.prefix_list.prefix_orf_v4()
+		sw.prefix_list.prefix_orf_v6()
 
 	orf_cmds = f"""
 	set capability-orf both
@@ -6324,6 +6616,321 @@ if testcase == 6212 or test_all:
 	# 	myixia.topologies[i].change_bgp_routes_attributes_v6(med=6111+i,address_family="v6")
 
 	# myixia.start_protocol(wait=40)
+	 
+	check_bgp_test_result(testcase,description,switches)
+
+if testcase == 6213 or test_all:
+	testcase = 6213
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "ipv6 deterministic and always compare med - different eBGP AS and iBGP"
+	tag = "ipv6 deterministic and always compare med, always and deterministic med "
+	print_test_subject(testcase,description)
+
+ 
+	ixia_ipv6_as_list = [101,101,102,102,65000,65000]
+	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
+
+	fsw_switches =switches[1:]
+	dut_switch = fsw_switches[0]  # At the switch_1, create 6 ebgp sessions with IXIA
+	network = BGP_networks(switches)
+
+	#Infra configuration
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+		network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	#network.biuld_ibgp_mesh_topo_sys_intf()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary_v6()
+	
+	# FSW configuration
+	for ixia_port_info, ixia_as in zip(portList_v4_v6,ixia_ipv6_as_list):
+		if dut_switch.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if dut_switch.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+
+	# IXIA configuration
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		if i < 4:
+			topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='external',num=1)
+			topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		else:
+			topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='internal',num=1)
+			topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='internal',prefix_num=1)
+		i += 1
+
+	for i in range(6):
+		myixia.topologies[i].change_bgp_routes_attributes(med=4116-i, address_family="v4")
+		myixia.topologies[i].change_bgp_routes_attributes_v6(med=6116-i,address_family="v6")
+
+	myixia.start_protocol(wait=40)
+
+
+if testcase == 6214 or test_all:
+	testcase = 6214
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Cisco ipv6 deterministic and always compare med - different eBGP AS and iBGP"
+	tag = "Cisco ipv6 deterministic and always compare med "
+	print_test_subject(testcase,description)
+
+ 
+	ixia_ipv6_as_list = [101,101,102,102,65000,65000]
+	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
+
+	fsw_switches =switches[1:]
+	dut_switch = switches[0]  # Dut switch is cisco
+	network = BGP_networks(switches)
+
+	#Infra configuration
+	if test_config:
+		test_clean_config(switches =fsw_switches)
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+		network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	#network.biuld_ibgp_mesh_topo_sys_intf()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary_v6()
+	
+	# FSW configuration
+	for ixia_port_info, ixia_as in zip(portList_v4_v6,ixia_ipv6_as_list):
+		if dut_switch.router_bgp.cisco_bgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if dut_switch.router_bgp.cisco_bgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+
+	# IXIA configuration
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		if i < 4:
+			topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='external',num=1)
+			topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		else:
+			topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='internal',num=1)
+			topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='internal',prefix_num=1)
+		i += 1
+
+	for i in range(6):
+		myixia.topologies[i].change_bgp_routes_attributes(med=4116-i, address_family="v4")
+		myixia.topologies[i].change_bgp_routes_attributes_v6(med=6116-i,address_family="v6")
+
+	myixia.start_protocol(wait=40)
+	 
+	#check_bgp_test_result(testcase,description,switches)
+
+if testcase == 6215 or test_all:
+	testcase = 6215
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "ignore as_path "
+	tag = "ignore as_path"
+	print_test_subject(testcase,description)
+
+ 
+	ixia_ipv6_as_list = [101,101,101,101,101,101]
+	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
+
+	fsw_switches =switches[1:]
+	dut_switch = fsw_switches[0]  # At the switch_1, create 6 ebgp sessions with IXIA
+	network = BGP_networks(switches)
+
+	#Infra configuration
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+	network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	#network.biuld_ibgp_mesh_topo_sys_intf()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary_v6()
+	
+	# FSW configuration
+	for ixia_port_info, ixia_as in zip(portList_v4_v6,ixia_ipv6_as_list):
+		if dut_switch.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if dut_switch.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+
+	# IXIA configuration
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='external',num=1)
+		topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		i += 1
+
+	for i in range(6):
+		myixia.topologies[i].change_bgp_routes_attributes(med=4111+i, num_path=6-i,as_base=45010,address_family="v4")
+		myixia.topologies[i].change_bgp_routes_attributes_v6(med=6111+i,num_path=6-i,as_base=65010,address_family="v6")
+
+	myixia.start_protocol(wait=40)
+	 
+	check_bgp_test_result(testcase,description,switches)
+
+if testcase == 6216 or test_all:
+	testcase = 6216
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "ipv6 best path missing med worst - different eBGP AS "
+	tag = "ipv6 best path missing med worst "
+	print_test_subject(testcase,description)
+
+ 
+	ixia_ipv6_as_list = [101,102,103,104,105,106]
+	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
+
+	fsw_switches =switches[1:]
+	dut_switch = fsw_switches[0]  # At the switch_1, create 6 ebgp sessions with IXIA
+	network = BGP_networks(switches)
+
+	#Infra configuration
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	test_config_igp_ipv6_fabric(switches =fsw_switches)
+	network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	network.biuld_ibgp_mesh_topo_sys_intf_one()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary_v6()
+	
+	# FSW configuration
+	for ixia_port_info, ixia_as in zip(portList_v4_v6,ixia_ipv6_as_list):
+		if dut_switch.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if dut_switch.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+	# IXIA configuration
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='external',num=1)
+		topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		i += 1
+
+	for i in range(3):
+		myixia.topologies[i].change_bgp_routes_attributes_v6(med=4111+i, address_family="v4")
+		myixia.topologies[i].change_bgp_routes_attributes_v6(med=6111+i,address_family="v6")
+
+	myixia.start_protocol(wait=40)
+	 
+	check_bgp_test_result(testcase,description,switches)
+
+
+if testcase == 6217 or test_all:
+	testcase = 6217
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "multipath-relax "
+	tag = "multipath-relax"
+	print_test_subject(testcase,description)
+
+ 
+	ixia_ipv6_as_list = [101,102,102,104,105,106]
+	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1"]
+
+	fsw_switches =switches[1:]
+	dut_switch = fsw_switches[0]  # At the switch_1, create 6 ebgp sessions with IXIA
+	network = BGP_networks(switches)
+
+	#Infra configuration
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+	network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	#network.biuld_ibgp_mesh_topo_sys_intf()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary_v6()
+	
+	# FSW configuration
+	for ixia_port_info, ixia_as in zip(portList_v4_v6,ixia_ipv6_as_list):
+		if dut_switch.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if dut_switch.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+
+	# IXIA configuration
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=dut_switch.vlan1_ip,bgp_type='external',num=1)
+		topo.add_bgp_v6(dut_ip=dut_switch.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		i += 1
+
+	for i in range(6):
+		myixia.topologies[i].change_bgp_routes_attributes(med=4111, num_path=6-i,as_base=45010,address_family="v4")
+		myixia.topologies[i].change_bgp_routes_attributes_v6(med=6111,num_path=6-i,as_base=65010,address_family="v6")
+
+	myixia.start_protocol(wait=40)
 	 
 	check_bgp_test_result(testcase,description,switches)
 

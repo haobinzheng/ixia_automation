@@ -718,6 +718,51 @@ class BGP_networks:
         """
         config_cmds_lines(bgp2.switch.console,bgp_config)
 
+    def config_ebgp_session_v6(self,bgp1,bgp2):
+        tprint(f"============== Configurating eBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {bgp1.ebgp_as}
+            set router-id {bgp1.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.switch.vlan1_ipv6.split("/")[0]}
+                    set remote-as {bgp2.ebgp_as}
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {bgp2.ebgp_as}
+            set router-id {bgp2.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.switch.vlan1_ipv6.split("/")[0]}
+                    set remote-as {bgp1.ebgp_as}
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+    
+
     def config_ebgp_session(self,bgp1,bgp2):
         tprint(f"============== Configurating eBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
         bgp_config = f"""
@@ -734,6 +779,94 @@ class BGP_networks:
             config neighbor
                 edit {bgp2.switch.vlan1_ip}
                     set remote-as {bgp2.ebgp_as}
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {bgp2.ebgp_as}
+            set router-id {bgp2.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.switch.vlan1_ip}
+                    set remote-as {bgp1.ebgp_as}
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+    def config_rs_ebgp_session_v6(self,bgp1,bgp2):
+        tprint(f"============== Configurating IPv6 eBGP Route Server peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {bgp1.ebgp_as}
+            set router-id {bgp1.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.switch.vlan1_ipv6.split("/")[0]}
+                    set remote-as {bgp2.ebgp_as}
+                    set route-server-client6 enable
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+
+        bgp_config = f"""
+        config router bgp
+            set as {bgp2.ebgp_as}
+            set router-id {bgp2.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp1.switch.vlan1_ipv6.split("/")[0]}
+                    set remote-as {bgp1.ebgp_as}
+                next
+            end
+        end
+        """
+        config_cmds_lines(bgp2.switch.console,bgp_config)
+
+    def config_rs_ebgp_session(self,bgp1,bgp2):
+        tprint(f"============== Configurating route server eBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        bgp_config = f"""
+        config router bgp
+            set as {bgp1.ebgp_as}
+            set router-id {bgp1.router_id }
+        end
+        end
+        """
+        config_cmds_lines(bgp1.switch.console,bgp_config)
+
+        bgp_config = f"""
+        config router bgp
+            config neighbor
+                edit {bgp2.switch.vlan1_ip}
+                    set remote-as {bgp2.ebgp_as}
+                    set route-server-client enable
                 next
             end
         end
@@ -808,51 +941,78 @@ class BGP_networks:
 
     def config_ibgp_rr_session_v6(self,rr,client):
         tprint(f"============== Configurating iBGP v6 Router Reflector and Client session between {rr.switch.name} and {client.switch.name} ")
-        bgp_config = f"""
-        config router bgp
-            set as {rr.ibgp_as}
-            set router-id {rr.router_id }
-        end
-        end
-        """
-        config_cmds_lines(rr.switch.console,bgp_config)         
-
-        bgp_config = f"""
-        config router bgp
-            config neighbor
-                edit {client.switch.loop0_ipv6.split("/")[0]}
-                    set remote-as {client.ibgp_as}
-                    set update-source loop0
-                    set route-reflector-client enable
-                next
+        if rr.switch.is_fortinet():
+            bgp_config = f"""
+            config router bgp
+                set as {rr.ibgp_as}
+                set router-id {rr.router_id }
             end
-        end
-        """
-        config_cmds_lines(rr.switch.console,bgp_config)
-
-
-        bgp_config = f"""
-        config router bgp
-            set as {client.ibgp_as}
-            set router-id {client.router_id }
-        end
-        end
-        """
-        config_cmds_lines(client.switch.console,bgp_config)
-
-        bgp_config = f"""
-        config router bgp
-            config neighbor
-                edit {rr.switch.loop0_ipv6.split("/")[0]})
-                    set remote-as {rr.ibgp_as}
-                    set update-source loop0
-                next
             end
+            """
+            config_cmds_lines(rr.switch.console,bgp_config)         
+
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                    edit {client.switch.loop0_ipv6.split("/")[0]}
+                        set remote-as {client.ibgp_as}
+                        set update-source loop0
+                        set route-reflector-client enable
+                    next
+                end
+            end
+            """
+            config_cmds_lines(rr.switch.console,bgp_config)
+
+        if client.switch.is_fortinet():
+            bgp_config = f"""
+            config router bgp
+                set as {client.ibgp_as}
+                set router-id {client.router_id }
+            end
+            end
+            """
+            config_cmds_lines(client.switch.console,bgp_config)
+
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                    edit {rr.switch.loop0_ipv6.split("/")[0]}
+                        set remote-as {rr.ibgp_as}
+                        set update-source loop0
+                    next
+                end
+            end
+            """
+            config_cmds_lines(client.switch.console,bgp_config)
+
+    def config_cluster_id(self,rr1,rr2):
+        bgp_config = f"""
+        config router bgp
+            set cluster-id  1.1.1.2
         end
         """
-        config_cmds_lines(client.switch.console,bgp_config)
+        config_cmds_lines(rr1.switch.console,bgp_config)
 
-   
+        bgp_config = f"""
+        config router bgp
+            set cluster-id 2.2.2.3
+        end
+        """
+        config_cmds_lines(rr2.switch.console,bgp_config)
+
+    def build_route_server_topo_v6(self):
+        rs = self.routers[0]
+        for i in range(1,6):
+            self.config_rs_ebgp_session_v6(rs,self.routers[i])
+
+
+    def build_route_server_topo(self):
+        rs = self.routers[0]
+        for i in range(1,6):
+            self.config_rs_ebgp_session(rs,self.routers[i])
+         
+
     def build_router_reflector_topo(self):
         rr1 = self.routers[0]
         rr2 = self.routers[1]
@@ -874,6 +1034,9 @@ class BGP_networks:
             self.config_ibgp_rr_session_v6(rr2,self.routers[i])
 
         self.config_ibgp_session_loopback_v6(rr1,rr2)
+
+        self.config_cluster_id(rr1,rr2)
+
 
     def config_all_confed_id(self):
         for router in self.routers:
@@ -944,17 +1107,17 @@ class BGP_networks:
         self.config_confed_peers(fed_50_2,[fed_60_1,fed_70_1])
         self.config_confed_peers(fed_60_1,[fed_70_2,fed_50_2])
         self.config_confed_peers(fed_70_1,[fed_50_2])
+        self.config_confed_peers(fed_70_2,[fed_60_1])
 
-def build_confed_topo_1_v6(self):
+    def build_confed_topo_1_v6(self):
         fed_50_1 = self.routers[0]
         fed_50_2 = self.routers[1]
 
         fed_60_1 = self.routers[2]
         fed_60_2 = self.routers[3]
-        fed_60_3 = self.routers[4]
 
-        fed_70_1 = self.routers[5]
-        fed_70_2 = self.routers[6]
+        fed_70_1 = self.routers[4]
+        fed_70_2 = self.routers[5]
 
 
         fed_50_1.ibgp_as = 50
@@ -962,37 +1125,32 @@ def build_confed_topo_1_v6(self):
         fed_50_1.ebgp_as = 50
         fed_50_2.ebgp_as = 50
 
-        fed_60_1.ibgp_as =60
-        fed_60_2.ibgp_as =60
-        fed_60_3.ibgp_as =60
-        fed_60_1.ebgp_as =60
-        fed_60_2.ebgp_as =60
-        fed_60_3.ebgp_as =60
-
-        fed_70_1.ibgp_as =70
-        fed_70_2.ibgp_as =70
-        fed_70_1.ebgp_as =70
-        fed_70_2.ebgp_as =70
-
-        self.config_ibgp_session(fed_50_1,fed_50_2)
-
-
-        self.config_ibgp_session(fed_60_1,fed_60_2)
-        self.config_ibgp_session(fed_60_1,fed_60_3)
-        self.config_ibgp_session(fed_60_2,fed_60_3)
+        fed_60_1.ibgp_as = 60
+        fed_60_2.ibgp_as = 60
+        fed_60_1.ebgp_as = 60
+        fed_60_2.ebgp_as = 60
         
-        
-        self.config_ibgp_session(fed_70_1,fed_70_2)
+        fed_70_1.ibgp_as = 70
+        fed_70_2.ibgp_as = 70
+        fed_70_1.ebgp_as = 70
+        fed_70_2.ebgp_as = 70
 
-        self.config_ebgp_session(fed_50_2,fed_60_1)
-        self.config_ebgp_session(fed_50_2,fed_70_1)
-        self.config_ebgp_session(fed_60_1,fed_70_2)
+        self.config_ibgp_session_loopback_v6(fed_50_1,fed_50_2)
+
+        self.config_ibgp_session_loopback_v6(fed_60_1,fed_60_2)
+         
+        self.config_ibgp_session_loopback_v6(fed_70_1,fed_70_2)
+
+        self.config_ebgp_session_v6(fed_50_2,fed_60_1)
+        self.config_ebgp_session_v6(fed_50_2,fed_70_1)
+        self.config_ebgp_session_v6(fed_60_1,fed_70_2)
 
         self.config_all_confed_id()
 
         self.config_confed_peers(fed_50_2,[fed_60_1,fed_70_1])
         self.config_confed_peers(fed_60_1,[fed_70_2,fed_50_2])
         self.config_confed_peers(fed_70_1,[fed_50_2])
+        self.config_confed_peers(fed_70_2,[fed_60_1])
 
 class Router_community_list:
     def __init__(self, *args, **kwargs):
@@ -1049,6 +1207,30 @@ class Router_prefix_list:
         """
         config_cmds_lines(self.switch.console,config)
 
+    def prefix_unsuppress_v4(self):
+        config = """
+        config router prefix-list
+        edit "unsuppress-list"
+            config rule
+                edit 1
+                    set prefix 10.10.4.27/32   
+                next
+                edit 2
+                     set prefix 10.10.4.28/32  
+                next
+                edit 3
+                    set prefix 10.10.4.29/32
+                next
+                edit 4
+                    set prefix 10.10.4.30/32
+                next
+            end
+            next
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+
 
     def prefix_orf_v6(self):
         config = """
@@ -1090,6 +1272,29 @@ class Router_prefix_list:
             next
         end
 
+        """
+        config_cmds_lines(self.switch.console,config)
+
+    def prefix_unsuppress_v6(self):
+        config = """
+        config router prefix-list6
+        edit "unsuppress-list-v6"
+            config rule
+                edit 1
+                    set prefix6 2001:104:1:1::1b/128  
+                next
+                edit 2
+                    set prefix6 2001:104:1:1::1c/128
+                next
+                edit 3
+                    set prefix6 2001:104:1:1::1d/128
+                next
+                edit 4
+                    set prefix6 2001:104:1:1::1e/128  
+                next
+            end
+            next
+        end
         """
         config_cmds_lines(self.switch.console,config)
 
@@ -1201,6 +1406,29 @@ class Router_route_map:
             switch_exec_cmd(self.switch.console, f"delete {c} " )
         switch_exec_cmd(self.switch.console,"end")
 
+    def unsuppress_map(self):
+
+        config = """
+        config router route-map
+            edit "suppress-map-4"
+                set protocol bgp
+                    config rule
+                        edit 1
+                            set match-ip-address "unsuppress-list"
+                        next
+                    end
+            next
+            edit "unsuppress-map-6"
+                set protocol bgp
+                    config rule
+                        edit 1
+                            set match-ip6-address "unsuppress-list-v6"
+                        next
+                    end
+            next
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
 
 class Ospf_Neighbor:
     def __init__(self,*args,**kargs):
@@ -2125,12 +2353,12 @@ class Router_BGP:
         self.update_bgp_config_neighbors()
         commands = split_f_string_lines(cmds)
         for n in self.bgp_config_neighbors:
-            for command in commands:
+            #for command in commands:
                 config = f"""
                   config router bgp
                     config neighbor
                         edit {n}
-                        {command}
+                        {cmds}
                     end
                  end
                 """
@@ -2388,6 +2616,7 @@ class Router_BGP:
     def check_neighbor_status(self):
         if self.switch.is_fortinet() == False:
             return 
+        Info(f"=================== Checking BGP neighbor status on switch {self.switch.name} =======================")
         self.get_neighbors_summary()
         result = True
         for neighbor in self.bgp_neighbors_objs:
@@ -3293,17 +3522,19 @@ class Router_BGP:
             return False
 
         if "sw_as" in kwargs:
-            sw_as = int(kwargs["sw_as"])
+            sw_as = kwargs["sw_as"]
+            if sw_as != None:
+                sw_as = int(sw_as)
         else:
             sw_as = 65000
-
-        bgp_config = f"""
-        config router bgp
-            set as {sw_as}
-            set router-id {self.router_id }
-        end
-        """
-        config_cmds_lines(self.switch.console,bgp_config)
+        if sw_as != None:
+            bgp_config = f"""
+            config router bgp
+                set as {sw_as}
+                set router-id {self.router_id }
+            end
+            """
+            config_cmds_lines(self.switch.console,bgp_config)
         bgp_config = f"""
         config router bgp
             config neighbor
@@ -3311,6 +3542,70 @@ class Router_BGP:
                 set remote-as {ixia_as}
             next
             end
+        end
+        """
+        config_cmds_lines(self.switch.console,bgp_config)
+        return True
+
+    def cisco_bgp_ixia_v6(self,*args,**kwargs):
+        tprint(f"============== Configurating BGP peer relationship to ixia {self.switch.name} ")
+        ixia_port = kwargs["ixia_port"]
+        ixia_as = kwargs["ixia_as"]
+        ixia_ip,ixia_mask = seperate_ip_mask(ixia_port[6])
+        if ixia_ip == None:
+            return False
+
+        if "sw_as" in kwargs:
+            sw_as = int(kwargs["sw_as"])
+        else:
+            sw_as = 65000
+
+        # if sw_as != None:
+        #     bgp_config = f"""
+        #     config router bgp
+        #         set as {sw_as}
+        #         set router-id {self.router_id }
+        #     end
+        #     """
+        #     config_cmds_lines(self.switch.console,bgp_config)
+        bgp_config = f"""
+        config t
+            router bgp 65000
+            neighbor {ixia_ip}
+                remote-as {ixia_as}
+                address-family ipv6 unicast
+        end
+        """
+        config_cmds_lines(self.switch.console,bgp_config)
+        return True
+
+    def cisco_bgp_ixia_v4(self,*args,**kwargs):
+        tprint(f"============== Configurating BGP peer relationship to ixia {self.switch.name} ")
+        ixia_port = kwargs["ixia_port"]
+        ixia_as = kwargs["ixia_as"]
+        ixia_ip,ixia_mask = seperate_ip_mask(ixia_port[6])
+        if ixia_ip == None:
+            return False
+
+        if "sw_as" in kwargs:
+            sw_as = int(kwargs["sw_as"])
+        else:
+            sw_as = 65000
+
+        # if sw_as != None:
+        #     bgp_config = f"""
+        #     config router bgp
+        #         set as {sw_as}
+        #         set router-id {self.router_id }
+        #     end
+        #     """
+        #     config_cmds_lines(self.switch.console,bgp_config)
+        bgp_config = f"""
+        config t
+            router bgp 65000
+            neighbor {ixia_ip}
+                remote-as {ixia_as}
+                address-family ipv4 unicast
         end
         """
         config_cmds_lines(self.switch.console,bgp_config)
@@ -3327,17 +3622,20 @@ class Router_BGP:
             return False
 
         if "sw_as" in kwargs:
-            sw_as = int(kwargs["sw_as"])
+            sw_as = kwargs["sw_as"]
+            if sw_as != None:
+                sw_as = int(sw_as)
         else:
             sw_as = 65000
 
-        bgp_config = f"""
-        config router bgp
-            set as {sw_as}
-            set router-id {self.router_id }
-        end
-        """
-        config_cmds_lines(self.switch.console,bgp_config)
+        if sw_as != None:
+            bgp_config = f"""
+            config router bgp
+                set as {sw_as}
+                set router-id {self.router_id }
+            end
+            """
+            config_cmds_lines(self.switch.console,bgp_config)
         bgp_config = f"""
         config router bgp
             config neighbor
@@ -3806,12 +4104,14 @@ class FortiSwitch:
         self.discover_lldp_neighbors()
         self.config_lldp_neighbor_ports()
         self.vlan_interfaces = []
+        self.cisco_config_full_2()
 
 
     def find_crash(self):
         cmd = "diag debug crashlog read" 
         result = collect_show_cmd(self.console,cmd)
-
+        config = "diagnose debug crash clear"
+        config_cmds_lines(self.console,config)
 
 
     def reboot(self):
@@ -4038,137 +4338,277 @@ class FortiSwitch:
 
     def cisco_config_full(self):
         dut = self.dut
+        if self.platform == "n9k":
+            config = """
+            config t
+            router bgp 65000
+              router-id 10.10.10.10
+              address-family ipv4 unicast
+                maximum-paths 4
+              address-family ipv6 unicast
+                maximum-paths 4
+              neighbor 2001:1:1:1::1
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:2:2:2::2
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:3:3:3::3
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:4:4:4::4
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:5:5:5::5
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:6:6:6::6
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::1
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::2
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::3
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::4
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::5
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::6
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::213
+                remote-as 103
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::214
+                remote-as 104
+                address-family ipv6 unicast
+              neighbor fe80::6d5:90ff:fe2e:22a7
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::724c:a5ff:fea5:a219
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::926c:acff:fe0c:bceb
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::926c:acff:fe13:9575
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::926c:acff:fe6d:c951
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::ea1c:baff:fe88:d15f
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor 1.1.1.1
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 2.2.2.2
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 3.3.3.3
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 4.4.4.4
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 5.5.5.5
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 6.6.6.6
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 10.1.1.1
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.2
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.3
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.4
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.5
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.6
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.213
+                remote-as 103
+                address-family ipv4 unicast
+              neighbor 10.1.1.214
+                remote-as 104
+                address-family ipv4 unicast
+                end
+            """
+            config_cmds_lines(dut,config)
 
-        config = """
-        router bgp 65000
-          router-id 10.10.10.10
-          address-family ipv4 unicast
-            maximum-paths 4
-          address-family ipv6 unicast
-            maximum-paths 4
-          neighbor 2001:1:1:1::1
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:2:2:2::2
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:3:3:3::3
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:4:4:4::4
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:5:5:5::5
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:6:6:6::6
-            remote-as 65000
-            update-source loopback0
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::1
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::2
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::3
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::4
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::5
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::6
-            remote-as 65000
-            update-source Vlan1
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::213
-            remote-as 103
-            address-family ipv6 unicast
-          neighbor 2001:10:1:1::214
-            remote-as 104
-            address-family ipv6 unicast
-          neighbor fe80::6d5:90ff:fe2e:22a7
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::724c:a5ff:fea5:a219
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::926c:acff:fe0c:bceb
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::926c:acff:fe13:9575
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::926c:acff:fe6d:c951
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor fe80::ea1c:baff:fe88:d15f
-            remote-as 65000
-            address-family ipv6 unicast
-          neighbor 1.1.1.1
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 2.2.2.2
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 3.3.3.3
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 4.4.4.4
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 5.5.5.5
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 6.6.6.6
-            remote-as 65000
-            update-source loopback0
-            address-family ipv4 unicast
-          neighbor 10.1.1.1
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.2
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.3
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.4
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.5
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.6
-            remote-as 65000
-            address-family ipv4 unicast
-          neighbor 10.1.1.213
-            remote-as 103
-            address-family ipv4 unicast
-          neighbor 10.1.1.214
-            remote-as 104
-            address-family ipv4 unicast
-        """
-        config_cmds_lines(dut,config)
 
+    def cisco_config_full_2(self):
+        dut = self.dut
+        debug("======Enter into cisco_config_full_2")
+        if self.platform == "n9k":
+            config = """
+            config t
+            router bgp 65000
+              router-id 10.10.10.10
+              address-family ipv4 unicast
+                maximum-paths 4
+              address-family ipv6 unicast
+                redistribute direct route-map known-community
+                aggregate-address 2001:105:1:1::/64 as-set summary-only
+                maximum-paths 4
+              neighbor 2001:1:1:1::1
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:2:2:2::2
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:3:3:3::3
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:4:4:4::4
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:5:5:5::5
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:6:6:6::6
+                remote-as 65000
+                update-source loopback0
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::1
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::2
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::3
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::4
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::5
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::6
+                remote-as 65000
+                update-source Vlan1
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::213
+                remote-as 103
+                address-family ipv6 unicast
+              neighbor 2001:10:1:1::214
+                remote-as 104
+                address-family ipv6 unicast
+              neighbor fe80::6d5:90ff:fe2e:22a7
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::724c:a5ff:fea5:a219
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::926c:acff:fe0c:bceb
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::926c:acff:fe13:9575
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::926c:acff:fe6d:c951
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor fe80::ea1c:baff:fe88:d15f
+                remote-as 65000
+                address-family ipv6 unicast
+              neighbor 1.1.1.1
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 2.2.2.2
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 3.3.3.3
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 4.4.4.4
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 5.5.5.5
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 6.6.6.6
+                remote-as 65000
+                update-source loopback0
+                address-family ipv4 unicast
+              neighbor 10.1.1.1
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.2
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.3
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.4
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.5
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.6
+                remote-as 65000
+                address-family ipv4 unicast
+              neighbor 10.1.1.213
+                remote-as 103
+                address-family ipv4 unicast
+              neighbor 10.1.1.214
+                remote-as 104
+                address-family ipv4 unicast
+                end
+            """
+            config_cmds_lines(dut,config)
 
     def config_commands(self,config):
         dut = self.dut

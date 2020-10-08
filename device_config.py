@@ -1,5 +1,5 @@
 from utils import *
-import settings 
+#import settings 
 import xmltodict
 import xml.etree.ElementTree as ET
 from test_process import * 
@@ -395,7 +395,7 @@ def bgpv6_testbed_init():
     dut_dir_list.append(dut1_dir)
     dut_list.append(dut1)
      
-    dut2 = get_switch_telnet_connection_new("10.105.241.44",2066)
+    dut2 = get_switch_telnet_connection_new("10.105.241.243",2035)
     dut2_dir['comm'] = "10.105.241.44"
     dut2_dir['comm_port'] = 2066
     dut2_dir['name'] = "3032D-R7-40"

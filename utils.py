@@ -211,7 +211,7 @@ def dprint(msg):
 
 def debug(msg):
 	# global DEBUG
-	# print(DEBUG)
+	#print(f"DEBUG Mode = {settings.DEBUG}")
 	if settings.DEBUG:
 		if type(msg) == list:
 			for m in msg:
@@ -727,6 +727,9 @@ def config_block_cmds_new(dut, cmdblock):
 	for cmd in b:
 		switch_configure_cmd(dut,cmd)
 
+def print_title(msg):
+	print(f"================================ {msg}")
+
 def config_block_cmds(dut_dir, cmdblock):
 	b= cmdblock.split("\n")
 	b = [x.strip() for x in b if x.strip()]
@@ -1063,14 +1066,26 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	prompt = switch_find_login_prompt_new(tn)
 	p = prompt[0]
 	debug(prompt)
+	if p == "cisco":
+		debug("Login in Cisco device......")
+		tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+
 	if p == 'login':
-		Info("This is new software image, login back without passord ")
+		Info("This is new software image, login back without passord ") #This needs to rewrite to take care factory reset situation
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
-		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		# tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
 		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
@@ -1361,21 +1376,25 @@ def switch_find_login_prompt_new(tn):
 
 	# tn.write(('\x03').encode('ascii'))
 	# time.sleep(1)
-	# tn.write(('\x03').encode('ascii'))
-	# time.sleep(1)
-	# tn.write(('\x03').encode('ascii'))
-	# time.sleep(1)
+	tn.write(('\x03').encode('ascii'))
+	time.sleep(1)
+	tn.write(('\x03').encode('ascii'))
+	time.sleep(1)
 	debug("See what prompt the console is at")
 	output = tn.expect([re.compile(b"login:")],timeout=TIMEOUT)
-	debug(output)
-	debug(output[2].decode().strip())
+	debug(f"collect info to look for prompt: {output}")
+	debug(f"output[2] = {output[2].decode().strip()}")
+	#debug(output[2].decode().strip())
 	prompt = output[2].decode().strip()
+	if 'Login incorrect' in prompt:
+		debug (f"The switch could be a Cisco in login mode, need to enter username and password")
+		return ("cisco",None)
 	if output[0] == -1: 
-		debug("It is a NOT login prompt, Need further action to login")
+		debug("It is a NOT login prompt, Need further action to login, going through more logics......")
 	if output[0] == 0:
 		debug("it is a login prompt, you need to re-login")
 		return ("login",None)
-	elif " #" in prompt: 
+	elif " #" in prompt or "#" in prompt: 
 		debug("it is a Shell prompt")
 		pattern = r"[a-zA-Z0-9\-]+"
 		match = re.match(pattern,prompt)
@@ -1405,7 +1424,6 @@ def switch_find_login_prompt(tn):
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
 	#time.sleep(1)
-
 	
 	debug("See what prompt the console is at")
 	output = tn.expect([re.compile(b"login:")],timeout=TIMEOUT)
@@ -2132,6 +2150,48 @@ def print_dash_line():
 def print_double_line():
 	print("======================================================================================================")
 
+
+def find_subnet(ipaddr,mask_length):
+	import ipaddress
+	n = f"{ipaddr}/{mask_length}"
+	net = str(ipaddress.ip_network(n, strict=False))
+	subnet = (net.split('/'))[0]
+	print(subnet)
+	return subnet
+
+def print_test_subject(testcase,description):
+	print(f"======================= Testcase #{testcase}: {description} =============================")
+
+def smooth_cli_line(line):
+	line = line.strip()
+	debug(f'old line = {line}')
+	if "More" in line:
+		line = line.replace("--More--",'')
+		line = line.replace("\r",'')
+		line = line.strip()
+	debug(f'new line = {line}')
+	return line
+
+def switch_factory_reset_relogin(dut_dir):
+	dut = dut_dir['telnet']
+	dut_com = dut_dir['comm'] 
+	dut_port = dut_dir['comm_port']
+
+	switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)") 
+	console_timer(300,msg="Wait for 5 min after reset factory default")
+	tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
+	dut = get_switch_telnet_connection_new(dut_com,dut_port)
+	dut_dir['telnet'] = dut
+
+def switch_factory_reset_nologin(dut_dir):
+	dut = dut_dir['telnet']
+	dut_com = dut_dir['comm'] 
+	dut_port = dut_dir['comm_port']
+	dut_name = dut_dir['name']
+	tprint(f":::::::::: Factory resetting {dut_name} :::::::::::")
+	switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)") 
+
+
 if __name__ == "__main__":
 	# reliable_telnet("10.105.50.59")
 	# exit()
@@ -2140,8 +2200,10 @@ if __name__ == "__main__":
 	# scp_file(file="MCLAG_Perf_548D_no_mac_log.xlsx")
 	# scp_file(file="MCLAG_Perf_548D_mac_log.xlsx")
 	# exit()
-	_dut1_com = "10.105.50.2"
-	_dut1_port = 2077
+	# debug("test debug")
+	# exit()
+	_dut1_com = "10.105.241.243"
+	_dut1_port = 2045
 	dut1_com = "10.105.50.3"
 	dut1_port = 2057
 	dut2_com = "10.105.50.3"
@@ -2164,7 +2226,7 @@ if __name__ == "__main__":
 	# tprint(dir(dut1))
 
 
-	dut = get_switch_telnet_connection(dut1_com,dut1_port)
+	dut = get_switch_telnet_connection_new(_dut1_com,_dut1_port,platform="n9k")
 	find_dut_prompt(dut)
 	exit()
 	image = find_dut_image(dut)
@@ -2207,42 +2269,6 @@ if __name__ == "__main__":
 	#tprint(result)
 	#tprint(result)
 
-def find_subnet(ipaddr,mask_length):
-	import ipaddress
-	n = f"{ipaddr}/{mask_length}"
-	net = str(ipaddress.ip_network(n, strict=False))
-	subnet = (net.split('/'))[0]
-	print(subnet)
-	return subnet
 
-def print_test_subject(testcase,description):
-	print(f"======================= Testcase #{testcase}: {description} =============================")
-
-def smooth_cli_line(line):
-	line = line.strip()
-	debug(f'old line = {line}')
-	if "More" in line:
-		line = line.replace("--More--",'')
-		line = line.replace("\r",'')
-		line = line.strip()
-	debug(f'new line = {line}')
-	return line
-
-def switch_factory_reset_relogin(dut_dir):
-	dut = dut_dir['telnet']
-	dut_com = dut_dir['comm'] 
-	dut_port = dut_dir['comm_port']
-
-	switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)") 
-	console_timer(300,msg="Wait for 5 min after reset factory default")
-	tprint('-------------------- re-login Fortigate devices after factory rest-----------------------')
-	dut = get_switch_telnet_connection_new(dut_com,dut_port)
-	dut_dir['telnet'] = dut
-
-def switch_factory_reset_nologin(dut_dir):
-	dut = dut_dir['telnet']
-	dut_com = dut_dir['comm'] 
-	dut_port = dut_dir['comm_port']
-	dut_name = dut_dir['name']
-	tprint(f":::::::::: Factory resetting {dut_name} :::::::::::")
-	switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)") 
+# if __name__ == "__main__":
+# 	debug("test debug")

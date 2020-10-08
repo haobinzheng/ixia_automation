@@ -95,16 +95,16 @@ def check_bgp_test_result(testcase,description,switches,**kwargs):
 
     tprint(f"====================== Test case #{testcase}:{description} has been {final_result} ==========\n\n")   
 
-def check_bgp_test_result_v6(testcase,description,switches,**kwargs):
+def check_bgp_test_result_v6(testcase,description,switches_check,**kwargs):
     if "test1" in kwargs:
         result1 = kwargs["test1"]
     else:
         result1 = True
     result = True
-    if type(switches) is list:
-        dut_switches = switches
+    if type(switches_check) is list:
+        dut_switches = switches_check
     else:
-        dut_switches = [switches]
+        dut_switches = [switches_check]
     for switch in dut_switches:
         if switch.is_fortinet() == False:
             return 
@@ -2661,38 +2661,59 @@ def get_table_with_heading(dut,cmd,head_id1,head_id2,*args):
 	return table_list
 
 def get_router_bgp_summary(dut):
-# IPv4 Unicast Summary:
-# BGP router identifier 1.1.1.1, local AS number 65000 vrf-id 0
-# BGP table version 0
-# RIB entries 0, using 0 bytes of memory
-# Peers 4, using 83 KiB of memory
+    result = collect_show_cmd(dut,"get router info bgp summary")
+    items_list = []
+    headline_found = False
+    for line in result:
+        line = line.strip()
+        if "IPv6 Unicast Summary" in line:
+            return items_list
+        if "Neighbor" in line and "AS" in line and "MsgRcvd" in line:
+            heads = re.split('\\s+',line)
+            headline_found = True
+        elif headline_found and (re.match(r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)',line) or re.match(r'(([a-f0-9:]+:+)+[a-f0-9]+)',line)):
+            port_line_dict = {}
+            items = re.split('\\s+',line)
+            for k,v in zip(heads,items):
+                port_line_dict[k] = v
+                items_list.append(port_line_dict)
+        else:
+            pass
+    print(items_list)
+    return items_list
 
-# Neighbor        V         AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
-# 2.2.2.2         4      65000      70      76        0    0    0 00:08:17            0
-# 3.3.3.3         4      65000      71      77        0    0    0 00:08:17            0
-# 4.4.4.4         4      65000      71      83        0    0    0 00:08:17            0
-# 5.5.5.5         4      65000      66      75        0    0    0 00:08:17            0
+# def get_router_bgp_summary_old(dut):
+# # IPv4 Unicast Summary:
+# # BGP router identifier 1.1.1.1, local AS number 65000 vrf-id 0
+# # BGP table version 0
+# # RIB entries 0, using 0 bytes of memory
+# # Peers 4, using 83 KiB of memory
 
-# Total number of neighbors 4
+# # Neighbor        V         AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+# # 2.2.2.2         4      65000      70      76        0    0    0 00:08:17            0
+# # 3.3.3.3         4      65000      71      77        0    0    0 00:08:17            0
+# # 4.4.4.4         4      65000      71      83        0    0    0 00:08:17            0
+# # 5.5.5.5         4      65000      66      75        0    0    0 00:08:17            0
 
-	result = collect_show_cmd(dut,"get router info bgp summary")
-	items_list = []
-	headline_found = False
-	for line in result:
-		line = line.strip()
-		if "Neighbor" in line and "AS" in line and "MsgRcvd" in line:
-			heads = re.split('\\s+',line)
-			headline_found = True
-		elif headline_found == True and re.match(r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)',line):
-			port_line_dict = {}
-			items = re.split('\\s+',line)
-			for k,v in zip(heads,items):
-				port_line_dict[k] = v
-			items_list.append(port_line_dict)
-		else:
-			pass
-	#print(items_list)
-	return items_list
+# # Total number of neighbors 4
+# 	result = collect_show_cmd(dut,"get router info bgp summary")
+# 	items_list = []
+# 	headline_found = False
+# 	for line in result:
+# 		line = line.strip()
+# 		if "Neighbor" in line and "AS" in line and "MsgRcvd" in line:
+# 			heads = re.split('\\s+',line)
+# 			headline_found = True
+# 		elif headline_found and (re.match(r'([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)',line) or re.match(r'(([a-f0-9:]+:+)+[a-f0-9]+)',line)):
+#             port_line_dict = {}
+#             items = re.split('\\s+',line)
+#             for k,v in zip(heads,items):
+#                 port_line_dict[k] = v
+#                 items_list.append(port_line_dict)
+# 		else:
+# 			pass
+# 	#print(items_list)
+# 	return items_list
 
 def get_router_bgp_summary_v6(dut):
 # IPv4 Unicast Summary:
