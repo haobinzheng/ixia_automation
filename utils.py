@@ -499,6 +499,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	tn.write(('' + '\n').encode('ascii'))
 	sleep(timeout)
 	output = tn.read_very_eager()
+	debug(output)
 	#output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
@@ -514,6 +515,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	#Will revove these lines after bgp is done
 	if cmd == "get router info6 bgp summary":
 		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
+	debug(out_str_list)
 	return out_str_list
 
 def process_show_command(output):
@@ -1043,16 +1045,14 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	#tprint("successful login\n")
 	tn.write(('\x03').encode('ascii'))
 	tn.write(('\x03').encode('ascii'))
-	tn.write(('\x03').encode('ascii'))
-	tn.write(('\x03').encode('ascii'))
-	time.sleep(1)
+	time.sleep(0.2)
 
 	#tprint("successful login\n")
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
-	tn.write(('' + '\n').encode('ascii'))
-	tn.write(('' + '\n').encode('ascii'))
-	time.sleep(1)
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	time.sleep(0.2)
 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
 
@@ -1060,12 +1060,30 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 
 	tn.read_until(("Password: ").encode('ascii'),timeout=5)
 
-	#tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
 	tn.write((pwd + '\n').encode('ascii'))
 
 	prompt = switch_find_login_prompt_new(tn)
 	p = prompt[0]
 	debug(prompt)
+	if p == "change":
+		Info("Login after factory reset, changing password..... ") #This needs to rewrite to take care factory reset situation
+		#switch_need_change_password(tn)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		tn.read_until(("login: ").encode('ascii'),timeout=5)
+		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		tn.write(('' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
+		tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.read_until(("# ").encode('ascii'),timeout=10)
 	if p == "cisco":
 		debug("Login in Cisco device......")
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
@@ -1074,11 +1092,11 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(1)
+		sleep(0.2)
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 
 	if p == 'login':
-		Info("This is new software image, login back without passord ") #This needs to rewrite to take care factory reset situation
+		Info("Login after time out or reboot") #This needs to rewrite to take care factory reset situation
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
@@ -1090,7 +1108,7 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(1)
+		sleep(0.2)
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 	elif p == 'shell':
 		Info("Login without password")
@@ -1107,9 +1125,9 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('\x03').encode('ascii'))
 		time.sleep(1)
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(1)
+		sleep(0.2)
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(1)
+		sleep(0.2)
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
@@ -1122,7 +1140,7 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(1)
+		sleep(0.2)
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 
 	if platform == "fortinet":
@@ -1376,16 +1394,31 @@ def switch_find_login_prompt_new(tn):
 
 	# tn.write(('\x03').encode('ascii'))
 	# time.sleep(1)
+
 	tn.write(('\x03').encode('ascii'))
-	time.sleep(1)
+	time.sleep(0.1)
 	tn.write(('\x03').encode('ascii'))
-	time.sleep(1)
+	time.sleep(0.1)
+
+	tn.read_until(("login: ").encode('ascii'),timeout=5)
+
+	tn.write(('admin' + '\n').encode('ascii'))
+
+	tn.read_until(("Password: ").encode('ascii'),timeout=5)
+
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+
 	debug("See what prompt the console is at")
 	output = tn.expect([re.compile(b"login:")],timeout=TIMEOUT)
 	debug(f"collect info to look for prompt: {output}")
 	debug(f"output[2] = {output[2].decode().strip()}")
 	#debug(output[2].decode().strip())
 	prompt = output[2].decode().strip()
+	if 'please change your password!' in prompt:
+		debug (f"The switch could be factory reset and need change password")
+		return ("change",None)
 	if 'Login incorrect' in prompt:
 		debug (f"The switch could be a Cisco in login mode, need to enter username and password")
 		return ("cisco",None)
@@ -2202,12 +2235,12 @@ if __name__ == "__main__":
 	# exit()
 	# debug("test debug")
 	# exit()
-	_dut1_com = "10.105.241.243"
-	_dut1_port = 2045
-	dut1_com = "10.105.50.3"
-	dut1_port = 2057
-	dut2_com = "10.105.50.3"
-	dut2_port = 2056
+	cisco_com = "10.105.241.243"
+	cisco_port = 2045
+	dut1_com = "10.105.241.144"
+	dut1_port = 2071
+	dut2_com = "10.105.241.243"
+	dut2_port = 2035
 	dut3_com = "10.105.50.1"
 	dut3_port = 2075
 	dut4_com = "10.105.50.1"
@@ -2225,8 +2258,8 @@ if __name__ == "__main__":
 	# dut1 = get_switch_telnet_connection(dut1_com,dut1_port)
 	# tprint(dir(dut1))
 
-
-	dut = get_switch_telnet_connection_new(_dut1_com,_dut1_port,platform="n9k")
+	dut = get_switch_telnet_connection_new(dut2_com,dut2_port)
+	dut = get_switch_telnet_connection_new(dut1_com,dut1_port)
 	find_dut_prompt(dut)
 	exit()
 	image = find_dut_image(dut)

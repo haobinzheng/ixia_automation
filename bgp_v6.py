@@ -1010,7 +1010,52 @@ if testcase == 6015 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,switches)
 
+if testcase == 6016 or test_all:
+	testcase = 6016
+	description = "iBGP mesh over 2nd IPv6 address over internal_v6,vlan1_ipv6 and loop0_ipv6, bfd, flap "
+	tags = "ipv6 2nd, bfd, flap"
+	print_test_subject(testcase,description)
 
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+		test_config_igp_ipv6(switches =fsw_switches)
+		
+	if test_config:
+		for sw in fsw_switches:
+			sw.add_extra_ipv6()
+		network.biuld_ibgp_mesh_topo_sys_intf_v6_2nd()
+		console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary_v6()
+
+	for _ in range(10):
+		for switch in fsw_switches:
+			switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
+
+		console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks, svi and LLOC intf && enable BFD, wait for 20s =====")
+		for switch in fsw_switches:
+			switch.router_bgp.show_bgp_summary_v6()
+			switch.router_bgp.show_bfd_neighbor_v6()
+			router_bfd = Router_BFD(switch)
+			router_bfd.counte_peers_v6()
+
+		for switch in fsw_switches:
+			switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+
+	# console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
+	# for switch in fsw_switches:
+	# 	switch.router_bgp.show_bgp_summary_v6()
+	# 	switch.router_bgp.show_bfd_neighbor_v6()
+
+	# console_timer(20,msg="=======After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s ======")
+	# for switch in fsw_switches:
+	# 	switch.router_ospf.show_ospf_neighbors_v6()
+	# 	switch.router_bgp.show_bgp_summary_v6()
+	# 	switch.show_routing_v6()
+
+	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
 if testcase == 2 or test_all:
 	testcase = 2
@@ -1371,11 +1416,62 @@ if testcase == 6026 or test_all:
 			router_bfd = Router_BFD(switch)
 			router_bfd.counte_peers_v6()
 
-		for switch in switches:
+		for switch in fsw_switches:
 			switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
 
 		console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
-		for switch in switches:
+		for switch in fsw_switches:
+			switch.router_bgp.show_bgp_summary_v6()
+			switch.find_crash()
+
+if testcase == 6027 or test_all:
+	testcase = 6027
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Negative Testing: iBGP on 2nd IPv6: Enable BFD and Flap"
+	tags = ["2nd ipv6","bfd flapping"]
+	print_test_subject(testcase,description)
+
+
+	fsw_switches =switches[1:]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6(switches =fsw_switches)
+
+	for switch in fsw_switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+
+	for switch in fsw_switches:  
+		# switch.router_ospf.neighbor_discovery_all()
+		# switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		switch.discover_ipv6_neighbors()
+		switch.router_bgp.config_ibgp_mesh_svi_v6() #config IPv6 over svi 
+		switch.router_bgp.config_ibgp_mesh_direct() #config IPv4 over svi 
+		switch.router_bgp.update_ipv6_neighbor_cache()
+		switch.router_bgp.config_ibgp_mesh_link_local() #config link local
+		switch.router_bgp.config_ibgp_mesh_loopback_v6() #config IPv6 over loopback
+		switch.router_bgp.config_ibgp_mesh_loopback_v4()  #config IPv4 over loopback
+
+	console_timer(60,msg="After configuring iBGP sessions over loopback, svi and link local address, wait for 60s")
+
+	for _ in range(10):
+
+		for switch in fsw_switches:
+			switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
+
+		console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks, svi and LLOC intf && enable BFD, wait for 20s =====")
+		for switch in fsw_switches:
+			switch.router_bgp.show_bgp_summary_v6()
+			switch.router_bgp.show_bfd_neighbor_v6()
+			router_bfd = Router_BFD(switch)
+			router_bfd.counte_peers_v6()
+
+		for switch in fsw_switches:
+			switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+
+		console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
+		for switch in fsw_switches:
 			switch.router_bgp.show_bgp_summary_v6()
 			switch.find_crash()
 

@@ -323,6 +323,14 @@ class BGP_networks:
                 else:
                     self.config_ibgp_session_one_interface(router1,router2) 
 
+    def biuld_ibgp_mesh_topo_sys_intf_v6_2nd(self):
+        for router1 in self.routers: 
+            for router2 in self.routers:   
+                if router1 is router2: 
+                    continue 
+                else:
+                    self.config_ibgp_session_all_interface_v6_2nd(router1,router2) 
+
     def biuld_ibgp_mesh_topo_sys_intf_v6(self):
         for router1 in self.routers: 
             for router2 in self.routers:   
@@ -534,6 +542,57 @@ class BGP_networks:
             config_cmds_lines(bgp2.switch.console,bgp_config)
 
 
+    def config_ibgp_session_all_interface_v6_2nd(self,bgp1,bgp2):
+        tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        if bgp1.switch.is_fortinet():
+            bgp_config = f"""
+            config router bgp
+                set as {bgp1.ibgp_as}
+                set router-id {bgp1.router_id }
+            end
+            end
+            """
+            config_cmds_lines(bgp1.switch.console,bgp_config)
+            for interface1,interface2 in zip(bgp1.switch.sys_interfaces,bgp2.switch.sys_interfaces):
+                if interface1.name == "mgmt" or interface2.name == "mgmt":
+                    continue
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                        edit {interface2.ipv6_2nd.split("/")[0]}
+                            set remote-as {bgp2.ibgp_as}
+                            set update-source {interface1.name}
+                        next
+                    end
+                end
+                """
+                config_cmds_lines(bgp1.switch.console,bgp_config)
+
+        #Cofiguring router #2 
+        if bgp2.switch.is_fortinet():
+            bgp_config = f"""
+            config router bgp
+                set as {bgp2.ibgp_as}
+                set router-id {bgp2.router_id }
+            end
+            end
+            """
+            config_cmds_lines(bgp2.switch.console,bgp_config)
+
+            for interface1,interface2 in zip(bgp1.switch.sys_interfaces,bgp2.switch.sys_interfaces):
+                if interface1.name == "mgmt" or interface2.name == "mgmt":
+                    continue
+                bgp_config = f"""
+                config router bgp
+                    config neighbor
+                        edit {interface1.ipv6_2nd.split("/")[0]}
+                            set remote-as {bgp2.ibgp_as}
+                            set update-source {interface2.name}
+                        next
+                    end
+                end
+                """
+                config_cmds_lines(bgp2.switch.console,bgp_config)
            
     def config_ibgp_session_all_interface_v6(self,bgp1,bgp2):
         tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
@@ -4038,12 +4097,28 @@ class interface:
             self.type = kwargs['type']
 
 
-class system_interfaces:
+class System_interface:
     def __init__(self,*args,**kwargs):
-        self.switch = args[0]
+        self.switch = None
+        self.name = None
+        self.ipv4 = None
+        self.ipv4_mask = None
+        self.allowaccess = None
+        self.type = None
+        self.vlan = None
+        self.ipv6 = None
+        self.ipv6_mask = None
+        self.ipv6_2nd = None
 
-    def create_interface(self,*args,**kwargs):
-        pass
+
+    def derive_ipv6_extra(self,*args,**kwargs):
+        if self.ipv6 != None and self.name != "mgmt":
+            ipv6 = self.ipv6
+            ipv6_list = ipv6.split(":")
+            ipv6_list[2] = str(int(ipv6_list[2])+1)
+            ipv6_list = [s for s in ipv6_list if s]
+            ipv6_2nd = f"{ipv6_list[0]}:{ipv6_list[1]}:{ipv6_list[2]}:{ipv6_list[3]}::{ipv6_list[4]}"
+            self.ipv6_2nd = ipv6_2nd
 
 
 class FortiSwitch:
@@ -4105,6 +4180,9 @@ class FortiSwitch:
         self.config_lldp_neighbor_ports()
         self.vlan_interfaces = []
         self.cisco_config_full_2()
+        self.sys_interfaces = self.find_sys_interfaces()
+        #self.add_extra_ipv6()
+
 
 
     def find_crash(self):
@@ -4146,6 +4224,8 @@ class FortiSwitch:
             """
         config_cmds_lines(self.console,config)
 
+
+
     def add_vlan_interface(self,*args,**kwargs):
         vlan_name = kwargs['vlan_name']
         ipv4_addr = kwargs['ipv4_addr']
@@ -4179,6 +4259,115 @@ class FortiSwitch:
         """
         config_cmds_lines(self.console,config)
 
+    def find_sys_interfaces(self,*args,**kwargs):
+
+        # edit "internal"
+        #     set ip 1.1.1.100 255.255.255.255
+        #     set allowaccess ping https http ssh telnet
+        #     set type physical
+        #     set snmp-index 34
+        #         config ipv6
+        #             set ip6-address 2001:1:1:1::100/128
+        #             set ip6-allowaccess ping https ssh telnet
+        #         end
+        # next
+        # edit "vlan1000"
+        #     set ip 100.1.1.1 255.255.255.0
+        #     set allowaccess ping https ssh telnet
+        #     set secondary-IP enable
+        #     set snmp-index 37
+        #         config ipv6
+        #             set ip6-address 2001:100:1:1::1/64
+        #             set ip6-allowaccess ping https ssh telnet
+        #         end
+        #     set vlanid 1000
+        #     set interface "internal"
+        # next
+        # edit "loop0"
+        #     set ip 1.1.1.1 255.255.255.255
+        #     set allowaccess ping https http ssh telnet
+        #     set type loopback
+        #     set snmp-index 38
+        #         config ipv6
+        #             set ip6-address 2001:1:1:1::1/128
+        #             set ip6-allowaccess ping https ssh telnet
+        #         end
+        # next
+        # self.switch = args[0]
+        # self.name = None
+        # self.ipv4 = None
+        # self.ipv4_mask = None
+        # self.allowaccess = None
+        # self.type = None
+        # self.vlan = None
+        # self.ipv6 = None
+        if self.is_fortinet() == False:
+            return 
+        result = collect_show_cmd(self.console,"show system interface")
+        sys_int_list = []
+        regex_name = r'\s*edit "([a-z0-9]+)"'
+        ipv4_regex = r'\s*set ip ([0-9.]+\.[0-9]+) ([0-9.]+\.[0-9]+)'
+        ipv6_regex = r'\s*set ip6-address (([a-f0-9:]+:+)+[a-f0-9]+)/([0-9]+)'
+        regex_type = r'set type ([a-zA-Z]+)'
+        regex_ipv6_extra = r'edit (([a-f0-9:]+:+)+[a-f0-9]+)'
+
+        for line in result:
+            matched = re.match(regex_name,line)
+            if matched:
+                name = matched.group(1)
+                debug(name)
+                sys_interface = System_interface()
+                sys_interface.switch = self.console
+                sys_interface.name = name
+                continue
+            m = re.match(ipv4_regex,line)
+            if m:
+                sys_interface.ipv4 = m.group(1)
+                sys_interface.ipv4_mask = m.group(2)
+            
+            m = re.match(ipv6_regex,line)
+            if m:
+                sys_interface.ipv6 = m.group(1)
+                sys_interface.ipv6_mask = m.group(3)
+                continue
+            m = re.match(regex_type,line)
+            if m:
+                sys_interface.type = m.group(1)
+                continue
+            m = re.match(regex_ipv6_extra,line)
+            if m:
+                sys_interface.ipv6_2nd = m.group(1)
+                continue
+            if "next" in line:
+                sys_int_list.append(sys_interface)
+
+        print(sys_int_list)
+        return sys_int_list
+
+    def add_extra_ipv6(self):
+        if self.is_fortinet() == False:
+            return 
+        for interface in self.sys_interfaces:
+            if interface.name == "mgmt":
+                continue
+            interface.derive_ipv6_extra()
+            ipv6_2nd = interface.ipv6_2nd
+            mask = interface.ipv6_mask
+
+            config = f"""
+             config system interface
+                edit {interface.name}
+                    config ipv6
+                        config ip6-extra-addr
+                            edit {ipv6_2nd}/{mask}
+                        next
+                    end
+                 end
+              next
+            end
+            """
+            config_cmds_lines(self.console,config)
+
     def find_vlan_interfaces(self):
         result = collect_show_cmd(self.console,"show system interface")
         regex = r'\s+edit "(vlan[0-9]+)"'
@@ -4195,6 +4384,7 @@ class FortiSwitch:
     def config_lldp_neighbor_ports(self,*args,**kwargs):
         if self.is_fortinet() == False:
             return 
+        Info(f"Configuring ISL ports at {self.name}......")
         if "vlan" in kwargs:
             vlan = kwargs["vlan"]
         else:
@@ -4272,6 +4462,7 @@ class FortiSwitch:
     def discover_lldp_neighbors(self):
         if self.is_fortinet() == False:
             return 
+        Info(f"Discovering LLDP neighbors and updating LLDP database at {self.name}......")
         lldp_obj_list = []
         lldp_dict_list = []
 

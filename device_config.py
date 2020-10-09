@@ -396,8 +396,8 @@ def bgpv6_testbed_init():
     dut_list.append(dut1)
      
     dut2 = get_switch_telnet_connection_new("10.105.241.243",2035)
-    dut2_dir['comm'] = "10.105.241.44"
-    dut2_dir['comm_port'] = 2066
+    dut2_dir['comm'] = "10.105.241.243"
+    dut2_dir['comm_port'] = 2035
     dut2_dir['name'] = "3032D-R7-40"
     dut2_dir['label'] = 2
     dut2_dir['location'] = "Rack7-40"
