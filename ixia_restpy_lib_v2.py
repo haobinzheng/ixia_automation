@@ -465,7 +465,7 @@ class IXIA_TOPOLOGY:
         elif address_family == "v6":
             ipPrefixPool = self.ipv6_pool
             bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
-            bgpiprouteproperty.NextHopType.Single("sameaslocalip")
+            # bgpiprouteproperty.NextHopType.Single("sameaslocalip")
             bgpiprouteproperty.NextHopIPType.Single("ipv6")
             # bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
 
@@ -474,8 +474,8 @@ class IXIA_TOPOLOGY:
         #bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
         #bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
         #bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.find()
-        bgpiprouteproperty.NextHopType.Single("sameaslocalip")
-        bgpiprouteproperty.NextHopIPType.Single("ipv6")
+        # bgpiprouteproperty.NextHopType.Single("sameaslocalip")
+        # bgpiprouteproperty.NextHopIPType.Single("ipv6")
 
         if "next_hop" in kwargs:
             next_hop_addr = kwargs["next_hop"]

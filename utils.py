@@ -487,16 +487,37 @@ def collect_edit_question_cmd(tn,cmd,**kwargs):
 	# 	tprint(i)
 	return out_str_list
 
+def clean_show_output(out_str_list,cmd):
+	i = 0
+	i_list = []
+	for o in out_str_list:
+		if str(cmd) in str(o):
+			i_list.append(i)
+		i += 1
+	index = i_list[-1]
+	good_out_list = out_str_list[index:]
+	debug(good_out_list)
+	return good_out_list
+
+def clean_show_output_recursive(out_str_list,cmd):
+	for o in out_str_list:
+		if str(cmd) in str(o):
+			return out_str_list
+		else:
+			out_str_list.pop(0)
+			return clean_show_output_recursive(out_str_list,cmd)
+
 def collect_show_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:
 		timeout = kwargs['t']
 	else:
 		timeout = 3
 	#relogin_if_needed(tn)
-	cmd = convert_cmd_ascii_n(cmd)
-	tn.write(cmd)
-	tn.write(('' + '\n').encode('ascii'))
-	tn.write(('' + '\n').encode('ascii'))
+	original_cmd = cmd
+	cmd_bytes = convert_cmd_ascii_n(cmd)
+	tn.write(cmd_bytes)
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	sleep(timeout)
 	output = tn.read_very_eager()
 	debug(output)
@@ -505,7 +526,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	encoding = 'utf-8'
 	out_str_list = []
 	for o in out_list:
-		o_str = o.decode(encoding).rstrip(' ')
+		o_str = o.decode(encoding).strip(' \r')
 		out_str_list.append(o_str)
 	# tprint(dir(output))
 	# tprint(type(output))
@@ -515,8 +536,17 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	#Will revove these lines after bgp is done
 	if cmd == "get router info6 bgp summary":
 		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
-	debug(out_str_list)
-	return out_str_list
+	# i = 0
+	# i_list = []
+	# for o in out_str_list:
+	# 	if str(original_cmd) in str(o):
+	# 		i_list.append(i)
+	# 	i += 1
+	# index = i_list[-1]
+	# good_out_list = out_str_list[index:]
+	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
+	debug(good_out_list)
+	return good_out_list
 
 def process_show_command(output):
 	out_list = output.split('\r\n')
@@ -561,6 +591,11 @@ def collect_show_cmd_fast(tn,cmd,**kwargs):
 	#tprint(out_list)
 	# for i in out_str_list:
 	# 	tprint(i)
+	i = 0
+	for o in out_str_list:
+		if cmd in o:
+			break
+		out_str_list.remove(o)
 	return out_str_list
 
 def get_mac_table_size(dut):
@@ -943,12 +978,29 @@ def find_dut_prompt(tn):
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
 	for o in out_list:
-		o_str = o.decode(encoding).rstrip(' ')
-		if "#" in o_str:
-			prompt = o_str.strip(' ')
-			prompt = prompt.strip("#")
+	        o_str = o.decode(encoding).rstrip(' ')
+	        if "#" in o_str:
+	                prompt = o_str.strip(' ')
+	                prompt = prompt.strip("#")
 	dprint(prompt)
 	return prompt
+
+
+# def find_dut_prompt(tn):
+# 	tn.write(('' + '\n').encode('ascii'))
+# 	tn.write(('' + '\n').encode('ascii'))
+# 	sleep(0.1)
+# 	tn.write(('' + '\n').encode('ascii'))
+# 	output = tn.read_until(("# ").encode('ascii'))
+# 	out_list = output.split(b'\r\n')
+# 	encoding = 'utf-8'
+# 	for o in out_list:
+# 		o_str = o.decode(encoding).rstrip(' ')
+# 		if "#" in o_str:
+# 			prompt = o_str.strip(' ')
+# 			prompt = prompt.strip("#")
+# 	dprint(prompt)
+# 	return prompt
 
 def reliable_telnet(ip_address,*args,**kwargs):
 	if 'sig' in kwargs:
@@ -1119,15 +1171,13 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		Info("This first time login to image not allowing blank password, password has been changed to <fortinet123>")
 	elif p == None:
 		Info("Not in login prompt, press enter a couple times to show login prompt")
-		tn.write(('\x03').encode('ascii'))
-		tn.write(('\x03').encode('ascii'))
-		tn.write(('\x03').encode('ascii'))
-		tn.write(('\x03').encode('ascii'))
-		time.sleep(1)
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		#time.sleep(1)
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(0.2)
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(0.2)
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
@@ -1138,9 +1188,12 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('admin' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
 		tn.write(('fortinet123' + '\n').encode('ascii'))
+		sleep(0.5)
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(0.2)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.5)
 		tn.read_until(("# ").encode('ascii'),timeout=10)
 
 	if platform == "fortinet":
@@ -2241,8 +2294,8 @@ if __name__ == "__main__":
 	dut1_port = 2071
 	dut2_com = "10.105.241.243"
 	dut2_port = 2035
-	dut3_com = "10.105.50.1"
-	dut3_port = 2075
+	dut3_com = "10.105.240.144"
+	dut3_port = 2070
 	dut4_com = "10.105.50.1"
 	dut4_port = 2078
 
@@ -2257,7 +2310,7 @@ if __name__ == "__main__":
 
 	# dut1 = get_switch_telnet_connection(dut1_com,dut1_port)
 	# tprint(dir(dut1))
-
+	dut = get_switch_telnet_connection_new(dut3_com,dut3_port)
 	dut = get_switch_telnet_connection_new(dut2_com,dut2_port)
 	dut = get_switch_telnet_connection_new(dut1_com,dut1_port)
 	find_dut_prompt(dut)

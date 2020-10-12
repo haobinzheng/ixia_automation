@@ -215,6 +215,56 @@ class BGP_networks:
             switch.router_bgp.update_ospf_neighbors()
             switch.router_bgp.config_ibgp_mesh_loopback()
 
+
+    def build_bgp_peer_multi_hops(self,bgp1,as1,bgp2,as2):
+        tprint(f"============== Configurating BGP peer between {bgp1.switch.name} AS = {as1} and {bgp2.switch.name} AS={as2} ")
+        if bgp1.switch.is_fortinet():
+            bgp_config = f"""
+            config router bgp
+                set as {as1}
+                set router-id {bgp1.router_id }
+            end
+            config redistribute6 "connected"
+             set status enable
+            end
+            """
+            config_cmds_lines(bgp1.switch.console,bgp_config)
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                    edit {bgp2.switch.loop0_ipv6.split("/")[0]}
+                        set remote-as {as2}
+                        set ebgp-enforce-multihop enable
+                        set ebgp-multihop-ttl 3
+                        set update-source loop0
+                    next
+                end
+            end
+            """
+            config_cmds_lines(bgp1.switch.console,bgp_config)
+
+        if bgp2.switch.is_fortinet():
+            bgp_config = f"""
+            config router bgp
+                set as {as2}
+                set router-id {bgp2.router_id }
+            end
+            """
+            config_cmds_lines(bgp2.switch.console,bgp_config)
+            bgp_config = f"""
+            config router bgp
+                config neighbor
+                    edit {bgp1.switch.loop0_ipv6.split("/")[0]}
+                        set remote-as {as1}
+                        set ebgp-enforce-multihop enable
+                        set ebgp-multihop-ttl 3
+                        set update-source loop0
+                    next
+                end
+            end
+            """
+            config_cmds_lines(bgp2.switch.console,bgp_config)
+
     def build_bgp_peer(self,bgp1,as1,bgp2,as2):
         tprint(f"============== Configurating BGP peer between {bgp1.switch.name} AS = {as1} and {bgp2.switch.name} AS={as2} ")
         if bgp1.switch.is_fortinet():
@@ -1630,6 +1680,10 @@ class Router_OSPF:
                 config redistribute "connected"
                     set status enable
                 end
+                config redistribute "static"
+                    set status enable
+                end
+            end
             end
             """
         else:
@@ -1660,6 +1714,10 @@ class Router_OSPF:
                 config redistribute "connected"
                     set status enable
                 end
+                 config redistribute "static"
+                    set status enable
+                end
+            end
             end
             """
         config_cmds_lines(self.dut,ospf_config)
@@ -1744,6 +1802,9 @@ class Router_OSPF:
                     next
                 end
                 config redistribute "connected"
+                    set status enable
+                end
+                config redistribute "static"
                     set status enable
                 end
             end
@@ -3507,7 +3568,6 @@ class Router_BGP:
                     set update-source loop0
                     set activate enable
                     set activate6 enable
-                    set 
                 next
                 end
             end
@@ -4303,7 +4363,8 @@ class FortiSwitch:
         # self.ipv6 = None
         if self.is_fortinet() == False:
             return 
-        result = collect_show_cmd(self.console,"show system interface")
+        cmd_output = collect_show_cmd(self.console,"show system interface")
+        debug(cmd_output)
         sys_int_list = []
         regex_name = r'\s*edit "([a-z0-9]+)"'
         ipv4_regex = r'\s*set ip ([0-9.]+\.[0-9]+) ([0-9.]+\.[0-9]+)'
@@ -4311,7 +4372,9 @@ class FortiSwitch:
         regex_type = r'set type ([a-zA-Z]+)'
         regex_ipv6_extra = r'edit (([a-f0-9:]+:+)+[a-f0-9]+)'
 
-        for line in result:
+        new_interface = False
+        for line in cmd_output:
+            debug (f"system interface ouput:: {line}")
             matched = re.match(regex_name,line)
             if matched:
                 name = matched.group(1)
@@ -4319,12 +4382,13 @@ class FortiSwitch:
                 sys_interface = System_interface()
                 sys_interface.switch = self.console
                 sys_interface.name = name
+                new_interface = True
                 continue
             m = re.match(ipv4_regex,line)
             if m:
                 sys_interface.ipv4 = m.group(1)
                 sys_interface.ipv4_mask = m.group(2)
-            
+                continue
             m = re.match(ipv6_regex,line)
             if m:
                 sys_interface.ipv6 = m.group(1)
@@ -4338,10 +4402,12 @@ class FortiSwitch:
             if m:
                 sys_interface.ipv6_2nd = m.group(1)
                 continue
-            if "next" in line:
+            if "next" in line and new_interface:
+                debug (f"problemetic line:: {line}")
                 sys_int_list.append(sys_interface)
+                new_interface = False
 
-        print(sys_int_list)
+        debug(sys_int_list)
         return sys_int_list
 
     def add_extra_ipv6(self):
@@ -4665,8 +4731,8 @@ class FortiSwitch:
 
     def cisco_config_full_2(self):
         dut = self.dut
-        debug("======Enter into cisco_config_full_2")
         if self.platform == "n9k":
+            debug("======Enter into cisco_config_full_2")
             config = """
             config t
             router bgp 65000
@@ -5041,6 +5107,35 @@ class FortiSwitch:
                 end
             """
             config_cmds_lines(self.console,config)
+
+    def config_static_route_host(self,*args,**kwargs):
+        index = kwargs['index']
+        dst = kwargs['dst']
+        gw = kwargs['gw']
+        config = f"""
+            config router static
+            edit {index}
+                set dst {dst} 255.255.255.255
+                set gateway {gw}
+                next
+            end
+        """
+        config_cmds_lines(self.console,config)
+
+    def config_static6_route_host(self,*args,**kwargs):
+        index = kwargs['index']
+        dst = kwargs['dst']
+        gw = kwargs['gw']
+        config = f"""
+            config router static6
+            edit {index}
+                set dst {dst}/128 
+                set gateway {gw}
+                next
+            end
+        """
+        config_cmds_lines(self.console,config)
+
 
     def pre_restore_config(self):
         dut = self.dut
