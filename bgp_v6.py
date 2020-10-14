@@ -293,12 +293,20 @@ def test_config_igp_ipv6_fabric(*args,**kwargs):
 		print("----------Updating ospf neighbor database  ---------")
 		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
 
+def update_igp_database_all(*args,**kwargs):
+	dut_switches = kwargs["switches"]
+	#Config OSPF infra
+	for switch in dut_switches:
+		switch.router_ospf.neighbor_discovery_all()
+		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
 
 def test_config_igp_ipv6(*args,**kwargs):
 	ospf_config_v4 = False
 	ospf_config_v6 = False
 	#Config OSPF infra
-	for switch in switches:
+	dut_switches = kwargs["switches"]
+
+	for switch in dut_switches:
 		switch.show_switch_info()
 		switch.router_ospf.neighbor_discovery_all()
 		switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
@@ -317,7 +325,7 @@ def test_config_igp_ipv6(*args,**kwargs):
 
 	#update IPv4 and IPv6 ospf neighbors after configuring ospf 
 	Info("=============== Updating OSPF Config and Neighbor Information ==========")
-	for switch in switches:
+	for switch in dut_switches:
 		switch.router_ospf.show_ospf_neighbors_all()
 		print("----------Discovering ospf neighbor ---------")
 		switch.router_ospf.neighbor_discovery_all()
@@ -1030,7 +1038,7 @@ if testcase == 6016 or test_all:
 		console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
 	network.show_summary_v6()
 
-	for _ in range(10):
+	for _ in range(1):
 		for switch in fsw_switches:
 			switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
 
@@ -1325,11 +1333,15 @@ if testcase == 6025 or test_all:
 
 
 	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
 
 	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
 	if test_config:
 		test_config_igp_ipv6(switches =fsw_switches)
+
+	update_igp_database_all(switches =fsw_switches)
+	network.ping_sweep_v6()
 
 	for switch in fsw_switches:
 		switch.router_ospf.show_ospf_neighbors_v6()
@@ -1357,21 +1369,132 @@ if testcase == 6025 or test_all:
 		router_bfd = Router_BFD(switch)
 		router_bfd.counte_peers_v6()
 
-	check_bgp_test_result_v6(testcase,description,fsw_switches)
+	#check_bgp_test_result_v6(testcase,description,fsw_switches)
+
+	# for switch in switches:
+	# 	switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+
+	# console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
+	# for switch in switches:
+	# 	switch.router_bgp.show_bgp_summary_v6()
+	# 	switch.router_bgp.show_bfd_neighbor_v6()
+
+if testcase == 60250 or test_all:
+	testcase = 60250
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Negative Testing: iBGP on all interfaces: loopback,SVI Except Link Local Address, Enable BFD"
+	tags = ["Exclude link local bfd","all interfaces bfd"]
+	print_test_subject(testcase,description)
+
+
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6(switches =fsw_switches)
+
+	update_igp_database_all(switches =fsw_switches)
+	network.ping_sweep_v6()
+
+	for switch in fsw_switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+
+	for switch in fsw_switches:  
+		# switch.router_ospf.neighbor_discovery_all()
+		# switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		switch.discover_ipv6_neighbors()
+		switch.router_bgp.config_ibgp_mesh_svi_v6() #config IPv6 over svi 
+		switch.router_bgp.config_ibgp_mesh_direct() #config IPv4 over svi 
+		switch.router_bgp.update_ipv6_neighbor_cache()
+		#switch.router_bgp.config_ibgp_mesh_link_local() #config link local
+		switch.router_bgp.config_ibgp_mesh_loopback_v6() #config IPv6 over loopback
+		switch.router_bgp.config_ibgp_mesh_loopback_v4()  #config IPv4 over loopback
+
+	console_timer(60,msg="After configuring iBGP sessions over loopback, svi and link local address, wait for 60s")
+
+	for switch in fsw_switches:
+		switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
+
+	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks, svi and LLOC intf && enable BFD, wait for 20s =====")
+	for switch in fsw_switches:
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.router_bgp.show_bfd_neighbor_v6()
+		router_bfd = Router_BFD(switch)
+		router_bfd.counte_peers_v6()
+
+	#check_bgp_test_result_v6(testcase,description,fsw_switches)
+
+	# for switch in switches:
+	# 	switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+
+	# console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
+	# for switch in switches:
+	# 	switch.router_bgp.show_bgp_summary_v6()
+	# 	switch.router_bgp.show_bfd_neighbor_v6()
+
+if testcase == 60251 or test_all:
+	testcase = 60251
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Negative Testing: iBGP on all interfaces: loopback,SVI And Link Local Address, Enable and Delete BFD"
+	tags = ["link local bfd","all interfaces bfd", "delete bfd sessions"]
+	print_test_subject(testcase,description)
+
+
+	fsw_switches =switches[1:]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6(switches =fsw_switches)
+
+	update_igp_database_all(switches =fsw_switches)
+
+	for switch in fsw_switches:
+		switch.router_ospf.show_ospf_neighbors_v6()
+
+	for switch in fsw_switches:  
+		# switch.router_ospf.neighbor_discovery_all()
+		# switch.router_bgp.update_ospf_neighbors_all(sw_list=switches)
+		switch.discover_ipv6_neighbors()
+		switch.router_bgp.config_ibgp_mesh_svi_v6() #config IPv6 over svi 
+		switch.router_bgp.config_ibgp_mesh_direct() #config IPv4 over svi 
+		switch.router_bgp.update_ipv6_neighbor_cache()
+		switch.router_bgp.config_ibgp_mesh_link_local() #config link local
+		switch.router_bgp.config_ibgp_mesh_loopback_v6() #config IPv6 over loopback
+		switch.router_bgp.config_ibgp_mesh_loopback_v4()  #config IPv4 over loopback
+
+	for switch in fsw_switches:
+		switch.clear_crash_log()
+       
+
+	console_timer(60,msg="After configuring iBGP sessions over loopback, svi and link local address, wait for 60s")
+
+	for switch in fsw_switches:
+		switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
+
+	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks, svi and LLOC intf && enable BFD, wait for 20s =====")
+	for switch in fsw_switches:
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.router_bgp.show_bfd_neighbor_v6()
+		router_bfd = Router_BFD(switch)
+		router_bfd.counte_peers_v6()
+
+	#check_bgp_test_result_v6(testcase,description,fsw_switches)
 
 	for switch in switches:
-		switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+		switch.router_bgp.delete_all_neighbors_v6()
+
+	for switch in fsw_switches:
+		switch.find_crash()
+       
 
 	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
 	for switch in switches:
 		switch.router_bgp.show_bgp_summary_v6()
 		switch.router_bgp.show_bfd_neighbor_v6()
 
-	console_timer(20,msg="=======After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s ======")
-	for switch in switches:
-		switch.router_ospf.show_ospf_neighbors_v6()
-		switch.router_bgp.show_bgp_summary_v6()
-		switch.show_routing_v6()
 
 if testcase == 6026 or test_all:
 	testcase = 6026
@@ -2006,7 +2129,7 @@ if testcase == 6065 or test_all:
 if testcase == 6066 or test_all:
 	testcase = 6066
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "4 nodes topology + 1 IXAA, filter-list"
+	description = "4 nodes topology + 1 IXIA, filter-list"
 	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
 	tag1 = "4 nodes topology 1 IXIA, filter-list, filter list"
 	print_test_subject(testcase,description)
@@ -2748,9 +2871,9 @@ if testcase == 60610 or test_all:
 if testcase == 60611 or test_all:
 	testcase = 60611
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "4 nodes topology + 1 IXAA, attribute-unchanged compare with cisco"
+	description = "4 nodes topology + 1 IXAA, enforce-first-as"
 	topology = "(103)IXIA ---- Cisco(65000) ----- R1(1) ---- R2(2) ----- R3(3) ----- R4[4) ---- IXIA (65104) "
-	tag1 = "4 nodes topology 1 IXIA, attribute-unchanged cisco"
+	tag1 = "4 nodes topology 1 IXIA, enforce-first-as"
 	print_test_subject(testcase,description)
 
 	ixia_port_info = [
@@ -2767,7 +2890,7 @@ if testcase == 60611 or test_all:
 	network = BGP_networks(switches)
 	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
-	test_config_igp_ipv6_fabric(switches =fsw_switches)
+	#test_config_igp_ipv6_fabric(switches =fsw_switches)
 
 	cisco = switches[0]
 	cisco_bgp = network.routers[0]
@@ -2783,27 +2906,34 @@ if testcase == 60611 or test_all:
 
 	dut_switches = fsw_switches[0:4]
 
-	for sw in fsw_switches:
-		sw.prefix_list.prefix_unsuppress_v4()
-		sw.prefix_list.prefix_unsuppress_v6()
-		sw.route_map.unsuppress_map()
+	# for sw in fsw_switches:
+	# 	sw.prefix_list.prefix_unsuppress_v4()
+	# 	sw.prefix_list.prefix_unsuppress_v6()
+	# 	sw.route_map.unsuppress_map()
 
-	network.build_bgp_peer_multi_hops(cisco_bgp,65000,bgp1,1)
-	network.build_bgp_peer_multi_hops(bgp1,1,bgp2,2)
-	network.build_bgp_peer_multi_hops(bgp2,2,bgp3,3)
-	network.build_bgp_peer_multi_hops(bgp3,3,bgp4,4)
+	network.build_bgp_peer(cisco_bgp,65000,bgp1,1)
+	network.build_bgp_peer(bgp1,1,bgp2,2)
+	network.build_bgp_peer(bgp2,2,bgp3,3)
+	network.build_bgp_peer(bgp3,3,bgp4,4)
 
 
-	if bgp4.config_ebgp_ixia_v6(ixia_port=ixia_port_info[0],ixia_as=ixia_ipv6_as_list[0],sw_as=65001) == False:
+	if bgp4.config_ebgp_ixia_v6(ixia_port=ixia_port_info[0],ixia_as=ixia_ipv6_as_list[0],sw_as=4) == False:
 		tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
 		exit()
-	if bgp4.config_ebgp_ixia_v4(ixia_port=ixia_port_info[0],ixia_as=ixia_ipv6_as_list[0],sw_as=65001) == False:
+	if bgp4.config_ebgp_ixia_v4(ixia_port=ixia_port_info[0],ixia_as=ixia_ipv6_as_list[0],sw_as=4) == False:
 		tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
 		exit()
 
-	for switch in dut_switches:
-		switch.router_bgp.config_all_neighbor_commands("set attribute-unchanged6 next-hop as-path med")
-		switch.router_bgp.config_all_neighbor_commands("set attribute-unchanged next-hop as-path med")
+	if cisco_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info[1],ixia_as=ixia_ipv6_as_list[1],sw_as=65000) == False:
+		tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+		exit()
+	if cisco_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info[1],ixia_as=ixia_ipv6_as_list[1],sw_as=65000) == False:
+		tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+		exit()
+
+	# for switch in dut_switches:
+	# 	switch.router_bgp.config_all_neighbor_commands("set attribute-unchanged6 next-hop as-path med")
+	# 	switch.router_bgp.config_all_neighbor_commands("set attribute-unchanged next-hop as-path med")
 
 	myixia = IXIA(apiServerIp,ixChassisIpList,ixia_port_info)
 
@@ -2819,24 +2949,36 @@ if testcase == 60611 or test_all:
 	
 	topos = myixia.topologies
 	topos[0].add_bgp(dut_ip=sw4.vlan1_ip,bgp_type='external',num=30)
-	topos[0].add_bgp_v6(dut_ip=sw4.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=30)
+	topos[0].add_bgp_v6(dut_ip=sw4.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
 
 	topos[1].add_bgp(dut_ip=cisco.vlan1_ip,bgp_type='external',num=30)
-	topos[1].add_bgp_v6(dut_ip=cisco.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=30)
+	topos[1].add_bgp_v6(dut_ip=cisco.vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
 
 	#This is DUT #5, don't get confused!!!!
 	ixia_topology = myixia.topologies[0]
 	dut_switch = sw4
 	 
-	topos[0].change_bgp_routes_attributes(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=66660,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="200.200.200.200") 
-	topos[0].change_bgp_routes_attributes_v6(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=64101,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::200")
-	 
-	topos[1].change_bgp_routes_attributes(origin="egp",med=6211,community=5,comm_base=6200,num_path=5,as_base=65021,aggregator="107.107.107.107",aggregator_as=66661,ext_community=5,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="201.201.201.201") 
-	topos[1].change_bgp_routes_attributes_v6(origin="egp",med=6211,community=5,comm_base=6200,num_path=5,as_base=65021,aggregator="107.107.107.107",aggregator_as=64102,ext_community=5,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:201:201:201::201")
+	topos[0].change_bgp_routes_attributes(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=66660,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v4" ) 
+	topos[0].change_bgp_routes_attributes_v6(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=64101,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v6")
+	topos[1].change_bgp_routes_attributes(origin="egp",med=6211,community=5,comm_base=6200,num_path=5,as_base=65021,aggregator="107.107.107.107",aggregator_as=66661,ext_community=5,excomm_base=1,com_type="routetarget",address_family="v4") 
+	topos[1].change_bgp_routes_attributes_v6(origin="egp",med=6211,community=5,comm_base=6200,num_path=5,as_base=65021,aggregator="107.107.107.107",aggregator_as=64102,ext_community=5,excomm_base=1,com_type="routetarget",address_family="v6")
 	 
 	myixia.start_protocol(wait=40)
 
- 
+	config = """
+	config router route-map
+    edit "change-as"
+        set protocol bgp
+            config rule
+                edit 1
+                        set set-aspath "1111"
+                next
+            end
+    next
+	end
+
+	"""
+	sw1.config_commands(config)
 
 if testcase == 7 or test_all:
 	testcase = 7
@@ -3000,9 +3142,13 @@ if testcase == 6091 or test_all:
 	network = BGP_networks(switches)
 
 	#Infra configuration
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
-	test_config_igp_ipv6_fabric(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+	else:
+		update_igp_database_all(switches =fsw_switches)
+
 	network.biuld_ibgp_mesh_topo_sys_intf_v6()
 	network.biuld_ibgp_mesh_topo_sys_intf()
 	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
@@ -3031,8 +3177,8 @@ if testcase == 6091 or test_all:
 		 
 	i = 0
 	for topo in myixia.topologies:
-		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=100)
-		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1000)
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=200000)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=200000)
 		i += 1
 
 	myixia.start_protocol(wait=40)
@@ -3528,6 +3674,123 @@ if testcase == 6113 or test_all:
 	myixia.topologies[5].change_bgp_routes_attributes_v6(origin="egp",med=6225,community=6,comm_base=6400,num_path=6,as_base=61016,aggregator="106.106.106.112",aggregator_as=64106,ext_community=6,excomm_base=6,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::206")
 
 	myixia.start_protocol(wait=40)
+
+	check_bgp_test_result_v6(testcase,description,fsw_switches)
+
+if testcase == 6114 or test_all:
+	testcase = 6114
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "eBGP multi-hop v6 attribute-unchanged, back door"
+	tags = "ebgp attribute-unchanged, backdoor"
+	print_test_subject(testcase,description)
+
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+		console_timer(20,msg=f"Test case {testcase}: After configuring ospf and ospfv6 routing protocols, wait for 20 seconds")
+	else:
+		update_igp_database_all(switches =fsw_switches)
+
+	network.show_summary_v6()
+
+	for switch in fsw_switches:
+		switch.router_bgp.config_ebgp_mesh_multihop_v6()
+	console_timer(60,msg="After configuring eBGP sessions, wait for 60s")
+
+	for switch in fsw_switches:
+		switch.router_bgp.config_all_neighbor_commands("set attribute-unchanged6 next-hop as-path med")
+		switch.router_bgp.config_all_neighbor_commands("set attribute-unchanged next-hop as-path med")
+
+	#For IPv4 use static entry index 2, as index 1 is being used for mgmt default route
+	fsw_switches[0].config_static_route_host(index=2,dst="200.200.200.201",gw="10.1.1.211")
+	fsw_switches[1].config_static_route_host(index=2,dst="200.200.200.202",gw="10.1.1.212")
+	fsw_switches[2].config_static_route_host(index=2,dst="200.200.200.203",gw="10.1.1.213")
+	fsw_switches[3].config_static_route_host(index=2,dst="200.200.200.204",gw="10.1.1.214")
+	fsw_switches[4].config_static_route_host(index=2,dst="200.200.200.205",gw="10.1.1.215")
+	fsw_switches[5].config_static_route_host(index=2,dst="200.200.200.206",gw="10.1.1.216")
+
+	fsw_switches[0].config_static6_route_host(index=1,dst="2001:200:200:200::201",gw="2001:10:1:1::211")
+	fsw_switches[1].config_static6_route_host(index=1,dst="2001:200:200:200::202",gw="2001:10:1:1::212")
+	fsw_switches[2].config_static6_route_host(index=1,dst="2001:200:200:200::203",gw="2001:10:1:1::213")
+	fsw_switches[3].config_static6_route_host(index=1,dst="2001:200:200:200::204",gw="2001:10:1:1::214")
+	fsw_switches[4].config_static6_route_host(index=1,dst="2001:200:200:200::205",gw="2001:10:1:1::215")
+	fsw_switches[5].config_static6_route_host(index=1,dst="2001:200:200:200::206",gw="2001:10:1:1::216")
+
+
+
+	# for switch in switches:
+	# 	switch.show_routing_v6()
+	#check_bgp_test_result_v6(testcase,description,switches)
+
+	ixia_ipv6_as_list = [65101,65102,65103,65104,65105,65106]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::1","2001:106:1:1::1"]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
+
+	for switch in switches:
+		switch.show_routing_v6()
+	for switch, ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
+		if switch.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as,sw_as=switch.ebgp_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if switch.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as,sw_as=switch.ebgp_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=1)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=1)
+		i += 1
+
+	#This is DUT #5, don't get confused!!!!
+	# ixia_topology = myixia.topologies[4]
+	# dut_switch = fsw_switches[4]
+	# ixia_topology.change_bgp_routes_attributes(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=66660,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v4",next_hop="200.200.200.200")
+	myixia.topologies[0].change_bgp_routes_attributes(origin="incomplete",med=4220,community=4,comm_base=4200,num_path=4,as_base=15012,aggregator="106.106.106.107",aggregator_as=66661,ext_community=6,excomm_base=2,com_type="routetarget",address_family="v4",next_hop="200.200.200.201")
+	myixia.topologies[1].change_bgp_routes_attributes(origin="igp",med=4221,community=4,comm_base=4200,num_path=4,as_base=25012,aggregator="106.106.106.107",aggregator_as=66661,ext_community=6,excomm_base=2,com_type="routetarget",address_family="v4",next_hop="200.200.200.202")
+	myixia.topologies[2].change_bgp_routes_attributes(origin="egp",med=4222,community=4,comm_base=4200,num_path=4,as_base=35012,aggregator="106.106.106.108",aggregator_as=66662,ext_community=6,excomm_base=3,com_type="routetarget",address_family="v4",next_hop="200.200.200.203")
+	myixia.topologies[3].change_bgp_routes_attributes(origin="incomplete",med=4223,community=4,comm_base=4200,num_path=4,as_base=45012,aggregator="106.106.106.109",aggregator_as=66663,ext_community=6,excomm_base=4,com_type="routetarget",address_family="v4",next_hop="200.200.200.204")
+	myixia.topologies[4].change_bgp_routes_attributes(origin="igp",med=4224,community=4,comm_base=4200,num_path=4,as_base=55012,aggregator="106.106.106.110",aggregator_as=66662,ext_community=6,excomm_base=5,com_type="routetarget",address_family="v4",next_hop="200.200.200.205")
+	myixia.topologies[5].change_bgp_routes_attributes(origin="egp",med=4225,community=4,comm_base=4200,num_path=4,as_base=65012,aggregator="106.106.106.112",aggregator_as=66663,ext_community=6,excomm_base=6,com_type="routetarget",address_family="v4",next_hop="200.200.200.206")
+
+
+	# ixia_topology.change_bgp_routes_attributes_v6(origin="egp",med=6111,community=6,comm_base=6100,num_path=6,as_base=65011,aggregator="106.106.106.106",aggregator_as=64101,ext_community=6,excomm_base=1,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::200")
+	myixia.topologies[0].change_bgp_routes_attributes_v6(origin="incomplete",med=6220,community=6,comm_base=6200,num_path=5,as_base=61012,aggregator="106.106.106.107",aggregator_as=64102,ext_community=6,excomm_base=2,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::201")
+	myixia.topologies[1].change_bgp_routes_attributes_v6(origin="igp",med=6221,community=6,comm_base=6200,num_path=5,as_base=61012,aggregator="106.106.106.108",aggregator_as=64102,ext_community=6,excomm_base=2,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::202")
+	myixia.topologies[2].change_bgp_routes_attributes_v6(origin="egp",med=622,community=6,comm_base=6300,num_path=6,as_base=61013,aggregator="106.106.106.109",aggregator_as=64103,ext_community=6,excomm_base=3,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::203")
+	myixia.topologies[3].change_bgp_routes_attributes_v6(origin="incomplete",med=6223,community=6,comm_base=6400,num_path=6,as_base=61014,aggregator="106.106.106.110",aggregator_as=64014,ext_community=6,excomm_base=4,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::204")
+	myixia.topologies[4].change_bgp_routes_attributes_v6(origin="igp",med=6224,community=6,comm_base=6300,num_path=6,as_base=61015,aggregator="106.106.106.111",aggregator_as=64105,ext_community=6,excomm_base=5,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::205")
+	myixia.topologies[5].change_bgp_routes_attributes_v6(origin="egp",med=6225,community=6,comm_base=6400,num_path=6,as_base=61016,aggregator="106.106.106.112",aggregator_as=64106,ext_community=6,excomm_base=6,com_type="routetarget",address_family="v6",next_hop="2001:200:200:200::206")
+
+	myixia.start_protocol(wait=40)
+
+
+	vlans = [10,11,12,13,14,15]
+	for ipv4,ipv6,v in zip(ipv4_networks,ipv6_networks,vlans):
+		fsw_switches[0].config_sys_vlan_v6(ipv6=ipv6,ipv4=ipv4,vlan=v)
+
+	index_list = [100,101,102,103,104,105]
+	for sw in fsw_switches:
+		for ipv4,ipv6,index in zip(ipv4_networks,ipv6_networks,index_list):
+			sw.router_bgp.bgp_network_cmd(network=ipv4,cmd="set backdoor enable",index=index)
+			sw.router_bgp.bgp_network6_cmd(network=ipv6,cmd="set backdoor enable",index=index)
+ 	
 	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
 if testcase == 12 or test_all:

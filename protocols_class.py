@@ -168,7 +168,12 @@ class BGP_networks:
             return True
         else:
             return False
-        
+    
+    def ping_sweep_v6(self):
+        num = len(self.switches)
+        for i in range(num-1):
+            for j in range(i+1,num):
+                ping_ipv6(self.switches[i].console,ip=self.switches[j].loop0_ipv6.split("/")[0])
 
     def show_address_mappings(self):
         arp_list = []
@@ -289,6 +294,16 @@ class BGP_networks:
             """
             config_cmds_lines(bgp1.switch.console,bgp_config)
 
+        elif bgp1.switch.platform == "n9k":
+            bgp_config = f"""
+            config t
+            router bgp 65000
+            neighbor {bgp2.switch.vlan1_ipv6.split("/")[0]}
+                remote-as {as2}
+                address-family ipv6 unicast
+            """
+            config_cmds_lines(bgp1.switch.console,bgp_config)
+
         if bgp2.switch.is_fortinet():
             bgp_config = f"""
             config router bgp
@@ -305,6 +320,16 @@ class BGP_networks:
                     next
                 end
             end
+            """
+            config_cmds_lines(bgp2.switch.console,bgp_config)
+
+        elif bgp2.switch.platform == "n9k":
+            bgp_config = f"""
+            config t
+            router bgp 65000
+            neighbor {bgp1.switch.vlan1_ipv6.split("/")[0]}
+                remote-as {as1}
+                address-family ipv6 unicast
             """
             config_cmds_lines(bgp2.switch.console,bgp_config)
 
@@ -2465,6 +2490,7 @@ class Router_BGP:
         self.bgp_config_neighbors = None #Need to be found by using find_bgp_config_neighbors(dut)
         #self.route_map = Router_route_map()
 
+
     def clear_bgp_all(self):
         config = "execute router clear bgp all"
         config_cmds_lines(self.switch.console,config)
@@ -3711,28 +3737,40 @@ class Router_BGP:
         else:
             sw_as = 65000
 
-        # if sw_as != None:
-        #     bgp_config = f"""
-        #     config router bgp
-        #         set as {sw_as}
-        #         set router-id {self.router_id }
-        #     end
-        #     """
-        #     config_cmds_lines(self.switch.console,bgp_config)
-        bgp_config = f"""
-        config t
+        if self.switch.is_fortinet():
+            if sw_as != None:
+                bgp_config = f"""
+                config router bgp
+                    set as {sw_as}
+                    set router-id {self.router_id }
+                end
+                """
+                config_cmds_lines(self.switch.console,bgp_config)
+            bgp_config = f"""
+             config router bgp
+                config neighbor
+                edit {ixia_ip}
+                    set remote-as {ixia_as}
+                next
+                end
+            end
+            """
+            config_cmds_lines(self.switch.console,bgp_config)
+
+        elif self.switch.platform == "n9k":
+            bgp_config = f"""
+            config t
             router bgp 65000
             neighbor {ixia_ip}
                 remote-as {ixia_as}
                 address-family ipv4 unicast
-        end
-        """
-        config_cmds_lines(self.switch.console,bgp_config)
+            """
+            config_cmds_lines(self.switch.console,bgp_config)
         return True
 
     def config_ebgp_ixia_v6(self,*args,**kwargs):
-        if self.switch.is_fortinet() == False:
-            return 
+        # if self.switch.is_fortinet() == False:
+        #     return 
         tprint(f"============== Configurating eBGP peer relationship to ixia {self.switch.name} ")
         ixia_port = kwargs["ixia_port"]
         ixia_as = kwargs["ixia_as"]
@@ -3747,24 +3785,36 @@ class Router_BGP:
         else:
             sw_as = 65000
 
-        if sw_as != None:
+        if self.switch.is_fortinet():
+            if sw_as != None:
+                bgp_config = f"""
+                config router bgp
+                    set as {sw_as}
+                    set router-id {self.router_id }
+                end
+                """
+                config_cmds_lines(self.switch.console,bgp_config)
+
             bgp_config = f"""
             config router bgp
-                set as {sw_as}
-                set router-id {self.router_id }
+                config neighbor
+                edit {ixia_ip}
+                    set remote-as {ixia_as}
+                next
+                end
             end
             """
             config_cmds_lines(self.switch.console,bgp_config)
-        bgp_config = f"""
-        config router bgp
-            config neighbor
-            edit {ixia_ip}
-                set remote-as {ixia_as}
-            next
-            end
-        end
-        """
-        config_cmds_lines(self.switch.console,bgp_config)
+
+        elif self.switch.platform == "n9k":
+            bgp_config = f"""
+                config t
+                router bgp 65000
+                neighbor {ixia_ip}
+                    remote-as {ixia_as}
+                    address-family ipv6 unicast
+                """
+            config_cmds_lines(self.switch.console,bgp_config)
         return True
 
     def config_ibgp_ixia_v6(self,*args,**kwargs):
@@ -3931,6 +3981,39 @@ class Router_BGP:
         dut=self.switch.console
         switch_show_cmd(dut,"get router info routing-table bgp")
 
+    def bgp_network_cmd(self,*args,**kwargs):
+        network = kwargs["network"]
+        cmd = kwargs["cmd"]
+        index = kwargs["index"]
+        config = f"""
+            config router bgp
+                config network
+                    edit {index}
+                    set prefix {network}/32
+                    {cmd}
+                end
+            next
+            end
+            """
+        config_cmds_lines(self.switch.console,config)
+
+
+    def bgp_network6_cmd(self,*args,**kwargs):
+        network = kwargs["network"]
+        cmd = kwargs["cmd"]
+        index = kwargs["index"]
+        config = f"""
+            config router bgp
+                config network6
+                    edit {index}
+                    set prefix {network}
+                    {cmd}
+                end
+            next
+            end
+            """
+        config_cmds_lines(self.switch.console,config)
+
 
     def clear_config(self):
         if self.switch.is_fortinet() == False:
@@ -4003,6 +4086,21 @@ class Router_BGP:
 
     def clear_config_all(self):
         self.clear_config_v6()
+
+    def delete_all_neighbors_v6(self):
+        if self.switch.is_fortinet() == False:
+            return 
+        neighbor_list = get_switch_show_bgp_v6(self.switch.console)
+        print(neighbor_list)
+        for n in neighbor_list:
+            config = f"""
+            config router bgp
+                config neighbor
+                delete {n}
+                end
+                end
+            """
+            config_cmds_lines(self.switch.console,config)
 
     def clear_config_v6(self):
         if self.switch.is_fortinet() == False:
@@ -4241,16 +4339,24 @@ class FortiSwitch:
         self.vlan_interfaces = []
         self.cisco_config_full_2()
         self.sys_interfaces = self.find_sys_interfaces()
+        self.disable_diag_debugs()
         #self.add_extra_ipv6()
 
 
+    def disable_diag_debugs(self):
+        config = """
+        diag debug application bfd 0
+        """
+        config_cmds_lines(self.console,config)
+
+
+    def clear_crash_log(self):
+        config = "diagnose debug crash clear"
+        config_cmds_lines(self.console,config)
 
     def find_crash(self):
         cmd = "diag debug crashlog read" 
         result = collect_show_cmd(self.console,cmd)
-        config = "diagnose debug crash clear"
-        config_cmds_lines(self.console,config)
-
 
     def reboot(self):
         if self.is_fortinet() == False:
@@ -5332,6 +5438,29 @@ class FortiSwitch:
             end
             """
             config_cmds_lines(dut,config)
+
+    def config_sys_vlan_v6(self,*args,**kwargs):
+        dut = self.console
+        ipv6 = kwargs["ipv6"]
+        ipv4 = kwargs["ipv4"]
+        vlan_id = kwargs["vlan"]
+         
+        config  = f"""
+        config system interface
+        edit vlan{vlan_id}
+            set ip {ipv4} 255.255.255.255
+            set allowaccess ping https ssh telnet
+            set vlanid {vlan_id}
+            set interface internal
+            config ipv6
+                set ip6-address {ipv6}/128
+                set ip6-allowaccess ping https ssh telnet
+            end
+        next
+        end
+        """
+        config_cmds_lines(dut,config)
+
     def fsw_show_cmd(self,cmd):
         dut = self.console
         result = collect_show_cmd(dut,cmd,t=3)

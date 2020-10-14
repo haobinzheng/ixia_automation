@@ -187,6 +187,15 @@ def print_cmd_output(msg,dut_name,cmd):
 	else:
 		tprint("{}: {}".format(dut_name,msg))
 
+def print_cmd_output_from_list(msgs):
+	# global DEBUG
+	# print(DEBUG)
+	if type(msgs) == list:
+		for m in msgs:
+			tprint(f"{m}")
+	else:
+		tprint(f"{msgs}")
+
 def print_file(msg, file,**kwargs):
 	if "dut_name" in kwargs:
 		dut_name = kwargs['dut_name']
@@ -544,6 +553,35 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	# 	i += 1
 	# index = i_list[-1]
 	# good_out_list = out_str_list[index:]
+	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
+	debug(good_out_list)
+	return good_out_list
+
+def collect_execute_cmd(tn,cmd,**kwargs):
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 8
+	#relogin_if_needed(tn)
+	original_cmd = cmd
+	cmd_bytes = convert_cmd_ascii_n(cmd)
+	tn.write(cmd_bytes)
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	sleep(timeout)
+	output = tn.read_very_eager()
+	debug(output)
+	#output = tn.read_until(("# ").encode('ascii'))
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).strip(' \r')
+		out_str_list.append(o_str)
+	 
+	if cmd == "get router info6 bgp summary":
+		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
+
 	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
 	debug(good_out_list)
 	return good_out_list
@@ -1049,6 +1087,17 @@ def telnet_connection(ip_address,**kwargs):
 	tn.write(('' + '\n').encode('ascii'))
 	return tn
 
+def ping_ipv4(tn,*args,**kwargs):
+	ip = kwargs["ip"]
+	result = collect_execute_cmd(tn,f"execute ping {ip}")
+	dprint(result)
+	print_cmd_output_from_list(result)
+
+def ping_ipv6(tn,*args,**kwargs):
+	ip = kwargs["ip"]
+	result = collect_execute_cmd(tn,f"execute ping6 {ip}")
+	dprint(result)
+	print_cmd_output_from_list(result)
 
 def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	tprint("console server ip ="+str(ip_address))
@@ -1095,8 +1144,8 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	# time.sleep(2)
 
 	#tprint("successful login\n")
-	tn.write(('\x03').encode('ascii'))
-	tn.write(('\x03').encode('ascii'))
+	tn.write(('\x03\n').encode('ascii'))
+	tn.write(('\x03\n').encode('ascii'))
 	time.sleep(0.2)
 
 	#tprint("successful login\n")
@@ -1122,8 +1171,16 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		Info("Login after factory reset, changing password..... ") #This needs to rewrite to take care factory reset situation
 		#switch_need_change_password(tn)
 		tn.write(('' + '\n').encode('ascii'))
+		#
+		tn.write(('' + '\n').encode('ascii'))
+		#sleep(0.1)
+		tn.write(('' + '\n').encode('ascii'))
+		#sleep(0.1)
+		tn.write(('' + '\n').encode('ascii'))
+		#sleep(0.1)
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
+		#sleep(0.1)
 		tn.write(('' + '\n').encode('ascii'))
 		sleep(1)
 		tn.read_until(("login: ").encode('ascii'),timeout=5)
@@ -2311,6 +2368,9 @@ if __name__ == "__main__":
 	# dut1 = get_switch_telnet_connection(dut1_com,dut1_port)
 	# tprint(dir(dut1))
 	dut = get_switch_telnet_connection_new(dut3_com,dut3_port)
+	ping_ipv4(dut,ip="10.1.1.1")
+	ping_ipv6(dut,ip="2001:1:1:1::1")
+	exit()
 	dut = get_switch_telnet_connection_new(dut2_com,dut2_port)
 	dut = get_switch_telnet_connection_new(dut1_com,dut1_port)
 	find_dut_prompt(dut)
