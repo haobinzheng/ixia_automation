@@ -1099,6 +1099,118 @@ def ping_ipv6(tn,*args,**kwargs):
 	dprint(result)
 	print_cmd_output_from_list(result)
 
+def relogin_factory_reset(*args,**kwargs):
+	tn = kwargs['dut']
+	hostname = kwargs['host']
+	# tprint("console server ip ="+str(ip_address))
+	# tprint("console port="+str(console_port))
+	# if "password" in kwargs:
+	# 	pwd = kwargs["password"]
+	# else:
+	# 	pwd = ''
+	# if "platform" in kwargs:
+	# 	platform = kwargs['platform']
+	# else:
+	# 	platform = "fortinet"
+	
+	# console_port_int = int(console_port)
+	# if settings.CLEAR_LINE:
+	# 	status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
+	# 	if status['status'] != 1:
+	# 		logger.console('unable clear console port %s' % console_port)
+	# 	time.sleep(1)
+	# #switch_login(ip_address,console_port)
+	# try:
+	# 	tn = telnetlib.Telnet(ip_address,console_port_int)
+	# except ConnectionRefusedError: 
+	# 	tprint("!!!!!!!!!!!the console is being used, need to clear it first")
+	# 	status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
+	# 	if status['status'] != 1:
+	# 		logger.console('unable clear console port %s' % console_port)
+	# 		exit()
+	# 	sleep(2)
+	# 	tn = telnetlib.Telnet(ip_address,console_port_int)
+	#tprint("successful login\n")
+
+	#tn.write('' + '\n')
+	# tn.write(('get system status\n').encode('ascii'))
+	# time.sleep(1)
+
+	#tprint("successful login\n")
+
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(1)
+
+	#tprint("successful login\n")
+	# tn.write(('\x03').encode('ascii'))
+	# time.sleep(2)
+
+	#tprint("successful login\n")
+	# tn.write(('\x03\n').encode('ascii'))
+	# tn.write(('\x03\n').encode('ascii'))
+	# time.sleep(0.2)
+
+	#tprint("successful login\n")
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	time.sleep(0.2)
+
+	tn.read_until(("login: ").encode('ascii'),timeout=5)
+
+	tn.write(('admin' + '\n').encode('ascii'))
+
+	tn.read_until(("Password: ").encode('ascii'),timeout=5)
+
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+
+	prompt = switch_find_login_prompt_new(tn)
+	p = prompt[0]
+	debug(prompt)
+	if p == "change":
+		Info(f"Login {hostname} after factory reset , changing password..... ") #This needs to rewrite to take care factory reset situation
+		#switch_need_change_password(tn)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		#sleep(0.1)
+		# tn.write(('' + '\n').encode('ascii'))
+		# #sleep(0.1)
+		# tn.write(('' + '\n').encode('ascii'))
+		# #sleep(0.1)
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# #sleep(0.1)
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# sleep(1)
+		tn.read_until(("login: ").encode('ascii'),timeout=5)
+		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		tn.write(('' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
+		tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+
+		switch_configure_cmd(tn,'config system global')
+		switch_configure_cmd(tn,'set admintimeout 480')
+		switch_configure_cmd(tn,'end')
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
+	else:
+		ErrorNotify(f"Not able to login {hostname} after factory reset the device")
+		exit()
+
 def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	tprint("console server ip ="+str(ip_address))
 	tprint("console port="+str(console_port))
@@ -1163,7 +1275,6 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write((pwd + '\n').encode('ascii'))
-
 	prompt = switch_find_login_prompt_new(tn)
 	p = prompt[0]
 	debug(prompt)
@@ -1181,6 +1292,8 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		#sleep(0.1)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		sleep(1)
 		tn.read_until(("login: ").encode('ascii'),timeout=5)

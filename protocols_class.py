@@ -4343,6 +4343,9 @@ class FortiSwitch:
         #self.add_extra_ipv6()
 
 
+    def show_command(self,cmd):
+        switch_show_cmd(self.dut,cmd)
+
     def disable_diag_debugs(self):
         config = """
         diag debug application bfd 0
@@ -4358,22 +4361,40 @@ class FortiSwitch:
         cmd = "diag debug crashlog read" 
         result = collect_show_cmd(self.console,cmd)
 
+    def reboot_and_relogin(self):
+        if self.is_fortinet() == False:
+            return 
+        else:
+            switch_exec_reboot(self.console,device=self.name)
+
+        console_timer(300,msg=f"===== rebooting the switch {self.name}, wait for 300s =====")
+        dut = self.console
+        Info(f"================= Re-login device: {self.name} =============")
+        try:
+            relogin_if_needed(dut)
+        except Exception as e:
+            debug("something is wrong with rlogin_if_needed at bgp, try again")
+            relogin_if_needed(dut)
+        image = find_dut_image(dut)
+        tprint(f"============================ {dut_name} software image = {image} ============")
+
+
     def reboot(self):
         if self.is_fortinet() == False:
             return 
         else:
             switch_exec_reboot(self.console,device=self.name)
 
-    # def relogin_(self):
-    #     dut = self.console
-    #     Info(f"================= Re-login device: {self.name} =============")
-    #     try:
-    #         relogin_if_needed(dut)
-    #     except Exception as e:
-    #         debug("something is wrong with rlogin_if_needed at bgp, try again")
-    #         relogin_if_needed(dut)
-    #     image = find_dut_image(dut)
-    #     tprint(f"============================ {dut_name} software image = {image} ============")
+    def relogin(self):
+        dut = self.console
+        Info(f"================= Re-login device: {self.name} =============")
+        try:
+            relogin_if_needed(dut)
+        except Exception as e:
+            debug("something is wrong with rlogin_if_needed at bgp, try again")
+            relogin_if_needed(dut)
+        image = find_dut_image(dut)
+        tprint(f"============================ {dut_name} software image = {image} ============")
  
     def config_stp(self,*args,**kwargs):
         if "root" in kwargs:
@@ -4526,6 +4547,7 @@ class FortiSwitch:
             ipv6_2nd = interface.ipv6_2nd
             mask = interface.ipv6_mask
 
+            dut = self.console
             config = f"""
              config system interface
                 edit {interface.name}
@@ -4536,6 +4558,19 @@ class FortiSwitch:
                     end
                  end
               next
+            end
+            """
+            config_cmds_lines(self.console,config)
+
+            config = f"""
+            config system interface
+                edit {interface.name}
+                    config ipv6
+                    set ip6-allowaccess any
+            """
+            config_cmds_lines(self.console,config)
+            switch_interactive_exec(dut,"end","Do you want to continue? (y/n)")
+            config = f"""
             end
             """
             config_cmds_lines(self.console,config)

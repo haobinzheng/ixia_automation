@@ -375,6 +375,11 @@ class IXIA_TOPOLOGY:
         if "origin" in kwargs:
             origin = kwargs['origin']
             bgpiprouteproperty.Origin.Single(origin)
+
+        if "originator" in kwargs:
+            originator = kwargs['originator']
+            bgpiprouteproperty.OriginatorId.Single(originator)
+            
         if "flapping" in kwargs:
             start_ip = kwargs["flapping"]
             if start_ip.upper() == "RANDOM":
@@ -693,6 +698,11 @@ class IXIA_TOPOLOGY:
         if "origin" in kwargs:
             origin = kwargs['origin']
             bgpiprouteproperty.Origin.Single(origin)
+
+        if "originator" in kwargs:
+            originator = kwargs['originator']
+            bgpiprouteproperty.OriginatorId.Single(originator)
+
         if "flapping" in kwargs:
             start_ip = kwargs["flapping"]
             if start_ip.upper() == "RANDOM":
