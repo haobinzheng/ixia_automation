@@ -1025,7 +1025,8 @@ if testcase == 6015 or test_all:
 if testcase == 6016 or test_all:
 	testcase = 6016
 	description = "iBGP mesh over 2nd IPv6 address over internal_v6,vlan1_ipv6 and loop0_ipv6, bfd, flap "
-	tags = "ipv6 2nd, bfd, flap"
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	tags = "ipv6 2nd"
 	print_test_subject(testcase,description)
 
 	fsw_switches =switches[1:]
@@ -1038,36 +1039,91 @@ if testcase == 6016 or test_all:
 	else:
 		update_igp_database_all(switches =fsw_switches)
 		
-	
 	for sw in fsw_switches:
-		sw.add_extra_ipv6()
+		sw.add_extra_ipv6_no_fw()
+
+	exit()
 	network.biuld_ibgp_mesh_topo_sys_intf_v6_2nd()
-	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	console_timer(60,msg=f"!!!!!!!!!!! Step 0: Start From No FW Configured. After configuring fully mesh iBGP across all IPv6 system interfaces, check bgp neighbors")
+	for sw in fsw_switches:
+		sw.show_command("show system interface")
+
+	network.ping_sweep_v6_extensive()
+	for sw in fsw_switches:
+		sw.collect_linux_cmd(sw_name=sw.name,cmd="ip6tables -L g_in_runn -nv  | grep 179")
+
+	network.show_summary()
+
+	for sw in fsw_switches:
+		sw.turn_on_ipv6_fw()
+
+	console_timer(60,msg=f"!!!!!!!!!!!  Step 1: Configure FSW. After configuring FW, check bgp neighbors")
+	for sw in fsw_switches:
+		sw.show_command("show system interface")
+		 
+	network.ping_sweep_v6_extensive()
+	for sw in fsw_switches:
+		sw.collect_linux_cmd(sw_name=sw.name,cmd="ip6tables -L g_in_runn -nv  | grep 179")
+
+	network.show_summary()
+
+	for sw in fsw_switches:
+		sw.reboot()
+	console_timer(300,msg="After configuring FW: rebooting all switches after configuring FW, wait for 300s =====")
+	for sw in fsw_switches:
+		sw.relogin()
+
+	console_timer(60,msg=f"!!!!!!!!!!!!! Step 2: Reboot. After configuring FW and rebooting devices check bgp status....")
+	for sw in fsw_switches:
+		sw.show_command("show system interface")
+
+	network.ping_sweep_v6_extensive()
+	for sw in fsw_switches:
+		sw.collect_linux_cmd(sw_name=sw.name,cmd="ip6tables -L g_in_runn -nv  | grep 179")
+
+	network.show_summary()
+
+	for sw in fsw_switches:
+		sw.remove_firewall_sys_interface()
+
+	console_timer(60,msg=f"!!!!!!!!!!!!! Step 3: Remove FW.  After removing firewall config, wait and check bgp status ")
+	for sw in fsw_switches:
+		sw.show_command("show system interface")
+
+
+	network.ping_sweep_v6_extensive()
+	for sw in fsw_switches:
+		sw.collect_linux_cmd(sw_name=sw.name,cmd="ip6tables -L g_in_runn -nv  | grep 179")
+
+	network.show_summary()
+
 	for sw in fsw_switches:
 		sw.reboot()
 	console_timer(300,msg="===== rebooting all switches, wait for 300s =====")
 	for sw in fsw_switches:
 		sw.relogin()
 
-	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	console_timer(20,msg=f"!!!!!!!!!!!! Step 4: Reboot: After removing FSW and rebooting devices,check bgp status....")
+	for sw in fsw_switches:
+		sw.show_command("show system interface")
 
-	network.show_summary_v6()
+	network.ping_sweep_v6_extensive()
+	for sw in fsw_switches:
+		sw.collect_linux_cmd(sw_name=sw.name,cmd="ip6tables -L g_in_runn -nv  | grep 179")
+	network.show_summary()
+	# for _ in range(20):
+	# 	for switch in fsw_switches:
+	# 		switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
 
+	# 	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks, svi and LLOC intf && enable BFD, wait for 20s =====")
+	# 	for switch in fsw_switches:
+	# 		switch.router_bgp.show_bgp_summary_v6()
+	# 		switch.router_bgp.show_bfd_neighbor_v6()
+	# 		router_bfd = Router_BFD(switch)
+	# 		router_bfd.counte_peers_v6()
 
-
-	for _ in range(1):
-		for switch in fsw_switches:
-			switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
-
-		console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks, svi and LLOC intf && enable BFD, wait for 20s =====")
-		for switch in fsw_switches:
-			switch.router_bgp.show_bgp_summary_v6()
-			switch.router_bgp.show_bfd_neighbor_v6()
-			router_bfd = Router_BFD(switch)
-			router_bfd.counte_peers_v6()
-
-		for switch in fsw_switches:
-			switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+	# 	for switch in fsw_switches:
+	# 		switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
 
 	# console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
 	# for switch in fsw_switches:
@@ -1080,7 +1136,7 @@ if testcase == 6016 or test_all:
 	# 	switch.router_bgp.show_bgp_summary_v6()
 	# 	switch.show_routing_v6()
 
-	check_bgp_test_result_v6(testcase,description,fsw_switches)
+	# check_bgp_test_result_v6(testcase,description,fsw_switches)
 
 if testcase == 2 or test_all:
 	testcase = 2
@@ -3157,6 +3213,8 @@ if testcase == 6091 or test_all:
 
 	
 	fsw_switches =switches[1:]
+	sw5 = switches[5]
+	sw6 = switches[6]
 	network = BGP_networks(switches)
 	#Infra configuration
 	if clear_bgp:
@@ -3166,10 +3224,10 @@ if testcase == 6091 or test_all:
 	else:
 		update_igp_database_all(switches =fsw_switches)
 
-	network.biuld_ibgp_mesh_topo_sys_intf_v6()
-	network.biuld_ibgp_mesh_topo_sys_intf()
+	# network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	# network.biuld_ibgp_mesh_topo_sys_intf()
 	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
-	network.show_summary_v6()
+	network.show_summary()
 	
 	# FSW configuration
 	for switch, ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
@@ -3179,6 +3237,11 @@ if testcase == 6091 or test_all:
 		if switch.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
 			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
 			exit()
+
+	print_title("Get crash information before injecting routes")
+	sw5.get_crash_debug()
+	sw6.get_crash_debug()
+
 
 	# IXIA configuration
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
@@ -3194,8 +3257,8 @@ if testcase == 6091 or test_all:
 		 
 	i = 0
 	for topo in myixia.topologies:
-		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=10000)
-		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=10000)
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=40000)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=20000)
 		i += 1
 
 	myixia.start_protocol(wait=40)
@@ -3225,7 +3288,16 @@ if testcase == 6091 or test_all:
 	myixia.collect_stats()
 	myixia.check_traffic()
 
-	check_bgp_test_result(testcase,description,switches)
+	print_title("Get crash information after injecting routes")
+
+	sw5.get_crash_debug()
+	sw6.get_crash_debug()
+
+	#check_bgp_test_result(testcase,description,switches)
+
+	# print_title("Get crash information after show bgp commands")
+	# sw5.get_crash_debug()
+	# sw6.get_crash_debug()
 
 
 if testcase == 6092 or test_all:

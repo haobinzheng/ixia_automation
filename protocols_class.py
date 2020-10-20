@@ -175,6 +175,23 @@ class BGP_networks:
             for j in range(i+1,num):
                 ping_ipv6(self.switches[i].console,ip=self.switches[j].loop0_ipv6.split("/")[0])
 
+    def ping_sweep_v6_extensive(self):
+        num = len(self.switches)
+        for i in range(num-1):
+            console = self.switches[i].console
+            for j in range(i+1,num):
+                for interface1,interface2 in zip(self.switches[i].sys_interfaces,self.switches[j].sys_interfaces):
+                    ip_src = interface1.ipv6_2nd
+                    ip_dst = interface2.ipv6_2nd
+                    sw_src = self.switches[i].name
+                    sw_dst = self.switches[j].name
+                    interface_name = interface1.name
+                    switch_name = self.switches[j].name
+                    if interface_name == "mgmt":
+                        continue
+                    ping_ipv6(console,ip=ip_dst)
+                    ping_ipv6_extensive(console=console, ip_src=ip_src,ip_dst = ip_dst,name=interface_name,sw_src=sw_src, sw_dst=sw_dst)
+ 
     def show_address_mappings(self):
         arp_list = []
         lloc_list = []
@@ -201,13 +218,15 @@ class BGP_networks:
 
     def show_summary(self):
         for router in self.routers:
+            Info(f"----------------------{router.switch.name} -----------------------")
             router.show_bgp_summary()
-            router.check_neighbor_status()
+            #router.check_neighbor_status()
 
     def show_summary_v6(self):
         for router in self.routers:
             router.show_bgp_summary_v6()
-            router.check_bgp_neighbor_status_v6()
+            Info(f"----------------------{router.switch.name} -----------------------")
+            #router.check_bgp_neighbor_status_v6()
 
     def clear_bgp_config(self):
         for router in self.routers:
@@ -4342,9 +4361,78 @@ class FortiSwitch:
         self.disable_diag_debugs()
         #self.add_extra_ipv6()
 
+    def collect_linux_cmd(self,*args,**kwargs):
+        if "cmd" in kwargs:
+            linux_cmd = kwargs['cmd']
+        else:
+            linux_cmd = None
+        if "sw_name" in kwargs:
+            sw_name = kwargs['sw_name']
+        else:
+            sw_name = "dut"
+        Info(f"============================ {sw_name}: {linux_cmd} ========================")
+        cmd = f"""
+            fnsysctl sh 
+        """
+        self.show_command(cmd)
+
+        cmd = f"""
+            {linux_cmd}
+            
+        """
+        self.show_command(cmd)
+
+        cmd = f"""
+            exit 
+        """
+        self.show_command(cmd)
+    
+    def collect_linux_cmd_batch(self,*args,**kwargs):
+        if "cmd" in kwargs:
+            linux_cmds = kwargs['cmd']
+        else:
+            linux_cmds = None
+        if "sw_name" in kwargs:
+            sw_name = kwargs['sw_name']
+        else:
+            sw_name = "dut"
+        cmd = f"""
+            fnsysctl sh 
+        """
+        self.show_command_linux(cmd)
+
+        for linux_cmd in linux_cmds:
+            cmd = f"""
+                {linux_cmd}
+                
+            """
+            self.show_command_linux(cmd)
+
+        cmd = f"""
+            exit 
+        """
+        self.show_command_linux(cmd)
+
+    def get_crash_debug(self):
+        # commands = [
+        # "fnsysctl cat /proc/slabinfo","fnsysctl cat /proc/zoneinfo","fnsysctl cat /proc/meminfo", 
+        # "fnsysctl ps wlT", "fnsysctl cat /sys/kernel/slab/fib6_nodes/total_objects",
+        # "fnsysctl cat /sys/kernel/slab/ip6_dst_cache/total_objects"
+        #  ]
+
+        command_list = [
+        "cat /proc/slabinfo","cat /proc/zoneinfo","cat /proc/meminfo", 
+        "ps wlT", "cat /sys/kernel/slab/fib6_nodes/total_objects",
+        "cat /sys/kernel/slab/ip6_dst_cache/total_objects"
+         ]
+         
+        self.collect_linux_cmd_batch(cmd=command_list,sw_name=self.name)
 
     def show_command(self,cmd):
         switch_show_cmd(self.dut,cmd)
+
+    def show_command_linux(self,cmd):
+        switch_show_cmd_linux(self.dut,cmd)
 
     def disable_diag_debugs(self):
         config = """
@@ -4537,7 +4625,56 @@ class FortiSwitch:
         debug(sys_int_list)
         return sys_int_list
 
-    def add_extra_ipv6(self):
+    
+    def add_extra_ipv6_no_fw(self):
+        if self.is_fortinet() == False:
+            return 
+        for interface in self.sys_interfaces:
+            if interface.name == "mgmt":
+                continue
+            interface.derive_ipv6_extra()
+            ipv6_2nd = interface.ipv6_2nd
+            mask = interface.ipv6_mask
+
+            dut = self.console
+            config = f"""
+             config system interface
+                edit {interface.name}
+                    config ipv6
+                        config ip6-extra-addr
+                            edit {ipv6_2nd}/{mask}
+                        next
+                    end
+                 end
+              next
+            end
+            """
+            config_cmds_lines(self.console,config)
+
+        self.sys_interfaces = self.find_sys_interfaces()
+
+
+    def turn_on_ipv6_fw(self):
+        if self.is_fortinet() == False:
+            return 
+        for interface in self.sys_interfaces:
+            if interface.name == "mgmt":
+                continue
+
+            config = f"""
+            config system interface
+                edit {interface.name}
+                    config ipv6
+                    set ip6-allowaccess any
+            """
+            config_cmds_lines(self.console,config)
+            switch_interactive_exec(self.console,"end","Do you want to continue? (y/n)")
+            config = f"""
+            end
+            """
+            config_cmds_lines(self.console,config)
+
+    def add_extra_ipv6_with_fw(self):
         if self.is_fortinet() == False:
             return 
         for interface in self.sys_interfaces:
@@ -4574,6 +4711,26 @@ class FortiSwitch:
             end
             """
             config_cmds_lines(self.console,config)
+
+    def remove_firewall_sys_interface(self):
+        if self.is_fortinet() == False:
+            return 
+        for interface in self.sys_interfaces:
+            if interface.name == "mgmt":
+                continue
+
+            dut = self.console
+             
+            config = f"""
+            config system interface
+                edit {interface.name}
+                    config ipv6
+                    set ip6-allowaccess ping
+                end
+            end
+            """
+            config_cmds_lines(self.console,config)
+             
 
     def find_vlan_interfaces(self):
         result = collect_show_cmd(self.console,"show system interface")

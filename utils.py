@@ -176,7 +176,6 @@ def parse_sys_top(result):
 	debug (cpu_dict)
 	return (high,high_lines,cpu_dict)
 
-
 def print_cmd_output(msg,dut_name,cmd):
 	# global DEBUG
 	# print(DEBUG)
@@ -557,6 +556,36 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	debug(good_out_list)
 	return good_out_list
 
+def show_execute_cmd(tn,cmd,**kwargs):
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 8
+	#relogin_if_needed(tn)
+	original_cmd = cmd
+	cmd_bytes = convert_cmd_ascii_n(cmd)
+	tn.write(cmd_bytes)
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	sleep(timeout)
+	output = tn.read_very_eager()
+	debug(output)
+	#output = tn.read_until(("# ").encode('ascii'))
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).strip(' \r')
+		out_str_list.append(o_str)
+	 
+	if cmd == "get router info6 bgp summary":
+		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
+
+	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
+	print_cmd_output_from_list(good_out_list)
+	debug(good_out_list)
+	
+
 def collect_execute_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:
 		timeout = kwargs['t']
@@ -713,6 +742,40 @@ def switch_show_cmd_name(dut_dir,cmd,**kwargs):
 def print_collect_show(output):
 	for i in output:
 		tprint(i)
+
+def switch_show_cmd_linux(tn,cmd,**kwargs):
+	#relogin_if_needed(tn)
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 2
+	cmd = convert_cmd_ascii_n(cmd)
+	tn.write(cmd)
+	tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	sleep(timeout)
+	output = tn.read_very_eager()
+	#output = tn.read_until(("# ").encode('ascii'))
+	out_list = output.split(b'\r\n')
+	debug(f"out_list in switch_show_cmd = {out_list}")
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		try:
+			o_str = o.decode(encoding).rstrip(' ')
+			out_str_list.append(o_str)
+		except Exception as e:
+			pass
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	# tprint(dir(output))
+	# tprint(type(output))
+	#tprint(out_list)
+	for i in out_str_list:
+		tprint(i)
+	return out_str_list
 
 def switch_show_cmd(tn,cmd,**kwargs):
 	#relogin_if_needed(tn)
@@ -1099,62 +1162,25 @@ def ping_ipv6(tn,*args,**kwargs):
 	dprint(result)
 	print_cmd_output_from_list(result)
 
+def ping_ipv6_extensive(*args,**kwargs):
+	#ping_ipv6_extensive(console=self.switches[i].console, ip_src=ip_src,ip_dst = ip_dst,name=interface_name)
+	tn = kwargs["console"]
+	ip_src = kwargs["ip_src"]
+	ip_dst = kwargs["ip_dst"]
+	interface_name = kwargs['name']
+	sw_src = kwargs['sw_src']
+	sw_dst = kwargs['sw_dst']
+	Info(f"=================== Ping source: {interface_name}: 2nd IPv6 {ip_src} on {sw_src} ===============")
+	show_execute_cmd(tn,f"execute ping6-options source {ip_src}")
+	Info(f"=================== Ping Destination: {ip_dst} on {sw_dst} ===============")
+	show_execute_cmd(tn,f"execute ping6 {ip_dst}")
+ 
 def relogin_factory_reset(*args,**kwargs):
 	tn = kwargs['dut']
 	hostname = kwargs['host']
-	# tprint("console server ip ="+str(ip_address))
-	# tprint("console port="+str(console_port))
-	# if "password" in kwargs:
-	# 	pwd = kwargs["password"]
-	# else:
-	# 	pwd = ''
-	# if "platform" in kwargs:
-	# 	platform = kwargs['platform']
-	# else:
-	# 	platform = "fortinet"
-	
-	# console_port_int = int(console_port)
-	# if settings.CLEAR_LINE:
-	# 	status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
-	# 	if status['status'] != 1:
-	# 		logger.console('unable clear console port %s' % console_port)
-	# 	time.sleep(1)
-	# #switch_login(ip_address,console_port)
-	# try:
-	# 	tn = telnetlib.Telnet(ip_address,console_port_int)
-	# except ConnectionRefusedError: 
-	# 	tprint("!!!!!!!!!!!the console is being used, need to clear it first")
-	# 	status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
-	# 	if status['status'] != 1:
-	# 		logger.console('unable clear console port %s' % console_port)
-	# 		exit()
-	# 	sleep(2)
-	# 	tn = telnetlib.Telnet(ip_address,console_port_int)
-	#tprint("successful login\n")
-
-	#tn.write('' + '\n')
-	# tn.write(('get system status\n').encode('ascii'))
-	# time.sleep(1)
-
-	#tprint("successful login\n")
-
-	# tn.write(('' + '\n').encode('ascii'))
-	# time.sleep(1)
-
-	#tprint("successful login\n")
-	# tn.write(('\x03').encode('ascii'))
-	# time.sleep(2)
-
-	#tprint("successful login\n")
-	# tn.write(('\x03\n').encode('ascii'))
-	# tn.write(('\x03\n').encode('ascii'))
-	# time.sleep(0.2)
-
-	#tprint("successful login\n")
+	 
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
-	# tn.write(('' + '\n').encode('ascii'))
-	# tn.write(('' + '\n').encode('ascii'))
 	time.sleep(0.2)
 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
@@ -1163,37 +1189,35 @@ def relogin_factory_reset(*args,**kwargs):
 
 	tn.read_until(("Password: ").encode('ascii'),timeout=5)
 
+	###################### Has to be 3 enters: Dont change ################
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
+	############################ Dont change ##############################
 
 	prompt = switch_find_login_prompt_new(tn)
 	p = prompt[0]
 	debug(prompt)
 	if p == "change":
 		Info(f"Login {hostname} after factory reset , changing password..... ") #This needs to rewrite to take care factory reset situation
-		#switch_need_change_password(tn)
+		############################################# Dont change these lines ##################################
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
-		#sleep(0.1)
-		# tn.write(('' + '\n').encode('ascii'))
-		# #sleep(0.1)
-		# tn.write(('' + '\n').encode('ascii'))
-		# #sleep(0.1)
-		# tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
-		# #sleep(0.1)
-		# tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
-		# sleep(1)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		############################################# Dont change these lines ###################################
 		tn.read_until(("login: ").encode('ascii'),timeout=5)
 		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
-		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.6)
+		tn.write(('' + '\n').encode('ascii')) #This line is needed. Don't deleted!!!!!! After enter is hit, user can enter password
 		tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
 		tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
+		#sleep(0.5) Must not have sleep in between write and read_until
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
 		tn.write(('fortinet123' + '\n').encode('ascii'))
+		sleep(0.5)
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("# ").encode('ascii'),timeout=10)
@@ -1229,7 +1253,6 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		if status['status'] != 1:
 			logger.console('unable clear console port %s' % console_port)
 		time.sleep(1)
-	#switch_login(ip_address,console_port)
 	try:
 		tn = telnetlib.Telnet(ip_address,console_port_int)
 	except ConnectionRefusedError: 
@@ -1240,39 +1263,22 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 			exit()
 		sleep(2)
 		tn = telnetlib.Telnet(ip_address,console_port_int)
-	#tprint("successful login\n")
-
-	#tn.write('' + '\n')
-	# tn.write(('get system status\n').encode('ascii'))
-	# time.sleep(1)
-
-	#tprint("successful login\n")
-
-	# tn.write(('' + '\n').encode('ascii'))
-	# time.sleep(1)
-
-	#tprint("successful login\n")
-	# tn.write(('\x03').encode('ascii'))
-	# time.sleep(2)
-
-	#tprint("successful login\n")
+	 
 	tn.write(('\x03\n').encode('ascii'))
 	tn.write(('\x03\n').encode('ascii'))
 	time.sleep(0.2)
 
-	#tprint("successful login\n")
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
-	# tn.write(('' + '\n').encode('ascii'))
-	# tn.write(('' + '\n').encode('ascii'))
+	 
 	time.sleep(0.2)
 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
-
 	tn.write(('admin' + '\n').encode('ascii'))
-
 	tn.read_until(("Password: ").encode('ascii'),timeout=5)
 
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write((pwd + '\n').encode('ascii'))
 	prompt = switch_find_login_prompt_new(tn)
@@ -1280,22 +1286,18 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	debug(prompt)
 	if p == "change":
 		Info("Login after factory reset, changing password..... ") #This needs to rewrite to take care factory reset situation
-		#switch_need_change_password(tn)
-		tn.write(('' + '\n').encode('ascii'))
-		#
-		tn.write(('' + '\n').encode('ascii'))
-		#sleep(0.1)
-		tn.write(('' + '\n').encode('ascii'))
-		#sleep(0.1)
-		tn.write(('' + '\n').encode('ascii'))
-		#sleep(0.1)
+		########################################## Golden lines: Do not change #############
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
-		#sleep(0.1)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		sleep(1)
+		#################################### Don't change ################################
 		tn.read_until(("login: ").encode('ascii'),timeout=5)
 		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
 		tn.write(('' + '\n').encode('ascii'))
