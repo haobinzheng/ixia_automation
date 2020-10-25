@@ -61,7 +61,7 @@ parser.add_argument("-t", "--testbed", type=str, help="Specific which testbed to
 parser.add_argument("-file", "--file", type=str, help="Specific file name appendix when exporting to excel. Example:mac-1k. Default=none")
 parser.add_argument("-x", "--ixia", help=" Use IXIA only, skipping login to devices",action="store_true")
 parser.add_argument("-n", "--run_time", type=int, help="Specific how many times you want to run the test, default=2")
-parser.add_argument("-test", "--testcase", type=int, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
+parser.add_argument("-test", "--testcase", type=str, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
 parser.add_argument("-mac", "--mac", type=str, help="Background MAC entries learning,defaul size=1000")
 parser.add_argument("-d", "--dev", help="IXIA Development mode,do not verify any network status", action="store_true")
 parser.add_argument("-b", "--boot", help="Perform reboot test", action="store_true")
@@ -77,6 +77,7 @@ parser.add_argument("-sw", "--upgrade", type = int,help="FSW software upgrade vi
 parser.add_argument("-ug", "--sa_upgrade", type = int,help="FSW software upgrade in standlone mode. For debug image enter -1. Example: 193,-1(debug image)")
 
 global DEBUG
+IPV6 = False
 # if len(sys.argv) > 1:
 #     #parser.print_help()
 args = parser.parse_args()
@@ -201,7 +202,15 @@ else:
 	Run_time = 1
 	print_title("Test iterate numbers = {}".format(Run_time))
 if args.testcase:
-	testcase = args.testcase
+	try:
+		testcase = int(args.testcase)
+	except:
+		testcase = (args.testcase)
+		if testcase == "ipv6":
+			print_title("Test all IPv6 cases")
+			IPV6 = True
+		else:
+			IPV6 = False
 	test_all = False
 	print_title("Test Case To Run: #{}".format(testcase))
 else:
@@ -687,6 +696,7 @@ if Reboot:
 
 if not ixia_only:
 	switches = [FortiSwitch(dut_dir) for dut_dir in dut_dir_list]
+	fsw_switches =switches[1:]
 
 if testcase == 1 or test_all:
 	testcase = 1
@@ -731,18 +741,15 @@ if testcase == 1 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6011 or test_all:
+if testcase == 6011 or test_all or IPV6:
 	testcase = 6011
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Test IPv6 iBGP via loopbacks IPv6 address"
 	print_test_subject(testcase,description)
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
+
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	for switch in switches:
 		switch.show_switch_info()
@@ -766,6 +773,14 @@ if testcase == 6011 or test_all:
 		if CONFIG_BGP:
 			switch.router_bgp.config_ibgp_mesh_loopback_v6() 
 			switch.router_bgp.config_ibgp_mesh_loopback_v4() 
+
+	for switch in switches:  
+		switch.router_bgp.config_ibgp_mesh_loopback_v6() 
+		switch.router_bgp.config_ibgp_mesh_loopback_v4()  
+	console_timer(30,msg="After configuring iBGPv6 sessions via loopbacks, wait for 30s")
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+
 
 	for switch in switches:
 		switch.router_bgp.config_bgp_bfd_all_neighbors('enable')
@@ -796,7 +811,7 @@ if testcase == 6011 or test_all:
 	check_bgp_test_result_v6(testcase,description,switches)
 
 
-if testcase == 6012 or test_all:
+if testcase == 6012 or test_all or IPV6:
 	testcase = 6012
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Test IPv6 iBGP via loopbacks IPv4 and IPv6 addresses"
@@ -805,7 +820,7 @@ if testcase == 6012 or test_all:
 
 	fsw_switches =switches[1:]
 
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
 
 	test_config_igp_ipv6_fabric(switches =fsw_switches)
@@ -851,21 +866,17 @@ if testcase == 6012 or test_all:
 	check_bgp_test_result_v6(testcase,description,switches)
 
 
-if testcase == 6013 or test_all: #template for basic ipv4 and ipv6 iBGP
+if testcase == 6013 or test_all or IPV6: #template for basic ipv4 and ipv6 iBGP
 	testcase = 6013
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = """Test IPv6 iBGP via loopbacks IPv4 and IPv6 addresses, alternate activate and activate6
 	This is for test cases: 952713,952715,952716,952717
 	"""
-	print_test_subject(testcase,description)
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
 
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	 
 	ospf_config = False
 	for switch in switches:
 		switch.show_switch_info()
@@ -922,13 +933,16 @@ if testcase == 6013 or test_all: #template for basic ipv4 and ipv6 iBGP
 
 	#sys.stdout.close()
 
-if testcase == 6014 or test_all:
+if testcase == 6014 or test_all or IPV6:
 	testcase = 6014
 	description = "iBGP mesh over internal_v6,vlan1_ipv6 and loop0_ipv6. "
 	print_test_subject(testcase,description)
 
 	fsw_switches =switches[1:]
 	network = BGP_networks(fsw_switches)
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
 
 	test_clean_config(switches =fsw_switches)
 	test_config_igp_ipv6(switches =fsw_switches)
@@ -964,7 +978,7 @@ if testcase == 6014 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
-if testcase == 6015 or test_all:
+if testcase == 6015 or test_all or IPV6:
 	testcase = 6015
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Test IPv6 iBGP via loopbacks IPv4 and IPv6 addresses and bfd flap, finally reboot the devices"
@@ -973,7 +987,7 @@ if testcase == 6015 or test_all:
 
 	fsw_switches =switches[1:]
 
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
 
 	test_config_igp_ipv6_fabric(switches =fsw_switches)
@@ -1022,7 +1036,7 @@ if testcase == 6015 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,switches)
 
-if testcase == 6016 or test_all:
+if testcase == 6016 or test_all or IPV6:
 	testcase = 6016
 	description = "iBGP mesh over 2nd IPv6 address over internal_v6,vlan1_ipv6 and loop0_ipv6, bfd, flap "
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
@@ -1138,6 +1152,44 @@ if testcase == 6016 or test_all:
 
 	# check_bgp_test_result_v6(testcase,description,fsw_switches)
 
+if testcase == 6017 or test_all or IPV6:
+	testcase = 6017
+	description = "iBGP mesh over 2nd IPv6 address over single internal_v6,vlan1_ipv6 and loop0_ipv6, bfd, flap "
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	tags = "ipv6 2nd single"
+	print_test_subject(testcase,description)
+
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6(switches =fsw_switches)
+	else:
+		update_igp_database_all(switches =fsw_switches)
+		
+	for sw in fsw_switches:
+		sw.add_extra_ipv6_no_fw()
+
+	SKIP = True
+	interface_list = ["vlan1","loop0"]
+	for intf in interface_list:
+		network.biuld_ibgp_mesh_topo_sys_intf_v6_2nd(interface=intf)
+		console_timer(120,msg=f"!!!!!!!!!!! Step 0: Start From No FW Configured. After configuring fully mesh iBGP across {intf}, check bgp neighbors")
+
+		network.show_summary()
+
+		for sw in fsw_switches:
+			sw.reboot()
+		console_timer(300,msg="===== rebooting all switches, wait for 300s =====")
+		for sw in fsw_switches:
+			sw.relogin()
+		network.show_summary()
+
+		for switch in switches:
+			switch.router_bgp.delete_all_neighbors_v6()
+
 if testcase == 2 or test_all:
 	testcase = 2
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
@@ -1163,19 +1215,16 @@ if testcase == 2 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6021 or test_all:
+if testcase == 6021 or test_all or IPV6:
 	testcase = 6021
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "iBGP v6 SVI interface"
 	print_test_subject(testcase,description)
 
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_v6()
-	else:
-		pass
+	fsw_switches =switches[1:]
+	 
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ospf_config = False
 	for switch in switches:
@@ -1205,21 +1254,18 @@ if testcase == 6021 or test_all:
 		switch.router_bgp.show_bgp_summary_v6()
 	check_bgp_test_result_v6(testcase,description,switches)
 
-
-if testcase == 6022 or test_all:
+ 
+if testcase == 6022 or test_all or IPV6:
 	testcase = 6022
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "iBGP v6 and v4 SVI interface"
 	print_test_subject(testcase,description)
 
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_v6()
-	else:
-		pass
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
+	 
 	ospf_config = False
 	for switch in switches:
 		switch.show_switch_info()
@@ -1254,19 +1300,16 @@ if testcase == 6022 or test_all:
 
 	#sys.stdout.close()
 
-if testcase == 6023 or test_all:
+if testcase == 6023 or test_all or IPV6:
 	testcase = 6023
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "iBGP on v6 and v4 SVI interface, alternate address faimily"
 	print_test_subject(testcase,description)
 
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_v6()
-	else:
-		pass
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
 
 	ospf_config = False
 	for switch in switches:
@@ -1322,20 +1365,20 @@ if testcase == 6023 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
  
-if testcase == 6024 or test_all:
+if testcase == 6024 or test_all or IPV6:
 	testcase = 6024
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "iBGP on Link Local Address + iBGP over SVI + BFD"
 	tags ["basic link local", "bfd"]
 	print_test_subject(testcase,description)
 
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_v6()
-	else:
-		pass
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
 
 	ospf_config = False
 	for switch in switches:
@@ -1397,7 +1440,7 @@ if testcase == 6024 or test_all:
 	check_bgp_test_result_v6(testcase,description,switches)
 
  
-if testcase == 6025 or test_all:
+if testcase == 6025 or test_all or IPV6:
 	testcase = 6025
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Negative Testing: iBGP on all interfaces: loopback,SVI And Link Local Address, Enable BFD"
@@ -1442,17 +1485,17 @@ if testcase == 6025 or test_all:
 		router_bfd = Router_BFD(switch)
 		router_bfd.counte_peers_v6()
 
-	#check_bgp_test_result_v6(testcase,description,fsw_switches)
+	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
-	# for switch in switches:
-	# 	switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
+	for switch in switches:
+		switch.router_bgp.config_bgp_bfd_all_neighbors('disable')
 
-	# console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
-	# for switch in switches:
-	# 	switch.router_bgp.show_bgp_summary_v6()
-	# 	switch.router_bgp.show_bfd_neighbor_v6()
+	console_timer(20,msg="===== After configuring iBGPv6 sessions via loopbacks && disable BFD, wait for 20s =====")
+	for switch in switches:
+		switch.router_bgp.show_bgp_summary_v6()
+		switch.router_bgp.show_bfd_neighbor_v6()
 
-if testcase == 60250 or test_all:
+if testcase == 60250 or test_all or IPV6:
 	testcase = 60250
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Negative Testing: iBGP on all interfaces: loopback,SVI Except Link Local Address, Enable BFD"
@@ -1507,7 +1550,7 @@ if testcase == 60250 or test_all:
 	# 	switch.router_bgp.show_bgp_summary_v6()
 	# 	switch.router_bgp.show_bfd_neighbor_v6()
 
-if testcase == 60251 or test_all:
+if testcase == 60251 or test_all or IPV6:
 	testcase = 60251
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Negative Testing: iBGP on all interfaces: loopback,SVI And Link Local Address, Enable and Delete BFD"
@@ -1569,7 +1612,7 @@ if testcase == 60251 or test_all:
 		switch.router_bgp.show_bfd_neighbor_v6()
 
 
-if testcase == 6026 or test_all:
+if testcase == 6026 or test_all or IPV6:
 	testcase = 6026
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Negative Testing: iBGP on all interfaces: loopback,SVI And Link Local Address, Enable BFD and Flap"
@@ -1620,7 +1663,7 @@ if testcase == 6026 or test_all:
 			switch.router_bgp.show_bgp_summary_v6()
 			switch.find_crash()
 
-if testcase == 6027 or test_all:
+if testcase == 6027 or test_all or IPV6:
 	testcase = 6027
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Negative Testing: iBGP on 2nd IPv6: Enable BFD and Flap"
@@ -1707,18 +1750,16 @@ if testcase == 3 or test_all:
 		switch.show_routing()
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6031 or test_all:
+if testcase == 6031 or test_all or IPV6:
 	testcase = 6031
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Test IPv6 redistrubted connected"
 	print_test_subject(testcase,description)
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_v6()
-	else:
-		pass
+
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	 
 
 	for switch in switches:
 		switch.show_switch_info()
@@ -1811,19 +1852,14 @@ if testcase == 5 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6 or test_all:
+if testcase == 6 or test_all :
 	testcase = 6
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP direct connection"
 	print_test_subject(testcase,description)
 
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_v6()
-	else:
-		pass
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	for switch in switches:
 		switch.vlan_neighors(switches)
@@ -1833,20 +1869,17 @@ if testcase == 6 or test_all:
 	for switch in switches:
 		switch.show_routing()
 
-if testcase == 6061 or test_all:
+if testcase == 6061 or test_all or IPV6:
 	testcase = 6061
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP v6 only direct connection via SVI interfaces"
 	print_test_subject(testcase,description)
 
 	# Clean up configuration before start testing
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	
 
 	ospf_config_v4 = False
 	ospf_config_v6 = False
@@ -1884,7 +1917,7 @@ if testcase == 6061 or test_all:
 	# 	switch.show_routing_v6()
 	check_bgp_test_result_v6(testcase,description,switches)
 
-if testcase == 6062 or test_all:
+if testcase == 6062 or test_all or IPV6:
 	testcase = 6062
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP v4 and v6 direct connection via SVI interfaces"
@@ -1892,13 +1925,13 @@ if testcase == 6062 or test_all:
 	print_test_subject(testcase,description)
 
 	# Clean up configuration before start testing
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
+
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
 
 	ospf_config_v4 = False
 	ospf_config_v6 = False
@@ -1938,20 +1971,15 @@ if testcase == 6062 or test_all:
 	check_bgp_test_result_v6(testcase,description,switches)
 
 
-if testcase == 6063 or test_all:
+if testcase == 6063 or test_all or IPV6:
 	testcase = 6063
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP v4 and v6 direct connection via SVI interfaces"
 	print_test_subject(testcase,description)
 
 	# Clean up configuration before start testing
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ospf_config_v4 = False
 	ospf_config_v6 = False
@@ -2008,24 +2036,13 @@ if testcase == 6063 or test_all:
 	check_bgp_test_result_v6(testcase,description,switches)
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6064 or test_all:
+if testcase == 6064 or test_all or IPV6:
 	testcase = 6064
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP v6 direct connection via SVI interfaces, remove private AS, delete community"
 	tag1 = ["remove private as","change community","delete community"]
 	print_test_subject(testcase,description)
 
-	# apiServerIp = '10.105.19.19'
-	# ixChassisIpList = ['10.105.241.234']
-
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 1, 8,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 1, 9,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 1, 10,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 1, 11,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 1, 12,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
 
 	ixia_ipv6_as_list = [65101,65102,65103,65104,65105,65106]
 	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::1","2001:106:1:1::1"]
@@ -2033,7 +2050,7 @@ if testcase == 6064 or test_all:
 
 	fsw_switches =switches[1:]
 
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
 
 	test_config_igp_ipv6(switches =fsw_switches)
@@ -2168,7 +2185,7 @@ if testcase == 6064 or test_all:
 		"""
 	dut_switch.config_commands(config)
 
-if testcase == 6065 or test_all:
+if testcase == 6065 or test_all or IPV6:
 	testcase = 6065
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP v6  allow-as-in as-override6"
@@ -2177,10 +2194,9 @@ if testcase == 6065 or test_all:
 	tag2 = "as override"
 	print_test_subject(testcase,description)
 
-	fsw_switches =switches[1:]
-	network = BGP_networks(fsw_switches)
-	if test_config:
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
+
 	test_config_igp_ipv6(switches =fsw_switches)
 
 	bgp1 = network.routers[0]
@@ -2199,7 +2215,7 @@ if testcase == 6065 or test_all:
 	fsw_switches =switches[1:]
 
 
-if testcase == 6066 or test_all:
+if testcase == 6066 or test_all or IPV6:
 	testcase = 6066
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "4 nodes topology + 1 IXIA, filter-list"
@@ -2210,6 +2226,9 @@ if testcase == 6066 or test_all:
 	ixia_port_info = [
 	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.4","2001:10:1:1::211/64","2001:10:1:1::4",1]
 	]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ixia_ipv6_as_list = [65104]
 	ipv6_networks = ["2001:104:1:1::1"]
@@ -2305,7 +2324,7 @@ if testcase == 6066 or test_all:
 	bgp3.show_bgp_network_v64()
 	sw3.show_routing_table_v64()
 
-if testcase == 6067 or test_all:
+if testcase == 6067 or test_all or IPV6:
 	testcase = 6067
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Next Hop Self"
@@ -2316,6 +2335,9 @@ if testcase == 6067 or test_all:
 	ixia_port_info = [
 	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1]
 	]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ixia_ipv6_as_list = [65104]
 	ipv6_networks = ["2001:104:1:1::1"]
@@ -2436,7 +2458,7 @@ if testcase == 6067 or test_all:
 	bgp2.show_bgp_network_v64()
 	sw2.show_routing_table_v64()
 
-if testcase == 6068 or test_all:
+if testcase == 6068 or test_all or IPV6:
 	testcase = 6068
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "prefix list"
@@ -2447,6 +2469,9 @@ if testcase == 6068 or test_all:
 	ixia_port_info = [
 	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1]
 	]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ixia_ipv6_as_list = [65104]
 	ipv6_networks = ["2001:104:1:1::1"]
@@ -2583,7 +2608,7 @@ if testcase == 6068 or test_all:
 	bgp3.show_bgp_network_v6()
 	bgp3.show_bgp_network()
 
-if testcase == 6069 or test_all:
+if testcase == 6069 or test_all or IPV6:
 	testcase = 6069
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "distribute list"
@@ -2594,6 +2619,9 @@ if testcase == 6069 or test_all:
 	ixia_port_info = [
 	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1]
 	]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ixia_ipv6_as_list = [65104]
 	ipv6_networks = ["2001:104:1:1::1"]
@@ -2720,10 +2748,10 @@ end
 	bgp3.show_bgp_network_v6()
 	bgp3.show_bgp_network()
 
-if testcase == 60610 or test_all:
+if testcase == 60610 or test_all or IPV6:
 	testcase = 60610
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "4 nodes topology + 1 IXAA, aggregate,next_hop,policy, unsuppress"
+	description = "4 nodes topology + 1 IXAA, aggregate,next_hop,policy, unsuppress, manually apply route-map or filter list"
 	topology = "R1(65001) ---- R2(1) ----- R3(1) ----- R4[65001)"
 	tag1 = "4 nodes topology 1 IXIA, filter-list, aggregate6, next_hop, policy,unsuppress"
 	print_test_subject(testcase,description)
@@ -2732,6 +2760,9 @@ if testcase == 60610 or test_all:
 	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.4","2001:10:1:1::211/64","2001:10:1:1::4",1],
 	[ixChassisIpList[0], 1, 9,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1]
 	]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ixia_ipv6_as_list = [65104,103] # IXIA's AS numbers
 	ipv6_networks = ["2001:104:1:1::1","2001:105:1:1::1"]
@@ -2941,7 +2972,7 @@ if testcase == 60610 or test_all:
 	# bgp3.show_bgp_network_v64()
 	# sw3.show_routing_table_v64()
 
-if testcase == 60611 or test_all:
+if testcase == 60611 or test_all or IPV6:
 	testcase = 60611
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "4 nodes topology + 1 IXAA, enforce-first-as, as_prepend doesn't serve the purpose. Need ingress route-map to prepend an AS"
@@ -2953,6 +2984,9 @@ if testcase == 60611 or test_all:
 	[ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.4","2001:10:1:1::211/64","2001:10:1:1::4",1],
 	[ixChassisIpList[0], 1, 9,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1]
 	]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ixia_ipv6_as_list = [65104,103] # IXIA's AS numbers
 	ipv6_networks = ["2001:104:1:1::1","2001:105:1:1::1"]
@@ -3199,7 +3233,7 @@ if testcase == 9 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6091 or test_all:
+if testcase == 6091 or test_all or IPV6:
 	testcase = 6091
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Basic eBGP traffic forwarding - IPv4 And IPv6 peered to IXIA and traffic forwarding, ipv6 scale"
@@ -3211,6 +3245,8 @@ if testcase == 6091 or test_all:
 	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
 	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::211","2001:106:1:1::1"]
 
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 	
 	fsw_switches =switches[1:]
 	sw5 = switches[5]
@@ -3224,8 +3260,8 @@ if testcase == 6091 or test_all:
 	else:
 		update_igp_database_all(switches =fsw_switches)
 
-	# network.biuld_ibgp_mesh_topo_sys_intf_v6()
-	# network.biuld_ibgp_mesh_topo_sys_intf()
+	network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	network.biuld_ibgp_mesh_topo_sys_intf()
 	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
 	network.show_summary()
 	
@@ -3257,8 +3293,8 @@ if testcase == 6091 or test_all:
 		 
 	i = 0
 	for topo in myixia.topologies:
-		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=40000)
-		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=20000)
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=400)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=200)
 		i += 1
 
 	myixia.start_protocol(wait=40)
@@ -3300,7 +3336,7 @@ if testcase == 6091 or test_all:
 	# sw6.get_crash_debug()
 
 
-if testcase == 6092 or test_all:
+if testcase == 6092 or test_all or IPV6:
 	testcase = 6092
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Basic eBGP IPv4 And IPv6 ECMP peered to IXIA and traffic forwarding"
@@ -3309,14 +3345,6 @@ if testcase == 6092 or test_all:
 	# IXIA and switch information
 	
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1","10.10.2.1"]
@@ -3326,8 +3354,11 @@ if testcase == 6092 or test_all:
 	network = BGP_networks(switches)
 
 	# Infra configuration
-	if test_config:
+
+	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
+
+	if test_config:
 		test_config_igp_ipv6(switches =fsw_switches)
 		network.biuld_ibgp_mesh_topo_sys_intf_v6()
 		network.biuld_ibgp_mesh_topo_sys_intf()
@@ -3456,19 +3487,14 @@ if testcase == 10 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6101 or test_all:
+if testcase == 6101 or test_all or IPV6:
 	testcase = 6101
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Basic eBGP IPv6 peered to IXIA and traffic forwarding"
 	print_test_subject(testcase,description)
 
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ospf_config_v4 = False
 	ospf_config_v6 = False
@@ -3574,20 +3600,15 @@ if testcase == 11 or test_all:
 	check_bgp_test_result(testcase,description,switches)
 
 
-if testcase == 6111 or test_all:
+if testcase == 6111 or test_all or IPV6:
 	testcase = 6111
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP multi-hop v6 via loopback interfaces"
 	print_test_subject(testcase,description)
 
 	# Clean up configuration before start testing
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ospf_config_v4 = False
 	ospf_config_v6 = False
@@ -3611,20 +3632,15 @@ if testcase == 6111 or test_all:
 
 
 
-if testcase == 6112 or test_all:
+if testcase == 6112 or test_all or IPV6:
 	testcase = 6112
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP multi-hop v4 and v6 via loopback interfaces"
 	print_test_subject(testcase,description)
 
 	# Clean up configuration before start testing
-	if CLEAN_ALL:
-		switches_clean_up(switches)
-	elif CLEAN_BGP:
-		for switch in switches:
-			switch.router_bgp.clear_config_all()
-	else:
-		pass
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ospf_config_v4 = False
 	ospf_config_v6 = False
@@ -3663,15 +3679,13 @@ if testcase == 6112 or test_all:
 	# 	switch.show_routing_v6()
 	check_bgp_test_result_v6(testcase,description,switches)
 
-if testcase == 6113 or test_all:
+if testcase == 6113 or test_all or IPV6:
 	testcase = 6113
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP multi-hop v6 attribute-unchanged"
 	tags = "ebgp attribute-unchanged"
 	print_test_subject(testcase,description)
 
-	fsw_switches =switches[1:]
-	network = BGP_networks(fsw_switches)
 
 	if clear_bgp:
 		test_clean_config(switches =fsw_switches)
@@ -3680,6 +3694,9 @@ if testcase == 6113 or test_all:
 		test_config_igp_ipv6_fabric(switches =fsw_switches)
 		console_timer(20,msg=f"Test case {testcase}: After configuring ospf and ospfv6 routing protocols, wait for 20 seconds")
 	
+	fsw_switches =switches[1:]
+	network = BGP_networks(fsw_switches)
+
 	network.show_summary_v6()
 
 	for switch in fsw_switches:
@@ -3761,7 +3778,7 @@ if testcase == 6113 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
-if testcase == 6114 or test_all:
+if testcase == 6114 or test_all or IPV6:
 	testcase = 6114
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "eBGP multi-hop v6 attribute-unchanged, back door"
@@ -3877,7 +3894,7 @@ if testcase == 6114 or test_all:
  	
 	check_bgp_test_result_v6(testcase,description,fsw_switches)
 
-if testcase == 6115 or test_all:
+if testcase == 6115 or test_all or IPV6:
 	testcase = 6115
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Direct eBGP, attribute-unchanged, next_hop recursive"
@@ -4037,20 +4054,14 @@ if testcase == 12 or test_all:
 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6121 or test_all:
+if testcase == 6121 or test_all or IPV6:
 	testcase = 6121
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 policy and route filtering:duplicated routes were injected from IXIA."
 	print_test_subject(testcase,description)
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::211","2001:102:1:1::1","2001:102:1:1::1"]
@@ -4137,7 +4148,7 @@ if testcase == 13 or test_all:
 	check_bgp_test_result(testcase,description,switches)
 
 
-if testcase == 6131 or test_all:
+if testcase == 6131 or test_all or IPV6:
 	testcase = 6131
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 policy and route filtering: Origin attribute. "
@@ -4146,41 +4157,28 @@ if testcase == 6131 or test_all:
 	apiServerIp = '10.105.19.19'
 	ixChassisIpList = ['10.105.241.234']
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
-
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 	 
-	# if CLEAN_ALL:
-	# 	switches_clean_up(switches)
-	# else:
-	# 	for switch in switches:
-	# 		switch.router_bgp.clear_config()
-	 
-	# for switch in switches:
-	# 	switch.show_switch_info()
-	# 	switch.router_ospf.basic_config()
-	# console_timer(20,msg="After configuring ospf, wait for 20 sec")
+	for switch in switches:
+		switch.show_switch_info()
+		switch.router_ospf.basic_config()
+	console_timer(20,msg="After configuring ospf, wait for 20 sec")
 
-	# for switch in switches:
-	# 	switch.router_ospf.neighbor_discovery()
-	# 	switch.router_bgp.update_ospf_neighbors()
-	# 	switch.router_bgp.config_ibgp_mesh_loopback()
+	for switch in switches:
+		switch.router_ospf.neighbor_discovery()
+		switch.router_bgp.update_ospf_neighbors()
+		switch.router_bgp.config_ibgp_mesh_loopback()
 
-	# console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
-	# for switch in switches:
-	# 	switch.router_ospf.show_ospf_neighbors()
-	# 	switch.router_bgp.show_bgp_summary()
+	console_timer(30,msg="After configuring iBGP sessions via loopbacks, wait for 30s")
+	for switch in switches:
+		switch.router_ospf.show_ospf_neighbors()
+		switch.router_bgp.show_bgp_summary()
 	
-	# for switch,ixia_port_info in zip(switches,portList_v4_v6):
-	# 	if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
-	# 		tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
-	# 		exit()
+	for switch,ixia_port_info in zip(switches,portList_v4_v6):
+		if switch.router_bgp.config_ebgp_ixia(ixia_port_info) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP peers ==============")
+			exit()
 
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 
@@ -4295,24 +4293,17 @@ if testcase == 14 or test_all:
 	check_bgp_test_result(testcase,description,switches)
 
  
-if testcase == 6140 or test_all:
+if testcase == 6140 or test_all or IPV6:
 	testcase = 6140
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Router ID and Next Hop. eBGP path with smallest MED will be elected "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
-
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+ 
 	
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
 	ipv4_networks = ["10.10.0.1","10.10.0.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1"]
@@ -4354,23 +4345,15 @@ if testcase == 6140 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
-if testcase == 6141 or test_all:
+if testcase == 6141 or test_all or IPV6:
 	testcase = 6141
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: MED. eBGP path with smallest MED will be elected "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
-
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 	
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
@@ -4433,24 +4416,17 @@ if testcase == 6141 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
-if testcase == 6142 or test_all:
+if testcase == 6142 or test_all or IPV6:
 	testcase = 6142
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Origin. Run the test at the last 2 switches: switches[-2:] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
-
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
 	
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::211","2001:102:1:1::1","2001:102:1:1::1"]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1"]
@@ -4530,24 +4506,16 @@ if testcase == 6142 or test_all:
 	check_bgp_test_result_v6(testcase,description,switches[-2:])
 
 
-if testcase == 6143 or test_all:
+if testcase == 6143 or test_all or IPV6:
 	testcase = 6143
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Weight. Run the test at the last switch: switches[-1] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
-
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
-	
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+ 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::211","2001:102:1:1::1","2001:102:1:1::1"]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1"]
@@ -4614,24 +4582,16 @@ if testcase == 6143 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
-if testcase == 6144 or test_all:
+if testcase == 6144 or test_all or IPV6:
 	testcase = 6144
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Local Preference. Run the test at the last switch: switches[-1] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
-	
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1"]
@@ -4697,23 +4657,15 @@ if testcase == 6144 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
-if testcase == 6145 or test_all:
+if testcase == 6145 or test_all or IPV6:
 	testcase = 6145
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Community. Run the test at the last switch: switches[-1] "
 	print_test_subject(testcase,description)
 
-	# apiServerIp = '10.105.19.19'
-	# ixChassisIpList = ['10.105.241.234']
-
-	# portList_v4_v6 = [
-	# [ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
- #    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
- #    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
- #    ]
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
@@ -4781,25 +4733,18 @@ if testcase == 6145 or test_all:
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
 
-if testcase == 6146 or test_all:
+if testcase == 6146 or test_all or IPV6:
 	testcase = 6146
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: AS Path. Run the test at the last switch: switches[-1] "
 	tags = "IPv6 as path, multipath-relax"
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
-	
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1","10.10.2.1"]
@@ -4865,23 +4810,15 @@ if testcase == 6146 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
-if testcase == 6147 or test_all:
+if testcase == 6147 or test_all or IPV6:
 	testcase = 6147
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Aggreator. Run the test at the last switch: switches[-1] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
-
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 	
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
@@ -4948,24 +4885,17 @@ if testcase == 6147 or test_all:
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
 
-if testcase == 6148 or test_all:
+if testcase == 6148 or test_all or IPV6:
 	testcase = 6148
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Ext-Community. Run the test at the last switch: switches[-1] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
-	
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1"]
@@ -5030,39 +4960,17 @@ if testcase == 6148 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
-if testcase == 6149 or test_all:
+if testcase == 6149 or test_all or IPV6:
 	testcase = 6149
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: Put all attributes together. Run the test at the last switch: switches[-1] "
 	tag = "all attributes,route-map"
 	print_test_subject(testcase,description)
 
-	# apiServerIp = '10.105.19.19'
-	# ixChassisIpList = ['10.105.241.234']
-
-	# portList_v4_v6 = [
-	# [ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
- #    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
- #    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
- #    ]
-	
-
-	# apiServerIp = '10.105.19.19'
-	# ixChassisIpList = ['10.105.241.234']
-
-	# portList_v4_v6 = [
-	# [ixChassisIpList[0], 1, 7,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
- #    [ixChassisIpList[0], 1, 8,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 1, 9,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
- #    [ixChassisIpList[0], 1, 10,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 1, 11,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
- #    [ixChassisIpList[0], 1, 12,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
- #    ]
-
-
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+ 
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	#what matters are the last 4 elements of the list.  
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
@@ -5237,23 +5145,16 @@ if testcase == 6149 or test_all:
 		dut_switch.show_command("get router info6 bgp network 2001:102:1:1::9/128")
 
 
-if testcase == 61410 or test_all:
+if testcase == 61410 or test_all or IPV6:
 	testcase = 61410
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "BGPv6 Best Routes Selection: eBGP over iBGP. Run the test at the last switch: switches[-1] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
 
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 	
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	# Have the same IPv4 and IPv6 advertised via eBGP and iBGP. Look at sw6 to pick eBGP route
@@ -5263,10 +5164,7 @@ if testcase == 61410 or test_all:
 	cisco_switch = switches[0]
 	sw6_switch = switches[-1]
 	my_ixia_ports = portList_v4_v6[-4:]
-	# my_as_lists = ixia_ipv6_as_list[-4:]
-	# my_ipv6_networks = ipv6_networks[-4:]
-	# my_ipv4_networks = ipv4_networks[-4:]
-
+ 
 	sw6_ixia_ports = portList_v4_v6[-2:]
 	sw6_as_lists = ixia_ipv6_as_list[-2:]
 	sw6_ipv6_networks = ipv6_networks[-2:]
@@ -5301,30 +5199,22 @@ if testcase == 61410 or test_all:
 
 	check_bgp_test_result_v6(testcase,description,sw6_switch)
 
-if testcase == 61411 or test_all:
+if testcase == 61411 or test_all or IPV6:
 	testcase = 61411
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
-	description = "BGPv6 Best Routes Selection: ECMP over the 1048D - switches[4] "
+	description = "BGPv6 Best Routes Selection: ECMP over the 548D - switches[6] "
 	print_test_subject(testcase,description)
 
-	apiServerIp = '10.105.19.19'
-	ixChassisIpList = ['10.105.241.234']
-
-	portList_v4_v6 = [
-	[ixChassisIpList[0], 2, 11,"00:11:01:01:01:01","10.1.1.211/24","10.1.1.1","2001:10:1:1::211/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 12,"00:12:01:01:01:01","10.1.1.212/24","10.1.1.1","2001:10:1:1::212/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 13,"00:13:01:01:01:01","10.1.1.213/24","10.1.1.1","2001:10:1:1::213/64","2001:10:1:1::1",1], 
-    [ixChassisIpList[0], 2, 14,"00:14:01:01:01:01","10.1.1.214/24","10.1.1.1","2001:10:1:1::214/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 15,"00:15:01:01:01:01","10.1.1.215/24","10.1.1.1","2001:10:1:1::215/64","2001:10:1:1::1",1],
-    [ixChassisIpList[0], 2, 16,"00:16:01:01:01:01","10.1.1.216/24","10.1.1.1","2001:10:1:1::216/64","2001:10:1:1::1",1]
-    ]
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 	
 	ixia_ipv6_as_list = [101,102,103,104,105,106]
 	ipv6_networks = ["2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:101:1:1::1","2001:102:1:1::1","2001:102:1:1::1"]
 	ipv4_networks = ["10.10.1.1","10.10.1.1","10.10.1.1","10.10.1.1","10.10.2.1","10.10.2.1"]
 
 	cisco_switch = switches[0]
-	sw6_switch = switches[4]
+	sw6_switch = switches[6]
 	my_ixia_ports = portList_v4_v6[-4:]
 	
 
@@ -6786,7 +6676,7 @@ if testcase == 19 or test_all:
 		send_Message(msg)
 	myixia.stop_traffic()
 
-if testcase == 6190 or test_all:
+if testcase == 6190 or test_all or IPV6:
 	testcase = 6190
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "IPv6 BGP router reflector"
@@ -6799,6 +6689,7 @@ if testcase == 6190 or test_all:
 
 	fsw_switches =switches[1:]
 	network = BGP_networks(fsw_switches)
+
 	#Infra configuration
 
 	if clear_bgp:
@@ -6851,7 +6742,7 @@ if testcase == 6190 or test_all:
 	myixia.collect_stats()
 	myixia.check_traffic()
 
-if testcase == 6191 or test_all:
+if testcase == 6191 or test_all or IPV6:
 	testcase = 6191
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "IPv6 BGP route server reflector"
@@ -6866,15 +6757,15 @@ if testcase == 6191 or test_all:
 	network = BGP_networks(fsw_switches)
 	#Infra configuration
 
-	# if clear_bgp:
-	# 	test_clean_config(switches =fsw_switches)
-	# if test_config:
-	# 	test_config_igp_ipv6_fabric(switches =fsw_switches)
-	# # network.biuld_ibgp_mesh_topo_sys_intf_v6()
-	# # network.biuld_ibgp_mesh_topo_sys_intf_one()
-	# network.build_route_server_topo_v6()
-	# console_timer(20,msg=f"Test case {testcase}: After configuring IPv6 route server in the BGP network, wait....")
-	# network.show_summary_v6()
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+	# network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	# network.biuld_ibgp_mesh_topo_sys_intf_one()
+	network.build_route_server_topo_v6()
+	console_timer(20,msg=f"Test case {testcase}: After configuring IPv6 route server in the BGP network, wait....")
+	network.show_summary_v6()
 
 	# FSW configuration
 
@@ -6887,13 +6778,13 @@ if testcase == 6191 or test_all:
 			exit()
 
 
-	# for sw,ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
-	# 	if sw.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
-	# 		tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
-	# 		exit()
-	# 	if sw.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
-	# 		tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
-	# 		exit()
+	for sw,ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
+		if sw.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if sw.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
 	 
 
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
@@ -6926,7 +6817,7 @@ if testcase == 6191 or test_all:
 	myixia.collect_stats()
 	myixia.check_traffic()
 
-if testcase == 6192 or test_all:
+if testcase == 6192 or test_all or IPV6:
 	testcase = 6192
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "IPv4 BGP route server reflector"
@@ -7060,7 +6951,7 @@ if testcase == 20 or test_all:
 	myixia.stop_traffic()
 
 
-if testcase == 6200 or test_all:
+if testcase == 6200 or test_all or IPV6:
 	testcase = 6200
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "IPv6 BGP basic confederation"
@@ -7140,7 +7031,7 @@ if testcase == 6200 or test_all:
 	myixia.collect_stats()
 	myixia.check_traffic()
 
-if testcase == 6201 or test_all:
+if testcase == 6201 or test_all or IPV6:
 	testcase = 6201
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "IPv6 BGP confederation as_path and med "
@@ -7275,7 +7166,7 @@ if testcase == 21 or test_all:
 
 
 
-if testcase == 6210 or test_all:
+if testcase == 6210 or test_all or IPV6:
 	testcase = 6210
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "ipv6 Always compare med - different eBGP AS "
@@ -7336,7 +7227,7 @@ if testcase == 6210 or test_all:
 	 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6211 or test_all:
+if testcase == 6211 or test_all or IPV6:
 	testcase = 6211
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "ipv6 deterministic med - same eBGP AS "
@@ -7398,7 +7289,7 @@ if testcase == 6211 or test_all:
 	check_bgp_test_result(testcase,description,switches)
 
 
-if testcase == 6212 or test_all:
+if testcase == 6212 or test_all or IPV6:
 	testcase = 6212
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "ipv6 orf "
@@ -7473,7 +7364,7 @@ if testcase == 6212 or test_all:
 	 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6213 or test_all:
+if testcase == 6213 or test_all or IPV6:
 	testcase = 6213
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "ipv6 deterministic and always compare med - different eBGP AS and iBGP"
@@ -7537,7 +7428,7 @@ if testcase == 6213 or test_all:
 	myixia.start_protocol(wait=40)
 
 
-if testcase == 6214 or test_all:
+if testcase == 6214 or test_all or IPV6:
 	testcase = 6214
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "Cisco ipv6 deterministic and always compare med - different eBGP AS and iBGP"
@@ -7552,6 +7443,10 @@ if testcase == 6214 or test_all:
 	fsw_switches =switches[1:]
 	dut_switch = switches[0]  # Dut switch is cisco
 	network = BGP_networks(switches)
+
+	fsw_switches =switches[1:]
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
 
 	#Infra configuration
 	if test_config:
@@ -7602,7 +7497,7 @@ if testcase == 6214 or test_all:
 	 
 	#check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6215 or test_all:
+if testcase == 6215 or test_all or IPV6:
 	testcase = 6215
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "ignore as_path "
@@ -7664,7 +7559,7 @@ if testcase == 6215 or test_all:
 	 
 	check_bgp_test_result(testcase,description,switches)
 
-if testcase == 6216 or test_all:
+if testcase == 6216 or test_all or IPV6:
 	testcase = 6216
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "ipv6 best path missing med worst - different eBGP AS "
@@ -7726,7 +7621,7 @@ if testcase == 6216 or test_all:
 	check_bgp_test_result(testcase,description,switches)
 
 
-if testcase == 6217 or test_all:
+if testcase == 6217 or test_all or IPV6:
 	testcase = 6217
 	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
 	description = "multipath-relax "

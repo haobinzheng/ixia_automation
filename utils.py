@@ -1206,21 +1206,35 @@ def relogin_factory_reset(*args,**kwargs):
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(1)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii')) 
+		sleep(3)       # For some console, it took long time for promopt to show up.  Keep this wait 3 sec
 		############################################# Dont change these lines ###################################
 		tn.read_until(("login: ").encode('ascii'),timeout=5)
 		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
-		sleep(0.6)
-		tn.write(('' + '\n').encode('ascii')) #This line is needed. Don't deleted!!!!!! After enter is hit, user can enter password
+		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
 		tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
-		#sleep(0.5) Must not have sleep in between write and read_until
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
 		tn.write(('fortinet123' + '\n').encode('ascii'))
-		sleep(0.5)
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.read_until(("# ").encode('ascii'),timeout=10)
+		# tn.read_until(("login: ").encode('ascii'),timeout=5)
+		# tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		# sleep(0.6)
+		# tn.write(('' + '\n').encode('ascii')) #This line is needed. Don't deleted!!!!!! After enter is hit, user can enter password
+		# tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
+		# tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
+		# #sleep(0.5) Must not have sleep in between write and read_until
+		# tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		# tn.write(('fortinet123' + '\n').encode('ascii'))
+		# sleep(0.5)
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.read_until(("# ").encode('ascii'),timeout=10)
 
 		switch_configure_cmd(tn,'config system global')
 		switch_configure_cmd(tn,'set admintimeout 480')

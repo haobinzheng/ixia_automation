@@ -109,6 +109,12 @@ class Router_BFD:
             result = collect_show_cmd(dut,"get router info bfd neighbor")
         new_peer = False
         peer_dict_list = []
+        if result: 
+            Info("=============== Collect bfd neighbor information again ================")
+            if ver == "v6":
+                result = collect_show_cmd(dut,"get router info6 bfd neighbor")
+            else:
+              result = collect_show_cmd(dut,"get router info bfd neighbor")
         for line in result:
             if "peer" in line and "multihop" in line and "local-address" in line:
                 neighbor_dict = {}
@@ -175,7 +181,14 @@ class BGP_networks:
             for j in range(i+1,num):
                 ping_ipv6(self.switches[i].console,ip=self.switches[j].loop0_ipv6.split("/")[0])
 
-    def ping_sweep_v6_extensive(self):
+    def ping_sweep_v6_extensive(self,*args,**kwargs):
+        if "skip" in kwargs:
+            skip = kwargs['skip']
+        else:
+            skip = False
+
+        if skip ==True:
+            return 
         num = len(self.switches)
         for i in range(num-1):
             console = self.switches[i].console
@@ -417,13 +430,34 @@ class BGP_networks:
                 else:
                     self.config_ibgp_session_one_interface(router1,router2) 
 
-    def biuld_ibgp_mesh_topo_sys_intf_v6_2nd(self):
-        for router1 in self.routers: 
-            for router2 in self.routers:   
-                if router1 is router2: 
-                    continue 
-                else:
-                    self.config_ibgp_session_all_interface_v6_2nd(router1,router2) 
+    # def biuld_ibgp_mesh_topo_sys_intf_v6_2nd_single(self,*args,**kwargs):
+    #     interface_name = kwargs['interface']
+    #     for router1 in self.routers: 
+    #         for router2 in self.routers:   
+    #             if router1 is router2: 
+    #                 continue 
+    #             else:
+    #                 self.config_ibgp_session_all_interface_v6_2nd(router1,router2) 
+
+    def biuld_ibgp_mesh_topo_sys_intf_v6_2nd(self,*args,**kwargs):
+        if "interface" in kwargs:
+            interface_name = kwargs["interface"]
+        else:
+            interface_name = "All"
+        if interface_name == "All":
+            for router1 in self.routers: 
+                for router2 in self.routers:   
+                    if router1 is router2: 
+                        continue 
+                    else:
+                        self.config_ibgp_session_all_interface_v6_2nd(router1,router2) 
+        else:
+            for router1 in self.routers: 
+                for router2 in self.routers:   
+                    if router1 is router2: 
+                        continue 
+                    else:
+                        self.config_ibgp_session_all_interface_v6_2nd(router1,router2,interface=interface_name) 
 
     def biuld_ibgp_mesh_topo_sys_intf_v6(self):
         for router1 in self.routers: 
@@ -636,8 +670,13 @@ class BGP_networks:
             config_cmds_lines(bgp2.switch.console,bgp_config)
 
 
-    def config_ibgp_session_all_interface_v6_2nd(self,bgp1,bgp2):
+    def config_ibgp_session_all_interface_v6_2nd(self,bgp1,bgp2,*args,**kwargs):
         tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
+        if "interface" in kwargs:
+            my_intf = kwargs['interface']
+        else:
+            my_intf = None 
+
         if bgp1.switch.is_fortinet():
             bgp_config = f"""
             config router bgp
@@ -650,17 +689,19 @@ class BGP_networks:
             for interface1,interface2 in zip(bgp1.switch.sys_interfaces,bgp2.switch.sys_interfaces):
                 if interface1.name == "mgmt" or interface2.name == "mgmt":
                     continue
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                        edit {interface2.ipv6_2nd.split("/")[0]}
-                            set remote-as {bgp2.ibgp_as}
-                            set update-source {interface1.name}
-                        next
+                if my_intf == None or (interface1.name == my_intf and interface2.name == my_intf):
+                    bgp_config = f"""
+                    config router bgp
+                        config neighbor
+                            edit {interface2.ipv6_2nd.split("/")[0]}
+                                set remote-as {bgp2.ibgp_as}
+                                set update-source {interface1.name}
+                            next
+                        end
                     end
-                end
-                """
-                config_cmds_lines(bgp1.switch.console,bgp_config)
+                    """
+                    config_cmds_lines(bgp1.switch.console,bgp_config)
+
 
         #Cofiguring router #2 
         if bgp2.switch.is_fortinet():
@@ -676,17 +717,18 @@ class BGP_networks:
             for interface1,interface2 in zip(bgp1.switch.sys_interfaces,bgp2.switch.sys_interfaces):
                 if interface1.name == "mgmt" or interface2.name == "mgmt":
                     continue
-                bgp_config = f"""
-                config router bgp
-                    config neighbor
-                        edit {interface1.ipv6_2nd.split("/")[0]}
-                            set remote-as {bgp2.ibgp_as}
-                            set update-source {interface2.name}
-                        next
+                if my_intf == None or (interface1.name == my_intf and interface2.name == my_intf):
+                    bgp_config = f"""
+                    config router bgp
+                        config neighbor
+                            edit {interface1.ipv6_2nd.split("/")[0]}
+                                set remote-as {bgp2.ibgp_as}
+                                set update-source {interface2.name}
+                            next
+                        end
                     end
-                end
-                """
-                config_cmds_lines(bgp2.switch.console,bgp_config)
+                    """
+                    config_cmds_lines(bgp2.switch.console,bgp_config)
            
     def config_ibgp_session_all_interface_v6(self,bgp1,bgp2):
         tprint(f"============== Configurating iBGP peer between {bgp1.switch.name} and {bgp2.switch.name} ")
@@ -4120,6 +4162,7 @@ class Router_BGP:
                 end
             """
             config_cmds_lines(self.switch.console,config)
+
 
     def clear_config_v6(self):
         if self.switch.is_fortinet() == False:
