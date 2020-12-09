@@ -596,6 +596,8 @@ if upgrade_sa:
 			relogin_if_needed(dut)
 		image = find_dut_image(dut)
 		tprint(f"============================ {dut_name} software image = {image} ============")
+	if testcase == 0:
+		exit()
 
 if factory == True:
 	for dut_dir in dut_dir_list:
@@ -944,7 +946,6 @@ if testcase == 6014 or test_all or IPV6:
 		test_clean_config(switches =fsw_switches)
 
 
-	test_clean_config(switches =fsw_switches)
 	test_config_igp_ipv6(switches =fsw_switches)
 
 	if test_config:
@@ -3293,9 +3294,13 @@ if testcase == 6091 or test_all or IPV6:
 		 
 	i = 0
 	for topo in myixia.topologies:
-		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=400)
-		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=200)
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=2000)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=2000)
 		i += 1
+
+	for i in range(6):
+		myixia.topologies[i].change_bgp_routes_attributes(flapping="RANDOM",address_family="v4")
+		myixia.topologies[i].change_bgp_routes_attributes_v6(flapping="RANDOM",address_family="v6")
 
 	myixia.start_protocol(wait=40)
 
@@ -3408,6 +3413,111 @@ if testcase == 6092 or test_all or IPV6:
 	myixia.check_traffic()
 
 	check_bgp_test_result(testcase,description,fsw_switches)
+
+
+if testcase == 6093 or test_all or IPV6:
+	testcase = 6093
+	sys.stdout = Logger(f"Log/bgp_test_{testcase}.log")
+	description = "Basic eBGP traffic forwarding - IPv4 And IPv6 peered to IXIA and traffic forwarding, ipv6 scale and route flapping,longevity"
+	tag = "basic traffic forwarding, ipv6 scale, route flapping,longevity"
+	print_test_subject(testcase,description)
+
+ 
+	ixia_ipv6_as_list = [101,102,103,104,105,106]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1","10.10.5.1","10.10.6.1"]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1","2001:105:1:1::211","2001:106:1:1::1"]
+
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	
+	fsw_switches =switches[1:]
+	sw5 = switches[5]
+	sw6 = switches[6]
+	network = BGP_networks(switches)
+	#Infra configuration
+	if clear_bgp:
+		test_clean_config(switches =fsw_switches)
+	if test_config:
+		test_config_igp_ipv6_fabric(switches =fsw_switches)
+	else:
+		update_igp_database_all(switches =fsw_switches)
+
+	network.biuld_ibgp_mesh_topo_sys_intf_v6()
+	network.biuld_ibgp_mesh_topo_sys_intf()
+	console_timer(20,msg=f"Test case {testcase}: After configuring fully mesh iBGP across all IPv6 system interfaces, wait....")
+	network.show_summary()
+	
+	# FSW configuration
+	for switch, ixia_port_info, ixia_as in zip(fsw_switches,portList_v4_v6,ixia_ipv6_as_list):
+		if switch.router_bgp.config_ebgp_ixia_v6(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v6 peers ==============")
+			exit()
+		if switch.router_bgp.config_ebgp_ixia_v4(ixia_port=ixia_port_info,ixia_as=ixia_as) == False:
+			tprint("================= !!!!! Not able to configure IXIA BGP v4 peers ==============")
+			exit()
+
+	print_title("Get crash information before injecting routes")
+	for sw in fsw_switches:
+		sw.clear_crash_log()
+
+
+	# IXIA configuration
+	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
+	for topo in myixia.topologies:
+		topo.add_ipv6()
+		topo.add_ipv4()
+	 
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		 
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=fsw_switches[i].vlan1_ip,bgp_type='external',num=2000)
+		topo.add_bgp_v6(dut_ip=fsw_switches[i].vlan1_ipv6.split("/")[0],bgp_type='external',prefix_num=2000)
+		i += 1
+
+	for i in range(6):
+		myixia.topologies[i].change_bgp_routes_attributes(flapping="RANDOM",address_family="v4")
+		myixia.topologies[i].change_bgp_routes_attributes_v6(flapping="RANDOM",address_family="v6")
+
+	myixia.start_protocol(wait=40)
+
+
+	myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+	myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+	myixia.create_traffic(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3",tracking_name="Tracking_3")
+	myixia.create_traffic(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2",tracking_name="Tracking_4")
+
+	myixia.create_traffic(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5",tracking_name="Tracking_5")
+	myixia.create_traffic(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4",tracking_name="Tracking_6")
+
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2_v6",tracking_name="Tracking_1_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1_v6",tracking_name="Tracking_2_v6")
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[2].topology, dst_topo=myixia.topologies[3].topology,traffic_name="t2_to_t3_v6",tracking_name="Tracking_3_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[2].topology,traffic_name="t3_to_t2_v6",tracking_name="Tracking_4_v6")
+
+	myixia.create_traffic_v6(src_topo=myixia.topologies[4].topology, dst_topo=myixia.topologies[5].topology,traffic_name="t4_to_t5_v6",tracking_name="Tracking_5_v6")
+	myixia.create_traffic_v6(src_topo=myixia.topologies[5].topology, dst_topo=myixia.topologies[4].topology,traffic_name="t5_to_t4_v6",tracking_name="Tracking_6_v6")
+
+
+	myixia.start_traffic()
+	while True:
+		myixia.collect_stats()
+		myixia.check_traffic()
+
+		print_title("Get crash information after injecting routes and start traffic, check crash every 60 sec")
+
+		for sw in fsw_switches:
+			sw.find_crash()
+			sw.clear_crash_log()
+		console_timer(60,msg="Let traffic run another 60 seconds")
+
 
 
 if testcase == 10 or test_all:

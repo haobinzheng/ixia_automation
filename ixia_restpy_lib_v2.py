@@ -302,6 +302,7 @@ class IXIA_TOPOLOGY:
 
     # bgpiprouteproperty.update(NoOfASPathSegmentsPerRouteRange=num_path)
         bgpiprouteproperty = ipPrefixPool.BgpIPRouteProperty.add()
+        bgpiprouteproperty.NextHopIPType.Single("ipv4")
         if "next_hop" in kwargs:
             next_hop_addr = kwargs["next_hop"]
             bgpiprouteproperty.NextHopType.Single("manual")
@@ -379,10 +380,11 @@ class IXIA_TOPOLOGY:
         if "originator" in kwargs:
             originator = kwargs['originator']
             bgpiprouteproperty.OriginatorId.Single(originator)
-            
+
         if "flapping" in kwargs:
             start_ip = kwargs["flapping"]
             if start_ip.upper() == "RANDOM":
+                bgpiprouteproperty.EnableFlapping.Single("True")
                 bgpiprouteproperty.EnableFlapping.Random()
             else:
                 bgpiprouteproperty.EnableFlapping.Increment(start_value=start_ip, step_value='0.0.0.1')
@@ -470,7 +472,7 @@ class IXIA_TOPOLOGY:
         elif address_family == "v6":
             ipPrefixPool = self.ipv6_pool
             bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
-            # bgpiprouteproperty.NextHopType.Single("sameaslocalip")
+            bgpiprouteproperty.NextHopType.Single("sameaslocalip")
             bgpiprouteproperty.NextHopIPType.Single("ipv6")
             # bgpiprouteproperty = ipPrefixPool.BgpV6IPRouteProperty.add()
 
@@ -488,6 +490,9 @@ class IXIA_TOPOLOGY:
             bgpiprouteproperty.Ipv6NextHop.Single(next_hop_addr)
             bgpiprouteproperty.NextHopIPType.Single("ipv6")
 
+        # if "flapping" in kwargs:
+        #     enable_flapping = kwargs['flapping']
+        #     bgpaspathsegmentlist.EnableFlapping.Single(enable_flapping)
 
         if "num_path" in kwargs:
             num_path = kwargs['num_path']
@@ -706,6 +711,7 @@ class IXIA_TOPOLOGY:
         if "flapping" in kwargs:
             start_ip = kwargs["flapping"]
             if start_ip.upper() == "RANDOM":
+                bgpiprouteproperty.EnableFlapping.Single("True")
                 bgpiprouteproperty.EnableFlapping.Random()
             else:
                 bgpiprouteproperty.EnableFlapping.Increment(start_value=start_ip, step_value='0.0.0.1')
@@ -1785,6 +1791,7 @@ def ixia_rest_change_route_properties(*args, **kwargs):
     if "flapping" in kwargs:
         start_ip = kwargs["flapping"]
         if start_ip.upper() == "RANDOM":
+            bgpiprouteproperty.EnableFlapping.Single("True")
             bgpiprouteproperty.EnableFlapping.Random()
         else:
             bgpiprouteproperty.EnableFlapping.Increment(start_value=start_ip, step_value='0.0.0.1')
@@ -1805,7 +1812,7 @@ if __name__ == "__main__":
     # [ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1",104,"10.1.1.104/24","10.1.1.1"], 
     # [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
     # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
-
+    
     ipv6_portList = [[ixChassisIpList[0], 8,13,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
     [ixChassisIpList[0], 8, 14,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
     [ixChassisIpList[0], 8, 15,"00:13:01:01:01:01","2001:0010.0030.0001.0001.",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],

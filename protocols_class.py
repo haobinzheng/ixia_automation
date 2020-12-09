@@ -32,8 +32,11 @@ class Router_BFD:
         neighbor_dict_list = self.get_bfd_neighbors(version="v6")
         neighbor_list = []
         for n in neighbor_dict_list:
-            neighbor = BFD_Peer(n)
-            neighbor_list.append(neighbor)
+            try: 
+                neighbor = BFD_Peer(n)
+                neighbor_list.append(neighbor)
+            except:
+                pass
         self.peer_list_v6 = neighbor_list
         return neighbor_list
 
