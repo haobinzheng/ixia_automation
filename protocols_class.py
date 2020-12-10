@@ -5703,3 +5703,81 @@ class FortiSwitch:
         dut = self.console
         result = collect_show_cmd(dut,cmd,t=3)
         print_collect_show(result)
+
+
+class tbinfo():
+    def __init__(self,*args, **kwargs):
+        self.devices = None
+        self.ixia = None
+        self.connections = None
+
+        
+class Connection_XML():
+    def __init__(self,*args,**kwargs):
+        self.connection_string = None
+        self.type = None
+        self.mode = None
+        self.left_string = None
+        self.right_string = None
+        self.left_device = None
+        self.left_port = None
+        self.right_device = None
+        self.right_port = None
+
+    def print_connection_info(self):
+        print(f"Connection String In XML File = {self.connection_string}")
+        print(f"Connection Type = {self.type}")
+        print(f"Connection Mode = {self.mode}")
+        print(f"Connection Left String = {self.left_string}")
+        print(f"Connection Right String = {self.right_string}")
+        print(f"Connection Left Device = {self.left_device}")
+        print(f"Connection Left Port = {self.left_port}")
+        print(f"Connection Right Device = {self.right_device}")
+        print(f"Connection Right Port = {self.right_port}")
+
+    def parse_string(self):
+            self.left_string,self.right_string = self.connection_string.split(',')
+            self.left_device,self.left_port = self.left_string.split(":")
+            self.right_device,self.right_port = self.right_string.split(":")
+
+class IXIA_XML():
+    def __init__(self, *args, **kwargs):
+        #<trafgen1 type="IXIA" model="IXIA" chassis_ip="10.160.12.5" tcl_server_ip="10.160.12.5" ixnetwork_server_ip="10.160.37.24:8030">
+        self.type = None
+        self.model = None
+        self.chassis_ip= None
+        self.tcl_server_ip = None
+        self.ixnetwork_server_ip= None
+
+
+
+    def print_ixia_info(self):
+        print(f"IXIA Type = {self.type}")
+        print(f"IXIA Mode = {self.model}")
+        print(f"IXIA Chassis IP = {self.chassis_ip}")
+        print(f"IXIA TCL Server IP = {self.tcl_server_ip}")
+        print(f"IXIA Ixnetwork Server IP = {self.ixnetwork_server_ip}")
+         
+class Device_XML():
+    def __init__(self,*args,**kwargs):
+        self.name = None
+        self.console_ip = None
+        self.console_line = None
+        self.username = None
+        self.password = None
+        self.mgmt_ip = None
+        self.mgmt_netmask = None
+        self.mgmt_gateway = None
+        self.license = None
+
+
+    def print_info(self):
+        print(f"Device Name in XML File = {self.name}")
+        print(f"Console IP = {self.console_ip}")
+        print(f"Console Line = {self.console_line}")
+        print(f"Mamangement IP = {self.mgmt_ip}")
+        print(f"Management Mask = {self.mgmt_netmask}")
+        print(f"Management Gateway = {self.mgmt_gateway}")
+        print(f"Login username= {self.username}")
+        print(f"Login password= {self.password}")
+        print(f"License = {self.license}")

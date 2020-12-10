@@ -2,10 +2,13 @@ from utils import *
 #import settings 
 import xmltodict
 import xml.etree.ElementTree as ET
+import untangle
 from test_process import * 
 from common_lib import *
 from common_codes import *
 from cli_functions import *
+from protocols_class import *
+
 
 
 def _parse_xml(file):
@@ -31,11 +34,70 @@ def _parse_xml(file):
             print(i.tag)
             print("----------- i.items() -----------")
             print(i.items())
-           
-    # with open('tbinfo_bgpv6.xml','r') as tbinfo:
-    #     result = xmltodict.parse(tbinfo)
-    #     print(result)
-    #     exit()
+
+def parse_xml_untangle(file):
+    obj = untangle.parse(file)
+    print(obj.testbed.children)
+    root_elements = getattr(obj.testbed,'children')
+    devices = []
+    for e in root_elements:
+        name = e.__dict__['_name']
+        print(name)
+        if "dev" in name:
+            print("this is a device element")
+            device = Device_XML()
+            device.name = name
+            for ee in e.get_elements():
+                # print(ee)
+                if ee.__dict__['_name'] == "console":
+                    dprint("-------this is console")
+                    dprint(ee)
+                    device.console_ip = ee.get_attribute("ip")
+                    device.console_line = ee.get_attribute("line")
+                elif ee.__dict__['_name'] == "login":
+                    dprint("------this is login")
+                    dprint(ee)
+                    device.username = ee.get_attribute("username")
+                    device.password = ee.get_attribute("password")
+                elif ee.__dict__['_name'] == "mgmt":
+                    dprint("-------this is mgmt")
+                    dprint(ee)
+                    device.mgmt_ip = ee.get_attribute("ip")
+                    device.mgmt_netmask = ee.get_attribute("netmask")
+                    device.mgmt_gateway = ee.get_attribute("gateway")
+                elif ee.__dict__['_name'] == "license":
+                    dprint("------this is license")
+                    dprint(ee)
+                    device.license = ee.get_attribute("licenses")
+            device.print_info()
+            devices.append(device)  
+        elif "trafgen" in name:
+            print("this is a ixia traffic generator element")
+            #<trafgen1 type="IXIA" model="IXIA" chassis_ip="10.160.12.5" tcl_server_ip="10.160.12.5" ixnetwork_server_ip="10.160.37.24:8030">
+            ixia = IXIA_XML()
+            ixia.type = e.get_attribute("type")
+            ixia.model =e.get_attribute("model")
+            ixia.chassis_ip= e.get_attribute("chassis_ip")
+            ixia.tcl_server_ip = e.get_attribute("tcl_server_ip")
+            ixia.ixnetwork_server_ip= e.get_attribute("ixnetwork_server_ip")
+            ixia.print_ixia_info()
+        elif "connections" in name:
+            print("this is a connection element")
+            connections = []
+            for ee in e.get_elements():
+                print(ee)
+                connection = Connection_XML()
+                connection.connection_string = ee.get_attribute("link")
+                connection.type = ee.get_attribute("type")
+                connection.mode = ee.get_attribute("mode")
+                connection.parse_string()
+                connection.print_connection_info()
+                connections.append(connection)
+     tb = tbinfo()
+     tb.devices = devices
+     tb.ixia = ixia
+     tb.connections = connections
+     return tb
 
 # def bgp_testbed_init():
 #     dut1_com = "10.105.241.144"
@@ -1054,6 +1116,8 @@ def sw_init_config(*args, **kwargs):
 
 if __name__ == "__main__":
     file = 'tbinfo_bgpv6.xml'
+    parse_xml_untangle(file)
+    exit()
     _parse_xml(file)
 
 
