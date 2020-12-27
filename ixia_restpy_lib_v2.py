@@ -33,6 +33,8 @@ class IXIA_TOPOLOGY:
         self.ipv4_session = None
         self.ipv6_session = None
         self.multiplier = kwargs['multiplier']
+        self.igmp_v4 = None
+        self.igmp_role = None
         self.ethernet,self.device_group,self.topology = ixia_rest_create_topology(
         platform = self.ixia.testPlatform, 
         session = self.ixia.Session,
@@ -45,6 +47,47 @@ class IXIA_TOPOLOGY:
         mac_start = self.mac_start
         )     
 
+    def add_mld_host(self,*args,**kwargs):
+        start_addr = kwargs['start_addr']
+        num = kwargs['num']
+        self.igmp_host_v4 = ixia_rest_create_mld_host(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = "mld_host",
+            mcast_addr_start=start_addr,
+            count=num,
+            ip = self.ipv6_session,
+        )
+
+    def add_mld_querier(self,*args,**kwargs):
+        self.igmp_querier_v4 = ixia_rest_create_mld_querier(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = "mld_querier",
+            ip = self.ipv6_session,
+        )
+
+
+    def add_igmp_host_v4(self,*args,**kwargs):
+        start_addr = kwargs['start_addr']
+        num = kwargs['num']
+        self.igmp_host_v4 = ixia_rest_create_igmp_host_v4(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = "igmp_host",
+            mcast_addr_start=start_addr,
+            count=num,
+            ip = self.ipv4_session,
+        )
+
+    
+    def add_igmp_querier_v4(self,*args,**kwargs):
+        self.igmp_querier_v4 = ixia_rest_create_igmp_querier_v4(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = "igmp_querier",
+            ip = self.ipv4_session,
+        )
 
     def add_ipv6(self,*args,**kwargs):
         # ip = kwargs['ip']
@@ -802,6 +845,43 @@ class IXIA:
             i += 1
         return topo_list
 
+    def create_mcast_traffic_v4(self,*args,**kwargs):
+        src_topo = kwargs['src_topo']
+        start_group = kwargs['start_group']
+        num = kwargs['num']
+        traffic_name = kwargs['traffic_name']
+        tracking_name = kwargs['tracking_name']
+
+        ixia_rest_create_mcast_traffic_v4(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork,
+        src_topo = src_topo,
+        start_group = start_group,
+        traffic_name= traffic_name,
+        num = num,
+        tracking_name =tracking_name,
+        )
+
+    def create_mcast_traffic_v6(self,*args,**kwargs):
+        src_topo = kwargs['src_topo']
+        start_group = kwargs['start_group']
+        num = kwargs['num']
+        traffic_name = kwargs['traffic_name']
+        tracking_name = kwargs['tracking_name']
+
+        ixia_rest_create_mcast_traffic_v6(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork,
+        src_topo = src_topo,
+        start_group = start_group,
+        traffic_name= traffic_name,
+        num = num,
+        tracking_name =tracking_name,
+        )
+
+
     def create_traffic(self,*args,**kwargs):
         src_topo = kwargs['src_topo']
         dst_topo = kwargs['dst_topo']
@@ -815,7 +895,7 @@ class IXIA:
         dst = dst_topo,
         name= traffic_name,
         tracking_group = tracking_name,
-    )
+        )
 
     def create_traffic_v6(self,*args,**kwargs):
         src_topo = kwargs['src_topo']
@@ -835,7 +915,7 @@ class IXIA:
         name= traffic_name,
         tracking_group = tracking_name,
         rate = rate,
-    )
+        )
     def start_traffic(self):
 
         ixia_rest_start_traffic(
@@ -1273,7 +1353,7 @@ def ixia_rest_dhcp_server_address(*args,**kwargs):
         start_ip = kwargs['start_ip']
         prefix = kwargs['prefix']
 
-        ixNetwork.info('Configuring IPv4 Dhcpv4sver IP Gateway')
+        ixNetwork.info('Configuring IPv4 Dhcpv4sver Addresses')
         dhcp_server.Dhcp4ServerSessions.IpAddress.Increment(start_value=start_ip, step_value="0.0.0.1")
         testPlatform.info(dhcp_server.Dhcp4ServerSessions.IpAddress)
         dhcp_server.Dhcp4ServerSessions.IpPrefix.Single(prefix)
@@ -1355,6 +1435,117 @@ def ixia_rest_stop_protocols(*args,**kwargs):
             if debugMode == False and 'session' in locals():
                 wait_time += 10
 
+def ixia_rest_create_mcast_traffic_v4(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        src_topo = kwargs['src_topo']
+        start_group = kwargs["start_group"]
+        traffic_name = kwargs['traffic_name']
+        tracking_name = kwargs['tracking_name']
+        num = kwargs['num']
+         
+
+        ixNetwork.info('Create IPv4 Multicast Traffic Item')
+        trafficItem = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType="ipv4",TransmitMode='sequential')
+
+        ixNetwork.info('Adding multicast endpoint flow group')
+
+        multicast_destinations = [
+            {
+                'arg1': False,
+                'arg2': 'igmp',
+                'arg3': start_group,
+                'arg4': '0.0.0.1',
+                'arg5': num
+            },
+            {
+                'arg1': False,
+                'arg2': 'igmp',
+                'arg3': '239.2.1.1',
+                'arg4': '0.0.0.1',
+                'arg5': num
+            },
+        ]
+        trafficItem.EndpointSet.add(Sources=src_topo, MulticastDestinations=multicast_destinations)
+        # trafficItem.Tracking.find()[0].TrackBy = [tracking_group]
+        
+
+        # # Note: A Traffic Item could have multiple EndpointSets (Flow groups).
+        # #       Therefore, ConfigElement is a list.
+        ixNetwork.info('Configuring config elements')
+        configElement = trafficItem.ConfigElement.find()[0]
+        configElement.FrameRate.update(Type='percentLineRate', Rate=3)
+        #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+        configElement.TransmissionControl.update(Type='continuous')
+        configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
+        configElement.FrameSize.FixedSize = 1000
+        
+        trafficItem.Generate()
+
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+
+def ixia_rest_create_mcast_traffic_v6(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        src_topo = kwargs['src_topo']
+        start_group = kwargs["start_group"]
+        traffic_name = kwargs['traffic_name']
+        tracking_name = kwargs['tracking_name']
+        num = kwargs['num']
+         
+
+        ixNetwork.info('Create IPv4 Multicast Traffic Item')
+        trafficItem = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType="ipv6",TransmitMode='sequential') 
+
+        ixNetwork.info('Adding multicast endpoint flow group')
+
+        multicast_destinations = [
+            {
+                'arg1': False,
+                'arg2': 'igmp',
+                'arg3': start_group,
+                'arg4': '::1',
+                'arg5': num
+            },
+            {
+                'arg1': False,
+                'arg2': 'igmp',
+                'arg3': 'ff3d::1:1:1',
+                'arg4': '::1',
+                'arg5': num
+            },
+        ]
+        trafficItem.EndpointSet.add(Sources=src_topo, MulticastDestinations=multicast_destinations)
+        # trafficItem.Tracking.find()[0].TrackBy = [tracking_group]
+        
+
+        # # Note: A Traffic Item could have multiple EndpointSets (Flow groups).
+        # #       Therefore, ConfigElement is a list.
+        ixNetwork.info('Configuring config elements')
+        configElement = trafficItem.ConfigElement.find()[0]
+        configElement.FrameRate.update(Type='percentLineRate', Rate=3)
+        #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+        configElement.TransmissionControl.update(Type='continuous')
+        configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
+        configElement.FrameSize.FixedSize = 1000
+        
+        trafficItem.Generate()
+
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+
+
 def ixia_rest_create_traffic(*args,**kwargs):
     debugMode = False
     try:
@@ -1385,27 +1576,7 @@ def ixia_rest_create_traffic(*args,**kwargs):
         configElement.FrameSize.FixedSize = 1000
         
         trafficItem.Generate()
-        
-        # ixNetwork.Traffic.Apply()
-        # ixNetwork.Traffic.Start()
-
-        # StatViewAssistant could also filter by REGEX, LESS_THAN, GREATER_THAN, EQUAL. 
-        # Examples:
-        #    flowStatistics.AddRowFilter('Port Name', StatViewAssistant.REGEX, '^Port 1$')
-        #    flowStatistics.AddRowFilter('Tx Frames', StatViewAssistant.LESS_THAN, 50000)
-
-        # flowStatistics = StatViewAssistant(ixNetwork, 'Flow Statistics')
-        # ixNetwork.info('{}\n'.format(flowStatistics))
-
-        # for rowNumber,flowStat in enumerate(flowStatistics.Rows):
-        #     ixNetwork.info('\n\nSTATS: {}\n\n'.format(flowStat))
-        #     ixNetwork.info('\nRow:{}  TxPort:{}  RxPort:{}  TxFrames:{}  RxFrames:{}\n'.format(
-        #         rowNumber, flowStat['Tx Port'], flowStat['Rx Port'],
-        #         flowStat['Tx Frames'], flowStat['Rx Frames']))
-
-        # flowStatistics = StatViewAssistant(ixNetwork, 'Traffic Item Statistics')
-        # ixNetwork.info('{}\n'.format(flowStatistics))
-
+         
     except Exception as errMsg:
         print('\n%s' % traceback.format_exc(None, errMsg))
         if debugMode == False and 'session' in locals():
@@ -1565,7 +1736,7 @@ def ixia_rest_collect_stats(*args,**kwargs):
 
 def check_traffic(flow_stats_list):
     for flow in flow_stats_list:
-        if flow["Frames Delta"] > 20:
+        if flow["Frames Delta"] > 200:
             return False
     return True
 
@@ -1593,7 +1764,60 @@ def ixia_rest_create_ptp(*args,**kwargs):
     #ixia_rest_set_med(pool=ipv4PrefixPool,med=1234,platform=testplatform)
     return ptp
  
+def ixia_rest_create_igmp_host_v4(*args,**kwargs):
+    testplatform = kwargs['platform']
+    igmp_host_name = kwargs['name']
+    ipv4 = kwargs['ip']
+    ixNetwork = kwargs['ixnet']
+    mcast_addr_start = kwargs['mcast_addr_start']
+    count = kwargs['count']
 
+    ixNetwork.info(f'Configuring IgmpHost {igmp_host_name}')
+    igmp = ipv4.IgmpHost.add(Name=igmp_host_name)
+    igmp.IgmpMcastIPv4GroupList.StartMcastAddr.Increment(start_value=mcast_addr_start, step_value='0.0.0.1')
+    igmp.IgmpMcastIPv4GroupList.McastAddrCnt.Single(count)
+    igmp.IgmpStartHost()
+     
+    return igmp
+
+def ixia_rest_create_mld_host(*args,**kwargs):
+    testplatform = kwargs['platform']
+    igmp_host_name = kwargs['name']
+    ipv6 = kwargs['ip']
+    ixNetwork = kwargs['ixnet']
+    mcast_addr_start = kwargs['mcast_addr_start']
+    count = kwargs['count']
+
+    ixNetwork.info(f'Configuring IgmpHost {igmp_host_name}')
+    igmp = ipv6.MldHost.add(Name=igmp_host_name)
+    igmp.MldMcastIPv6GroupList.StartMcastAddr.Increment(start_value=mcast_addr_start, step_value='::1')
+    igmp.MldMcastIPv6GroupList.McastAddrCnt.Single(count)
+    igmp.MldStartHost()
+     
+    return igmp
+
+def ixia_rest_create_mld_querier(*args,**kwargs):
+    testplatform = kwargs['platform']
+    igmp_host_name = kwargs['name']
+    ipv6 = kwargs['ip']
+    ixNetwork = kwargs['ixnet']
+
+    ixNetwork.info(f'Configuring IgmpQuerier {igmp_host_name}')
+    igmp = ipv6.MldQuerier.add(Name=igmp_host_name)
+    igmp.MldStartQuerier()
+    return igmp
+ 
+def ixia_rest_create_igmp_querier_v4(*args,**kwargs):
+    testplatform = kwargs['platform']
+    igmp_host_name = kwargs['name']
+    ipv4 = kwargs['ip']
+    ixNetwork = kwargs['ixnet']
+
+    ixNetwork.info(f'Configuring IgmpQuerier {igmp_host_name}')
+    igmp = ipv4.IgmpQuerier.add(Name=igmp_host_name)
+    igmp.IgmpStartQuerier()
+    return igmp
+ 
 def ixia_rest_create_bgp(*args,**kwargs):
     testplatform = kwargs['platform']
     bgp_name = kwargs['name']

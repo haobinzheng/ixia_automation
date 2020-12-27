@@ -5704,6 +5704,22 @@ class FortiSwitch:
         result = collect_show_cmd(dut,cmd,t=3)
         print_collect_show(result)
 
+class FortiSwitch_XML(FortiSwitch):
+    def __init__(self,*args,**kwargs):
+        device_xml = args[0]
+        self.name = device_xml.name
+        self.console_ip = device_xml.console_ip
+        self.console_line = device_xml.console_line
+        self.username = device_xml.username
+        self.password = device_xml.password
+        self.mgmt_ip = device_xml.mgmt_ip
+        self.mgmt_netmask = device_xml.mgmt_netmask
+        self.mgmt_gateway = device_xml.mgmt_gateway
+        self.license = device_xml.license
+        self.role = device_xml.role
+        self.type = device_xml.type
+        self.active = device_xml.active
+        self.console = telnet_switch(self.console_ip,self.console_line)
 
 class tbinfo():
     def __init__(self,*args, **kwargs):
@@ -5711,29 +5727,100 @@ class tbinfo():
         self.ixia = None
         self.connections = None
 
-        
+    def show_tbinfo(self):
+        for d in self.devices:
+            print_dash_line()
+            d.print_info()
+
+        print_double_line()
+        self.ixia.print_ixia_info()
+
+        print_double_line()
+
+        for c in self.connections:
+            print_dash_line()
+            c.print_connection_info()
+
+
 class Connection_XML():
     def __init__(self,*args,**kwargs):
+        self.name = None
         self.connection_string = None
         self.type = None
         self.mode = None
         self.left_string = None
         self.right_string = None
         self.left_device = None
+        self.left_device_obj = None
+        self.left_switch = None
         self.left_port = None
         self.right_device = None
+        self.right_device_obj = None
+        self.right_switch = None
         self.right_port = None
+        self.active = False
+        self.testtopo_name = None
 
     def print_connection_info(self):
+        print(f"Connection name = {self.name}")
         print(f"Connection String In XML File = {self.connection_string}")
         print(f"Connection Type = {self.type}")
         print(f"Connection Mode = {self.mode}")
         print(f"Connection Left String = {self.left_string}")
         print(f"Connection Right String = {self.right_string}")
-        print(f"Connection Left Device = {self.left_device}")
+        print(f"Connection Left Device Name = {self.left_device}")
+        print(f"Connection Left Device Object = {self.left_device_obj}")
         print(f"Connection Left Port = {self.left_port}")
-        print(f"Connection Right Device = {self.right_device}")
+        print(f"Connection Right Device Name = {self.right_device}")
+        print(f"Connection Right Device Object = {self.right_device_obj}")
         print(f"Connection Right Port = {self.right_port}")
+        print(f"Connection Active In this testing = {self.active}")
+        print(f"Connection link name in test topology = {self.testtopo_name}")
+
+    def update_obj(self,devices,ixia):
+        left_found = False
+        right_found = False
+        for d in devices:
+            if d.name == self.left_device:
+                self.left_device_obj = d
+                left_found = True
+                break
+        if left_found == False:
+            if ixia.name == self.left_device:
+                self.left_device_obj = ixia
+        for d in devices:
+            if d.name == self.right_device:
+                self.right_device_obj = d
+                break
+        if right_found == False:
+            if ixia.name == self.right_device:
+                self.right_device_obj = ixia
+
+    def update_devices_obj(self,switches):
+        for s in switches:
+            if s.name == self.left_device: 
+                self.left_switch = s
+            elif s.name == self.right_device: 
+                self.right_switch = s
+
+    def shut_unused_ports(self):
+        if self.active == False:
+            if self.left_switch:
+                switch_shut_port(self.left_switch.console,self.left_port)
+            if self.right_switch:
+                switch_shut_port(self.right_switch.console,self.right_port)
+        else:
+            if self.left_switch:
+                switch_unshut_port(self.left_switch.console,self.left_port)
+            if self.right_switch:
+                switch_unshut_port(self.right_switch.console,self.right_port)
+
+    def unshut_all_ports(self):
+        if self.left_switch:
+            switch_unshut_port(self.left_switch.console,self.left_port)
+        if self.right_switch:
+            switch_unshut_port(self.right_switch.console,self.right_port)
+
 
     def parse_string(self):
             self.left_string,self.right_string = self.connection_string.split(',')
@@ -5743,21 +5830,35 @@ class Connection_XML():
 class IXIA_XML():
     def __init__(self, *args, **kwargs):
         #<trafgen1 type="IXIA" model="IXIA" chassis_ip="10.160.12.5" tcl_server_ip="10.160.12.5" ixnetwork_server_ip="10.160.37.24:8030">
+        self.name = None
         self.type = None
         self.model = None
-        self.chassis_ip= None
+        self.chassis_ip = None
         self.tcl_server_ip = None
-        self.ixnetwork_server_ip= None
-
+        self.ixnetwork_server_ip = None
+        self.ixnetwork_server_port = None
+        self.active = False
+        self.port_list = []
+        self.port_active_list = []
 
 
     def print_ixia_info(self):
+        print(f"IXIA Name in XML  = {self.name}")
         print(f"IXIA Type = {self.type}")
         print(f"IXIA Mode = {self.model}")
         print(f"IXIA Chassis IP = {self.chassis_ip}")
         print(f"IXIA TCL Server IP = {self.tcl_server_ip}")
         print(f"IXIA Ixnetwork Server IP = {self.ixnetwork_server_ip}")
-         
+        print(f"IXIA Ixnetwork Server Port = {self.ixnetwork_server_port}")
+
+    def update_ixia_portList(self,connections):
+        for c in connections:
+            if "trafgen" in c.right_device:
+                self.port_list.append(c.right_port)
+                if c.active:
+                    self.port_active_list.append(c.right_port)
+
+            
 class Device_XML():
     def __init__(self,*args,**kwargs):
         self.name = None
@@ -5769,10 +5870,16 @@ class Device_XML():
         self.mgmt_netmask = None
         self.mgmt_gateway = None
         self.license = None
+        self.role = None
+        self.type = None
+        self.active = False
 
 
     def print_info(self):
         print(f"Device Name in XML File = {self.name}")
+        print(f"Device type = {self.type}")
+        print(f"Device Active = {self.active}")
+        print(f"Device Role = {self.role}")
         print(f"Console IP = {self.console_ip}")
         print(f"Console Line = {self.console_line}")
         print(f"Mamangement IP = {self.mgmt_ip}")
@@ -5781,3 +5888,5 @@ class Device_XML():
         print(f"Login username= {self.username}")
         print(f"Login password= {self.password}")
         print(f"License = {self.license}")
+        print(f"Device actively used this the test topo = {self.active}")
+        print(f"Device role in this the test topo = {self.role}")

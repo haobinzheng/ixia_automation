@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testtopo>
+ <dev1 type="FSW" role="DUT"> </dev1>
+ <dev2 type="FSW" role="Neighber"> </dev2>
+ <dev3 type="FSW" role="Neighber"> </dev3>
+ <trafgen1 type="IXIA" model="IXIA" role="trafgen"> </trafgen1>
+ <connections>
+  <link1 link="dev1,dev2" type="GigabitEthernet"> </link1>
+  <link2 link="dev1,dev2" type="GigabitEthernet"> </link2>
+  <link3 link="dev2,dev3" type="GigabitEthernet"> </link3>
+  <link4 link="dev1,trafgen1" type="GigabitEthernet"> </link4>
+  <link5 link="dev1,trafgen1" type="GigabitEthernet"> </link5>
+  <link6 link="dev2,trafgen1" type="GigabitEthernet"> </link6>
+  <link7 link="dev2,trafgen1" type="GigabitEthernet"> </link7>
+  <link8 link="dev2,trafgen1" type="GigabitEthernet"> </link8>
+  <link9 link="dev3,trafgen1" type="GigabitEthernet"> </link9>
+  <link10 link="dev3,trafgen1" type="GigabitEthernet"> </link10>
+  <link11 link="dev3,trafgen1" type="GigabitEthernet"> </link11>
+ </connections>
+</testtopo>
