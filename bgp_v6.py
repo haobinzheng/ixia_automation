@@ -651,27 +651,6 @@ if setup:
 	# 	# stop_threads = False
 	# 	# dut_cpu_memory(dut_dir_list,lambda: stop_threads)
 
-if upgrade_sa:
-	for dut_dir in dut_dir_list:
-		result = fsw_upgrade(build=sw_build,dut_dict=dut_dir)
-		if not result:
-			tprint(f"############# Upgrade {dut_dir['name']} to build #{sw_build} Fails ########### ")
-		else:
-			tprint(f"############# Upgrade {dut_dir['name']} to build #{sw_build} is successful ############")
-
-	console_timer(400,msg="Wait for 400s after started upgrading all switches")
-	for dut_dir in dut_dir_list:
-		dut = dut_dir['telnet']
-		dut_name = dut_dir['name']
-		try:
-			relogin_if_needed(dut)
-		except Exception as e:
-			debug("something is wrong with rlogin_if_needed at bgp, try again")
-			relogin_if_needed(dut)
-		image = find_dut_image(dut)
-		tprint(f"============================ {dut_name} software image = {image} ============")
-	if testcase == 0:
-		exit()
 
 if Reboot:
 	for dut_dir in dut_dir_list:

@@ -4407,6 +4407,102 @@ class FortiSwitch:
         self.disable_diag_debugs()
         #self.add_extra_ipv6()
 
+    def config_switch_interface_cmd(self,*args,**kwargs):
+        cmd = kwargs["cmd"]
+        port = kwargs["port"]
+        config = f"""
+            config switch interface
+                edit {port}
+                    {cmd}
+                next
+            end
+            """
+        config_cmds_lines(self.console,config)
+
+
+    def fsw_upgrade(self,*args,**kwargs):
+        if "build" in kwargs:
+            build = int(kwargs['build'])
+        else:
+            ErrorNotify("Software build number is missing. Exmaple: build=xxx.  Exiting program")
+            exit(-1)
+        dut = self.console
+        dut_name = self.name
+        
+        tprint(f"=================== Upgrading FSW {dut_name} to build # {build} =================")
+        model = find_dut_model(dut)
+        model = model.strip()
+        if model == "FSW_448D_FPOE":
+            image_name = f"FSW_448D_FPOE-v6-build0{build}-FORTINET.out"
+        elif model == "FSW_448D_POE":
+            image_name =  f"FSW_448D_POE-v6-build0{build}-FORTINET.out" 
+        elif model == "FSW_448D-v6":
+            image_name = f"FSW_448D-v6-build0{build}-FORTINET.out"
+        elif model == "FortiSwitch-3032E":
+            if build == -1:
+                image_name = "fs3e32.deb"
+            else:
+                image_name = f"FSW_3032E-v6-build0{build}-FORTINET.out"
+        elif model == "FortiSwitch-3032D":
+            if build == -1:
+                image_name = "fs3d32.deb"
+            else:
+                image_name = f"FSW_3032D-v6-build0{build}-FORTINET.out"
+        elif model == "FortiSwitch-1048E":
+            if build == -1:
+                image_name = "fs1e48.deb"
+            else:
+                image_name = f"FSW_1048E-v6-build0{build}-FORTINET.out"
+        elif model == "FortiSwitch-1048D":
+            if build == -1:
+                image_name = "fs1d48.deb"
+            else:
+                image_name = f"FSW_1048D-v6-build0{build}-FORTINET.out"
+        elif model == "FortiSwitch-1024D":
+            if build == -1:
+                image_name = "fs1d24.deb"
+            else:
+                image_name = f"FSW_1024D-v6-build0{build}-FORTINET.out"
+        elif model == "FortiSwitch-548D-FPOE":
+                image_name = f"FSW_548D_FPOE-v6-build0{build}-FORTINET.out"
+        elif model == "FortiSwitch-548D":
+                image_name = f"FSW_548D-v6-build0{build}-FORTINET.out"
+        else:
+            tprint("!!!!!!!!! Not able to identify switch platform, upgrade fails")
+            return False
+
+        dprint(f"image name = {image_name}")
+        cmd = f"execute restore image tftp {image_name} 10.105.19.19"
+        tprint(f"upgrade command = {cmd}")
+        switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
+        #console_timer(60,msg="wait for 60s to download image from tftp server")
+        #switch_wait_enter_yes(dut,"Do you want to continue? (y/n)")
+        prompt = "Do you want to continue? (y/n)"
+        output = switch_read_console_output(dut,timeout = 40)
+        dprint(output)
+        result = False
+        for line in output: 
+            if "Command fail" in line:
+                Info(f"upgrade with image {image_name} failed for {dut_name}")
+                result = False
+
+            elif "Check image OK" in line:
+                Info(f"At {dut_name} image {image_name} is downloaded and checked OK,upgrade should be fine")
+                result = True
+
+            elif "Writing the disk" in line:
+                Info(f"At {dut_name} image {image_name} is being written into disk, upgrade is Good!")
+                result = True
+
+            elif "Do you want to continue" in line:
+                dprint(f"Being prompted to answer yes/no 2nd time.  Prompt = {prompt}")
+                switch_enter_yes(dut)
+                result = True
+            else:
+                pass
+        return result
+
+
     def collect_linux_cmd(self,*args,**kwargs):
         if "cmd" in kwargs:
             linux_cmd = kwargs['cmd']
@@ -4518,6 +4614,25 @@ class FortiSwitch:
             return 
         else:
             switch_exec_reboot(self.console,device=self.name)
+
+    def switch_relogin(self):
+        tn = self.console
+        if switch_find_login_prompt(self.console) == True:
+            tn.read_until(("login: ").encode('ascii'),timeout=10)
+            tn.write(('admin' + '\n').encode('ascii'))
+            tn.read_until(("Password: ").encode('ascii'),timeout=10)
+            tn.write(('Fortinet123!' + '\n').encode('ascii'))
+            sleep(1)
+            tn.read_until(("# ").encode('ascii'),timeout=10)
+            switch_configure_cmd(tn,'config system global',mode="silent")
+            switch_configure_cmd(tn,'set admintimeout 480',mode="silent")
+            switch_configure_cmd(tn,'end',mode="silent")
+            return True
+        else:
+            switch_configure_cmd(self.console,'config system global',mode='silent')
+            switch_configure_cmd(self.console,'set admintimeout 480',mode='silent')
+            switch_configure_cmd(self.console,'end',mode='silent')
+            return 
 
     def relogin(self):
         dut = self.console
@@ -5396,17 +5511,17 @@ class FortiSwitch:
     def factory_reset_nologin(self):
         switch_factory_reset_nologin(self.dut_dir)
 
-    def relogin(self):
-        dut = self.console
-        tprint(f"============ relogin {self.name} ====== ")
-        try:
-            relogin_if_needed(dut)
-        except Exception as e:
-            debug("something is wrong with rlogin_if_needed at bgp test cases, try again")
-            relogin_if_needed(dut)
-        image = find_dut_image(dut)
-        tprint(f"============================ {self.name} software image = {image} ============")
-        switch_show_cmd(self.console,"get system status")
+    # def relogin(self):
+    #     dut = self.console
+    #     tprint(f"============ relogin {self.name} ====== ")
+    #     try:
+    #         relogin_if_needed(dut)
+    #     except Exception as e:
+    #         debug("something is wrong with rlogin_if_needed at bgp test cases, try again")
+    #         relogin_if_needed(dut)
+    #     image = find_dut_image(dut)
+    #     tprint(f"============================ {self.name} software image = {image} ============")
+    #     switch_show_cmd(self.console,"get system status")
     
     def show_log(self):
         sw_display_log(self.console,lines=200)
@@ -5812,8 +5927,10 @@ class Connection_XML():
         else:
             if self.left_switch:
                 switch_unshut_port(self.left_switch.console,self.left_port)
+                self.left_switch.config_switch_interface_cmd(cmd="set allowed-vlan 1-4000",port=self.left_port)
             if self.right_switch:
                 switch_unshut_port(self.right_switch.console,self.right_port)
+                self.right_switch.config_switch_interface_cmd(cmd="set allowed-vlan 1-4000",port=self.right_port)
 
     def unshut_all_ports(self):
         if self.left_switch:

@@ -736,13 +736,23 @@ def cisco_testbed_init():
 
 def fsw_upgrade(*args,**kwargs):
     build = int(kwargs['build'])
-    dut_dict = kwargs['dut_dict']
-    dut_name = dut_dict['name']
-    dut = dut_dict['telnet']
+    if "dut_dict" in kwargs:
+        dut_dict = kwargs['dut_dict']
+    else:
+        dut_dict = None
+    if "dut_name" in kwargs:
+        dut_name = dut_dict['name']
+    else:
+        dut_name = None
+    if "dut" in kwargs:
+        dut = dut_dict['telnet']
+    else:
+        dut = None
 
     print(f'=============   Platform = dut_dict["platform"]')
-    if dut_dict['platform'] != "fortinet":
-        return
+    if dir_dict != None:
+        if dut_dict['platform'] != "fortinet":
+            return
     
     tprint(f"=================== Upgrading FSW {dut_name} to build # {build} =================")
     model = find_dut_model(dut)

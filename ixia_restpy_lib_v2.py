@@ -1717,6 +1717,7 @@ def ixia_rest_collect_stats(*args,**kwargs):
             flowStat_dict['Tx Frames'] = int(flowStat['Tx Frames'])
             flowStat_dict['Rx Frames'] = int(flowStat['Rx Frames'])
             flowStat_dict["Frames Delta"] = int(flowStat["Frames Delta"])
+            flowStat_dict['Loss %'] = float((flowStat['Loss %']))
             flowStat_dict["Tx Rate (Bps)"] = (flowStat["Tx Rate (Bps)"])
             flowStat_dict['Traffic Item'] =  flowStat['Traffic Item']
             flowStat_dict['Flow Group'] =    flowStat['Flow Group']
@@ -1736,7 +1737,9 @@ def ixia_rest_collect_stats(*args,**kwargs):
 
 def check_traffic(flow_stats_list):
     for flow in flow_stats_list:
-        if flow["Frames Delta"] > 200:
+        # if flow["Frames Delta"] > 200:
+        if flow['Loss %'] > 1:
+            print(flow)
             return False
     return True
 
