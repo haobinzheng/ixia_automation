@@ -1848,15 +1848,18 @@ def switch_find_login_prompt_new(tn):
 
 def switch_find_login_prompt(tn):
 	TIMEOUT = 4
+	# tn.write(('\x03').encode('ascii'))
+	# tn.write(('\x03').encode('ascii'))
 	tn.write(('\x03').encode('ascii'))
-	tn.write(('\x03').encode('ascii'))
-	tn.write(('\x03').encode('ascii'))
-	time.sleep(1)
+	time.sleep(2)
 	tn.write(('' + '\n').encode('ascii'))
-	time.sleep(1)
+	time.sleep(2)
 	tn.write(('' + '\n').encode('ascii'))
+	time.sleep(2)
 	tn.write(('' + '\n').encode('ascii'))
+	time.sleep(2)
 	tn.write(('' + '\n').encode('ascii'))
+	time.sleep(2)
 	#time.sleep(1)
 	
 	debug("See what prompt the console is at")

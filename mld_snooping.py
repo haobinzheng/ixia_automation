@@ -33,7 +33,7 @@ if __name__ == "__main__":
 	parser.add_argument("-v", "--verbose", help="Run the test in verbose mode with amble debugs info", action="store_true")
 	parser.add_argument("-s", "--setup_only", help="Setup testbed and IXIA only for manual testing", action="store_true")
 	parser.add_argument("-i", "--interactive", help="Enter interactive mode for test parameters", action="store_true")
-	parser.add_argument("-ug", "--sa_upgrade", type = int,help="FSW software upgrade in standlone mode. For debug image enter -1. Example: 193,-1(debug image)")
+	parser.add_argument("-ug", "--sa_upgrade", type = str,help="FSW software upgrade in standlone mode. For debug image enter -1. Example: v6-193,v7-5,-1(debug image)")
 
 
 	global DEBUG
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 	if args.sa_upgrade:
 		upgrade_sa = True
 		sw_build = args.sa_upgrade
-		print_title(f"**Upgrade FSW software in standalone mode to build {sw_build}")
+		print_title(f"Upgrade FSW software in standalone: {sw_build}")
 	else:
 		upgrade_sa = False
 	 
@@ -56,18 +56,18 @@ if __name__ == "__main__":
 
 	if args.config:
 		setup = True
-		print_title("Before starting testing, configure devices")
+		print_title("Configure devices:Yes")
 	else:
 		setup = False   
-		print_title("Skip setting up testbed and configuring devices")  
+		print_title("Configure devices:No")  
 		 
 	 
 	if args.factory:
 		factory = True
-		print_title("Will factory reset each FSW ")
+		print_title("Factory reset: Yes")
 	else:
 		factory = False
-		print_title("Will NOT factory reset each FSW")
+		print_title("Factory reset: No")
 
  
 	if args.testcase:
@@ -90,17 +90,17 @@ if __name__ == "__main__":
  
 	if args.boot:
 		Reboot = True
-		tprint("** Measure performance with rebooting DUTs")
+		print_title("Reboot:Yes")
 	else:
 		Reboot = False
-		tprint("** Measure performance WITHOUT rebooting DUTs")
+		print_title("Reboot:No")
 
 	if args.setup_only:
 		Setup_only = True
-		tprint("** Set up IXIA only for manual testing")
+		print_title("Set up Only:Yes")
 	else:
 		Setup_only = False
-
+		print_title("Set up Only:No")
 	file = 'tbinfo_mld.xml'
 	tb = parse_tbinfo_untangle(file)
 	testtopo_file = 'threeSw8Trafgens3Links.xml'
@@ -121,7 +121,8 @@ if __name__ == "__main__":
 	##################################### Pre-Test setup and configuration #############################
 	if upgrade_sa:
 		for sw in switches:
-			result = sw.fsw_upgrade(build=sw_build)
+			v,b = sw_build.split('-')
+			result = sw.fsw_upgrade(build=b,version=v)
 			if not result:
 				tprint(f"############# Upgrade {sw.name} to build #{sw_build} Fails ########### ")
 			else:
@@ -138,8 +139,8 @@ if __name__ == "__main__":
 				relogin_if_needed(dut)
 			image = find_dut_image(dut)
 			tprint(f"============================ {dut_name} software image = {image} ============")
-		if testcase == 0:
-			exit()
+		# if testcase == 0:
+		# 	exit()
 
 	if factory == True:
 		for dut_dir in dut_dir_list:
@@ -169,8 +170,8 @@ if __name__ == "__main__":
 				tprint(f"============================ {dut_name} software image = {image}")
 				sw_init_config_v6(device=dut_dir,config_split =True)
 
-		if testcase == 0:
-			exit()
+		# if testcase == 0:
+		# 	exit()
 
 	if setup: 
 		for sw in switches:
@@ -187,7 +188,10 @@ if __name__ == "__main__":
 				        set interface "internal"
 				    next
 				end
-
+			config switch vlan
+				delete 20 
+				delete 1
+			end
 			config switch vlan
 			    edit 20
 			        set mld-snooping enable
@@ -198,10 +202,13 @@ if __name__ == "__main__":
 			        set mld-snooping enable
 			    next
 			end
+			conf switch igmp-snooping globals
+				set aging-time 300
+			end
 			"""
 			config_cmds_lines(sw.console,config)
-		if testcase == 0:
-			exit()
+		# if testcase == 0:
+		# 	exit()
 
 	if Reboot:
 		for sw in switches:
@@ -217,8 +224,8 @@ if __name__ == "__main__":
 			image = find_dut_image(dut)
 			tprint(f"============================ {dut_name} software image = {image} ============")
 
-		if testcase == 0:
-			exit()
+		# if testcase == 0:
+		# 	exit()
 	# for c in tb.connections:
 	# 	c.unshut_all_ports()
 	# switches = []
@@ -258,7 +265,11 @@ if __name__ == "__main__":
 			topo.add_igmp_querier_v4()
 			topo.add_mld_querier()
 
-	myixia.start_protocol(wait=100)
+	myixia.start_protocol(wait=200)
+
+	for sw in switches:
+		sw.fsw_show_cmd("get switch igmp-snooping group")
+		sw.fsw_show_cmd("get switch mld-snooping group")
 
 	myixia.create_mcast_traffic_v4(src_topo=myixia.topologies[0].topology, start_group="239.1.1.1",traffic_name="t0_239_1_1_1",num=10,tracking_name="Tracking_1")
 	myixia.create_mcast_traffic_v6(src_topo=myixia.topologies[0].topology, start_group="ff3e::1:1:1",traffic_name="t0_ff3e_1_1_1",num=10,tracking_name="Tracking_2")

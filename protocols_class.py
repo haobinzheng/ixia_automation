@@ -4423,9 +4423,14 @@ class FortiSwitch:
     def fsw_upgrade(self,*args,**kwargs):
         if "build" in kwargs:
             build = int(kwargs['build'])
+            build = f"{build:04}"
         else:
             ErrorNotify("Software build number is missing. Exmaple: build=xxx.  Exiting program")
             exit(-1)
+        if "version" in kwargs:
+            version = kwargs['version']
+        else:
+            version = "v6"
         dut = self.console
         dut_name = self.name
         
@@ -4433,40 +4438,40 @@ class FortiSwitch:
         model = find_dut_model(dut)
         model = model.strip()
         if model == "FSW_448D_FPOE":
-            image_name = f"FSW_448D_FPOE-v6-build0{build}-FORTINET.out"
+            image_name = f"FSW_448D_FPOE-{version}-build{build}-FORTINET.out"
         elif model == "FSW_448D_POE":
-            image_name =  f"FSW_448D_POE-v6-build0{build}-FORTINET.out" 
+            image_name =  f"FSW_448D_POE-{version}-build{build}-FORTINET.out" 
         elif model == "FSW_448D-v6":
-            image_name = f"FSW_448D-v6-build0{build}-FORTINET.out"
+            image_name = f"FSW_448D-{version}-build{build}-FORTINET.out"
         elif model == "FortiSwitch-3032E":
             if build == -1:
                 image_name = "fs3e32.deb"
             else:
-                image_name = f"FSW_3032E-v6-build0{build}-FORTINET.out"
+                image_name = f"FSW_3032E-{version}-build{build}-FORTINET.out"
         elif model == "FortiSwitch-3032D":
             if build == -1:
                 image_name = "fs3d32.deb"
             else:
-                image_name = f"FSW_3032D-v6-build0{build}-FORTINET.out"
+                image_name = f"FSW_3032D-{version}-build{build}-FORTINET.out"
         elif model == "FortiSwitch-1048E":
             if build == -1:
                 image_name = "fs1e48.deb"
             else:
-                image_name = f"FSW_1048E-v6-build0{build}-FORTINET.out"
+                image_name = f"FSW_1048E-{version}-build{build}-FORTINET.out"
         elif model == "FortiSwitch-1048D":
             if build == -1:
                 image_name = "fs1d48.deb"
             else:
-                image_name = f"FSW_1048D-v6-build0{build}-FORTINET.out"
+                image_name = f"FSW_1048D-{version}-build{build}-FORTINET.out"
         elif model == "FortiSwitch-1024D":
             if build == -1:
                 image_name = "fs1d24.deb"
             else:
-                image_name = f"FSW_1024D-v6-build0{build}-FORTINET.out"
+                image_name = f"FSW_1024D-{version}-build{build}-FORTINET.out"
         elif model == "FortiSwitch-548D-FPOE":
-                image_name = f"FSW_548D_FPOE-v6-build0{build}-FORTINET.out"
+                image_name = f"FSW_548D_FPOE-{version}-build{build}-FORTINET.out"
         elif model == "FortiSwitch-548D":
-                image_name = f"FSW_548D-v6-build0{build}-FORTINET.out"
+                image_name = f"FSW_548D-{version}-build{build}-FORTINET.out"
         else:
             tprint("!!!!!!!!! Not able to identify switch platform, upgrade fails")
             return False
