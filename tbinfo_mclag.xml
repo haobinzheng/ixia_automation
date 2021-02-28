@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testbed name="hb-tb">
+ <dev1 type="FSW" hostname="S248EF3X17000518" model="248E-FPOE">
+  <console ip="10.105.241.44" line="2085"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.39" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+ </dev1>
+<dev2 type="FSW" hostname="S248EF3X17000533" model="248E-FPOE">
+  <console ip="10.105.240.44" line="2085"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.40" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+ </dev2>
+
+<dev3 type="FSW" hostname="S224EPTF18000630" model="224E-POE">
+  <console ip="10.105.241.44" line="2089"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+</dev3>
+
+<dev4 type="FSW" hostname="S224EPTF18000820" model="224E-POE">
+  <console ip="10.105.240.44" line="2083"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+</dev4>
+
+<dev5 type="FSW" hostname="S448DN3X15000028" model="448D">
+  <console ip="10.105.241.44" line="2075"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+</dev5>
+
+<dev6 type="FSW" hostname="S448DP3X15000029" model="448D-POE">
+  <console ip="10.105.241.44" line="2074"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+</dev6>
+
+<dev7 type="FSW" hostname="S424DN3X16000332" model="424D">
+  <console ip="10.105.240.144" line="2075"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+</dev7>
+
+<dev8 type="FSW" hostname="S424DF3X14000015" model="424D-FPOE">
+  <console ip="10.105.240.144" line="2092"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+</dev8>
+
+<dev9 type="FGT" hostname="FortiGate-3000D" model="FortiGate-3000D">
+  <console ip="10.105.240.244" line="2074"> </console>
+  <login username="admin" password="fortinet123"> </login>
+  <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+</dev9>
+
+
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.19:11009">
+ </trafgen1>
+ <connections>
+  <link1 link="dev1:port3,dev3:port2" type="GigabitEthernet" mode="Copper"> </link1>
+  <link2 link="dev1:port4,dev4:port1" type="GigabitEthernet" mode="Copper"> </link2>
+  <link3 link="dev2:port3,dev3:port1" type="GigabitEthernet" mode="Copper"> </link3>
+  <link4 link="dev2:port4,dev4:port2" type="GigabitEthernet" mode="Copper"> </link4>
+  <link5 link="dev1:port5,dev5:port2" type="GigabitEthernet" mode="Copper"> </link5>
+  <link6 link="dev1:port6,dev6:port3" type="GigabitEthernet" mode="Copper"> </link6>
+  <link7 link="dev2:port5,dev5:port1" type="GigabitEthernet" mode="Copper"> </link7>
+  <link8 link="dev2:port6,dev6:port4" type="GigabitEthernet" mode="Copper"> </link8>
+  <link9 link="dev5:port31,dev7:port1" type="GigabitEthernet" mode="Copper"> </link9>
+  <link10 link="dev5:port29,dev8:port1" type="GigabitEthernet" mode="Copper"> </link10>
+  <link11 link="dev6:port31,dev7:port2" type="GigabitEthernet" mode="Copper"> </link11>
+  <link12 link="dev6:port29,dev8:port2" type="GigabitEthernet" mode="Copper"> </link12>
+  <link13 link="dev1:port49,dev9:port2" type="GigabitEthernet" mode="Copper"> </link13>
+  <link14 link="dev2:port50,dev9:port3" type="GigabitEthernet" mode="Copper"> </link14>
+  <link15 link="dev7:port26,dev9:port7" type="GigabitEthernet" mode="Copper"> </link15>
+  <link16 link="dev8:port25,dev9:port9" type="GigabitEthernet" mode="Copper"> </link16>
+  <link17 link="dev1:port23,dev2:port23" type="GigabitEthernet" mode="Copper"> </link17>
+  <link18 link="dev1:port24,dev2:port24" type="GigabitEthernet" mode="Copper"> </link18>
+  <link19 link="dev3:port23,dev4:port23" type="GigabitEthernet" mode="Copper"> </link19>
+  <link20 link="dev3:port24,dev4:port24" type="GigabitEthernet" mode="Copper"> </link20>
+  <link19 link="dev5:port47,dev6:port47" type="GigabitEthernet" mode="Copper"> </link19>
+  <link20 link="dev5:port48,dev6:port48" type="GigabitEthernet" mode="Copper"> </link20>
+  <link21 link="dev7:port9,dev8:port9" type="GigabitEthernet" mode="Copper"> </link21>
+  <link22 link="dev7:port11,dev8:port11" type="GigabitEthernet" mode="Copper"> </link22>
+
+  <link23 link="dev3:port13,trafgen1:4/12" type="GigabitEthernet" mode="Copper"> </link23>
+  <link24 link="dev4:port13,trafgen1:4/13" type="GigabitEthernet" mode="Copper"> </link24>
+  <link25 link="dev5:port13,trafgen1:4/14" type="GigabitEthernet" mode="Copper"> </link25>
+  <link26 link="dev6:port13,trafgen1:4/15"  type="GigabitEthernet" mode="Copper"> </link26>
+  <link27 link="dev9:port13,trafgen1:1/10" type="GigabitEthernet" mode="Copper"> </link27>
+ </connections>
+</testbed>

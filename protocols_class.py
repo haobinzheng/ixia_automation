@@ -4294,6 +4294,25 @@ class port_class():
     def update_allowed_vlan(self,allow_vlans):
         pass
 
+class switch_trunk(self,*args,**kwargs):
+    def __init__(self,*args,**kwargs):
+        self.sample = """
+        edit "8EF3X17000533-0"
+        set mode lacp-active
+        set auto-isl 1
+        set mclag-icl enable
+        set static-isl enable
+            set members "port15" "port16"
+        next
+        """
+        self.switch = args[0]
+        self.name = None
+        self.mode = None
+        self.auto_isl = 1
+        self.mclag_icl = "disable"
+        self.static_isl = "disable"
+        self.type = "static"
+        self.members = []
 
 
 class interface:
@@ -4406,6 +4425,45 @@ class FortiSwitch:
         self.sys_interfaces = self.find_sys_interfaces()
         self.disable_diag_debugs()
         #self.add_extra_ipv6()
+
+    def discover_switch_trunk(self,*args,**kwargs):
+        if self.is_fortinet() == False:
+            return 
+        Info(f"Discovering switch trunk and updating switch trunk database at {self.name}......")
+        switch_trunk_obj_list = []
+        switch_trunk_dict_list = []
+
+        output = collect_show_cmd(self.console,"show switch trunk")
+        print(output)
+        for line in output:
+            if "Portname" in line and  "Status" in line and "Device-name" in line:
+                items = line.split()
+                continue
+            if " Up " in line:
+                lldp_dict = {k:v for k, v in zip(items,line.split())}
+                # printr(lldp_dict)
+                if lldp_dict["Device-name"] == "-" or lldp_dict["Capability"] == "-":
+                    pass
+                else:
+                    lldp = lldp_class()
+                    lldp.local_port = lldp_dict["Portname"]
+                    lldp.status = lldp_dict["Status"]
+                    lldp.ttl = lldp_dict["TTL"]
+                    lldp.neighbor = lldp_dict["Device-name"]
+                    lldp.capability = lldp_dict["Capability"]
+                    if lldp_dict["MED-type"] == "-":
+                        lldp.med_type = "p2p".encode('utf-8')
+                        lldp_dict["MED-type"] = "p2p".encode('utf-8')
+                    else:
+                        lldp.med_type = lldp_dict["MED-type"]
+                    lldp.remote_port = lldp_dict["Port-ID"]
+                    lldp_obj_list.append(lldp)
+                    lldp_dict_list.append(lldp_dict)
+        self.lldp_dict_list = lldp_dict_list
+        self.lldp_obj_list = lldp_obj_list
+        print(self.lldp_dict_list)
+ 
+
 
     def config_switch_interface_cmd(self,*args,**kwargs):
         cmd = kwargs["cmd"]
@@ -5827,6 +5885,10 @@ class FortiSwitch:
 class FortiSwitch_XML(FortiSwitch):
     def __init__(self,*args,**kwargs):
         device_xml = args[0]
+        if "password" in kwargs:
+            pwd = kwargs['password']
+        else:
+            pwd = "Fortinet123!"
         self.name = device_xml.name
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
@@ -5839,7 +5901,28 @@ class FortiSwitch_XML(FortiSwitch):
         self.role = device_xml.role
         self.type = device_xml.type
         self.active = device_xml.active
-        self.console = telnet_switch(self.console_ip,self.console_line)
+        self.console = telnet_switch(self.console_ip,self.console_line,password=pwd)
+
+class FortiGate_XML(FortiSwitch):
+    def __init__(self,*args,**kwargs):
+        device_xml = args[0]
+        if "password" in kwargs:
+            pwd = kwargs['password']
+        else:
+            pwd = "Fortinet123!"
+        self.name = device_xml.name
+        self.console_ip = device_xml.console_ip
+        self.console_line = device_xml.console_line
+        self.username = device_xml.username
+        self.password = device_xml.password
+        self.mgmt_ip = device_xml.mgmt_ip
+        self.mgmt_netmask = device_xml.mgmt_netmask
+        self.mgmt_gateway = device_xml.mgmt_gateway
+        self.license = device_xml.license
+        self.role = device_xml.role
+        self.type = device_xml.type
+        self.active = device_xml.active
+        self.console = telnet_switch(self.console_ip,self.console_line,password=pwd)
 
 class tbinfo():
     def __init__(self,*args, **kwargs):

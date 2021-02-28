@@ -946,7 +946,7 @@ class IXIA:
         ixnet = self.ixNetwork, 
     )
     def check_traffic(self):
-        if check_traffic(self.flow_stats_list) == False:
+        if check_traffic_detail(self.flow_stats_list) == False:
             tprint("========================= Failed: significant traffic loss ============")
             return False
         else:
@@ -1735,13 +1735,23 @@ def ixia_rest_collect_stats(*args,**kwargs):
         if debugMode == False and 'session' in locals():
             session.remove()
 
-def check_traffic(flow_stats_list):
+def check_traffic_detail(flow_stats_list,*args,**kwargs):
+    if "percent" in kwargs:
+        percent = kwargs['percent']
+    else:
+        percent = 1.9
+
+    packet_loss = False
     for flow in flow_stats_list:
         # if flow["Frames Delta"] > 200:
-        if flow['Loss %'] > 1:
+        if float(flow['Loss %']) > percent:
+            print(f"!!!!!!!!!!!!!!!!!!!!!!!! Stream is having packet loss: {flow['Loss %']}%  !!!!!!!!!!!!!!!")
             print(flow)
-            return False
-    return True
+            packet_loss = True
+    if packet_loss:
+        return False
+    else:
+        return True
 
 
 def ixia_rest_create_ptp(*args,**kwargs):

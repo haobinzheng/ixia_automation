@@ -866,7 +866,7 @@ def config_block_cmds_new(dut, cmdblock):
 		switch_configure_cmd(dut,cmd)
 
 def print_title(msg):
-	print(f"================================ {msg}")
+	print(f"================================ {msg} ===============================")
 
 def config_block_cmds(dut_dir, cmdblock):
 	b= cmdblock.split("\n")
@@ -1058,6 +1058,23 @@ def switch_login(tn,*args,**kwargs):
 	switch_configure_cmd(tn,'set admintimeout 480',mode="silent")
 	switch_configure_cmd(tn,'end',mode="silent")
 	return tn
+
+def enter_login_info(tn,*args,**kwargs):
+	if "password" in kwargs:
+		password = kwargs['password']
+	else:
+		password = 'fortinet123'
+	tn.read_until(("login: ").encode('ascii'),timeout=10)
+	tn.write(('admin' + '\n').encode('ascii'))
+	tn.read_until(("Password: ").encode('ascii'),timeout=10)
+	tn.write((password + '\n').encode('ascii'))
+	sleep(1)
+	tn.read_until(("# ").encode('ascii'),timeout=10)
+	switch_configure_cmd(tn,'config system global',mode="silent")
+	switch_configure_cmd(tn,'set admintimeout 480',mode="silent")
+	switch_configure_cmd(tn,'end',mode="silent")
+	return tn
+
 
 def find_dut_prompt_cisco(tn):
 	tn.write(('' + '\n').encode('ascii'))
@@ -1682,11 +1699,57 @@ def get_switch_telnet_connection(ip_address, console_port,**kwargs):
 	tprint("get_switch_telnet_connection: Login sucessful!\n")
 	return tn
 
+def relogin_new(tn,*args,**kwargs):
+	if "password" in kwargs:
+		password = kwargs['password']
+	else:
+		password = "fortinet123"
+
+	if settings.TELNET:
+		try:
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+		except BrokenPipeError:
+			return False
+
+	if switch_find_login_prompt(tn) == True:
+		# tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write((password + '\n').encode('ascii'))
+		sleep(1)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+		switch_configure_cmd(tn,'config system global',mode="silent")
+		switch_configure_cmd(tn,'set admintimeout 480',mode="silent")
+		switch_configure_cmd(tn,'end',mode="silent")
+		return True
+	else:
+		switch_configure_cmd(tn,'config system global',mode='silent')
+		switch_configure_cmd(tn,'set admintimeout 480',mode='silent')
+		switch_configure_cmd(tn,'end',mode='silent')
+		return 
 
 def relogin_if_needed(tn):
 	if settings.TELNET:
 		try:
 			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
+			tn.write(('' + '\n').encode('ascii'))
+			sleep(2)
 		except BrokenPipeError:
 			return False
 
@@ -1853,13 +1916,13 @@ def switch_find_login_prompt(tn):
 	tn.write(('\x03').encode('ascii'))
 	time.sleep(2)
 	tn.write(('' + '\n').encode('ascii'))
-	time.sleep(2)
+	time.sleep(1)
 	tn.write(('' + '\n').encode('ascii'))
-	time.sleep(2)
+	time.sleep(1)
 	tn.write(('' + '\n').encode('ascii'))
-	time.sleep(2)
+	time.sleep(1)
 	tn.write(('' + '\n').encode('ascii'))
-	time.sleep(2)
+	time.sleep(1)
 	#time.sleep(1)
 	
 	debug("See what prompt the console is at")

@@ -101,21 +101,32 @@ if __name__ == "__main__":
 	else:
 		Setup_only = False
 		print_title("Set up Only:No")
-	file = 'tbinfo_mld.xml'
+	file = 'tbinfo_mclag.xml'
 	tb = parse_tbinfo_untangle(file)
-	testtopo_file = 'threeSw8Trafgens3Links.xml'
+	testtopo_file = 'mclag.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
 	switches = []
+	fortigates = []
+	devices=[]
 	for d in tb.devices:
-		switch = FortiSwitch_XML(d)
-		switches.append(switch)
+		if d.type == "FSW":
+			switch = FortiSwitch_XML(d,password="fortinet123")
+			switches.append(switch)
+			devices.append(switch)
+		elif d.type == "FGT":
+			fgt = FortiGate_XML(d,password="fortinet123")
+			fortigates.append(fgt)
+			devices.append(switch)
+		else:
+			pass
+		
 	for c in tb.connections:
-		c.update_devices_obj(switches)
+		c.update_devices_obj(devices)
 
-	for c in tb.connections:
-		c.shut_unused_ports()
+	# for c in tb.connections:
+	# 	c.shut_unused_ports()
 
 
 	##################################### Pre-Test setup and configuration #############################
@@ -252,6 +263,23 @@ if __name__ == "__main__":
 	print(portList_v4_v6)
 
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+	for topo in myixia.topologies:
+		topo.add_dhcp_client()
+
+	myixia.start_protocol(wait=200)
+
+	for i in range(0,len(tb.ixia.port_active_list)-1):
+		for j in range(i+1,len(tb.ixia.port_active_list)):
+			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
+
+	myixia.start_traffic()
+	myixia.collect_stats()
+	myixia.check_traffic()
+
+	exit()
+
+
 	igmp_ports = ["source","querier","host","host","host","host","host","host"]
 	for topo, role in zip(myixia.topologies,igmp_ports):
 		topo.igmp_role = role
