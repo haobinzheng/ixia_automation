@@ -4294,7 +4294,7 @@ class port_class():
     def update_allowed_vlan(self,allow_vlans):
         pass
 
-class switch_trunk(self,*args,**kwargs):
+class switch_trunk_class():
     def __init__(self,*args,**kwargs):
         self.sample = """
         edit "8EF3X17000533-0"
@@ -4311,7 +4311,9 @@ class switch_trunk(self,*args,**kwargs):
         self.auto_isl = 1
         self.mclag_icl = "disable"
         self.static_isl = "disable"
-        self.type = "static"
+        self.static_isl_auto_vlan = "enable"
+        self.type = "dynamic"
+        self.create = "system"
         self.members = []
 
 
@@ -4424,9 +4426,42 @@ class FortiSwitch:
         self.cisco_config_full_2()
         self.sys_interfaces = self.find_sys_interfaces()
         self.disable_diag_debugs()
+        self.trunk_list = []
         #self.add_extra_ipv6()
 
     def discover_switch_trunk(self,*args,**kwargs):
+        self.sample = """
+        config switch trunk
+            edit "8EF3X17000533-0"
+                set mode lacp-active
+                set auto-isl 1
+                set mclag-icl enable
+                set static-isl enable
+                    set members "port15" "port16"
+            next
+            edit "core1"
+                set mode lacp-active
+                set auto-isl 1
+                set mclag enable
+                    set members "port3" "port4"
+            next
+            edit "core2"
+                set mode lacp-active
+                set auto-isl 1
+                set mclag enable
+                    set members "port5" "port6"
+            next
+            edit "GT3KD3Z15800103"
+                set auto-isl 1
+                set fortilink 1
+                set mclag enable
+                set static-isl enable
+                set mclag-icl enable
+                set static-isl-auto-vlan disable
+                    set members "port49"
+            next
+            end
+        """
         if self.is_fortinet() == False:
             return 
         Info(f"Discovering switch trunk and updating switch trunk database at {self.name}......")
@@ -4435,33 +4470,52 @@ class FortiSwitch:
 
         output = collect_show_cmd(self.console,"show switch trunk")
         print(output)
+        trunk_block_list = []
+        if output == None:
+            ErrorNotify(f"show switch trunk has returned NoneType at switch {self.name}")
+            exit(-1)
         for line in output:
-            if "Portname" in line and  "Status" in line and "Device-name" in line:
-                items = line.split()
+            if "edit" in line:
+                trunk_block = []
+                trunk_block.append(line)
                 continue
-            if " Up " in line:
-                lldp_dict = {k:v for k, v in zip(items,line.split())}
-                # printr(lldp_dict)
-                if lldp_dict["Device-name"] == "-" or lldp_dict["Capability"] == "-":
-                    pass
-                else:
-                    lldp = lldp_class()
-                    lldp.local_port = lldp_dict["Portname"]
-                    lldp.status = lldp_dict["Status"]
-                    lldp.ttl = lldp_dict["TTL"]
-                    lldp.neighbor = lldp_dict["Device-name"]
-                    lldp.capability = lldp_dict["Capability"]
-                    if lldp_dict["MED-type"] == "-":
-                        lldp.med_type = "p2p".encode('utf-8')
-                        lldp_dict["MED-type"] = "p2p".encode('utf-8')
-                    else:
-                        lldp.med_type = lldp_dict["MED-type"]
-                    lldp.remote_port = lldp_dict["Port-ID"]
-                    lldp_obj_list.append(lldp)
-                    lldp_dict_list.append(lldp_dict)
-        self.lldp_dict_list = lldp_dict_list
-        self.lldp_obj_list = lldp_obj_list
-        print(self.lldp_dict_list)
+            elif "edit" in line:
+                trunk_block.append(line)
+            elif "next" in line:
+                trunk_block_list.append(trunk_block)
+        if len(trunk_block_list) == 0:
+            return
+        for trunk_block in trunk_block_list:
+            trunk_obj = switch_trunk_class(self.console)
+            for line in trunk_block:
+                if "edit" in line:
+                    trunk_obj.name = line.split()[1].replace('"',"")
+                elif "set" in line and "auto-isl" in line:
+                    trunk_obj.auto_isl = int(line.split()[2])
+                elif "set" in line and "fortilink" in line:
+                    trunk_obj.fortilink = int(line.split()[2])
+                elif "set" in line and "mclag" in line:
+                    trunk_obj.mclag = line.split()[2]
+                elif "set" in line and "static-isl" in line and "static-isl-auto-vlan" not in line:
+                    trunk_obj.static_isl = line.split()[2]
+                elif "set" in line and "static-isl-auto-vlan" in line:
+                    trunk_obj.static_isl_auto_vlan = line.split()[2]
+                elif "set" in line and "members" in line:
+                    trunk_obj.members = line.split()[2:]
+                elif "set" in line and "mclag-icl" in line:
+                    trunk_obj.mclag_icl = line.split()[2]
+            if len(trunk_obj.name) > 10:
+                trunk_obj.create = "system"
+            else:
+                trunk_obj.create = "manual"
+            if trunk_obj.static_isl == "enable":
+                trunk_obj.type = "static"
+            else:
+                trunk_obj.type = "dynamic"
+            self.trunk_list.append(trunk_obj)
+
+        print(self.trunk_list)
+        return self.trunk_list
  
 
 
@@ -5901,7 +5955,30 @@ class FortiSwitch_XML(FortiSwitch):
         self.role = device_xml.role
         self.type = device_xml.type
         self.active = device_xml.active
+        self.platform = "fortinet"
+        self.trunk_list = []
         self.console = telnet_switch(self.console_ip,self.console_line,password=pwd)
+
+class Managed_Switch():
+    def __init__(self,*args,**kwargs):
+        self.ftg_console = args[0]
+        self.switch_id = None
+        self.major_version = None
+        self.minor_version = None
+        self.authorized = False
+        self.up = False
+        self.flag = None
+        self.address = None
+        self.join_time = None
+
+    def print_managed_sw_info(self):
+        print_dash_line()
+        print(f"Switch ID = {self.switch_id}")
+        print(f"Software Version = {self.major_version}, {self.minor_version}")
+        print(f"Authorized = {self.authorized}")
+        print(f"Switch is Up = {self.up}")
+        print(f"Switch address = {self.address}")
+
 
 class FortiGate_XML(FortiSwitch):
     def __init__(self,*args,**kwargs):
@@ -5922,7 +5999,111 @@ class FortiGate_XML(FortiSwitch):
         self.role = device_xml.role
         self.type = device_xml.type
         self.active = device_xml.active
+        self.managed_switches_list = []
         self.console = telnet_switch(self.console_ip,self.console_line,password=pwd)
+
+    def config_custom_timeout(self,*args,**kwargs):
+        if "vdom" in kwargs:
+            vdom_name = kwargs['vdom']
+        else:
+            vdom_name = "root"
+        name = "timeout"
+        config = f"""
+        config vdom
+        edit {vdom_name}
+        config switch-controller custom-command
+            edit {name}
+                set command "config system global %0a set admintimeout 480 %0a end %0a"
+            next
+            end
+            end
+        end
+        """
+        config_cmds_lines(self.console,config)
+        return name
+
+    def execute_custom_command(self,*args,**kwargs):
+        switch_name = kwargs["switch_name"]
+        cmd = kwargs["cmd"]
+        if 'vdom' in kwargs:
+            vdom = kwargs["vdom"]
+        else:
+            vdom = "root"
+
+        config = f"""
+        config vdom
+            edit {vdom}
+            execute switch-controller custom-command {custom_cmd} {cmd}
+        end
+        """
+        config_cmds_lines(self.console,config)
+
+    def discover_managed_switches(self,*args,**kwargs):
+        sample_output = """
+        FortiGate-3000D (root) # execute switch-controller get-conn-status
+        Managed-devices in current vdom root:
+
+        STACK-NAME: FortiSwitch-Stack-fortilink
+        SWITCH-ID         VERSION           STATUS         FLAG   ADDRESS              JOIN-TIME            NAME
+        S224EPTF18000630  v7.0.0 (007)      Authorized/Up   -   169.254.1.4     Fri Feb 19 21:53:49 2021    -
+        S224EPTF18000820  v7.0.0 (007)      Authorized/Up   -   169.254.1.5     Fri Feb 26 10:20:43 2021    -
+        S248EF3X17000518  v7.0.0 (007)      Authorized/Up   -   169.254.1.3     Fri Feb 19 21:53:21 2021    -
+        S248EF3X17000533  v7.0.0 (007)      Authorized/Up   -   169.254.1.2     Fri Feb 26 10:17:29 2021    -
+        S424DF3X14000015  v7.0.0 (008)      Authorized/Up   -   169.254.1.8     Fri Feb 26 11:00:28 2021    -
+        S424DN3X16000332  v7.0.0 (008)      Authorized/Up   -   169.254.1.9     Fri Feb 26 11:04:00 2021    -
+        S448DN3X15000028  v7.0.0 (007)      Authorized/Up   -   169.254.1.6     Fri Feb 26 11:26:46 2021    -
+        S448DP3X15000029  v7.0.0 (008)      Authorized/Up   -   169.254.1.7     Fri Feb 26 11:53:20 2021    -
+
+        Flags: C=config sync, U=upgrading, S=staged, D=delayed reboot pending, E=config sync error, 3=L3
+        Managed-Switches: 8 (UP: 8 DOWN: 0)
+        """
+        if 'vdom' in kwargs:
+            vdom = kwargs['vdom']
+        else:
+            vdom = "root"
+
+        config = f"""
+            config vdom
+            edit {vdom}
+        """
+        config_cmds_lines(self.console,config)
+
+        output = collect_show_cmd(self.console,"execute switch-controller get-conn-status")
+        dprint(output)
+
+        Found = False
+        End = False
+        managed_switches = []
+        for line in output:
+            if "SWITCH-ID" in line and "VERSION" in line and "STATUS" in line:
+                Found = True
+                continue
+            if "Flags: C=config sync" in line:
+                End = True
+                return self.managed_switches_list
+
+            if Found and not End: 
+                dprint(line)
+                msw = Managed_Switch(self.console)
+                msw.switch_id = line.split()[0]
+                msw.major_version = line.split()[1]
+                msw.minor_version = re.sub('[()]',"",line.split()[2])
+                status = line.split()[3].split('/')
+                if status[0] == "Authorized":
+                    msw.authorized = True
+                else:
+                    msw.authorized = False
+                if status[0] == "Up":
+                    msw.up = True
+                else:
+                    msw.up = False
+                msw.flag = line.split()[4]
+                msw.address = line.split()[5]
+                managed_switches.append(msw)
+
+        self.managed_switches_list = managed_switches
+        return self.managed_switches_list
+
 
 class tbinfo():
     def __init__(self,*args, **kwargs):

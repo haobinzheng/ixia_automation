@@ -125,6 +125,15 @@ if __name__ == "__main__":
 	for c in tb.connections:
 		c.update_devices_obj(devices)
 
+	for sw in switches:
+		sw.discover_switch_trunk()
+
+	for ftg in fortigates:
+		managed_sw_list = ftg.discover_managed_switches()
+		for sw in managed_sw_list:
+			sw.print_managed_sw_info()
+
+
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
 
@@ -276,6 +285,9 @@ if __name__ == "__main__":
 	myixia.start_traffic()
 	myixia.collect_stats()
 	myixia.check_traffic()
+
+	for sw in switches:
+		sw.discover_switch_trunk()
 
 	exit()
 
