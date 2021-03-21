@@ -27,6 +27,7 @@
   <console ip="10.105.241.44" line="2089"> </console>
   <login username="admin" password="fortinet123"> </login>
   <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <uplink port="port25"> </uplink>
   <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
@@ -39,6 +40,7 @@
   <console ip="10.105.240.44" line="2083"> </console>
   <login username="admin" password="fortinet123"> </login>
   <mgmt ip="10.105.240.41" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <uplink port="port25"> </uplink>
   <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
@@ -123,8 +125,8 @@
   <link10 link="dev5:port29,dev8:port1" type="GigabitEthernet" mode="Copper"> </link10>
   <link11 link="dev6:port31,dev7:port2" type="GigabitEthernet" mode="Copper"> </link11>
   <link12 link="dev6:port29,dev8:port2" type="GigabitEthernet" mode="Copper"> </link12>
-  <link13 link="dev1:port49,dev9:port2" type="GigabitEthernet" mode="Copper"> </link13>
-  <link14 link="dev2:port50,dev9:port3" type="GigabitEthernet" mode="Copper"> </link14>
+  <link13 link="dev3:port25,dev9:port2" type="GigabitEthernet" mode="Copper"> </link13>
+  <link14 link="dev4:port25,dev9:port3" type="GigabitEthernet" mode="Copper"> </link14>
   <link15 link="dev7:port26,dev9:port7" type="GigabitEthernet" mode="Copper"> </link15>
   <link16 link="dev8:port25,dev9:port9" type="GigabitEthernet" mode="Copper"> </link16>
   <link17 link="dev1:port23,dev2:port23" type="GigabitEthernet" mode="Copper"> </link17>

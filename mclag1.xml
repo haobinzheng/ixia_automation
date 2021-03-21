@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testtopo>
+ <dev3 type="FSW" role="tier1-sw1"> </dev3>
+ <dev4 type="FSW" role="tier1-sw2"> </dev4>
+ <dev9 type="FGT" role="FGT1"> </dev9>
+ <trafgen1 type="IXIA" model="IXIA" role="trafgen"> </trafgen1>
+ <connections>
+  <link1 link="dev3,dev4" type="GigabitEthernet"> </link1>
+  <link2 link="dev3,dev4" type="GigabitEthernet"> </link2>
+
+  <link3 link="dev3,dev9" type="GigabitEthernet"> </link3>
+  <link4 link="dev4,dev9" type="GigabitEthernet"> </link4>
+
+  <link5 link="dev3,trafgen1" type="GigabitEthernet"> </link5>
+  <link6 link="dev4,trafgen1" type="GigabitEthernet"> </link6>
+  <link7 link="dev9,trafgen1" type="GigabitEthernet"> </link7>
+ </connections>
+</testtopo>

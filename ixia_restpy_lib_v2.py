@@ -887,7 +887,7 @@ class IXIA:
         dst_topo = kwargs['dst_topo']
         traffic_name = kwargs['traffic_name']
         tracking_name = kwargs['tracking_name']
-        ixia_rest_create_traffic(
+        traffic_item = ixia_rest_create_traffic(
         platform = self.testPlatform, 
         session = self.Session,
         ixnet = self.ixNetwork,
@@ -964,7 +964,6 @@ class IXIA:
         )
 
     def stop_protocol(self,*args, **kwargs):
-        wait_time = kwargs['wait']
         ixia_rest_stop_protocols(
             platform = self.testPlatform, 
             session = self.Session,
@@ -1045,15 +1044,16 @@ def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
             testPlatform = TestPlatform(ip_address=apiServerIp,log_file_name='restpy.log')
             # testPlatform = TestPlatform(ip_address=apiServerIp,rest_port=62428,log_file_name='restpy.log')
 
+             #Turn on/off trace
             # Console output verbosity: 'none'|request|'request response'
-            #testPlatform.Trace = 'none'
+            #testPlatform.Trace = 'none'
             testPlatform.Trace = 'request_response'
 
             testPlatform.Authenticate(username, password)
             session = testPlatform.Sessions.add()
-            #Turn off trace
-            
             ixNetwork = session.Ixnetwork
+           
+            
             testPlatform.info(ixNetwork)
             
             ixNetwork.NewConfig()
@@ -1576,11 +1576,14 @@ def ixia_rest_create_traffic(*args,**kwargs):
         configElement.FrameSize.FixedSize = 1000
         
         trafficItem.Generate()
+        return trafficItem
          
     except Exception as errMsg:
         print('\n%s' % traceback.format_exc(None, errMsg))
         if debugMode == False and 'session' in locals():
             session.remove()
+            return None
+
 
 def ixia_rest_create_traffic_v6(*args,**kwargs):
     debugMode = False

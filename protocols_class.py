@@ -4732,13 +4732,19 @@ class FortiSwitch:
         else:
             switch_exec_reboot(self.console,device=self.name)
 
-    def switch_relogin(self):
+    def switch_relogin(self,*args,**kwargs):
+        if "password" in kwargs:
+            pwd = kwargs['password']
+        else:
+            pwd = self.password
+        print(f"============== Relogin switch {self.name}, password = {pwd} ==============")
         tn = self.console
         if switch_find_login_prompt(self.console) == True:
+            print("Re-login switch.....")
             tn.read_until(("login: ").encode('ascii'),timeout=10)
             tn.write(('admin' + '\n').encode('ascii'))
             tn.read_until(("Password: ").encode('ascii'),timeout=10)
-            tn.write(('Fortinet123!' + '\n').encode('ascii'))
+            tn.write((pwd + '\n').encode('ascii'))
             sleep(1)
             tn.read_until(("# ").encode('ascii'),timeout=10)
             switch_configure_cmd(tn,'config system global',mode="silent")
@@ -4749,7 +4755,7 @@ class FortiSwitch:
             switch_configure_cmd(self.console,'config system global',mode='silent')
             switch_configure_cmd(self.console,'set admintimeout 480',mode='silent')
             switch_configure_cmd(self.console,'end',mode='silent')
-            return 
+            return True
 
     def relogin(self):
         dut = self.console
@@ -5955,9 +5961,11 @@ class FortiSwitch_XML(FortiSwitch):
         self.role = device_xml.role
         self.type = device_xml.type
         self.active = device_xml.active
+        self.uplink_port = device_xml.uplink_port
         self.platform = "fortinet"
         self.trunk_list = []
         self.console = telnet_switch(self.console_ip,self.console_line,password=pwd)
+        self.dut = self.console # For compatibility with old Fortiswitch codes
 
 class Managed_Switch():
     def __init__(self,*args,**kwargs):
@@ -5987,6 +5995,7 @@ class FortiGate_XML(FortiSwitch):
             pwd = kwargs['password']
         else:
             pwd = "Fortinet123!"
+        self.platform = "fortigate"
         self.name = device_xml.name
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
@@ -6000,7 +6009,7 @@ class FortiGate_XML(FortiSwitch):
         self.type = device_xml.type
         self.active = device_xml.active
         self.managed_switches_list = []
-        self.console = telnet_switch(self.console_ip,self.console_line,password=pwd)
+        self.console = telnet_switch(self.console_ip,self.console_line,password=pwd,platform="fortigate")
 
     def config_custom_timeout(self,*args,**kwargs):
         if "vdom" in kwargs:
@@ -6033,7 +6042,8 @@ class FortiGate_XML(FortiSwitch):
         config = f"""
         config vdom
             edit {vdom}
-            execute switch-controller custom-command {custom_cmd} {cmd}
+            execute switch-controller custom-command {cmd} {switch_name}
+        end
         end
         """
         config_cmds_lines(self.console,config)
@@ -6074,33 +6084,35 @@ class FortiGate_XML(FortiSwitch):
         Found = False
         End = False
         managed_switches = []
-        for line in output:
-            if "SWITCH-ID" in line and "VERSION" in line and "STATUS" in line:
-                Found = True
-                continue
-            if "Flags: C=config sync" in line:
-                End = True
-                return self.managed_switches_list
+        try:
+            for line in output:
+                if "SWITCH-ID" in line and "VERSION" in line and "STATUS" in line:
+                    Found = True
+                    continue
+                if "Flags: C=config sync" in line:
+                    End = True
+                    break
 
-            if Found and not End: 
-                dprint(line)
-                msw = Managed_Switch(self.console)
-                msw.switch_id = line.split()[0]
-                msw.major_version = line.split()[1]
-                msw.minor_version = re.sub('[()]',"",line.split()[2])
-                status = line.split()[3].split('/')
-                if status[0] == "Authorized":
-                    msw.authorized = True
-                else:
-                    msw.authorized = False
-                if status[0] == "Up":
-                    msw.up = True
-                else:
-                    msw.up = False
-                msw.flag = line.split()[4]
-                msw.address = line.split()[5]
-                managed_switches.append(msw)
-
+                if Found and not End and len(line) > 1: 
+                    dprint(line)
+                    msw = Managed_Switch(self.console)
+                    msw.switch_id = line.split()[0]
+                    msw.major_version = line.split()[1]
+                    msw.minor_version = re.sub('[()]',"",line.split()[2])
+                    status = line.split()[3].split('/')
+                    if status[0] == "Authorized":
+                        msw.authorized = True
+                    else:
+                        msw.authorized = False
+                    if status[1] == "Up":
+                        msw.up = True
+                    else:
+                        msw.up = False
+                    msw.flag = line.split()[4]
+                    msw.address = line.split()[5]
+                    managed_switches.append(msw)
+        except Exception as e:
+            print("Some managed switches are not recognized by the fortigate")
         self.managed_switches_list = managed_switches
         return self.managed_switches_list
 
@@ -6259,6 +6271,7 @@ class Device_XML():
         self.role = None
         self.type = None
         self.active = False
+        self.uplink_port = None
 
 
     def print_info(self):

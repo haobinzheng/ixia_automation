@@ -852,11 +852,16 @@ def split_f_string_lines(cmdblock):
 	b = [x.strip() for x in b if x.strip()]
 	return b
 
-def config_cmds_lines(dut, cmdblock):
+def config_cmds_lines(dut, cmdblock,*args,**kwargs):
+	if "wait" in kwargs:
+		wait_time = int(kwargs["wait"])
+	else:
+		wait_time = 0.5
 	b= cmdblock.split("\n")
 	b = [x.strip() for x in b if x.strip()]
 	for cmd in b:
 		switch_configure_cmd(dut,cmd)
+		sleep(wait_time)
 		 
 
 def config_block_cmds_new(dut, cmdblock):
@@ -1404,6 +1409,21 @@ def telnet_switch(ip_address, console_port,**kwargs):
 	if platform == "fortinet":
 		switch_configure_cmd(tn,'config system global')
 		switch_configure_cmd(tn,'set admintimeout 480')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config system console')
+		switch_configure_cmd(tn,'set output standard')
+		switch_configure_cmd(tn,'end')
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
+	elif platform == "fortigate":
+		switch_configure_cmd(tn,'config global')
+		switch_configure_cmd(tn,'config system console')
+		switch_configure_cmd(tn,'set output standard')
+		switch_configure_cmd(tn,'end')
 		switch_configure_cmd(tn,'end')
 		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
 		try:

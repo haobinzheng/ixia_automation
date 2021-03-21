@@ -78,6 +78,10 @@ def parse_tbinfo_untangle(file):
                     dprint("------this is license")
                     dprint(ee)
                     device.license = ee.get_attribute("licenses")
+                elif ee.__dict__['_name'] == "uplink":
+                    dprint("------this is uplink")
+                    dprint(ee)
+                    device.uplink_port = ee.get_attribute("port")
             device.print_info()
             devices.append(device)  
         elif "trafgen" in name:

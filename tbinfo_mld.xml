@@ -22,7 +22,6 @@
   <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
   <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
  </dev2>
-
 <dev3 type="FSW" hostname="FS1E483Z17000008" model="1048E">
   <console ip="10.105.240.44" line="2090"> </console>
   <login username="admin" password="Fortinet123!"> </login>
