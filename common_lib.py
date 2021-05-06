@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 import xlsxwriter
 from excel import *
-from ixia_ngfp_lib import *
+#from ixia_ngfp_lib import *
 import settings
 from console_util  import  *
 import pexpect
@@ -20,7 +20,7 @@ import subprocess
 import spur
 import multiprocessing
 
-from ixia_ngfp_lib import *
+#from ixia_ngfp_lib import *
 from utils import *
 from settings import *
  

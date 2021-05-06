@@ -5995,6 +5995,7 @@ class FortiGate_XML(FortiSwitch):
             pwd = kwargs['password']
         else:
             pwd = "Fortinet123!"
+        self.physical_ports = []
         self.platform = "fortigate"
         self.name = device_xml.name
         self.console_ip = device_xml.console_ip
@@ -6010,6 +6011,11 @@ class FortiGate_XML(FortiSwitch):
         self.active = device_xml.active
         self.managed_switches_list = []
         self.console = telnet_switch(self.console_ip,self.console_line,password=pwd,platform="fortigate")
+        self.network_discovery()
+
+    def network_discovery(self,*args,**kwargs):
+        self.collect_physical_ports()
+        self.port2mac()
 
     def config_custom_timeout(self,*args,**kwargs):
         if "vdom" in kwargs:
@@ -6031,6 +6037,89 @@ class FortiGate_XML(FortiSwitch):
         config_cmds_lines(self.console,config)
         return name
 
+    def fortilink_setup(self,*args,**kwargs):
+        pass
+
+
+    def port2mac(self,*args,**kwargs):
+        sample = """
+        commands: 
+            FortiGate-2500E # config global
+
+            FortiGate-2500E (global) # get hardware nic port1 | grep HWaddr
+        output:
+            Current_HWaddr   70:4c:a5:52:38:d4
+            Permanent_HWaddr 70:4c:a5:52:38:d4
+        """
+        for port in self.physical_ports:
+            cmds = f"""
+                config global
+                get hardware nic {port} | grep HWaddr
+            """
+            hw_addresses = self.fgt_show_commands(cmds,timeout=10)
+            print(hw_addresses)
+
+            port_regex = r"==\[(port[0-9]+)\]"
+            for addr in hw_addresses:
+                print(addr)
+                if "Current_HWaddr" in addr:
+                    print(addr)
+                    matched = re.search(port_regex,addr)
+                    if matched:
+                        p = matched.group(1)
+                        print(p)
+                        self.physical_ports.append(p)
+
+    def collect_physical_ports(self,*args,**kwargs):
+        sample = """
+        config global
+        get system interface physical
+        ==[port31]
+        mode: static
+        ip: 0.0.0.0 0.0.0.0
+        ipv6: ::/0
+        status: down
+        speed: n/a
+        ==[port32]
+        mode: static
+        ip: 0.0.0.0 0.0.0.0
+        ipv6: ::/0
+        status: down
+        speed: n/a
+        """
+        cmds = """
+        config global
+        get system interface physical
+        """
+        ports = self.fgt_show_commands(cmds,timeout=10)
+        print(ports)
+
+        port_regex = r"==\[(port[0-9]+)\]"
+        for line in ports:
+            #print(line)
+            if "==" in line:
+                print(line)
+                matched = re.search(port_regex,line)
+                if matched:
+                    p = matched.group(1)
+                    print(p)
+                    self.physical_ports.append(p)
+
+                     
+
+    def set_port_alias(self,*args,**kwargs):
+        cmd = f"""
+        conf vdom
+            edit root
+            config system interface
+                edit port1
+                set alias {port}
+                next
+                end
+            end
+        """
+        pass
+
     def execute_custom_command(self,*args,**kwargs):
         switch_name = kwargs["switch_name"]
         cmd = kwargs["cmd"]
@@ -6047,6 +6136,53 @@ class FortiGate_XML(FortiSwitch):
         end
         """
         config_cmds_lines(self.console,config)
+
+    def fgt_show_commands(self,cmds,**kwargs):
+        if 'timeout' in kwargs:
+            timeout = kwargs['timeout']
+        else:
+            timeout = 3
+        #relogin_if_needed(tn)
+        #make sure to start from the gloal prompt
+        tn = self.console
+        tn.write(('end' + '\n').encode('ascii'))
+        tn.write(('end' + '\n').encode('ascii'))
+        cmds = split_f_string_lines(cmds)
+        for i in range(len(cmds)):
+            original_cmd = cmds[i]
+            cmd = cmds[i]
+            cmd_bytes = convert_cmd_ascii_n(cmd)
+            if i != len(cmds)-1:
+                tn.write(cmd_bytes)
+                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+            else:
+                tn.write(cmd_bytes)
+                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+                console_timer(timeout,msg=f"wait for fortigate command {cmd} to execute")
+                output = tn.read_very_eager()
+                #output = tn.read_all()
+                #output = tn.read_until(("# ").encode('ascii'),timeout=10)
+                print(output)
+                out_list = output.split(b'\r\n')
+                encoding = 'utf-8'
+                out_str_list = []
+                for o in out_list:
+                    o_str = o.decode(encoding).strip(' \r')
+                    out_str_list.append(o_str)
+                # tprint(dir(output))
+                # tprint(type(output))
+                #tprint(out_list)
+                # for i in out_str_list:
+                #   tprint(i)
+                #Will revove these lines after bgp is done
+                good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
+                debug(good_out_list)
+                return good_out_list
 
     def discover_managed_switches(self,*args,**kwargs):
         sample_output = """

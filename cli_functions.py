@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 import xlsxwriter
 from excel import *
-from ixia_ngfp_lib import *
+#from ixia_ngfp_lib import *
 import settings
 from console_util  import  *
 import pexpect
@@ -21,7 +21,6 @@ import multiprocessing
 from collections import OrderedDict
 from copy import deepcopy
 
-from ixia_ngfp_lib import *
 from utils import *
 from settings import *
 
