@@ -7,6 +7,8 @@ import threading
 from threading import Thread
 from time import sleep
 import multiprocessing
+from random import seed                                                 
+from random import randint 
 
 from utils import *
 import settings 
@@ -4246,6 +4248,11 @@ class lldp_class():
         self.capability = None
         self.med_type = None
         self.remote_port = None
+        self.remote_system = None
+        self.remote_system_role = None
+        self.remote_system_console = None
+        self.remote_image = None
+        self.role = None
 
     def __repr__(self):
         return '{self.__class__.__name__}(fsw obj)'.format(self=self)
@@ -4265,13 +4272,16 @@ class lldp_class():
         self.unknow_tlvs = items[7]
 
     def print_lldp(self):
+        print(f"---------------------------- LLDP Neihgbor Info --------------------")
         print("type = {}".format(self.type))
         print("local_port = {}".format(self.local_port))
         print("med_type = {}".format(self.med_type))
         print("capability = {}".format(self.capability))
         print("remote_port = {}".format(self.remote_port))
         print("status = {}".format(self.status))
-
+        print("remote_system = {}".format(self.remote_system))
+        print("remote_system_role = {}".format(self.remote_system_role))
+        print("remote image = {}".format(self.remote_image))
 
 class port_class():
     def __init__(self,name):
@@ -4530,6 +4540,8 @@ class FortiSwitch:
             end
             """
         config_cmds_lines(self.console,config)
+
+
 
 
     def fsw_upgrade(self,*args,**kwargs):
@@ -5946,26 +5958,392 @@ class FortiSwitch_XML(FortiSwitch):
     def __init__(self,*args,**kwargs):
         device_xml = args[0]
         if "password" in kwargs:
-            pwd = kwargs['password']
+            self.password = kwargs['password']
         else:
-            pwd = "Fortinet123!"
+            self.password = device_xml.password
+        self.tb=kwargs['topo_db']
+        self.version = None
+        self.image_prefix = None
         self.name = device_xml.name
+        self.hostname = device_xml.hostname
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
         self.username = device_xml.username
-        self.password = device_xml.password
         self.mgmt_ip = device_xml.mgmt_ip
         self.mgmt_netmask = device_xml.mgmt_netmask
         self.mgmt_gateway = device_xml.mgmt_gateway
         self.license = device_xml.license
         self.role = device_xml.role
+        self.cluter = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(3)) 
+        self.tier = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(1)) 
+        self.pod = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(2)) 
         self.type = device_xml.type
         self.active = device_xml.active
-        self.uplink_port = device_xml.uplink_port
+        self.uplink_ports = device_xml.uplink_ports
+        self.fortigate_ports_db = device_xml.fortigate_ports
         self.platform = "fortinet"
         self.trunk_list = []
-        self.console = telnet_switch(self.console_ip,self.console_line,password=pwd)
+        self.icl_links = []
+        self.up_links = []
+        self.down_links = []
+        self.up_links_pod = {}
+        self.down_links_pod = {}
+        self.fortigate_links = []
+        self.lldp_neighbors_list = []
+        self.managed = False
+        self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
+        self.switch_system_status()
+
+    def fsw_upgrade_v2(self,*args,**kwargs):
+        samples = """
+        S248EFTF18002594 # get system status
+        
+        S248EFTF18002594 # get system status
+        Version: FortiSwitch-248E-FPOE v6.4.0,build0470,210205 (Interim)
+        Serial-Number: S248EFTF18002594
+        BIOS version: 04000004
+        System Part-Number: P21940-02
+        Burn in MAC: 70:4c:a5:d4:43:d2
+        Hostname: S248EFTF18002594
+        Distribution: International
+        Branch point: 470
+        System time: Wed Dec 31 17:21:44 1969
+
+        image_name = FSW_248E_POE-v7-build0022-FORTINET.out
+        """
+
+        if "build" in kwargs:
+            build = int(kwargs['build'])
+            build = f"{build:04}"
+        else:
+            ErrorNotify("Software build number is missing. Exmaple: build=xxx.  Exiting program")
+            exit(-1)
+        if "version" in kwargs:
+            version = kwargs['version']
+        else:
+            version = "v6"
+        dut = self.console
+        dut_name = self.name
+
+        config = f"""
+        config system admin
+            edit "admin"
+            set accprofile "super_admin"
+            set password ENC AK1uHvbOfsDLnA6ya8BxpLwXCNcKNZ9+7K7YC1pLpb4Qvs=
+        next
+        end
+        """
+        config_cmds_lines(self.console,config)
+
+        image_name = f"{self.image_prefix}-{version}-build{build}-FORTINET.out"
+
+        dprint(f"image name = {image_name}")
+        cmd = f"execute restore image tftp {image_name} 10.105.19.19"
+        tprint(f"upgrade command = {cmd}")
+        switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
+        #console_timer(60,msg="wait for 60s to download image from tftp server")
+        #switch_wait_enter_yes(dut,"Do you want to continue? (y/n)")
+        prompt = "Do you want to continue? (y/n)"
+        output = switch_read_console_output(dut,timeout = 100)
+        dprint(output)
+        result = False
+        for line in output: 
+            if "Command fail" in line:
+                Info(f"upgrade with image {image_name} failed for {dut_name}: {line}")
+                result = False
+
+            elif "Check image OK" in line:
+                Info(f"At {dut_name} image {image_name} is downloaded and checked OK,upgrade should be fine: {line}")
+                result = True
+
+            elif "Writing the disk" in line:
+                Info(f"At {dut_name} image {image_name} is being written into disk, upgrade is Good!: {line}")
+                result = True
+
+            elif "Do you want to continue" in line:
+                dprint(f"Being prompted to answer yes/no 2nd time.  Prompt = {prompt}")
+                switch_enter_yes(dut)
+                result = True
+            else:
+                result = True
+        return result
+
+    def config_network_standalone(self):
+        config = f"""
+        conf system interface 
+            edit mgmt
+            set mode static
+            end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(2)
+        config = f"""
+        conf system interface 
+            edit mgmt
+            set mode static
+            end
+        """
+        config_cmds_lines(self.console,config)
+
+        sleep(5)
+        config = f"""
+        conf system interface 
+            edit mgmt
+            set ip {self.mgmt_ip} {self.mgmt_netmask}
+            set allowaccess ping telnet https http
+        end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(5)
+
+        config = f"""
+        config router static
+            edit 1
+                set gateway {self.mgmt_gateway}
+                set device "mgmt"
+            next
+        end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(5)
+
+    def sw_relogin(self):
+        Info(f"================= {self.hostname}: Re-Login console =================")
+        self.console = telnet_switch(self.console_ip,self.console_line,password=self.password,relogin=True,console=self.console)
+        self.dut = self.console # For compatibility with old Fortiswitch codes
+
+    def switch_system_status(self,*args,**kwargs):
+        sample = """
+        S548DN4K17000133 # get system status
+        Version: FortiSwitch-548D v6.4.4,build0454,201106 (GA)
+        Serial-Number: S548DN4K17000133
+        BIOS version: 04000013
+        System Part-Number: P18057-06
+        Burn in MAC: 70:4c:a5:79:22:5a
+        Hostname: S548DN4K17000133
+        Distribution: International
+        Branch point: 454
+        System time: Tue Oct  2 06:03:37 2001
+        path=system, objname=status, tablename=(null), size=0
+        """
+        print(f"========================== {self.hostname}: Get System Status =======================")
+        output = collect_show_cmd(self.console,"get system status")
+        #print(output)
+
+        for line in output:
+            if "Version:" in line:
+                k,v = line.split(":")
+                self.version = v.split()[0].strip()
+                self.image_prefix = re.sub("FortiSwitch","FSW",self.version)
+                self.image_prefix = self.image_prefix.replace("-","_")
+                print(f"Platform version = {self.version}")
+                continue
+            if "Hostname" in line:
+                self.discovered_hostname = line.split(":")[1].strip()
+                print(f"Discovered hostname = {self.discovered_hostname}")
+                continue
+            if "Serial-Number" in line:
+                self.serial_number = line.split(":")[1].strip()
+                print(f"Serial Number = {self.serial_number}")
+
+        for device in self.tb.devices:
+            #print(device.hostname)
+            if self.serial_number == device.hostname:
+                device.serial_number = self.serial_number
+                device.discovered_hostname = self.discovered_hostname
+                device.version = self.version
+                print(f"----------------------------- Updated topo_db device infor  ------------------------")
+                device.print_info()
+
+    def sw_network_discovery(self,*args,**kwargs):
+        self.discover_fortiswitch_lldp()
+        print(f"Fortilink ports = {self.fortigate_links}")
+        print(f"ICL ports = {self.icl_links}")
+        print(f"Uplinke ports = {self.up_links}")
+        print(f"Uplinke ports pod = {self.up_links_pod}")
+        print(f"Downlink ports = {self.down_links}")
+        print(f"Downlink ports pod = {self.down_links_pod}")
+
+
+    def config_lldp_profile_auto_isl(self):
+
+        ports = self.icl_links + self.up_links + self.down_links
+        for port in ports:
+            config = f"""
+            conf switch physical-port
+                edit {port}
+                set lldp-profile default-auto-isl
+                end
+            """
+            config_cmds_lines(self.console,config)
+
+    def discover_fortiswitch_lldp(self):
+        if self.is_fortinet() == False:
+            return 
+        Info(f"Discovering LLDP neighbors and updating LLDP database at {self.name}......")
+        lldp_obj_list = []
+        lldp_dict_list = []
+
+        self.icl_links = []
+        self.up_links = []
+        self.down_links = []
+        self.fortigate_links = []
+        self.lldp_neighbors_list
+
+        print(f"========================== {self.serial_number}: Discovering LLDP Neighbors =======================")
+        output = collect_show_cmd(self.console,"get switch lldp neighbors-summary")
+        #print(output)
+        for line in output:
+            if "Portname" in line and  "Status" in line and "Device-name" in line:
+                items = line.split()
+                continue
+            if " Up " in line:
+                lldp_dict = {k:v for k, v in zip(items,line.split())}
+                #printr(lldp_dict)
+                if lldp_dict["Device-name"] == "-" or lldp_dict["Capability"] == "-":
+                    continue
+                else:
+                    lldp = lldp_class()
+                    lldp.local_port = lldp_dict["Portname"]
+                    lldp.status = lldp_dict["Status"]
+                    lldp.ttl = lldp_dict["TTL"]
+                    lldp.remote_system = lldp_dict["Device-name"]
+                    lldp.capability = lldp_dict["Capability"]
+                    lldp.remote_port = lldp_dict["Port-ID"]
+                    lldp_obj_list.append(lldp)
+                    lldp_dict_list.append(lldp_dict)
+                    print("############################### Debug ########################")
+                    print(f"Debug: Looking for this neighbor: {lldp.remote_system}")
+                    for device in self.tb.devices:
+                        if (lldp.remote_system == device.hostname or lldp.remote_system == device.discovered_hostname) and self.serial_number != device.serial_number:
+                            print(f"===== Debug:device hostname: {device.hostname}")
+                            print(f"===== Debug: device discovered hostname: {device.discovered_hostname}")
+                            lldp.remote_system_role = device.role
+                            if device.role == "FGT" and 'tier' in self.role:
+                                self.fortigate_links.append(lldp.local_port)
+                                self.fortigate_links = list(set(self.fortigate_links))
+                            elif 'tier' in self.role and 'tier' in device.role:
+                                neighbor_tier = int(re.match(r'tier([0-9]+)-([0-9]+)',device.role).group(1)) 
+                                neighbor_pod = int(re.match(r'tier([0-9]+)-([0-9]+)',device.role).group(2)) 
+                                self_tier = int(re.match(r'tier([0-9]+)-([0-9]+)',self.role).group(1))
+                                self_pod = int(re.match(r'tier([0-9]+)-([0-9]+)',self.role).group(2))  
+                                if neighbor_tier < self_tier:
+                                    self.up_links.append(lldp.local_port)
+                                    if neighbor_pod not in self.up_links_pod:
+                                        self.up_links_pod.setdefault(neighbor_pod,[]).append(lldp.local_port)
+                                    else:
+                                        self.up_links_pod[neighbor_pod].append(lldp.local_port)
+                                elif neighbor_tier > self_tier:
+                                    self.down_links.append(lldp.local_port)
+                                    if neighbor_pod not in self.down_links_pod:
+                                        self.down_links_pod.setdefault(neighbor_pod,[]).append(lldp.local_port)
+                                    else:
+                                        self.down_links_pod[neighbor_pod].append(lldp.local_port)
+                                else:
+                                    self.icl_links.append(lldp.local_port)
+
+                    lldp.print_lldp()
+                    self.lldp_neighbors_list.append(lldp)
+
+        self.lldp_dict_list = lldp_dict_list
+        self.lldp_obj_list = lldp_obj_list
+        print(self.lldp_dict_list)
+
+
+    def switch_factory_reset(self):
+        tprint(f":::::::::: Factory resetting {self.hostname} :::::::::::")
+        switch_interactive_exec(self.console,"execute factoryreset","Do you want to continue? (y/n)") 
+
+    def login_factory_reset(self,*args,**kwargs):
+        tn = self.console
+        hostname = self.hostname
+
+        password = kwargs['password']
+         
+        tn.write(('' + '\n').encode('ascii'))
+        tn.write(('' + '\n').encode('ascii'))
+        time.sleep(0.2)
+
+        tn.read_until(("login: ").encode('ascii'),timeout=5)
+
+        tn.write(('admin' + '\n').encode('ascii'))
+
+        tn.read_until(("Password: ").encode('ascii'),timeout=5)
+
+        ###################### Has to be 3 enters: Dont change ################
+        tn.write(('' + '\n').encode('ascii'))
+        tn.write(('' + '\n').encode('ascii'))
+        tn.write(('' + '\n').encode('ascii'))
+        ############################ Dont change ##############################
+
+        prompt = switch_find_login_prompt_new(tn)
+        p = prompt[0]
+        debug(prompt)
+        if p == "change":
+            Info(f"Login {hostname} after factory reset , changing password..... ") #This needs to rewrite to take care factory reset situation
+            ############################################# Dont change these lines ##################################
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii')) 
+            sleep(3)       # For some console, it took long time for promopt to show up.  Keep this wait 3 sec
+            ############################################# Dont change these lines ###################################
+            tn.read_until(("login: ").encode('ascii'),timeout=5)
+            tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+            tn.write(('' + '\n').encode('ascii'))
+            tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
+            tn.write((password + '\n').encode('ascii'))   #this is for factory reset scenario
+            tn.read_until(("Password: ").encode('ascii'),timeout=10)
+            tn.write((password + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.write(('' + '\n').encode('ascii'))
+            tn.read_until(("# ").encode('ascii'),timeout=10)
+            # tn.read_until(("login: ").encode('ascii'),timeout=5)
+            # tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+            # sleep(0.6)
+            # tn.write(('' + '\n').encode('ascii')) #This line is needed. Don't deleted!!!!!! After enter is hit, user can enter password
+            # tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
+            # tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
+            # #sleep(0.5) Must not have sleep in between write and read_until
+            # tn.read_until(("Password: ").encode('ascii'),timeout=10)
+            # tn.write(('fortinet123' + '\n').encode('ascii'))
+            # sleep(0.5)
+            # tn.write(('' + '\n').encode('ascii'))
+            # tn.write(('' + '\n').encode('ascii'))
+            # tn.read_until(("# ").encode('ascii'),timeout=10)
+
+            switch_configure_cmd(tn,'config system global')
+            switch_configure_cmd(tn,'set admintimeout 480')
+            switch_configure_cmd(tn,'end')
+            tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+            try:
+                print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+                print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+            except Exception as e:
+                pass
+        else:
+            ErrorNotify(f"Not able to login {hostname} after factory reset the device")
+            exit()
+
+    def config_auto_isl_port_group(self):
+        Info("Start configuring MCLAG auto isl port group")
+        if len(self.down_links) == 0:
+            return
+        for pod in self.down_links_pod:
+            ports = " ".join(self.down_links_pod[pod])
+            config = f"""
+            config switch auto-isl-port-group
+                edit Tier{self.tier}-Trunk-{pod}
+                    set members {ports}
+                end
+            """
+            config_cmds_lines(self.console,config)
 
 class Managed_Switch():
     def __init__(self,*args,**kwargs):
@@ -5973,11 +6351,12 @@ class Managed_Switch():
         self.switch_id = None
         self.major_version = None
         self.minor_version = None
-        self.authorized = False
-        self.up = False
+        self.authorized = None
+        self.up = None
         self.flag = None
         self.address = None
         self.join_time = None
+        self.switch_obj = None
 
     def print_managed_sw_info(self):
         print_dash_line()
@@ -5992,12 +6371,26 @@ class FortiGate_XML(FortiSwitch):
     def __init__(self,*args,**kwargs):
         device_xml = args[0]
         if "password" in kwargs:
-            pwd = kwargs['password']
+            self.pwd = kwargs['password']
         else:
-            pwd = "Fortinet123!"
+            self.pwd = device_xml.password
+        self.tb=kwargs['topo_db']
         self.physical_ports = []
+        self.port_mac_pair = {}
+        self.mac_port_pair = {}
+        self.lldp_neighbors_list = []
+        self.fortilink_ports = []
+        self.fortilink_ports_pod = {}
+        self.fortilink_interfaces = []
+        self.fortilink_just_configued = []
+        self.fgt_ha_ports = []
+        self.version = None
+        self.image_prefix = None
+        self.discovered_hostname = None
+        self.serial_number = None
         self.platform = "fortigate"
         self.name = device_xml.name
+        self.hostname = device_xml.hostname
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
         self.username = device_xml.username
@@ -6006,69 +6399,202 @@ class FortiGate_XML(FortiSwitch):
         self.mgmt_netmask = device_xml.mgmt_netmask
         self.mgmt_gateway = device_xml.mgmt_gateway
         self.license = device_xml.license
-        self.role = device_xml.role
+        self.role = re.match(r'([A-Za-z]+)_([A-Za-z]+)-([1-9])',device_xml.role).group(1)
+        self.mode = re.match(r'([A-Z]+)_([A-Za-z]+)-([1-9])',device_xml.role).group(2)
+        self.cluter = re.match(r'([A-Z]+)_([A-Za-z]+)-([1-9])',device_xml.role).group(3)
         self.type = device_xml.type
         self.active = device_xml.active
+        self.fortilink_ports_db = device_xml.fortilink_ports
+        self.ha_ports_db = device_xml.ha_ports
+        self.ixia_ports_db = device_xml.ixia_ports
         self.managed_switches_list = []
-        self.console = telnet_switch(self.console_ip,self.console_line,password=pwd,platform="fortigate")
-        self.network_discovery()
+        self.console = telnet_switch(self.console_ip,self.console_line,password=self.pwd,platform="fortigate")
+        self.local_discovery()
 
-    def network_discovery(self,*args,**kwargs):
-        self.collect_physical_ports()
-        self.port2mac()
-
-    def config_custom_timeout(self,*args,**kwargs):
-        if "vdom" in kwargs:
-            vdom_name = kwargs['vdom']
-        else:
-            vdom_name = "root"
-        name = "timeout"
+    def ha_sync(self,*args,**kwargs):
+        action = kwargs['action']
+        Info("synchronize configuration at both Firewalls")
         config = f"""
-        config vdom
-        edit {vdom_name}
-        config switch-controller custom-command
-            edit {name}
-                set command "config system global %0a set admintimeout 480 %0a end %0a"
-            next
-            end
-            end
+        conf global
+        execute ha synchronize {action}
+        """
+        config_cmds_lines(self.console,config)
+
+    def fgt_upgrade_v2(self,*args,**kwargs):
+        samples = """
+        S248EFTF18002594 # get system status
+        
+        S248EFTF18002594 # get system status
+        Version: FortiSwitch-248E-FPOE v6.4.0,build0470,210205 (Interim)
+        Serial-Number: S248EFTF18002594
+        BIOS version: 04000004
+        System Part-Number: P21940-02
+        Burn in MAC: 70:4c:a5:d4:43:d2
+        Hostname: S248EFTF18002594
+        Distribution: International
+        Branch point: 470
+        System time: Wed Dec 31 17:21:44 1969
+
+        image_name = FSW_248E_POE-v7-build0022-FORTINET.out
+        """
+
+        if "build" in kwargs:
+            build = int(kwargs['build'])
+            build = f"{build:04}"
+        else:
+            ErrorNotify("Software build number is missing. Exmaple: build=xxx.  Exiting program")
+            exit(-1)
+        if "version" in kwargs:
+            version = kwargs['version']
+        else:
+            version = "v6"
+        dut = self.console
+        dut_name = self.name
+
+        # if version == "v7":
+        #     version = "v7.0.0"
+        image_name = f"{self.image_prefix}-{version}-build{build}-FORTINET.out"
+
+        dprint(f"image name = {image_name}")
+        cmd = f"execute restore image tftp {image_name} 10.105.19.19"
+        tprint(f"upgrade command = {cmd}")
+
+        tprint(f":::::::::: Image Upgrade {self.hostname} :::::::::::")
+        config = """
+        config global
+        """
+        config_cmds_lines(self.console,config)
+        switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
+        #console_timer(60,msg="wait for 60s to download image from tftp server")
+        #switch_wait_enter_yes(dut,"Do you want to continue? (y/n)")
+        sleep(30)
+        switch_enter_yes(dut)
+        output = switch_read_console_output(dut,timeout = 30)
+        dprint(output)
+        result = False
+        for line in output: 
+            if "Command fail" in line:
+                Info(f"upgrade with image {image_name} failed for {dut_name}: {line}")
+                result = False
+
+            elif "Check image OK" in line:
+                Info(f"At {dut_name} image {image_name} is downloaded and checked OK,upgrade should be fine: {line}")
+                result = True
+
+            elif "Writing the disk" in line:
+                Info(f"At {dut_name} image {image_name} is being written into disk, upgrade is Good!: {line}")
+                result = True
+
+            elif "Do you want to continue" in line:
+                dprint(f"Being prompted to answer yes/no 2nd time.  Prompt = {prompt}")
+                switch_enter_yes(dut)
+                result = True
+            elif "Error" in line or "Invalid" in line or "Can not get image" in line:
+                Info(f"upgrade with image {image_name} failed for {dut_name}: {line}")
+                result = False
+            else:
+                result = True
+        return result
+
+    def config_default_policy(self,*args,**kwargs):
+        config = """
+        conf vdom
+        edit root
+        config firewall policy
+        edit 1
+            set name allowed-all
+            set srcintf any
+            set dstintf any
+            set srcaddr all
+            set dstaddr all
+            set action accept
+            set schedule always
+            set service ALL
+            set inspection-mode proxy
+            set logtraffic disable
+            set nat enable
+        next
+        end
         end
         """
         config_cmds_lines(self.console,config)
-        return name
 
-    def fortilink_setup(self,*args,**kwargs):
-        pass
+    def fgt_relogin(self):
+        Info(f"================= {self.discovered_hostname}: Re-Login console =================")
+        self.console = telnet_switch(self.console_ip,self.console_line,password=self.pwd,platform="fortigate",relogin=True,console=self.console)
 
-
-    def port2mac(self,*args,**kwargs):
-        sample = """
-        commands: 
-            FortiGate-2500E # config global
-
-            FortiGate-2500E (global) # get hardware nic port1 | grep HWaddr
-        output:
-            Current_HWaddr   70:4c:a5:52:38:d4
-            Permanent_HWaddr 70:4c:a5:52:38:d4
+    def fgt_factory_reset(self):
+        tprint(f":::::::::: Factory resetting {self.hostname} :::::::::::")
+        config = """
+        config global
         """
-        for port in self.physical_ports:
-            cmds = f"""
-                config global
-                get hardware nic {port} | grep HWaddr
-            """
-            hw_addresses = self.fgt_show_commands(cmds,timeout=10)
-            print(hw_addresses)
+        config_cmds_lines(self.console,config)
+        switch_interactive_exec(self.console,"execute factoryreset","Do you want to continue? (y/n)") 
 
-            port_regex = r"==\[(port[0-9]+)\]"
-            for addr in hw_addresses:
-                print(addr)
-                if "Current_HWaddr" in addr:
-                    print(addr)
-                    matched = re.search(port_regex,addr)
-                    if matched:
-                        p = matched.group(1)
-                        print(p)
-                        self.physical_ports.append(p)
+    def fortigate_system_status(self,*args,**kwargs):
+        sample = """
+        FortiGate-2500E # get system status
+        Version: FortiGate-2500E v6.4.4,build1802,201208 (Interim)
+        Virus-DB: 1.00123(2015-12-11 13:18)
+        Extended DB: 1.00000(2018-04-09 18:07)
+        Extreme DB: 1.00000(2018-04-09 18:07)
+        IPS-DB: 6.00741(2015-12-01 02:30)
+        IPS-ETDB: 6.00741(2015-12-01 02:30)
+        APP-DB: 6.00741(2015-12-01 02:30)
+        INDUSTRIAL-DB: 6.00741(2015-12-01 02:30)
+        Serial-Number: FG2K5E3917900021
+        IPS Malicious URL Database: 1.00001(2015-01-01 01:01)
+        BIOS version: 05000004
+        System Part-Number: P18723-05
+        Log hard disk: Available
+        Hostname: FortiGate-2500E
+        Private Encryption: Disable
+        Operation Mode: NAT
+        Current virtual domain: root
+        Max number of virtual domains: 500
+        Virtual domains status: 2 in NAT mode, 0 in TP mode
+        Virtual domain configuration: multiple
+        FIPS-CC mode: disable
+        Current HA mode: a-p, primary
+        Cluster uptime: 174 days, 5 hours, 55 minutes, 20 seconds
+        Branch point: 1802
+        Release Version Information: Interim
+        FortiOS x86-64: Yes
+        System time: Thu May  6 22:59:50 2021
+        Cluster state change time: 2021-04-27 14:16:02
+        """
+
+        print(f"========================== {self.hostname}: Get System Status =======================")
+        cmds = """
+        get system status
+        """
+        output = self.fgt_show_commands(cmds,timeout=2) #timeout has to be > 1
+        #print(output)
+
+        for line in output:
+            if "Version:" in line:
+                k,v = line.split(":")
+                self.version = v.split()[0].strip()
+                self.image_prefix = re.sub("FortiGate","FGT",self.version)
+                self.image_prefix = self.image_prefix.replace("-","_")
+                print(f"Platform version = {self.version}")
+                continue
+            if "Hostname" in line:
+                self.discovered_hostname = line.split(":")[1].strip()
+                print(f"Discovered hostname = {self.discovered_hostname}")
+                continue
+            if "Serial-Number" in line:
+                self.serial_number = line.split(":")[1].strip()
+                print(f"Serial Number = {self.serial_number}")
+
+        for device in self.tb.devices:
+            #print(device.hostname)
+            if self.serial_number == device.hostname:
+                device.serial_number = self.serial_number
+                device.discovered_hostname = self.discovered_hostname
+                device.version = self.version
+                print(f"----------------------------- Updated topo_db device infor  ------------------------")
+                device.print_info()
 
     def collect_physical_ports(self,*args,**kwargs):
         sample = """
@@ -6091,34 +6617,305 @@ class FortiGate_XML(FortiSwitch):
         config global
         get system interface physical
         """
+        print(f"========================== {self.serial_number}: discovering physical ports =======================")
         ports = self.fgt_show_commands(cmds,timeout=10)
-        print(ports)
 
+        self.physical_ports = []
         port_regex = r"==\[(port[0-9]+)\]"
         for line in ports:
             #print(line)
             if "==" in line:
-                print(line)
+                #print(line)
                 matched = re.search(port_regex,line)
                 if matched:
                     p = matched.group(1)
-                    print(p)
+                    #print(p)
                     self.physical_ports.append(p)
 
-                     
+        print(f"Physical ports on {self.serial_number}: {self.physical_ports}")   
 
-    def set_port_alias(self,*args,**kwargs):
-        cmd = f"""
-        conf vdom
+    def change_fortilink_ports(self,*args,**kwargs):
+        state = kwargs['state']
+        for port in self.fortilink_ports:
+            config = f"""
+            conf vdom
+                edit root
+                config system interface
+                edit {port}
+                    set status {state}
+                    next
+                    end
+                end
+            """
+            config_cmds_lines(self.console,config) 
+
+       
+
+    def config_custom_timeout(self,*args,**kwargs):
+        if "vdom" in kwargs:
+            vdom_name = kwargs['vdom']
+        else:
+            vdom_name = "root"
+        name = "timeout"
+        config = f"""
+        config vdom
+        edit {vdom_name}
+        config switch-controller custom-command
+            edit {name}
+                set command "config system global %0a set admintimeout 480 %0a end %0a"
+            next
+            end
+            end
+        end
+        """
+        config_cmds_lines(self.console,config)
+        return name
+
+    def unconfig_fortilink(self,*args,**kwargs):
+
+        for flk in self.fortilink_just_configued:
+            config = f"""
+                config vdom
+                edit root
+                config system interface
+                    delete {flk}
+                end
+                end
+                """
+            config_cmds_lines(self.console,config)
+            sleep(2)
+            show_cmds = f"""
+            config vdom
+            edit root
+                config system interface
+                    edit {flk}
+                        show 
+            """
+            self.fgt_show_commands(show_cmds)
+
+    def config_fortilink(self,*args,**kwargs):
+        sample = """
+        config vdom
+        edit root
+        config system interface
+            edit "fortilink1"
+            set vdom "root"
+            set fortilink enable
+            set ip 192.168.255.1 255.255.255.0
+            set allowaccess ping fabric
+            set type aggregate
+            set member "port15" "port16"
+            set device-identification enable
+            set lldp-reception enable
+            set lldp-transmission enable
+            set snmp-index 50
+            set auto-auth-extension-device enable
+            set fortilink-split-interface disable
+            set switch-controller-nac "fortilink1"
+            set swc-first-create 127
+            set lacp-mode active
+            next
+        end
+        """
+        if "domain" in kwargs:
+            domain = kwargs['domain']
+        else:
+            domain = "root"
+
+        if "name" in kwargs:
+            fortilink_name = kwargs['name']
+        else:
+            fortilink_name = "Myfortilink"
+
+        if "ip_addr" in kwargs:
+            ip_addr = kwargs['ip_addr']
+        else:
+            ip_addr = f"192.168.1.1 255.255.255.0"
+
+        fortilink_ports = " ".join(self.fortilink_ports)
+
+        config = f"""
+            config vdom
             edit root
             config system interface
-                edit port1
-                set alias {port}
+                edit {fortilink_name}
+                set vdom {domain}
+                set fortilink enable
+                set allowaccess ping fabric
+                set type aggregate
+                set member {fortilink_ports}
+                set device-identification enable
+                set lldp-reception enable
+                set lldp-transmission enable
+                set auto-auth-extension-device enable
+                set fortilink-split-interface disable
+                set switch-controller-nac {fortilink_name}
+                set lacp-mode active
                 next
-                end
             end
+            end
+            """
+        config_cmds_lines(self.console,config)
+        self.fortilink_interfaces.append(fortilink_name)
+        self.fortilink_just_configued.append(fortilink_name)
+        sleep(2)
+        show_cmds = f"""
+        config vdom
+            edit root
+                config system interface
+                    edit {fortilink_name}
+                        show 
         """
-        pass
+        self.fgt_show_commands(show_cmds)
+
+    def local_discovery(self,*args,**kwargs):
+        self.fortigate_system_status()
+        self.collect_physical_ports()
+        #self.port2mac()
+
+    def fgt_network_discovery(self,*args,**kwargs):
+        self.discover_fgt_lldp()
+        print(f"Fotilink ports = {self.fortilink_ports}")
+        print(f"Fotigate HA ports = {self.fgt_ha_ports}")
+
+    def discover_fgt_lldp(self):
+
+        sample = """
+        FortiGate-2500E # conf vdom
+
+        FortiGate-2500E (vdom) # edit root
+        current vf=root:0
+
+        FortiGate-2500E (root) # diagnose lldprx neighbor summary
+        1 port 15 mac 70:4C:A5:52:38:D4  chassis 70:4C:A5:52:38:FC port 'port1' system 'FortiGate-2500E'
+        2 port 18 mac 90:6C:AC:62:14:40  chassis 90:6C:AC:62:14:40 port 'port1' system 'S548DF4K16000653'
+        3 port 16 mac 70:4C:A5:52:38:D5  chassis 70:4C:A5:52:38:FC port 'port2' system 'FortiGate-2500E'
+        4 port 17 mac 70:4C:A5:79:22:5C  chassis 70:4C:A5:79:22:5C port 'port1' system 'S548DN4K17000133'
+
+        """
+        print(f"========================== {self.serial_number}: Discovering LLDP Neighbors =======================")
+        cmds = f"""
+            config vdom
+            edit root
+            diagnose lldprx neighbor summary
+        """
+        output = self.fgt_show_commands(cmds,timeout=2)
+        #print(output)
+        neighbor_count = 0
+        for line in output:
+            if "chassis" in line and "system" in line:
+                neighbor_count += 1
+
+        print(f"total number of lldp neighbors are: {neighbor_count}")
+
+        cmds = f"""
+            config vdom
+            edit root
+            diagnose lldprx neighbor details
+        """
+        output = self.fgt_show_commands(cmds,timeout=10)
+        #print(output)
+        lldp_neighbor_dict = {}
+        regix_mac = r'[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}'
+        for line in output:
+            if ":" in line and "lldprx" in line:
+                if re.search(regix_mac, line):
+                    continue
+                #print(line)
+                k,v = line.split(':')
+                lldp_neighbor_dict[k] = v
+
+        #print(lldp_neighbor_dict)
+
+        self.fortilink_ports = []
+        self.fgt_ha_ports = []
+        for i in range(neighbor_count):
+            nei = lldp_class()
+            nei.local_port = lldp_neighbor_dict[f'lldprx.neighbor.{i+1}.port.txt'].strip()
+            nei.remote_port = lldp_neighbor_dict[f'lldprx.neighbor.{i+1}.port.id.data'].strip()
+            nei.remote_system = lldp_neighbor_dict[f'lldprx.neighbor.{i+1}.system.name.data'].strip()
+            nei.remote_image = lldp_neighbor_dict[f'lldprx.neighbor.{i+1}.system.desc.data'].strip()
+            #print(f"Debug associating remote system: remote_system name = {nei.remote_system}")
+            for device in self.tb.devices:
+                #print(device.hostname)
+                if nei.remote_system == device.hostname or nei.remote_system == device.discovered_hostname:
+                    print(f"Debug-lldp neighbor found: device hostname: {nei.remote_system}")
+                    print(f"Debug-lldp neighbor found: device discovered hostname: {device.discovered_hostname}")
+                    if 'tier1' in device.role:
+                        self.fortilink_ports.append(nei.local_port)
+                        nei.remote_system_role = device.role
+
+                        neighbor_tier = int(re.match(r'tier([0-9]+)-([0-9]+)',device.role).group(1)) 
+                        neighbor_pod = int(re.match(r'tier([0-9]+)-([0-9]+)',device.role).group(2)) 
+                               
+                        if neighbor_pod not in self.fortilink_ports_pod:
+                            self.fortilink_ports_pod.setdefault(neighbor_pod,[]).append(nei.local_port)
+                        else:
+                            self.fortilink_ports_pod[neighbor_pod].append(nei.local_port)
+                    elif "FGT" in device.role and self.serial_number != device.serial_number:
+                        nei.remote_system_role = device.role
+                        self.fgt_ha_ports.append(nei.local_port)
+                    else:
+                        pass
+            nei.print_lldp()
+            self.lldp_neighbors_list.append(nei)
+
+
+
+
+    def port2mac(self,*args,**kwargs):
+        sample = """
+        commands: 
+            FortiGate-2500E # config global
+
+            FortiGate-2500E (global) # get hardware nic port1 | grep HWaddr
+        output:
+            Current_HWaddr   70:4c:a5:52:38:d4
+            Permanent_HWaddr 70:4c:a5:52:38:d4
+        """
+        print(f"{self.name}: Discovering mac address for physical ports.......")
+        port_mac_pair = {}
+        mac_port_pair = {}
+        for port in self.physical_ports:
+            cmds = f"""
+                config global
+                get hardware nic {port} | grep HWaddr
+            """
+            hw_addresses = self.fgt_show_commands(cmds,timeout=1)
+            debug(hw_addresses)
+
+            mac_regex = r'([0-9a-f]{2}(?::[0-9a-f]{2}){5})'
+            for addr in hw_addresses:
+                #print(addr)
+                if "Current_HWaddr" in addr:
+                    #print(addr)
+                    matched = re.search(mac_regex,addr)
+                    if matched:
+                        mac = matched.group(1)
+                        #print(mac)
+                        port_mac_pair[port] = mac
+                        mac_port_pair[mac] = port
+
+        self.port_mac_pair = port_mac_pair
+        self.mac_port_pair = mac_port_pair
+        #print(self.port_mac_pair)
+        #print(self.mac_port_pair)
+
+    def set_port_alias(self,*args,**kwargs):
+        for port in self.physical_ports:
+            config = f"""
+            conf vdom
+                edit root
+                config system interface
+                edit {port}
+                    set lldp-reception enable
+                    set lldp-transmission enable
+                    set alias {port}
+                    next
+                    end
+                end
+            """
+            config_cmds_lines(self.console,config)
 
     def execute_custom_command(self,*args,**kwargs):
         switch_name = kwargs["switch_name"]
@@ -6145,8 +6942,6 @@ class FortiGate_XML(FortiSwitch):
         #relogin_if_needed(tn)
         #make sure to start from the gloal prompt
         tn = self.console
-        tn.write(('end' + '\n').encode('ascii'))
-        tn.write(('end' + '\n').encode('ascii'))
         cmds = split_f_string_lines(cmds)
         for i in range(len(cmds)):
             original_cmd = cmds[i]
@@ -6158,33 +6953,43 @@ class FortiGate_XML(FortiSwitch):
             else:
                 tn.write(cmd_bytes)
                 tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
-                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
-                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
-                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
-                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
-                tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
-                console_timer(timeout,msg=f"wait for fortigate command {cmd} to execute")
+                sleep(timeout)
                 output = tn.read_very_eager()
-                #output = tn.read_all()
-                #output = tn.read_until(("# ").encode('ascii'),timeout=10)
-                print(output)
+                #print(output)
                 out_list = output.split(b'\r\n')
                 encoding = 'utf-8'
                 out_str_list = []
                 for o in out_list:
                     o_str = o.decode(encoding).strip(' \r')
                     out_str_list.append(o_str)
-                # tprint(dir(output))
-                # tprint(type(output))
-                #tprint(out_list)
-                # for i in out_str_list:
-                #   tprint(i)
-                #Will revove these lines after bgp is done
                 good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
                 debug(good_out_list)
-                return good_out_list
+                tprint(f"-------------------------------------------")
+                for i in good_out_list:
+                    tprint(i)
+        tn.write(('end' + '\n').encode('ascii'))
+        sleep(0.5)
+        tn.write(('end' + '\n').encode('ascii'))
+        sleep(0.5)
+        return good_out_list
+
 
     def discover_managed_switches(self,*args,**kwargs):
+
+        sample_v7 = """
+        FortiGate-2500E (root) # execute switch-controller get-conn-status 
+        Managed-devices in current vdom root:
+
+        FortiLink interface : Myfortilink
+        SWITCH-ID         VERSION           STATUS         FLAG   ADDRESS              JOIN-TIME            NAME            
+        S548DF4K16000653  v6.4.7 (478)      Authorized/Up   -   10.255.2.2      Wed May 12 20:58:44 2021    -               
+        S548DN4K17000133  v6.4.7 (478)      Authorized/Up   -   10.255.2.3      Wed May 12 20:44:40 2021    -               
+        S248EFTF18003278  v6.4.7 (478)      Authorized/Up   -   10.255.2.4      Wed May 12 20:46:10 2021    -               
+        S248EFTF18002594  v6.4.7 (478)      Authorized/Up   -   10.255.2.5      Wed May 12 20:46:14 2021    -               
+
+         Flags: C=config sync, U=upgrading, S=staged, D=delayed reboot pending, E=config sync error, 3=L3
+         Managed-Switches: 4 (UP: 4 DOWN: 0)
+        """
         sample_output = """
         FortiGate-3000D (root) # execute switch-controller get-conn-status
         Managed-devices in current vdom root:
@@ -6203,6 +7008,8 @@ class FortiGate_XML(FortiSwitch):
         Flags: C=config sync, U=upgrading, S=staged, D=delayed reboot pending, E=config sync error, 3=L3
         Managed-Switches: 8 (UP: 8 DOWN: 0)
         """
+
+        tb = kwargs['topology']
         if 'vdom' in kwargs:
             vdom = kwargs['vdom']
         else:
@@ -6240,24 +7047,145 @@ class FortiGate_XML(FortiSwitch):
                         msw.authorized = True
                     else:
                         msw.authorized = False
-                    if status[1] == "Up":
+                    if "Up" in status[1]:
                         msw.up = True
                     else:
                         msw.up = False
                     msw.flag = line.split()[4]
                     msw.address = line.split()[5]
                     managed_switches.append(msw)
+
+                    for sw in tb.switches:
+                        if msw.switch_id == sw.serial_number:
+                            sw.managed = True
+                            msw.switch_obj = sw
         except Exception as e:
             print("Some managed switches are not recognized by the fortigate")
         self.managed_switches_list = managed_switches
         return self.managed_switches_list
 
+    def enable_multiple_vdom(self):
+        config = """
+        conf system global
+        set vdom-mode multi-vdom
+        end
+        """
+        config_cmds_lines(self.console,config)
+        switch_wait_enter_yes(self.console,"Do you want to continue? (y/n)")
+        sleep(2)
+        self.fgt_relogin()
+
+    def config_after_factory(self):
+
+        self.enable_multiple_vdom()
+        sleep(10)
+        ports = self.fortilink_ports_db + self.ha_ports_db 
+
+        for port in ports:
+            config = f"""
+            config vdom
+                edit root
+                config system interface
+                edit {port}
+                    set lldp-reception enable
+                    set lldp-transmission enable
+                    set alias {port}
+                    next
+                    end
+                end
+            """
+            sleep(2)
+            config_cmds_lines(self.console,config)
+
+        #self.set_port_alias()
+        config = f"""
+        config vdom
+        edit root
+        conf system interface 
+            edit mgmt1 
+            set vdom root
+            set ip {self.mgmt_ip} {self.mgmt_netmask}
+            set allowaccess ping https ssh snmp http telnet fgfm
+            set type physical
+            set role lan
+            next
+        end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(10)
+
+        config = f"""
+        conf vdom
+        edit root
+        config router static
+            edit 1
+                set gateway {self.mgmt_gateway}
+                set device "mgmt1"
+            next
+        end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(10)
+
+    def config_ha(self):
+        if self.mode == "Active":
+            pri = 200
+        else:
+            pri = 100
+
+        config = f"""
+        config global
+        config system ha
+            set group-id 25
+            set group-name "2500E"
+            set mode a-p
+            set hbdev {self.fgt_ha_ports[0]} 50 {self.fgt_ha_ports[1]} 25
+            set session-pickup enable
+            set override enable
+            set priority {pri}
+            end
+            end
+        """
+        config_cmds_lines(self.console,config)
+
+    def config_msw_mclag_icl(self):
+        for msw in self.managed_switches_list:
+            icl_ports = msw.switch_obj.icl_links
+            if len(icl_ports) == 0:
+                continue
+
+            config = f"""
+                config vdom
+                edit root
+                config switch-controller managed-switch
+                edit {msw.switch_id}
+                config ports
+                """
+            config_cmds_lines(self.console,config)
+
+            
+            for port in icl_ports:
+                config = f"""
+                edit {port}
+                set lldp-profile default-auto-mclag-icl
+                next 
+                """
+                config_cmds_lines(self.console,config)
+
+            config = f"""
+                end
+                end
+                """
+            config_cmds_lines(self.console,config)
 
 class tbinfo():
     def __init__(self,*args, **kwargs):
         self.devices = None
         self.ixia = None
         self.connections = None
+        self.switches = None
+        self.fortigates = None
+
 
     def show_tbinfo(self):
         for d in self.devices:
@@ -6308,6 +7236,23 @@ class Connection_XML():
         print(f"Connection Right Port = {self.right_port}")
         print(f"Connection Active In this testing = {self.active}")
         print(f"Connection link name in test topology = {self.testtopo_name}")
+
+    def associate_ports_device(self):
+        if self.type == "tier1_link" and self.left_device_obj.type == "FGT":
+            self.left_device_obj.fortilink_ports.append(self.left_port)
+        elif self.type == "tier1_link" and self.right_device_obj.type == "FGT":
+            self.right_device_obj.fortilink_ports.append(self.right_port)
+        elif self.type == "tier1_link" and self.right_device_obj.type == "FSW":
+            self.right_device_obj.fortigate_ports.append(self.right_port)
+        elif self.type == "tier1_link" and self.left_device_obj.type == "FSW":
+            self.left_device_obj.fortigate_ports.append(self.left_port)
+        elif self.type == "ha_link":
+            self.left_device_obj.ha_ports.append(self.left_port)
+            self.right_device_obj.ha_ports.append(self.right_port)
+        elif self.type == "ixia_link":
+            self.left_device_obj.ixia_ports.append(self.left_port)
+        else:
+            pass
 
     def update_obj(self,devices,ixia):
         left_found = False
@@ -6396,6 +7341,7 @@ class IXIA_XML():
 class Device_XML():
     def __init__(self,*args,**kwargs):
         self.name = None
+        self.hostname = None
         self.console_ip = None
         self.console_line = None
         self.username = None
@@ -6407,11 +7353,22 @@ class Device_XML():
         self.role = None
         self.type = None
         self.active = False
-        self.uplink_port = None
+        self.uplink_ports = None
+        self.serial_number = None
+        self.discovered_hostname = None
+        self.version = None
+        self.fortilink_ports = []
+        self.fortigate_ports = []
+        self.ha_ports = []
+        self.ixia_ports = []
 
 
     def print_info(self):
         print(f"Device Name in XML File = {self.name}")
+        print(f"Device Host Name = {self.hostname}")
+        print(f"Serial Number = {self.serial_number}")
+        print(f"Discovered Hostname = {self.discovered_hostname}")
+        print(f"Platform version = {self.version}")
         print(f"Device type = {self.type}")
         print(f"Device Active = {self.active}")
         print(f"Device Role = {self.role}")

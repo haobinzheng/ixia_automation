@@ -115,6 +115,8 @@ def parse_tbinfo_untangle(file):
     tb.connections = connections
     for c in tb.connections:
         c.update_obj(tb.devices,tb.ixia)
+    for c in tb.connections:
+        c.associate_ports_device()
     return tb
 
 def parse_testtopo_untangle(file,tb):

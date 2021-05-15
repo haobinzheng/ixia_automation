@@ -8,6 +8,8 @@ import threading
 from threading import Thread
 from time import sleep
 import multiprocessing
+from random import seed                                                 
+from random import randint 
 
 # Append paths to python APIs (Linux and Windows)
 
@@ -27,6 +29,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
+	parser.add_argument("-m", "--maintainence", help="Bring switches into standalone for maintainence", action="store_true")
 	parser.add_argument("-test", "--testcase", type=str, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
 	parser.add_argument("-b", "--boot", help="Perform reboot test", action="store_true")
 	parser.add_argument("-f", "--factory", help="Run the test after factory resetting all devices", action="store_true")
@@ -34,12 +37,26 @@ if __name__ == "__main__":
 	parser.add_argument("-s", "--setup_only", help="Setup testbed and IXIA only for manual testing", action="store_true")
 	parser.add_argument("-i", "--interactive", help="Enter interactive mode for test parameters", action="store_true")
 	parser.add_argument("-ug", "--sa_upgrade", type = str,help="FSW software upgrade in standlone mode. For debug image enter -1. Example: v6-193,v7-5,-1(debug image)")
+	parser.add_argument("-fg", "--fgt_upgrade", type = str,help="Fortigate software upgrade. For debug image enter -1. Example: v6-193,v7-5,-1(debug image)")
 
 
 	global DEBUG
 	initial_testing = False
 	
 	args = parser.parse_args()
+
+	if args.maintainence:
+		maintainence = True
+		print_title(f"Factory switches into standalone for maintainence purpose")
+	else:
+		maintainence = False
+
+	if args.fgt_upgrade:
+		upgrade_fgt = True
+		sw_build = args.fgt_upgrade
+		print_title(f"Upgrade FGT software: {sw_build}")
+	else:
+		upgrade_fgt = False
 
 	if args.sa_upgrade:
 		upgrade_sa = True
@@ -110,35 +127,70 @@ if __name__ == "__main__":
 	switches = []
 	fortigates = []
 	devices=[]
-	# for d in tb.devices:
-	# 	if d.type == "FSW" and d.active == True:
-	# 		switch = FortiSwitch_XML(d,password="fortinet123")
-	# 		switches.append(switch)
-	# 		devices.append(switch)
-	# 	elif d.type == "FGT" and d.active == True:
-	# 		fgt = FortiGate_XML(d,password="fortinet123")
-	# 		fortigates.append(fgt)
-	# 		devices.append(switch)
-	# 	else:
-	# 		pass
-
 	for d in tb.devices:
-		if d.type == "FGT" and d.active == True:
-			fgt = FortiGate_XML(d,password="fortinet123")
-		 
+		if d.type == "FSW" and d.active == True:
+			switch = FortiSwitch_XML(d,topo_db=tb)
+			switches.append(switch)
+			devices.append(switch)
+		elif d.type == "FGT" and d.active == True:
+			fgt = FortiGate_XML(d,topo_db=tb)
+			fortigates.append(fgt)
+			devices.append(fgt)
+		else:
+			pass
+
 	for c in tb.connections:
 		c.update_devices_obj(devices)
 
-	exit()
+	tb.switches = switches
+	tb.fortigates = fortigates
+
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
 
 
 	##################################### Pre-Test setup and configuration #############################
+
+	if maintainence:
+		for fgt in fortigates:
+			#print_attributes(fgt)
+			fgt.fgt_network_discovery()
+			fgt.change_fortilink_ports(state="down")
+
+		for sw in switches:
+			sw.switch_factory_reset()
+
+		console_timer(400,msg='After switches are factory reset, wait for 400 seconds')
+
+		for sw in switches:
+			sw.sw_relogin()
+			dut = sw.console
+			dut_name = sw.name
+			image = find_dut_image(dut)
+			tprint(f"============================ {dut_name} software image = {image} ============")
+
+			sw.config_network_standalone()
+
+
+	if upgrade_fgt:
+		for fgt in fortigates:
+			v,b = sw_build.split('-')
+			result = fgt.fgt_upgrade_v2(build=b,version=v)
+			if not result:
+				tprint(f"############# Upgrade {fgt.name} to build #{sw_build} Fails ########### ")
+			else:
+				tprint(f"############# Upgrade {fgt.name} to build #{sw_build} is successful ############")
+
+		console_timer(400,msg="Wait for 400s after started upgrading all switches")
+		for fgt in fortigates:
+			dut = fgt.console
+			dut_name = fgt.name
+			fgt.fgt_relogin()
+
 	if upgrade_sa:
 		for sw in switches:
 			v,b = sw_build.split('-')
-			result = sw.fsw_upgrade(build=b,version=v)
+			result = sw.fsw_upgrade_v2(build=b,version=v)
 			if not result:
 				tprint(f"############# Upgrade {sw.name} to build #{sw_build} Fails ########### ")
 			else:
@@ -157,6 +209,11 @@ if __name__ == "__main__":
 			tprint(f"============================ {dut_name} software image = {image} ============")
 		# if testcase == 0:
 		# 	exit()
+
+		console_timer(30,msg="Wait for 30 after upgrading all switches, re-enable fortilink ports at fortigates")
+		for fgt in fortigates:
+			#print_attributes(fgt)
+			fgt.change_fortilink_ports(state="up")
 
 	if factory == True:
 		for dut_dir in dut_dir_list:
@@ -191,41 +248,86 @@ if __name__ == "__main__":
 
 	if setup: 
 		for sw in switches:
-			config = """
-			config system interface
-				edit "vlan1"
-				    set ip 10.1.1.1 255.255.255.0
-				            config ipv6
-				                set ip6-address 2001:10:1:1::1/64
-				                set ip6-allowaccess ping https http ssh telnet
-				                set dhcp6-information-request enable
-				            end
-				        set vlanid 1
-				        set interface "internal"
-				    next
-				end
-			config switch vlan
-				delete 20 
-				delete 1
-			end
-			config switch vlan
-			    edit 20
-			        set mld-snooping enable
-					set igmp-snooping enable
-			    next
-			    edit 1
-			        set igmp-snooping enable
-			        set mld-snooping enable
-			    next
-			end
-			conf switch igmp-snooping globals
-				set aging-time 300
-			end
-			"""
-			config_cmds_lines(sw.console,config)
-		# if testcase == 0:
-		# 	exit()
+			sw.switch_factory_reset()
 
+		console_timer(500,msg='After switches are factory reset, wait for 500 seconds')
+
+		for sw in switches:
+			sw.sw_relogin()
+			dut = sw.console
+			dut_name = sw.name
+			image = find_dut_image(dut)
+			tprint(f"============================ {dut_name} software image = {image} ============")
+			sw.sw_network_discovery()
+			sw.config_lldp_profile_auto_isl()
+		console_timer(30,msg='After switches are factory reset and configure lldp profile auto_isl, wait for 100 seconds')
+
+		for fgt in fortigates:
+			fgt.fgt_relogin()
+			fgt.fgt_factory_reset()
+		console_timer(400,msg='After fortigates are factory reset, wait for 400 seconds')
+		for fgt in fortigates:
+			fgt.fgt_relogin()
+			fgt.config_after_factory()
+
+		console_timer(100,msg='After FGT intial configuration, wait for 100 seconds and discover network topology')
+
+		for fgt in fortigates:
+			fgt.fgt_relogin()
+			fgt.fgt_network_discovery()
+
+		for fgt in fortigates:
+			fgt.config_ha()
+
+		for fgt in fortigates:
+			fgt.fgt_relogin()
+
+		for fgt in fortigates:
+			if fgt.mode == "Active":
+				fgt.config_default_policy()
+
+		for fgt in fortigates:
+			fgt.fgt_relogin()
+			fgt.ha_sync(action="start")
+
+		console_timer(100,msg='configuring firewall policy and sync, wait for 100 seconds')
+         
+		fortilink_name = f"Myfortilink"
+		addr = f"192.168.1.1 255.255.255.0"
+		for fgt in fortigates:
+			fgt.fgt_relogin()
+			fgt.config_fortilink(name=fortilink_name,ip_addr=addr)
+
+		console_timer(300,msg='After configuring FSW and FGT, wait for 5 minutes for network to discover topology')
+
+		for fgt in fortigates:
+			if fgt.mode == "Active":
+				fgt_active = fgt
+		
+		for sw in switches:
+			print_attributes(sw)
+		for fgt in fortigates:
+			print_attributes(fgt)
+
+		fgt_active.fgt_relogin()
+		managed_sw_list = fgt_active.discover_managed_switches(topology=tb)
+		fgt_active.config_custom_timeout()
+		for sw in managed_sw_list:
+			sw.print_managed_sw_info()
+			if sw.authorized and sw.up:
+				print(f"{sw.switch_id} is authorized and Up")
+				fgt_active.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
+			else:
+				print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
+
+		fgt_active.config_msw_mclag_icl()
+
+		console_timer(200,msg='After configuring MCLAG ICL LLDP Profile via Fortigate, wait for 200 seconds for network to discover topology')
+
+		for sw in switches:
+			sw.sw_relogin()
+			sw.config_auto_isl_port_group()
+		
 	if Reboot:
 		for sw in switches:
 			dut = sw.console
@@ -236,7 +338,7 @@ if __name__ == "__main__":
 		for sw in switches:
 			dut = sw.console
 			dut_name = sw.name
-			sw.switch_relogin(password="fortinet123")
+			sw.login_factory_reset()
 			image = find_dut_image(dut)
 			tprint(f"============================ {dut_name} software image = {image} ============")
 
@@ -249,21 +351,33 @@ if __name__ == "__main__":
 	# 	if d.active:
 	# 		switch = FortiSwitch_XML(d)
 	# 		switches.append(switch)
+	
+	for fgt in fortigates:
+		fgt.fgt_relogin()
+		fgt.fgt_network_discovery()
+		print_attributes(fgt)
+	
+	for sw in switches:
+		sw.sw_relogin()
+		sw.sw_network_discovery()
+		print_attributes(sw)
 
 	for sw in switches:
 		sw.discover_switch_trunk()
 
-	for ftg in fortigates:
-		managed_sw_list = ftg.discover_managed_switches()
-		ftg.config_custom_timeout()
-		for sw in managed_sw_list:
-			sw.print_managed_sw_info()
-			if sw.authorized and sw.up:
-				print(f"{sw.switch_id} is authorized and Up")
-				ftg.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
-			else:
-				print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
+	for fgt in fortigates:
+		if fgt.mode == "Active":
+			managed_sw_list = fgt.discover_managed_switches(topology=tb)
+			fgt.config_custom_timeout()
+			for sw in managed_sw_list:
+				sw.print_managed_sw_info()
+				if sw.authorized and sw.up:
+					print(f"{sw.switch_id} is authorized and Up")
+					fgt.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
+				else:
+					print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
 
+	exit()
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]

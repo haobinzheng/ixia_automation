@@ -519,10 +519,12 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:
 		timeout = kwargs['t']
 	else:
-		timeout = 3
+		timeout = 5
 	#relogin_if_needed(tn)
 	original_cmd = cmd
 	cmd_bytes = convert_cmd_ascii_n(cmd)
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	tn.write(cmd_bytes)
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
@@ -856,13 +858,21 @@ def config_cmds_lines(dut, cmdblock,*args,**kwargs):
 	if "wait" in kwargs:
 		wait_time = int(kwargs["wait"])
 	else:
-		wait_time = 0.5
+		wait_time = 0.2
 	b= cmdblock.split("\n")
 	b = [x.strip() for x in b if x.strip()]
 	for cmd in b:
 		switch_configure_cmd(dut,cmd)
 		sleep(wait_time)
 		 
+def print_attributes(fgt):
+	attrs = vars(fgt)
+	print(attrs)
+	print_dict_simple(attrs)
+
+def print_dict_simple(attrs):
+	for k,v in attrs.items():
+		print(f"{k}:{v}")
 
 def config_block_cmds_new(dut, cmdblock):
 	b= cmdblock.split("\n")
@@ -940,7 +950,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
-	time.sleep(0.1)
+	time.sleep(0.5)
 	tn.read_until(("# ").encode('ascii'),timeout=10)
 
 def switch_configure_cmd_cisco(tn,cmd,**kwargs):
@@ -985,12 +995,12 @@ def switch_enter_yes(tn):
 
 def switch_interactive_exec(tn,exec_cmd,prompt):
 	#relogin_if_needed(tn)
+	tprint(exec_cmd)
 	exec_cmd = exec_cmd + '\n'
 	exec_cmd = convert_cmd_ascii(exec_cmd)
 	tn.write(exec_cmd)
 	time.sleep(1)
 
-	 
 	prompt = convert_cmd_ascii(prompt)
 	#prompt_re = (prompt + r'.*').encode('ascii')
 	tn.read_until(prompt,timeout=10)
@@ -1097,6 +1107,7 @@ def find_dut_prompt_cisco(tn):
 
 def find_dut_prompt(tn):
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5) #added this line for fortigate 
 	output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
@@ -1272,13 +1283,431 @@ def relogin_factory_reset(*args,**kwargs):
 		exit()
 
 
-def telnet_switch(ip_address, console_port,**kwargs):
+def telnet_switch_original(ip_address, console_port,*args,**kwargs):
 	tprint("console server ip ="+str(ip_address))
 	tprint("console port="+str(console_port))
 	if "password" in kwargs:
 		pwd = kwargs["password"]
 	else:
 		pwd = 'Fortinet123!'
+	if "platform" in kwargs:
+		platform = kwargs['platform']
+	else:
+		platform = "fortinet"
+
+	if 'relogin' in kwargs:
+		relogin = kwargs['relogin']
+	else:
+		relogin = False
+
+	if relogin:
+		tn = kwargs['console']
+	
+	console_port_int = int(console_port)
+	if relogin == False:
+		if settings.CLEAR_LINE:
+			status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
+			if status['status'] != 1:
+				logger.console('unable clear console port %s' % console_port)
+			time.sleep(1)
+		try:
+			tn = telnetlib.Telnet(ip_address,console_port_int)
+		except ConnectionRefusedError: 
+			tprint("!!!!!!!!!!!the console is being used, need to clear it first")
+			status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
+			if status['status'] != 1:
+				logger.console('unable clear console port %s' % console_port)
+				exit()
+			sleep(2)
+			tn = telnetlib.Telnet(ip_address,console_port_int)
+	 
+	tn.write(('\x03\n').encode('ascii'))
+	time.sleep(2)
+	tn.write(('\x03\n').encode('ascii'))
+	time.sleep(2)
+	# tn.write(('x03\n').encode('ascii'))
+	# time.sleep(0.2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(0.2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(0.2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(0.2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(0.2)
+
+	tn.read_until(("login: ").encode('ascii'),timeout=5)
+	tn.write(('admin' + '\n').encode('ascii'))
+	tn.read_until(("Password: ").encode('ascii'),timeout=5)
+
+	tn.write(('' + '\n').encode('ascii'))
+	sleep(2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write((pwd + '\n').encode('ascii'))
+	prompt = switch_find_login_prompt_new(tn,password=pwd)
+	p = prompt[0]
+	debug(prompt)
+	if p == "change":
+		Info("Login after factory reset, changing password..... ") #This needs to rewrite to take care factory reset situation
+		########################################## Golden lines: Do not change #############
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		#################################### Don't change ################################
+		tn.read_until(("login: ").encode('ascii'),timeout=5)
+		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		tn.write(('' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
+		print(f"!!!!!!! Debug!!!!! setting password after factory reset. New password = {pwd}")
+		tn.write((pwd + '\n').encode('ascii'))   #this is for factory reset scenario
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write((pwd + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+	if p == "cisco":
+		debug("Login in Cisco device......")
+		tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.2)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+
+	if p == 'login':
+		Info("Login after time out or reboot") #This needs to rewrite to take care factory reset situation
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write((pwd + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.2)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+	elif p == 'shell':
+		Info("Login without password")
+		#prevent enter a prompt that is in a config mode
+		tn.write(('end' + '\n').encode('ascii'))
+		tn.write(('end' + '\n').encode('ascii'))
+	elif p == 'new':
+		Info(f"This first time login after factory reset, not allowing blank password, password has been changed to {pwd}")
+	elif p == None:
+		Info("Not in login prompt, press enter a couple times to show login prompt")
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		#time.sleep(1)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		 
+		tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+
+		tn.write((pwd + '\n').encode('ascii'))
+		sleep(0.5)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.5)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+			 
+
+	if platform == "fortinet":
+		switch_configure_cmd(tn,'config system global')
+		switch_configure_cmd(tn,'set admintimeout 480')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config system console')
+		switch_configure_cmd(tn,'set output standard')
+		switch_configure_cmd(tn,'end')
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
+	elif platform == "fortigate":
+		switch_configure_cmd(tn,'config global')
+		switch_configure_cmd(tn,'config system console')
+		switch_configure_cmd(tn,'set output standard')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'end')
+
+		switch_configure_cmd(tn,'config global')
+		switch_configure_cmd(tn,'config system global')
+		switch_configure_cmd(tn,'set admin-console-timeout 300')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'end')
+
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
+	elif platform == "n9k":
+		print("--------- TBD: utils.py get_switch_telnet_connection_new() | will configure some basic stuff like exec-timeout -----------")
+		# config = f"""
+		# config t
+		#     line con 
+		#         exec-timeout 300 
+		# end
+		# """
+		# config_cmds_lines_cisco(tn,config)
+		# switch_configure_cmd_cisco(tn,'config t')
+		# switch_configure_cmd_cisco(tn,'line con')
+		# switch_configure_cmd_cisco(tn,'exec-timeout 300')
+		# switch_configure_cmd_cisco(tn,'end')
+	else:
+		print("=========== This is a uncognized device platform ============")
+	return tn
+
+
+def telnet_switch(ip_address, console_port,*args,**kwargs):
+	tprint("console server ip ="+str(ip_address))
+	tprint("console port="+str(console_port))
+	if "password" in kwargs:
+		pwd = kwargs["password"]
+	else:
+		pwd = 'Fortinet123!'
+	if "platform" in kwargs:
+		platform = kwargs['platform']
+	else:
+		platform = "fortinet"
+
+	if 'relogin' in kwargs:
+		relogin = kwargs['relogin']
+	else:
+		relogin = False
+
+	if relogin:
+		tn = kwargs['console']
+	
+	console_port_int = int(console_port)
+	if relogin == False:
+		if settings.CLEAR_LINE:
+			status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
+			if status['status'] != 1:
+				logger.console('unable clear console port %s' % console_port)
+			time.sleep(1)
+		try:
+			tn = telnetlib.Telnet(ip_address,console_port_int)
+		except ConnectionRefusedError: 
+			tprint("!!!!!!!!!!!the console is being used, need to clear it first")
+			status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
+			if status['status'] != 1:
+				logger.console('unable clear console port %s' % console_port)
+				exit()
+			sleep(2)
+			tn = telnetlib.Telnet(ip_address,console_port_int)
+	 
+	tn.write(('\x03\n').encode('ascii'))
+	time.sleep(2)
+	tn.write(('\x03\n').encode('ascii'))
+	time.sleep(2)
+	# tn.write(('x03\n').encode('ascii'))
+	# time.sleep(0.2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(0.2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(0.2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(0.2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# time.sleep(0.2)
+
+	tn.read_until(("login: ").encode('ascii'),timeout=5)
+	tn.write(('admin' + '\n').encode('ascii'))
+	tn.read_until(("Password: ").encode('ascii'),timeout=5)
+
+	tn.write(('' + '\n').encode('ascii'))
+	sleep(2)
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write((pwd + '\n').encode('ascii'))
+
+	Info("See what prompt the console is at")
+	TIMEOUT = 3
+	output = tn.expect([re.compile(b"login:")],timeout=TIMEOUT)
+	Info(f"collect info to look for prompt: {output}")
+	Info(f"output[2] = {output[2].decode().strip()}")
+	Info(output[2].decode().strip())
+	prompt = output[2].decode().strip()
+	if "New Password:"in prompt:
+		debug(f"it is a new switch that needs to change password, change password to {pwd} ")
+		tn.write((pwd + '\n').encode('ascii'))
+		tn.write((pwd + '\n').encode('ascii'))
+		return tn
+	 
+		debug("can not get any prompt, need to use robust login procedure...")
+		return (None,None)
+	prompt = switch_find_login_prompt_new(tn,password=pwd)
+	p = prompt[0]
+	debug(prompt)
+	if p == "change":
+		Info("Login after factory reset, changing password..... ") #This needs to rewrite to take care factory reset situation
+		########################################## Golden lines: Do not change #############
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		# tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		#################################### Don't change ################################
+		tn.read_until(("login: ").encode('ascii'),timeout=5)
+		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		tn.write(('' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
+		print(f"!!!!!!! Debug!!!!! setting password after factory reset. New password = {pwd}")
+		tn.write((pwd + '\n').encode('ascii'))   #this is for factory reset scenario
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write((pwd + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+	if p == "cisco":
+		debug("Login in Cisco device......")
+		tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.2)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+
+	if p == 'login':
+		Info("Login after time out or reboot") #This needs to rewrite to take care factory reset situation
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write((pwd + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.2)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+	elif p == 'shell':
+		Info("Login without password")
+		#prevent enter a prompt that is in a config mode
+		tn.write(('end' + '\n').encode('ascii'))
+		tn.write(('end' + '\n').encode('ascii'))
+	elif p == 'new':
+		Info(f"This first time login after factory reset, not allowing blank password, password has been changed to {pwd}")
+	elif p == None:
+		Info("Not in login prompt, press enter a couple times to show login prompt")
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		# tn.write(('\x03').encode('ascii'))
+		#time.sleep(1)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		 
+		tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+
+		tn.write((pwd + '\n').encode('ascii'))
+		sleep(0.5)
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.5)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+			 
+
+	if platform == "fortinet":
+		switch_configure_cmd(tn,'config system global')
+		switch_configure_cmd(tn,'set admintimeout 480')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config system console')
+		switch_configure_cmd(tn,'set output standard')
+		switch_configure_cmd(tn,'end')
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
+	elif platform == "fortigate":
+		switch_configure_cmd(tn,'config global')
+		switch_configure_cmd(tn,'config system console')
+		switch_configure_cmd(tn,'set output standard')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'end')
+
+		switch_configure_cmd(tn,'config global')
+		switch_configure_cmd(tn,'config system global')
+		switch_configure_cmd(tn,'set admin-console-timeout 300')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'end')
+
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
+	elif platform == "n9k":
+		print("--------- TBD: utils.py get_switch_telnet_connection_new() | will configure some basic stuff like exec-timeout -----------")
+		# config = f"""
+		# config t
+		#     line con 
+		#         exec-timeout 300 
+		# end
+		# """
+		# config_cmds_lines_cisco(tn,config)
+		# switch_configure_cmd_cisco(tn,'config t')
+		# switch_configure_cmd_cisco(tn,'line con')
+		# switch_configure_cmd_cisco(tn,'exec-timeout 300')
+		# switch_configure_cmd_cisco(tn,'end')
+	else:
+		print("=========== This is a uncognized device platform ============")
+	return tn
+def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
+	tprint("console server ip ="+str(ip_address))
+	tprint("console port="+str(console_port))
+	if "password" in kwargs:
+		pwd = kwargs["password"]
+	else:
+		pwd = ''
 	if "platform" in kwargs:
 		platform = kwargs['platform']
 	else:
@@ -1366,183 +1795,7 @@ def telnet_switch(ip_address, console_port,**kwargs):
 		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
 		# tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('fortinet123' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		sleep(0.2)
-		tn.read_until(("# ").encode('ascii'),timeout=10)
-	elif p == 'shell':
-		Info("Login without password")
-		#prevent enter a prompt that is in a config mode
-		tn.write(('end' + '\n').encode('ascii'))
-		tn.write(('end' + '\n').encode('ascii'))
-	elif p == 'new':
-		Info("This first time login to image not allowing blank password, password has been changed to <fortinet123>")
-	elif p == None:
-		Info("Not in login prompt, press enter a couple times to show login prompt")
-		# tn.write(('\x03').encode('ascii'))
-		# tn.write(('\x03').encode('ascii'))
-		# tn.write(('\x03').encode('ascii'))
-		# tn.write(('\x03').encode('ascii'))
-		#time.sleep(1)
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.read_until(("login: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))
-		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-
 		tn.write((pwd + '\n').encode('ascii'))
-		sleep(0.5)
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		sleep(0.5)
-		tn.read_until(("# ").encode('ascii'),timeout=10)
-			 
-
-	if platform == "fortinet":
-		switch_configure_cmd(tn,'config system global')
-		switch_configure_cmd(tn,'set admintimeout 480')
-		switch_configure_cmd(tn,'end')
-		switch_configure_cmd(tn,'config system console')
-		switch_configure_cmd(tn,'set output standard')
-		switch_configure_cmd(tn,'end')
-		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
-		try:
-			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
-			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
-		except Exception as e:
-			pass
-	elif platform == "fortigate":
-		switch_configure_cmd(tn,'config global')
-		switch_configure_cmd(tn,'config system console')
-		switch_configure_cmd(tn,'set output standard')
-		switch_configure_cmd(tn,'end')
-		switch_configure_cmd(tn,'end')
-		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
-		try:
-			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
-			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
-		except Exception as e:
-			pass
-	elif platform == "n9k":
-		print("--------- TBD: utils.py get_switch_telnet_connection_new() | will configure some basic stuff like exec-timeout -----------")
-		# config = f"""
-		# config t
-		#     line con 
-		#         exec-timeout 300 
-		# end
-		# """
-		# config_cmds_lines_cisco(tn,config)
-		# switch_configure_cmd_cisco(tn,'config t')
-		# switch_configure_cmd_cisco(tn,'line con')
-		# switch_configure_cmd_cisco(tn,'exec-timeout 300')
-		# switch_configure_cmd_cisco(tn,'end')
-	else:
-		print("=========== This is a uncognized device platform ============")
-	return tn
-
-def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
-	tprint("console server ip ="+str(ip_address))
-	tprint("console port="+str(console_port))
-	if "password" in kwargs:
-		pwd = kwargs["password"]
-	else:
-		pwd = ''
-	if "platform" in kwargs:
-		platform = kwargs['platform']
-	else:
-		platform = "fortinet"
-	
-	console_port_int = int(console_port)
-	if settings.CLEAR_LINE:
-		status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
-		if status['status'] != 1:
-			logger.console('unable clear console port %s' % console_port)
-		time.sleep(1)
-	try:
-		tn = telnetlib.Telnet(ip_address,console_port_int)
-	except ConnectionRefusedError: 
-		tprint("!!!!!!!!!!!the console is being used, need to clear it first")
-		status = clear_console_line(ip_address,str(console_port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
-		if status['status'] != 1:
-			logger.console('unable clear console port %s' % console_port)
-			exit()
-		sleep(2)
-		tn = telnetlib.Telnet(ip_address,console_port_int)
-	 
-	tn.write(('\x03\n').encode('ascii'))
-	tn.write(('\x03\n').encode('ascii'))
-	time.sleep(0.2)
-
-	tn.write(('' + '\n').encode('ascii'))
-	tn.write(('' + '\n').encode('ascii'))
-	 
-	time.sleep(0.2)
-
-	tn.read_until(("login: ").encode('ascii'),timeout=5)
-	tn.write(('admin' + '\n').encode('ascii'))
-	tn.read_until(("Password: ").encode('ascii'),timeout=5)
-
-	tn.write(('' + '\n').encode('ascii'))
-	tn.write(('' + '\n').encode('ascii'))
-	tn.write(('' + '\n').encode('ascii'))
-	tn.write((pwd + '\n').encode('ascii'))
-	prompt = switch_find_login_prompt_new(tn)
-	p = prompt[0]
-	debug(prompt)
-	if p == "change":
-		Info("Login after factory reset, changing password..... ") #This needs to rewrite to take care factory reset situation
-		########################################## Golden lines: Do not change #############
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		sleep(1)
-		#################################### Don't change ################################
-		tn.read_until(("login: ").encode('ascii'),timeout=5)
-		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
-		tn.write(('' + '\n').encode('ascii'))
-		tn.read_until(("Password: ").encode('ascii'),timeout=5) #read_util() can not work with prompt with prompt with space, such as New Password
-		tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
-		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('fortinet123' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.read_until(("# ").encode('ascii'),timeout=10)
-	if p == "cisco":
-		debug("Login in Cisco device......")
-		tn.read_until(("login: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))
-		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('fortinet123' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		sleep(0.2)
-		tn.read_until(("# ").encode('ascii'),timeout=10)
-
-	if p == 'login':
-		Info("Login after time out or reboot") #This needs to rewrite to take care factory reset situation
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.write(('' + '\n').encode('ascii'))
-		tn.read_until(("login: ").encode('ascii'),timeout=10)
-		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
-		# tn.write(('fortinet123' + '\n').encode('ascii'))   #this is for factory reset scenario
-		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('fortinet123' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		sleep(0.2)
@@ -1553,7 +1806,7 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.write(('end' + '\n').encode('ascii'))
 		tn.write(('end' + '\n').encode('ascii'))
 	elif p == 'new':
-		Info("This first time login to image not allowing blank password, password has been changed to <fortinet123>")
+		Info("This first time login to image not allowing blank password, password has been changed ???")
 	elif p == None:
 		Info("Not in login prompt, press enter a couple times to show login prompt")
 		# tn.write(('\x03').encode('ascii'))
@@ -1572,7 +1825,7 @@ def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
 		tn.write(('admin' + '\n').encode('ascii'))
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)
-		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write((pwd + '\n').encode('ascii'))
 		sleep(0.5)
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
@@ -1871,7 +2124,11 @@ The remote host key has changed. Do you want to accept the new key and continue 
 		return False
 
 
-def switch_find_login_prompt_new(tn):
+def switch_find_login_prompt_new(tn,*args,**kwargs):
+	if "password" in kwargs:
+		pwd = kwargs['password']
+	else:
+		pwd = 'fortinet123'
 	TIMEOUT = 3
 	# tn.write(('' + '\n').encode('ascii'))
 	#time.sleep(1)
@@ -1880,9 +2137,9 @@ def switch_find_login_prompt_new(tn):
 	# time.sleep(1)
 
 	tn.write(('\x03').encode('ascii'))
-	time.sleep(0.1)
+	time.sleep(1)
 	tn.write(('\x03').encode('ascii'))
-	time.sleep(0.1)
+	time.sleep(1)
 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
 
@@ -1921,9 +2178,9 @@ def switch_find_login_prompt_new(tn):
 			result = None
 		return ("shell",result)
 	elif "New Password:"in prompt:
-		debug("it is a new switch that needs to change password, change password to *fortinet123* ")
-		tn.write(('fortinet123' + '\n').encode('ascii'))
-		tn.write(('fortinet123' + '\n').encode('ascii'))
+		debug(f"it is a new switch that needs to change password, change password to {pwd} ")
+		tn.write((pwd + '\n').encode('ascii'))
+		tn.write((pwd + '\n').encode('ascii'))
 		return ("new",None)
 	else:
 		debug("can not get any prompt, need to use robust login procedure...")
