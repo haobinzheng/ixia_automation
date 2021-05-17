@@ -521,6 +521,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	else:
 		timeout = 5
 	#relogin_if_needed(tn)
+	handle_prompt_before_commands(tn)
 	original_cmd = cmd
 	cmd_bytes = convert_cmd_ascii_n(cmd)
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
@@ -854,7 +855,8 @@ def split_f_string_lines(cmdblock):
 	b = [x.strip() for x in b if x.strip()]
 	return b
 
-def config_cmds_lines(dut, cmdblock,*args,**kwargs):
+def config_cmds_lines(dut,cmdblock,*args,**kwargs):
+	handle_prompt_before_commands(dut)
 	if "wait" in kwargs:
 		wait_time = int(kwargs["wait"])
 	else:
@@ -1410,7 +1412,7 @@ def telnet_switch_original(ip_address, console_port,*args,**kwargs):
 	elif p == 'new':
 		Info(f"This first time login after factory reset, not allowing blank password, password has been changed to {pwd}")
 	elif p == None:
-		Info("Not in login prompt, press enter a couple times to show login prompt")
+		Info("Login prompt not seen yet, press enter a couple times to show login prompt")
 		# tn.write(('\x03').encode('ascii'))
 		# tn.write(('\x03').encode('ascii'))
 		# tn.write(('\x03').encode('ascii'))
@@ -2122,6 +2124,49 @@ The remote host key has changed. Do you want to accept the new key and continue 
 		print("Something unexpected is happens, handle later")
 		print(output)
 		return False
+
+def handle_prompt_before_commands(tn,*args,**kwargs):
+	Info("Before entering commands into device, find out what prompt the device is at")
+	password = "Fortinet123!"
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+
+	TIMEOUT = 3
+	Info("See what prompt the console is at")
+	output = tn.expect([re.compile(b"login:")],timeout=TIMEOUT)
+	Info(f"collect info to look for prompt: {output}")
+	Info(f"output[2] = {output[2].decode().strip()}")
+	#debug(output[2].decode().strip())
+	prompt = output[2].decode().strip()
+	if output[0] == 0:
+		Info("it is a login prompt, you need to re-login because of timeout or reboot")
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(1)
+		tn.read_until(("login: ").encode('ascii'),timeout=10)
+		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
+		tn.read_until(("Password: ").encode('ascii'),timeout=10)
+		tn.write((password + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.2)
+		tn.read_until(("# ").encode('ascii'),timeout=10)
+		return ("re-login",None)
+	elif " #" in prompt or "#" in prompt: # be careful of with and without space at the front
+		Info("it is a Shell prompt")
+		pattern = r"[a-zA-Z0-9\-]+"
+		match = re.match(pattern,prompt)
+		if match:
+			result = match.group()
+		else:
+			result = None
+		return ("shell",result)
+	else:
+		debug("can not get any prompt, need to use robust login procedure...")
+		return (None,None)
 
 
 def switch_find_login_prompt_new(tn,*args,**kwargs):

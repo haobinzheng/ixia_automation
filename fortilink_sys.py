@@ -27,6 +27,7 @@ from ixia_restpy_lib_v2 import *
 
 if __name__ == "__main__":
 
+	sys.stdout = Logger("Log/fortilink_system.log")
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
 	parser.add_argument("-m", "--maintainence", help="Bring switches into standalone for maintainence", action="store_true")
@@ -250,7 +251,7 @@ if __name__ == "__main__":
 		for sw in switches:
 			sw.switch_factory_reset()
 
-		console_timer(500,msg='After switches are factory reset, wait for 500 seconds')
+		console_timer(600,msg='After switches are factory reset, wait for 600 seconds')
 
 		for sw in switches:
 			sw.sw_relogin()
@@ -263,7 +264,7 @@ if __name__ == "__main__":
 		console_timer(30,msg='After switches are factory reset and configure lldp profile auto_isl, wait for 100 seconds')
 
 		for fgt in fortigates:
-			fgt.fgt_relogin()
+			#fgt.fgt_relogin()
 			fgt.fgt_factory_reset()
 		console_timer(400,msg='After fortigates are factory reset, wait for 400 seconds')
 		for fgt in fortigates:
@@ -273,21 +274,17 @@ if __name__ == "__main__":
 		console_timer(100,msg='After FGT intial configuration, wait for 100 seconds and discover network topology')
 
 		for fgt in fortigates:
-			fgt.fgt_relogin()
 			fgt.fgt_network_discovery()
 
 		for fgt in fortigates:
 			fgt.config_ha()
 
-		for fgt in fortigates:
-			fgt.fgt_relogin()
 
 		for fgt in fortigates:
 			if fgt.mode == "Active":
 				fgt.config_default_policy()
 
 		for fgt in fortigates:
-			fgt.fgt_relogin()
 			fgt.ha_sync(action="start")
 
 		console_timer(100,msg='configuring firewall policy and sync, wait for 100 seconds')
@@ -295,8 +292,10 @@ if __name__ == "__main__":
 		fortilink_name = f"Myfortilink"
 		addr = f"192.168.1.1 255.255.255.0"
 		for fgt in fortigates:
-			fgt.fgt_relogin()
 			fgt.config_fortilink(name=fortilink_name,ip_addr=addr)
+
+		for fgt in fortigates:
+			fgt.ha_sync(action="start")
 
 		console_timer(300,msg='After configuring FSW and FGT, wait for 5 minutes for network to discover topology')
 
@@ -309,7 +308,7 @@ if __name__ == "__main__":
 		for fgt in fortigates:
 			print_attributes(fgt)
 
-		fgt_active.fgt_relogin()
+		#fgt_active.fgt_relogin()
 		managed_sw_list = fgt_active.discover_managed_switches(topology=tb)
 		fgt_active.config_custom_timeout()
 		for sw in managed_sw_list:
@@ -325,8 +324,9 @@ if __name__ == "__main__":
 		console_timer(200,msg='After configuring MCLAG ICL LLDP Profile via Fortigate, wait for 200 seconds for network to discover topology')
 
 		for sw in switches:
-			sw.sw_relogin()
+			#sw.sw_relogin()
 			sw.config_auto_isl_port_group()
+		exit()
 		
 	if Reboot:
 		for sw in switches:
@@ -353,12 +353,10 @@ if __name__ == "__main__":
 	# 		switches.append(switch)
 	
 	for fgt in fortigates:
-		fgt.fgt_relogin()
 		fgt.fgt_network_discovery()
 		print_attributes(fgt)
 	
 	for sw in switches:
-		sw.sw_relogin()
 		sw.sw_network_discovery()
 		print_attributes(sw)
 

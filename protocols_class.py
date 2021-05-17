@@ -6216,11 +6216,13 @@ class FortiSwitch_XML(FortiSwitch):
                     print("############################### Debug ########################")
                     print(f"Debug: Looking for this neighbor: {lldp.remote_system}")
                     for device in self.tb.devices:
-                        if (lldp.remote_system == device.hostname or lldp.remote_system == device.discovered_hostname) and self.serial_number != device.serial_number:
+                        if (lldp.remote_system == device.hostname or lldp.remote_system == device.discovered_hostname \
+                            or device.serial_number in lldp.remote_system) \
+                            and self.serial_number != device.serial_number:
                             print(f"===== Debug:device hostname: {device.hostname}")
                             print(f"===== Debug: device discovered hostname: {device.discovered_hostname}")
                             lldp.remote_system_role = device.role
-                            if device.role == "FGT" and 'tier' in self.role:
+                            if "FGT" in device.role and 'tier' in self.role:
                                 self.fortigate_links.append(lldp.local_port)
                                 self.fortigate_links = list(set(self.fortigate_links))
                             elif 'tier' in self.role and 'tier' in device.role:
@@ -6245,6 +6247,11 @@ class FortiSwitch_XML(FortiSwitch):
 
                     lldp.print_lldp()
                     self.lldp_neighbors_list.append(lldp)
+        for item in self.up_links_pod:
+            self.up_links_pod[item] = list(set(self.up_links_pod[item]))
+
+        for item in self.down_links_pod:
+            self.down_links_pod[item] = list(set(self.down_links_pod[item]))
 
         self.lldp_dict_list = lldp_dict_list
         self.lldp_obj_list = lldp_obj_list
@@ -6410,6 +6417,21 @@ class FortiGate_XML(FortiSwitch):
         self.managed_switches_list = []
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.pwd,platform="fortigate")
         self.local_discovery()
+        self.change_hostname()
+
+    def change_hostname(self):
+        if self.mode == "Active":
+            name = f"{self.hostname}-Active"
+        else:
+            name = f"{self.hostname}-Passive"
+        config = f"""
+        config global
+        config system global
+        set hostname {name}
+        end
+        """
+        config_cmds_lines(self.console,config)
+
 
     def ha_sync(self,*args,**kwargs):
         action = kwargs['action']
@@ -6799,7 +6821,7 @@ class FortiGate_XML(FortiSwitch):
             edit root
             diagnose lldprx neighbor summary
         """
-        output = self.fgt_show_commands(cmds,timeout=2)
+        output = self.fgt_show_commands(cmds,timeout=4)
         #print(output)
         neighbor_count = 0
         for line in output:
@@ -6838,7 +6860,7 @@ class FortiGate_XML(FortiSwitch):
             #print(f"Debug associating remote system: remote_system name = {nei.remote_system}")
             for device in self.tb.devices:
                 #print(device.hostname)
-                if nei.remote_system == device.hostname or nei.remote_system == device.discovered_hostname:
+                if nei.remote_system == device.hostname or nei.remote_system == device.discovered_hostname or device.serial_number in nei.remote_system:
                     print(f"Debug-lldp neighbor found: device hostname: {nei.remote_system}")
                     print(f"Debug-lldp neighbor found: device discovered hostname: {device.discovered_hostname}")
                     if 'tier1' in device.role:
@@ -6942,6 +6964,7 @@ class FortiGate_XML(FortiSwitch):
         #relogin_if_needed(tn)
         #make sure to start from the gloal prompt
         tn = self.console
+        handle_prompt_before_commands(tn)
         cmds = split_f_string_lines(cmds)
         for i in range(len(cmds)):
             original_cmd = cmds[i]
@@ -7076,7 +7099,8 @@ class FortiGate_XML(FortiSwitch):
         self.fgt_relogin()
 
     def config_after_factory(self):
-
+        self.change_hostname()
+        self.local_discovery()
         self.enable_multiple_vdom()
         sleep(10)
         ports = self.fortilink_ports_db + self.ha_ports_db 
