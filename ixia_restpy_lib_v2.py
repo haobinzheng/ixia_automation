@@ -14,6 +14,7 @@ class IXIA_TOPOLOGY:
         self.name = kwargs['name']
         self.dg_name = kwargs['dg_name']
         self.mac_start = kwargs['mac_start']
+        self.start_vlan = kwargs['start_vlan']
         self.bgpv4_network = None
         self.bgpv6_network = None
         self.bgp_as =  None
@@ -44,7 +45,8 @@ class IXIA_TOPOLOGY:
         dg_name = self.dg_name,
         ether_name = self.ether_name,
         multiplier = self.multiplier,    
-        mac_start = self.mac_start
+        mac_start = self.mac_start,
+        start_vlan = self.start_vlan
         )     
 
     def add_mld_host(self,*args,**kwargs):
@@ -816,11 +818,14 @@ class IXIA:
         #self.bgp_start_as = kwargs["start_as"]
         self.testPlatform,self.Session,self.ixNetwork,self.vport_holder_list = ixia_rest_connect_chassis(self.apiServerIp,self.ixChassisIpList,self.portList)
         #self.create_topologies()
-        self.topologies = self.create_topologies()
+        if "vlan" in kwargs:
+            self.start_vlan = kwargs['vlan']
+        else:
+            self.start_vlan = 10
+        self.topologies = self.create_ixia_topologies()
          
 
-
-    def create_topologies(self):
+    def create_ixia_topologies(self):
         i = 0
         bgp_as = None
         topo_list = []
@@ -840,6 +845,7 @@ class IXIA:
                 ipv6=self.portList[i][6],
                 ipv6_gw=self.portList[i][7],
                 multiplier=self.portList[i][8],
+                start_vlan=self.start_vlan
             )
             topo_list.append(topo)
             i += 1
@@ -1099,12 +1105,20 @@ def ixia_rest_create_topology(*args,**kwargs):
         multi = kwargs['multiplier']
         mac_start = kwargs['mac_start']
         ether_name = kwargs['ether_name']
-        #vlan_id = kwargs['vlan_id']       
+        start_vlan = kwargs['start_vlan']       
         ixNetwork.info(f'Creating Topology Group {topo_name}')
         topology = ixNetwork.Topology.add(Name=topo_name, Ports=vport)
         deviceGroup = topology.DeviceGroup.add(Name=dg_name, Multiplier=multi)
         ethernet = deviceGroup.Ethernet.add(Name=ether_name)
+        
         ethernet.Mac.Increment(start_value=mac_start, step_value='00:00:00:00:00:01')
+
+        if int(multi) > 1:
+            vlans = ethernet.Vlan.find()
+            vlans.VlanId.Increment(start_value=start_vlan, step_value=1)
+            ethernet.EnableVlans.Single("True")
+            ethernet.EnableVlans.Increment(start_value=1, step_value=0)
+         
         #vlan can not be used in FSW, dont know why. need to investigate
         # ethernet1.EnableVlans.Single(True)
 
@@ -1133,10 +1147,10 @@ def ixia_rest_create_ip(*args,**kwargs):
 
         ixNetwork.info('Configuring IPv4')
         ipv4 = ethernet.Ipv4.add(Name=ip_name)
-        ipv4.Address.Increment(start_value=start_ip, step_value='0.0.0.1')
+        ipv4.Address.Increment(start_value=start_ip, step_value='0.0.1.0')
         # ipv4.address.RandomMask(fixed_value=16)
         print(dir(ipv4.Address))
-        ipv4.GatewayIp.Increment(start_value=gw_start_ip, step_value='0.0.0.1')
+        ipv4.GatewayIp.Increment(start_value=gw_start_ip, step_value='0.0.1.0')
         ipv4.Prefix.Single(ip_prefix)
         address = ipv4.Address
         # testPlatform.info(address.prefix)

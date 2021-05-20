@@ -2125,13 +2125,41 @@ The remote host key has changed. Do you want to accept the new key and continue 
 		print(output)
 		return False
 
+def increment_24(ip,num):
+	bytes = ip.split('.')
+	ibytes = [int(i) for i in bytes]
+	newip_list = [ip]
+	for i in range(num-1):
+		ibytes[2] += 1
+		if ibytes[2] > 255:
+			ibytes[1] += 1
+			ibytes[2] = 0
+			if ibytes[1] > 255:
+				ibytes[0]+= 1
+				ibytes[1] = 0
+				if ibytes[0] > 224:
+					print("The range is too big for IPv4")
+					return newip_list
+		newip = ".".join(str(i) for i in ibytes)
+		newip_list.append(newip)
+	print(newip_list)
+	return newip_list
+
 def handle_prompt_before_commands(tn,*args,**kwargs):
 	Info("Before entering commands into device, find out what prompt the device is at")
 	password = "Fortinet123!"
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
-
+	sleep(0.5)
+	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
+	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
+	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	TIMEOUT = 3
 	Info("See what prompt the console is at")
 	output = tn.expect([re.compile(b"login:")],timeout=TIMEOUT)

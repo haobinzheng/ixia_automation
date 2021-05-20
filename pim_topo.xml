@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testtopo>
+ <dev1 type="FSW" role="DUT"> </dev1>
+ <trafgen1 type="IXIA" model="IXIA" role="trafgen"> </trafgen1>
+ <connections>
+  <link1 link="dev1,trafgen1" type="GigabitEthernet"> </link1>
+ </connections>
+</testtopo>

@@ -4439,6 +4439,45 @@ class FortiSwitch:
         self.trunk_list = []
         #self.add_extra_ipv6()
 
+
+    def config_sw_after_factory(self):
+        
+
+        config_mgmt_mode = f"""
+        config system interface
+            edit mgmt
+            set mode static
+            end
+        config system interface
+            edit "mgmt"
+            set mode static
+            end
+        """
+        config_cmds_lines(self.console,config_mgmt_mode)
+        config = f"""
+        conf system interface 
+            edit mgmt
+            set ip {self.mgmt_ip} {self.mgmt_netmask}
+            set allowaccess ping https ssh snmp http telnet fgfm
+            set type physical
+            set role lan
+            next
+        end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(10)
+
+        config = f"""
+        config router static
+            edit 1
+                set gateway {self.mgmt_gateway}
+                set device "mgmt"
+            next
+        end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(10)
+
     def discover_switch_trunk(self,*args,**kwargs):
         self.sample = """
         config switch trunk
@@ -5974,9 +6013,14 @@ class FortiSwitch_XML(FortiSwitch):
         self.mgmt_gateway = device_xml.mgmt_gateway
         self.license = device_xml.license
         self.role = device_xml.role
-        self.cluter = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(3)) 
-        self.tier = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(1)) 
-        self.pod = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(2)) 
+        try:
+            self.cluter = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(3)) 
+            self.tier = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(1)) 
+            self.pod = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(2)) 
+        except Exception as e:
+            self.cluter = None
+            self.tier = None
+            self.pod = None
         self.type = device_xml.type
         self.active = device_xml.active
         self.uplink_ports = device_xml.uplink_ports
@@ -5994,6 +6038,57 @@ class FortiSwitch_XML(FortiSwitch):
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
+
+    def config_sw_after_factory_xml(self):
+        config_mgmt_mode = f"""
+        config system interface
+            edit mgmt
+            set mode static
+            end
+        config system interface
+            edit "mgmt"
+            set mode static
+            end
+        """
+        config_cmds_lines(self.console,config_mgmt_mode)
+        config = f"""
+        conf system interface 
+            edit mgmt
+            set ip {self.mgmt_ip} {self.mgmt_netmask}
+            set allowaccess ping https ssh snmp http telnet fgfm
+            set type physical
+            set role lan
+            next
+        end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(10)
+
+        config = f"""
+        config router static
+            edit 1
+                set gateway {self.mgmt_gateway}
+                set device "mgmt"
+            next
+        end
+        """
+        config_cmds_lines(self.console,config)
+        sleep(10)
+
+    def switch_reboot(self):
+        switch_exec_reboot(self.console,device=self.hostname)
+
+        print(f"===== rebooting the switch {self.name}  =====")
+        # dut = self.console
+        # Info(f"================= Re-login device: {self.name} =============")
+        # try:
+        #     relogin_if_needed(dut)
+        # except Exception as e:
+        #     debug("something is wrong with rlogin_if_needed at bgp, try again")
+        #     relogin_if_needed(dut)
+        # image = find_dut_image(dut)
+        # tprint(f"============================ {dut_name} software image = {image} ============")
+
 
     def fsw_upgrade_v2(self,*args,**kwargs):
         samples = """
@@ -6256,6 +6351,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.lldp_dict_list = lldp_dict_list
         self.lldp_obj_list = lldp_obj_list
         print(self.lldp_dict_list)
+
 
 
     def switch_factory_reset(self):

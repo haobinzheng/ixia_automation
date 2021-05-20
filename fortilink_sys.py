@@ -248,6 +248,7 @@ if __name__ == "__main__":
 		# 	exit()
 
 	if setup: 
+		################ Will be uncommented this blocks
 		for sw in switches:
 			sw.switch_factory_reset()
 
@@ -261,17 +262,16 @@ if __name__ == "__main__":
 			tprint(f"============================ {dut_name} software image = {image} ============")
 			sw.sw_network_discovery()
 			sw.config_lldp_profile_auto_isl()
-		console_timer(30,msg='After switches are factory reset and configure lldp profile auto_isl, wait for 100 seconds')
-
+		#console_timer(100,msg='After switches are factory reset and configure lldp profile auto_isl, wait for 100 seconds')
+		#################
 		for fgt in fortigates:
-			#fgt.fgt_relogin()
 			fgt.fgt_factory_reset()
 		console_timer(400,msg='After fortigates are factory reset, wait for 400 seconds')
 		for fgt in fortigates:
 			fgt.fgt_relogin()
 			fgt.config_after_factory()
 
-		console_timer(100,msg='After FGT intial configuration, wait for 100 seconds and discover network topology')
+		console_timer(200,msg='After FGT intial configuration, wait for 200 seconds and discover network topology')
 
 		for fgt in fortigates:
 			fgt.fgt_network_discovery()
@@ -297,12 +297,32 @@ if __name__ == "__main__":
 		for fgt in fortigates:
 			fgt.ha_sync(action="start")
 
-		console_timer(300,msg='After configuring FSW and FGT, wait for 5 minutes for network to discover topology')
+		console_timer(600,msg='After configuring FSW and FGT, wait for 10 minutes for network to discover topology')
 
 		for fgt in fortigates:
 			if fgt.mode == "Active":
 				fgt_active = fgt
+		############## Move this blocks to the beginning later ############################
+		# for sw in switches:
+		# 	sw.switch_factory_reset()
+
+		# console_timer(600,msg='After switches are factory reset, wait for 600 seconds')
+
 		
+		# for sw in switches:
+		# 	sw.sw_relogin()
+		# 	dut = sw.console
+		# 	dut_name = sw.name
+		# 	image = find_dut_image(dut)
+		# 	tprint(f"============================ {dut_name} software image = {image} ============")
+		# 	sw.sw_network_discovery()
+		# 	sw.config_lldp_profile_auto_isl()
+		# console_timer(500,msg='After switches are factory reset and configure lldp profile auto_isl, wait for 500 seconds')
+		###########################################
+		for sw in switches:
+			sw.switch_reboot()
+		console_timer(600,msg='After switches are rebooted, wait for 600 seconds')
+
 		for sw in switches:
 			print_attributes(sw)
 		for fgt in fortigates:
@@ -321,7 +341,7 @@ if __name__ == "__main__":
 
 		fgt_active.config_msw_mclag_icl()
 
-		console_timer(200,msg='After configuring MCLAG ICL LLDP Profile via Fortigate, wait for 200 seconds for network to discover topology')
+		console_timer(400,msg='After configuring MCLAG ICL LLDP Profile via Fortigate, wait for 400 seconds for network to discover topology')
 
 		for sw in switches:
 			#sw.sw_relogin()
