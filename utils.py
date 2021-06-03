@@ -861,11 +861,28 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 		wait_time = int(kwargs["wait"])
 	else:
 		wait_time = 0.2
+	if "mode" in kwargs:
+		config_mode = kwargs["mode"]
+	else:
+		config_mode = "slow"
+
+	if "feedback" in kwargs:
+		feedback = kwargs['feedback']
+	else:
+		feedback = False
+
+	if config_mode == "fast":
+		wait_time = 0.1
 	b= cmdblock.split("\n")
 	b = [x.strip() for x in b if x.strip()]
+	config_return_list = []
 	for cmd in b:
-		switch_configure_cmd(dut,cmd)
+		config_return = switch_configure_cmd(dut,cmd,mode=config_mode,output=feedback)
+		if config_return != None:
+			config_return_list.append(config_return)
+
 		sleep(wait_time)
+	return config_return_list
 		 
 def print_attributes(fgt):
 	attrs = vars(fgt)
@@ -944,16 +961,37 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		mode = kwargs['mode']
 	else:
 		mode = None
+	if 'output' in kwargs:
+		output = kwargs["output"]
+	else:
+		output = False
 
-	if mode == "silent":
-		pass
+	if mode == "fast":
+		tprint(f"configuring {cmd}")
 	else:
 		dut_prompt = find_dut_prompt(tn)
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
+
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
-	time.sleep(0.5)
-	tn.read_until(("# ").encode('ascii'),timeout=10)
+	time.sleep(0.2)
+	if output == False:
+		tn.read_until(("# ").encode('ascii'),timeout=5)
+		return None 
+	else: 
+		sleep(1)
+		config_output = tn.read_very_eager()
+		out_list = config_output.split(b'\r\n')
+		encoding = 'utf-8'
+		out_str_list = []
+		for o in out_list:
+			o_str = o.decode(encoding).strip(' \r')
+			out_str_list.append(o_str)
+		 
+		for n in out_str_list:
+			print (f"{n}")
+		return out_str_list
+
 
 def switch_configure_cmd_cisco(tn,cmd,**kwargs):
 	if 'mode' in kwargs:
@@ -1483,7 +1521,19 @@ def telnet_switch_original(ip_address, console_port,*args,**kwargs):
 		# switch_configure_cmd_cisco(tn,'exec-timeout 300')
 		# switch_configure_cmd_cisco(tn,'end')
 	else:
-		print("=========== This is a uncognized device platform ============")
+		print("=========== This is a default device platform, assume it is a Fortinet Switch ============")
+		switch_configure_cmd(tn,'config system global')
+		switch_configure_cmd(tn,'set admintimeout 480')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config system console')
+		switch_configure_cmd(tn,'set output standard')
+		switch_configure_cmd(tn,'end')
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
 	return tn
 
 
@@ -1701,8 +1751,22 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 		# switch_configure_cmd_cisco(tn,'exec-timeout 300')
 		# switch_configure_cmd_cisco(tn,'end')
 	else:
+		print("=========== This is a default device platform, assume it is a Fortinet Switch ============")
+		switch_configure_cmd(tn,'config system global')
+		switch_configure_cmd(tn,'set admintimeout 480')
+		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config system console')
+		switch_configure_cmd(tn,'set output standard')
+		switch_configure_cmd(tn,'end')
+		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
+		try:
+			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
+			print(f"=========== Software Build = {find_dut_build(tn)[1]} ==================")
+		except Exception as e:
+			pass
 		print("=========== This is a uncognized device platform ============")
 	return tn
+
 def get_switch_telnet_connection_new(ip_address, console_port,**kwargs):
 	tprint("console server ip ="+str(ip_address))
 	tprint("console port="+str(console_port))

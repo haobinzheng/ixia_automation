@@ -2808,6 +2808,37 @@ def get_switch_show_bgp(dut):
  
 	return neighbor_list
 
+def get_config_edit_items(dut,*args,**kwargs):
+    cmd = kwargs['cmd']
+    config_item = kwargs['config']
+    result = collect_show_cmd(dut,cmd)
+    print(result)
+    edit_list = []
+    found_config = False
+    edit_list = []
+    if config_item == None:
+        found_config = True
+    try:
+        for line in result:
+            if found_config and "edit" in line:
+                print(f"before changing line, line = {line}")
+                line = line.replace('\"','')
+                print(f"after changing line, line = {line}")
+                regex = r'edit\s+([0-9a-zA-Z]+)'
+                matched = re.search(regex,line)
+                if matched:
+                    edit_line = matched.group(1)
+                    edit_list.append(edit_line)
+            elif "config" in line and found_config == True:
+                return edit_list
+            elif config_item != None:
+                if config_item in line:
+                    found_config = True
+                    continue
+    except Exception as e:
+        print(f"Something is wrong with collecting configuration for {cmd}:{config_item} ")
+    return edit_list
+
 
 def get_switch_show_bgp_v6(dut):
     result = collect_show_cmd(dut,"show router bgp")

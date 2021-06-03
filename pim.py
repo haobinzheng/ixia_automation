@@ -38,6 +38,7 @@ if __name__ == "__main__":
 
 	global DEBUG
 	
+	sys.stdout = Logger(f"Log/pim_ssm_start.log")
 	args = parser.parse_args()
 
 	if args.sa_upgrade:
@@ -158,6 +159,9 @@ if __name__ == "__main__":
 			tprint(f"============================ {dut_name} software image = {image} ============")
 			sw.config_sw_after_factory()
 
+		for c in tb.connections:
+			c.shut_unused_ports()
+
 	if setup: 
 		for sw in switches:
 			config = """
@@ -191,7 +195,7 @@ if __name__ == "__main__":
 				set aging-time 300
 			end
 			"""
-			config_cmds_lines(sw.console,config)
+			config_cmds_lines(sw.console,config,mode="fast")
 		# if testcase == 0:
 		# 	exit()
 
@@ -218,6 +222,8 @@ if __name__ == "__main__":
 	# 	if d.active:
 	# 		switch = FortiSwitch_XML(d)
 	# 		switches.append(switch)
+
+
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]
@@ -229,103 +235,418 @@ if __name__ == "__main__":
 	net6_list = ["2001:10:1:1::211/64","2001:10:1:1::212/64","2001:10:1:1::213/64","2001:10:1:1::214/64","2001:10:1:1::215/64","2001:10:1:1::216/64","2001:10:1:1::217/64","2001:10:1:1::218/64"]
 	gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
 
-	sw = switches[0]
-	num = 10
-	
-	portList_v4_v6 = []
-	for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
-		module,port = p.split("/")
-		portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,num])
+	if testcase == 1 or test_all:
+		testcase = 1
+		sys.stdout = Logger(f"Log/pim_ssm_{testcase}.log")
+		description = "scale pim with maximum multicast flow"
+		print_test_subject(testcase,description)
+		sw = switches[0]
+		num = 1000
+		
+		portList_v4_v6 = []
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,num])
 
-	print(portList_v4_v6)
+		print(portList_v4_v6)
 
-	vlan_ip = "10.1.1.1"
-	iplist = increment_24(vlan_ip,num+1)
-	start_vlan = 10
-	i = 0
-	svi_config = f"""
-	config system interface
-	"""
-	for ip in iplist:
-		config = f"""
-		edit vlan{start_vlan+i}
-		set ip {ip} 255.255.255.0
-		set vlanid {start_vlan+i}
-		set interface "internal"
-		next
+		vlan_ip = "10.1.1.1"
+		iplist = increment_24(vlan_ip,num+1)
+		start_vlan = 10
+		i = 0
+		svi_config = f"""
+		config system interface
 		"""
-		i += 1
-		svi_config += config
-	config = f"""
-	end
-	"""
-	svi_config += config
-
-	print(svi_config)
-	config_cmds_lines(sw.console,svi_config)
-
-	start_vlan = 10
-	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6,vlan=start_vlan)
-	for topo in myixia.topologies:
-		#topo.add_ipv6()
-		topo.add_ipv4()
-
-	myixia.start_protocol(wait=200)
-
-
-	ipgw = "10.1.1.2"
-	iplist = increment_24(ipgw,num)
-
-	num_mcast = 1000
-	mcast_ip = "239.1.1.1"
-	mcast_ip_list = increment_24(mcast_ip,num_mcast)
-	flows_config = f"""
-	config router multicast-flow
-	"""
-	i = 1
-	for mcast_ip in mcast_ip_list:
+		for ip in iplist:
+			config = f"""
+			edit vlan{start_vlan+i}
+			set ip {ip} 255.255.255.0
+			set vlanid {start_vlan+i}
+			set interface "internal"
+			next
+			"""
+			i += 1
+			svi_config += config
 		config = f"""
-	    edit {i}
-	            config flows
-	                edit 1
-	                    set group-addr {mcast_ip}
-	                    set source-addr 10.1.1.2
-	                next
-	            end
-	    next
-		"""
-		i += 1
-		flows_config += config
-
-	config = f"""
-	end
-	"""
-	flows_config += config
-	print(flows_config)
-	config_cmds_lines(sw.console,flows_config)
-
-	mcast_config = f"""
-	config router multicast
-       config interface
-	"""
-
-	for i in range(1,num+1):
-		vlan_number = start_vlan + i
-		config = f"""
-            edit vlan11
-                set pim-mode ssm-mode
-                set multicast-flow {i}
-            next
-        """
-		mcast_config += config
-	config = f"""
 		end
-	set multicast-routing enable
-	end
-	"""
-	mcast_config += config
-	print(mcast_config)
-	config_cmds_lines(sw.console,mcast_config)
+		"""
+		svi_config += config
+
+		print(svi_config)
+		config_cmds_lines(sw.console,svi_config,mode="fast")
+
+		start_vlan = 10
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6,vlan=start_vlan)
+		for topo in myixia.topologies:
+			#topo.add_ipv6()
+			topo.add_ipv4()
+
+		myixia.start_protocol(wait=200)
+
+		num_mcast = 1000
+		mcast_ip = "239.1.1.1"
+		mcast_ip_list = increment_24(mcast_ip,num_mcast)
+		src_ip = "10.1.1.2"
+		src_iplist = increment_24(src_ip,num_mcast)
+		flows_config = f"""
+		config router multicast-flow
+		"""
+		i = 1
+		for src_ip,mcast_ip in zip(src_iplist,mcast_ip_list):
+			config = f"""
+		    edit {i}
+		            config flows
+		                edit 1
+		                    set group-addr {mcast_ip}
+		                    set source-addr {src_ip}
+		                next
+		            end
+		    next
+			"""
+			i += 1
+			flows_config += config
+
+		config = f"""
+		end
+		"""
+		flows_config += config
+		print(flows_config)
+		config_cmds_lines(sw.console,flows_config,mode="fast")
+
+		mcast_config = f"""
+		config router multicast
+	       config interface
+		"""
+
+		for i in range(1,num+1):
+			vlan_number = start_vlan + i
+			config = f"""
+	            edit vlan{vlan_number}
+	                set pim-mode ssm-mode
+	                set multicast-flow {i}
+	            next
+	        """
+			mcast_config += config
+		config = f"""
+			end
+		set multicast-routing enable
+		end
+		"""
+		mcast_config += config
+		print(mcast_config)
+		config_cmds_lines(sw.console,mcast_config,mode="fast")
+
+	if testcase == 2 or test_all:
+		testcase = 2
+		sys.stdout = Logger(f"Log/pim_ssm_{testcase}.log")
+		description = "scale pim with maximum entries within a multicast flow"
+		print_test_subject(testcase,description)
+		sw = switches[0]
+		num = 10
+		
+		portList_v4_v6 = []
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,num])
+
+		print(portList_v4_v6)
+
+		config = f"""
+		diag debug application pimd -1
+		"""
+		config_cmds_lines(sw.console,config,mode="fast")
+
+		vlan_ip = "10.1.1.1"
+		iplist = increment_24(vlan_ip,num)
+		start_vlan = 10
+		i = 0
+		svi_config = f"""
+		config system interface
+		"""
+		for ip in iplist:
+			config = f"""
+			edit vlan{start_vlan+i}
+			set ip {ip} 255.255.255.0
+			set vlanid {start_vlan+i}
+			set interface "internal"
+			next
+			"""
+			i += 1
+			svi_config += config
+		config = f"""
+		end
+		"""
+		svi_config += config
+
+		print(svi_config)
+		config_cmds_lines(sw.console,svi_config,mode="fast")
+
+		start_vlan = 10
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6,vlan=start_vlan)
+		for topo in myixia.topologies:
+			#topo.add_ipv6()
+			topo.add_ipv4()
+
+		myixia.start_protocol(wait=200)
+
+		num_mcast = 1000
+		mcast_ip = "239.1.1.1"
+		mcast_ip_list = increment_24(mcast_ip,num_mcast)
+		src_ip = "10.1.1.2"
+		flows_config = f"""
+		config router multicast-flow
+			    edit 1
+		            config flows
+		"""
+		i = 1
+		for mcast_ip in mcast_ip_list:
+			config = f"""
+		        edit {i}
+		            set group-addr {mcast_ip}
+		            set source-addr {src_ip}
+		        next
+			"""
+			i += 1
+			flows_config += config
+
+		config = f"""
+		end
+		next 
+		end
+		"""
+		flows_config += config
+		print(flows_config)
+		config_cmds_lines(sw.console,flows_config,mode="fast")
+
+		mcast_config = f"""
+		config router multicast
+	       config interface
+		"""
+		num_vlan = 10
+		for i in range(1,num_vlan+1):
+			vlan_number = start_vlan + i
+			config = f"""
+	            edit vlan{vlan_number}
+	                set pim-mode ssm-mode
+	                set multicast-flow 1
+	            next
+	        """
+			mcast_config += config
+		config = f"""
+			end
+		set multicast-routing enable
+		end
+		"""
+		mcast_config += config
+		print(mcast_config)
+		config_cmds_lines(sw.console,mcast_config,mode="fast",feedback=True)
+
+	if testcase == 3 or test_all:
+		testcase = 3
+		sys.stdout = Logger(f"Log/pim_ssm_{testcase}.log")
+		description = "scale pim to find out what number is the max in the platform"
+		print_test_subject(testcase,description)
+		sw = switches[0]
+		num = 10
+		
+		multicast_interfaces = get_config_edit_items(sw.console,cmd="show router multicast",config="config interface")
+		print(multicast_interfaces)
+		delete_mcast_interface_config = f"""
+		config router multicast 
+		config interface
+		"""
+		for i in multicast_interfaces:
+			config = f"""
+			delete {i}
+			"""
+			delete_mcast_interface_config += config
+		config = f"""
+			end
+			end
+		"""
+		delete_mcast_interface_config += config
+		config_cmds_lines(sw.console,delete_mcast_interface_config,mode="fast")
+
+		flows = get_config_edit_items(sw.console,cmd="show router multicast-flow",config="config router multicast-flow")
+		print(flows)
+		delete_flow_config = f"""
+		config router multicast-flow 
+		"""
+		for f in flows:
+			config = f""" 
+			delete {f}
+			"""
+			delete_flow_config += config
+		config  = f"""
+			end
+			end
+			"""
+		delete_flow_config += config
+		config_cmds_lines(sw.console,delete_flow_config,mode="fast")
+
+		portList_v4_v6 = []
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,num])
+
+		print(portList_v4_v6)
+
+		config = f"""
+		diag debug application pimd -1
+		"""
+		config_cmds_lines(sw.console,config,mode="fast")
+
+		vlan_ip = "10.1.1.1"
+		iplist = increment_24(vlan_ip,num+1)
+		start_vlan = 10
+		i = 0
+		svi_config = f"""
+		config system interface
+		"""
+		for ip in iplist:
+			config = f"""
+			edit vlan{start_vlan+i}
+			set ip {ip} 255.255.255.0
+			set vlanid {start_vlan+i}
+			set interface "internal"
+			next
+			"""
+			i += 1
+			svi_config += config
+		config = f"""
+		end
+		"""
+		svi_config += config
+
+		print(svi_config)
+		config_cmds_lines(sw.console,svi_config,mode="fast")
+
+		start_vlan = 10
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6,vlan=start_vlan)
+		for topo in myixia.topologies:
+			#topo.add_ipv6()
+			topo.add_ipv4()
+
+		myixia.start_protocol(wait=200)
+		num_mcast = 64
+		while True:
+			mcast_ip = "239.1.1.1"
+			mcast_ip_list = increment_24(mcast_ip,num_mcast)
+			src_ip = "10.1.1.2"
+			flows_config = f"""
+			config router multicast-flow
+				    edit 1
+			            config flows
+			"""
+			i = 1
+			for mcast_ip in mcast_ip_list:
+				config = f"""
+			        edit {i}
+			            set group-addr {mcast_ip}
+			            set source-addr {src_ip}
+			        next
+				"""
+				i += 1
+				flows_config += config
+
+			config = f"""
+			end
+			next 
+			end
+			"""
+			flows_config += config
+			print(flows_config)
+			config_cmds_lines(sw.console,flows_config,mode="fast")
+
+			mcast_config = f"""
+			config router multicast
+		       config interface
+			"""
+			num_vlan = 10
+			for i in range(0,num_vlan):
+				vlan_number = start_vlan + i
+				config = f"""
+		            edit vlan{vlan_number}
+		                set pim-mode ssm-mode
+		                set multicast-flow 1
+		            next
+		        """
+				mcast_config += config
+			config = f"""
+				end
+			set multicast-routing enable
+			end
+			"""
+			mcast_config += config
+			print(mcast_config)
+			pim_config_output = config_cmds_lines(sw.console,mcast_config,mode="fast",feedback=True)
+			if len(pim_config_output) > 0:
+				print(pim_config_output)
+				for item in pim_config_output:
+					for i in item:
+						if "errno" in i or "failure" in i:
+							print(f"!!!!!!!!!!!!!!! Errors in IGMP/PIM, Number of multicast flow = {num_mcast}!!!!!!!!!!!!!!!")
+							sw.show_command("get router info multicast table")
+							sw.show_command("get router info multicast config")
+							sw.show_command("get router info multicast pim interface")
+							sw.show_command("get router info multicast pim local-membership")
+							sw.show_command("get router info multicast pim join")
+							sw.show_command("get router info multicast pim rpf")
+							sw.show_command("get router info multicast igmp interface")
+							sw.show_command("get router info multicast igmp join")
+							sw.show_command("get router info multicast igmp sources")
+							sw.show_command("get router info multicast igmp group")
+							exit(0)
+			print(f"==================== Total number of multicast flows = {num_mcast} ===================")
+			sw.show_command("get router info multicast table")
+			sw.show_command("get router info multicast config")
+			sw.show_command("get router info multicast pim interface")
+			sw.show_command("get router info multicast pim local-membership")
+			sw.show_command("get router info multicast pim join")
+			sw.show_command("get router info multicast pim rpf")
+			sw.show_command("get router info multicast igmp interface")
+			sw.show_command("get router info multicast igmp join")
+			sw.show_command("get router info multicast igmp sources")
+			sw.show_command("get router info multicast igmp group")
+
+			multicast_interfaces = get_config_edit_items(sw.console,cmd="show router multicast",config="config interface")
+			print(multicast_interfaces)
+			delete_mcast_interface_config = f"""
+			config router multicast 
+			config interface
+			"""
+			for i in multicast_interfaces:
+				config = f"""
+				delete {i}
+				"""
+				delete_mcast_interface_config += config
+			config = f"""
+				end
+				end
+			"""
+			delete_mcast_interface_config += config
+			config_cmds_lines(sw.console,delete_mcast_interface_config,mode="fast")
+
+			flows = get_config_edit_items(sw.console,cmd="show router multicast-flow",config="config router multicast-flow")
+			print(flows)
+			delete_flow_config = f"""
+			config router multicast-flow 
+			"""
+			for f in flows:
+				config = f""" 
+				delete {f}
+				"""
+				delete_flow_config += config
+			config  = f"""
+				end
+				end
+				"""
+			delete_flow_config += config
+			config_cmds_lines(sw.console,delete_flow_config,mode="fast")
+
+			sleep(10)
+			num_mcast += 5
+
 	exit(0)
 	for sw in switches:
 		sw.fsw_show_cmd("get switch igmp-snooping group")
