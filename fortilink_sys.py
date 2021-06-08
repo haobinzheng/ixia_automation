@@ -42,7 +42,8 @@ if __name__ == "__main__":
 
 
 	global DEBUG
-	initial_testing = False
+	initial_testing = True
+	initial_config = False
 	
 	args = parser.parse_args()
 
@@ -302,23 +303,7 @@ if __name__ == "__main__":
 		for fgt in fortigates:
 			if fgt.mode == "Active":
 				fgt_active = fgt
-		############## Move this blocks to the beginning later ############################
-		# for sw in switches:
-		# 	sw.switch_factory_reset()
-
-		# console_timer(600,msg='After switches are factory reset, wait for 600 seconds')
-
-		
-		# for sw in switches:
-		# 	sw.sw_relogin()
-		# 	dut = sw.console
-		# 	dut_name = sw.name
-		# 	image = find_dut_image(dut)
-		# 	tprint(f"============================ {dut_name} software image = {image} ============")
-		# 	sw.sw_network_discovery()
-		# 	sw.config_lldp_profile_auto_isl()
-		# console_timer(500,msg='After switches are factory reset and configure lldp profile auto_isl, wait for 500 seconds')
-		###########################################
+	
 		for sw in switches:
 			sw.switch_reboot()
 		console_timer(600,msg='After switches are rebooted, wait for 600 seconds')
@@ -346,7 +331,30 @@ if __name__ == "__main__":
 		for sw in switches:
 			#sw.sw_relogin()
 			sw.config_auto_isl_port_group()
-		exit()
+		
+		console_timer(400,msg='After configuring all Fortigte related stuff, wait for 400 seconds for network to discover topology')
+		for fgt in fortigates:
+			fgt.fgt_network_discovery()
+			print_attributes(fgt)
+		
+		for sw in switches:
+			sw.sw_network_discovery()
+			print_attributes(sw)
+
+		for sw in switches:
+			sw.discover_switch_trunk()
+
+		for fgt in fortigates:
+			if fgt.mode == "Active":
+				managed_sw_list = fgt.discover_managed_switches(topology=tb)
+				fgt.config_custom_timeout()
+				for sw in managed_sw_list:
+					sw.print_managed_sw_info()
+					if sw.authorized and sw.up:
+						print(f"{sw.switch_id} is authorized and Up")
+						fgt.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
+					else:
+						print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
 		
 	if Reboot:
 		for sw in switches:
@@ -371,31 +379,238 @@ if __name__ == "__main__":
 	# 	if d.active:
 	# 		switch = FortiSwitch_XML(d)
 	# 		switches.append(switch)
-	
-	for fgt in fortigates:
-		fgt.fgt_network_discovery()
-		print_attributes(fgt)
-	
-	for sw in switches:
-		sw.sw_network_discovery()
-		print_attributes(sw)
 
-	for sw in switches:
-		sw.discover_switch_trunk()
+	system_interfaces_config = f"""
+		config vdom
+			edit root
+			config system interface
+			edit "engvlan11"
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set interface "Myfortilink"
+		        set vlanid 11
+		    next
+		    edit "marktingvlan12"
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set interface "Myfortilink"
+		        set vlanid 12
+		    next
+		    edit "hrvlan13"
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set interface "Myfortilink"
+		        set vlanid 13
+		    next
+		    edit "financevlan14"
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set interface "Myfortilink"
+		        set vlanid 14
+		    next
+		    edit "tacvlan15"
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set interface "Myfortilink"
+		        set vlanid 15
+		    next
+		end
+		"""
+	fortilink_settings_config = f"""
+		 config vdom
+			edit root
+			conf switch-controller fortilink-settings 
+    			edit "Myfortilink"
+        			config nac-ports
+			            set onboarding-vlan "onboarding"
+			            set lan-segment enabled
+			            set nac-lan-interface "nac_segment"
+			            set nac-segment-vlans "engvlan11" "financevlan14" "hrvlan13" "marktingvlan12" "tacvlan15" "voice" "video"
+			        end
+			    next
+			end
+		"""
+	mac_policy_config = f"""
+		config vdom
+		edit root
+		conf switch-controller  mac-policy 
+		    edit "eng"
+		        set fortilink "Myfortilink"
+		        set vlan "engvlan11"
+		    next
+		    edit "hr"
+		        set fortilink "Myfortilink"
+		        set vlan "hrvlan13"
+		    next
+		    edit "marketing"
+		        set fortilink "Myfortilink"
+		        set vlan "marktingvlan12"
+		    next
+		    edit "tac"
+		        set fortilink "Myfortilink"
+		        set vlan "tacvlan15"
+		    next
+		    edit "finance"
+		        set fortilink "Myfortilink"
+		        set vlan "financevlan14"
+		    next
+		end
+		"""
+
+	user_nacpolicy_config = f"""
+		config vdom
+		edit root
+		config user nac-policy
+		    edit "eng-users"
+		        set mac "00:11:**:**:**:**"
+		        set switch-fortilink "Myfortilink"
+		        set switch-mac-policy "eng"
+		    next
+		    edit "marketing-users"
+		        set mac "00:12:**:**:**:**"
+		        set switch-fortilink "Myfortilink"
+		        set switch-mac-policy "marketing"
+		    next
+		    edit "hr-users"
+		        set mac "00:13:**:**:**:**"
+		        set switch-fortilink "Myfortilink"
+		        set switch-mac-policy "hr"
+		    next
+		    edit "finance-users"
+		        set mac "00:14:**:**:**:**"
+		        set switch-fortilink "Myfortilink"
+		        set switch-mac-policy "finance"
+		    next
+		end
+	"""
+
+	user_nacpolicy_config_unmatched = f"""
+		config vdom
+		edit root
+		config user nac-policy
+		    edit "eng-users"
+		        set mac "88:11:**:**:**:**"
+		        set switch-fortilink "Myfortilink"
+		        set switch-mac-policy "eng"
+		    next
+		    edit "marketing-users"
+		        set mac "88:12:**:**:**:**"
+		        set switch-fortilink "Myfortilink"
+		        set switch-mac-policy "marketing"
+		    next
+		    edit "hr-users"
+		        set mac "88:13:**:**:**:**"
+		        set switch-fortilink "Myfortilink"
+		        set switch-mac-policy "hr"
+		    next
+		    edit "finance-users"
+		        set mac "88:14:**:**:**:**"
+		        set switch-fortilink "Myfortilink"
+		        set switch-mac-policy "finance"
+		    next
+		end
+	"""
+	delete_system_interfaces_config = f"""
+		config vdom
+			edit root
+			config system interface
+			delete "engvlan11"
+	 		delete "marktingvlan12"
+	 
+		    delete "hrvlan13"
+		 	delete "financevlan14"
+		  	delete "tacvlan15"
+		end
+	"""
+	delete_fortilink_settings_config = f"""
+		 config vdom
+			edit root
+			conf switch-controller fortilink-settings 
+    			edit "Myfortilink"
+        			config nac-ports
+			            set onboarding-vlan "onboarding"
+			            set lan-segment disable
+			            unset set nac-lan-interface  
+			            unset nac-segment-vlans 
+			        end
+			    next
+			end
+	"""
+	delet_mac_policy_config = f"""
+		config vdom
+		edit root
+		conf switch-controller mac-policy 
+		    delete "eng"
+		    delete "hr"
+		    delete "marketing"
+		    delete  "tac"
+		    delete "finance"
+		end
+	"""
+	delete_user_nacpolicy_config = f"""
+		config vdom
+		edit root
+		config user nac-policy
+		    delete "eng-users"
+		    delete "marketing-users"
+		   	delete "hr-users"
+		    delete "finance-users"
+		end
+	"""
 
 	for fgt in fortigates:
 		if fgt.mode == "Active":
-			managed_sw_list = fgt.discover_managed_switches(topology=tb)
-			fgt.config_custom_timeout()
-			for sw in managed_sw_list:
-				sw.print_managed_sw_info()
-				if sw.authorized and sw.up:
-					print(f"{sw.switch_id} is authorized and Up")
-					fgt.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
-				else:
-					print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
+			fgta = fgt
 
-	exit()
+	if initial_config:
+		nac_config = system_interfaces_config + fortilink_settings_config + mac_policy_config + user_nacpolicy_config
+		config_cmds_lines(fgta.console,nac_config)
+		
+		managed_sw_list = fgta.discover_managed_switches(topology=tb)
+		fgta.config_custom_timeout()
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode nac
+									next
+								end
+							end
+					end
+					"""
+					config_cmds_lines(fgta.console,config)
+
+			else:
+				print(f"{msw.switch_id} is Not authorized or Not up. Authorized={msw.authorized}, Up={msw.up}")
+
+	
+	for sw in switches:
+		print_attributes(sw)
+
+	for fgt in fortigates:
+		print_attributes(fgt)
+
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]
@@ -418,7 +633,6 @@ if __name__ == "__main__":
 	for topo in myixia.topologies:
 		topo.add_dhcp_client()
 
-
 	if initial_testing:
 		myixia.start_protocol(wait=200)
 
@@ -431,281 +645,268 @@ if __name__ == "__main__":
 		myixia.collect_stats()
 		myixia.check_traffic()
 		myixia.stop_traffic()
-
+	 
 	if testcase == 1 or test_all:
 		testcase = 1
 		myixia.start_traffic()
 		for sw in switches:
-			for trunk in sw.trunk_list:
-				config = f"""
-				config switch trunk
-					edit {trunk.name}
-						set static-isl enable
-					next 
+			sw.clear_crash_log()
+		managed_sw_list = fgta.discover_managed_switches(topology=tb)
+		fgta.config_custom_timeout()
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode static
+									next
+								end
+							end
 					end
-				"""
-				config_cmds_lines(sw.console,config)
-		console_timer(400,msg=f"Testcase #{testcase}:After enabling static-isl, wait for 20s")
-		myixia.collect_stats()
-		if myixia.check_traffic() == True:
-			print(f"Test Case #{testcase} Passed: Enable static-isl")
-		else:
-			print(f"Test Case #{testcase} Failed: Enable static-isl")
-		print_double_line()
+					"""
+					config_cmds_lines(fgta.console,config)
+		console_timer(20,msg=f"Testcase #{testcase}:After disabling access-mode nac, wait for 20s")
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode nac
+									next
+								end
+							end
+					end
+					"""
+					config_cmds_lines(fgta.console,config)
+		console_timer(20,msg=f"Testcase #{testcase}:After enabling access-mode nac, wait for 20s")
 		myixia.stop_traffic()
-
+		myixia.start_traffic()
+		myixia.check_traffic()
+		myixia.stop_traffic()
+		for sw in switches:
+			sw.get_crash_log()
+	 
 	if testcase == 2 or test_all:
 		testcase = 2
-		myixia.start_traffic()
+		myixia.stop_protocol()
 		for sw in switches:
-			for trunk in sw.trunk_list:
-				config = f"""
-				config switch trunk
-					edit {trunk.name}
-						set static-isl disable
-					next 
+			sw.clear_crash_log()
+		managed_sw_list = fgta.discover_managed_switches(topology=tb)
+		fgta.config_custom_timeout()
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode static
+									next
+								end
+							end
 					end
-				"""
-				config_cmds_lines(sw.console,config)
-		console_timer(400,msg=f"Testcase #{testcase}:After disabling static-isl, wait for 20s")
-		myixia.collect_stats()
-		if myixia.check_traffic() == True:
-			print(f"Test Case #{testcase} Passed: Disable static-isl")
-		else:
-			print(f"Test Case #{testcase} Failed: Disable static-isl")
-		print_double_line()
-		myixia.stop_traffic()
+					"""
+					config_cmds_lines(fgta.console,config)
 
+		myixia.start_protocol(wait=200)
+
+		console_timer(60,msg=f"Testcase #{testcase}:After start protocol with NAC mode disable, wait for 60s")
+		myixia.stop_protocol()
+
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode nac
+									next
+								end
+							end
+					end
+					"""
+					config_cmds_lines(fgta.console,config)
+		myixia.start_protocol(wait=200)
+		console_timer(60,msg=f"Testcase #{testcase}:After start protocol with NAC mode enable, wait for 60s")
+		myixia.start_traffic()
+		myixia.check_traffic()
+		myixia.stop_traffic()
+		for sw in switches:
+			sw.get_crash_log()
 
 	if testcase == 3 or test_all:
 		testcase = 3
 		myixia.start_traffic()
 		for sw in switches:
-			for trunk in sw.trunk_list:
-				config = f"""
-				config switch trunk
-					edit {trunk.name}
-						set static-isl enable
-						set static-isl-auto-vlan disable
-					next 
+			sw.clear_crash_log()
+		managed_sw_list = fgta.discover_managed_switches(topology=tb)
+		fgta.config_custom_timeout()
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode static
+									next
+								end
+							end
 					end
-				"""
-				config_cmds_lines(sw.console,config)
-		console_timer(400,msg=f"Testcase #{testcase}:After enabling static-isl, wait for 20s")
-		myixia.collect_stats()
-		if myixia.check_traffic() == True:
-			print(f"Test Case #{testcase} Passed: Enable static-isl and disable static-isl-auto-vlan")
-		else:
-			print(f"Test Case #{testcase} Failed: Enable static-isl and disable static-isl-auto-vlan")
-		print_double_line()
+					"""
+					config_cmds_lines(fgta.console,config)
+		console_timer(20,msg=f"Testcase #{testcase}:After disabling access-mode nac, wait for 20s")
+
+		delete_nac_config = delete_user_nacpolicy_config + delete_mac_policy_config + delete_fortilink_settings_config + delete_system_interfaces_config 
+		config_cmds_lines(fgta.console,delete_nac_config)
+
+		console_timer(60,msg=f"Testcase #{testcase}:After deleting all the NAC configuration, wait for 60s")
+ 
+		nac_config = system_interfaces_config + fortilink_settings_config + mac_policy_config + user_nacpolicy_config
+		config_cmds_lines(fgta.console,nac_config)
+
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode nac
+									next
+								end
+							end
+					end
+					"""
+					config_cmds_lines(fgta.console,config)
+		console_timer(20,msg=f"Testcase #{testcase}:After enabling access-mode nac, wait for 20s")
 		myixia.stop_traffic()
+		myixia.start_traffic()
+		myixia.check_traffic()
+		myixia.stop_traffic()
+		for sw in switches:
+			sw.get_crash_log()
 
 	if testcase == 4 or test_all:
 		testcase = 4
 		myixia.start_traffic()
 		for sw in switches:
-			for trunk in sw.trunk_list:
-				config = f"""
-				config switch trunk
-					edit {trunk.name}
-						set static-isl enable
-						set static-isl-auto-vlan enable
-					next 
+			sw.clear_crash_log()
+		managed_sw_list = fgta.discover_managed_switches(topology=tb)
+		fgta.config_custom_timeout()
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode static
+									next
+								end
+							end
 					end
-				"""
-				config_cmds_lines(sw.console,config)
-		console_timer(400,msg=f"Testcase #{testcase}:After enabling static-isl, wait for 20s")
-		myixia.collect_stats()
-		if myixia.check_traffic() == True:
-			print(f"Test Case #{testcase} Passed: Enable static-isl and enable static-isl-auto-vlan")
-		else:
-			print(f"Test Case #{testcase} Failed: Enable static-isl and enable static-isl-auto-vlan")
-		print_double_line()
-		myixia.stop_traffic()
+					"""
+					config_cmds_lines(fgta.console,config)
+		console_timer(20,msg=f"Testcase #{testcase}:After disabling access-mode nac, wait for 20s")
 
-	if testcase == 5 or test_all:
-		testcase = 5
-		myixia.start_traffic()
-		for sw in switches:
-			for trunk in sw.trunk_list:
-				config = f"""
-				config switch trunk
-					edit {trunk.name}
-						set static-isl disable
-						set static-isl-auto-vlan enable
-					next 
+		delete_nac_config = delete_user_nacpolicy_config + delete_mac_policy_config + delete_fortilink_settings_config + delete_system_interfaces_config 
+		config_cmds_lines(fgta.console,delete_nac_config)
+
+		console_timer(60,msg=f"Testcase #{testcase}:After deleting all the NAC configuration, wait for 60s")
+ 
+		nac_config = system_interfaces_config + fortilink_settings_config + mac_policy_config + user_nacpolicy_config_unmatched
+		config_cmds_lines(fgta.console,nac_config)
+
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						config root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode nac
+									next
+								end
+							end
 					end
-				"""
-				config_cmds_lines(sw.console,config)
-		console_timer(400,msg=f"Testcase #{testcase}:After Disable static-isl and enable static-isl-auto-vlan, wait for 20s")
-		myixia.collect_stats()
-		if myixia.check_traffic() == True:
-			print(f"Test Case #{testcase} Passed: Disable static-isl and enable static-isl-auto-vlan")
-		else:
-			print(f"Test Case #{testcase} Failed: Disable static-isl and enable static-isl-auto-vlan")
-		print_double_line()
+					"""
+					config_cmds_lines(fgta.console,config)
+		console_timer(20,msg=f"Testcase #{testcase}:After enabling access-mode nac, wait for 20s")
 		myixia.stop_traffic()
-
-	if testcase == 6 or test_all:
-		testcase = 6
-		description = "Delete static ISL Trunk Test: delete static ISL trunk, reboot. System will create a dynamic trunk"
-		print_test_subject(testcase,description)
-		for sw in switches:
-			if sw.role == "tier1-sw1":
-				tier1_sw1 = sw
-			elif sw.role == "tier1-sw2":
-				tier1_sw2 = sw
-
-
-		for trunk in tier1_sw1.trunk_list:
-			tier1_sw1.show_command("show switch trunk")
-			if "my" in trunk.name:
-				config = f"""
-				config switch trunk
-					delete {trunk.name}
-				end
-				end
-				"""
-				config_cmds_lines(tier1_sw1.console,config)
-				tier1_sw1.show_command("show switch trunk")
-				tier1_sw1.reboot()
-				break
-		for trunk in tier1_sw2.trunk_list:
-			tier1_sw2.show_command("show switch trunk")
-			if "my" in trunk.name:
-				config = f"""
-				config switch trunk
-					delete {trunk.name}
-				end
-				end
-				"""
-				config_cmds_lines(tier1_sw2.console,config)
-				tier1_sw2.show_command("show switch trunk")
-				tier1_sw2.reboot()
-				break
-			
-		console_timer(300,msg=f"Testcase #{testcase}:After reboot devices, wait for 300s")
-		tier1_sw1.switch_relogin()
-		tier1_sw2.switch_relogin()
-
-		tier1_sw1.show_command("show switch trunk")
-		tier1_sw2.show_command("show switch trunk")
-
-		myixia.start_protocol(wait=200)
-
-		for i in range(0,len(tb.ixia.port_active_list)-1):
-			traffic_list = []
-			for j in range(i+1,len(tb.ixia.port_active_list)):
-				traffic = myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
-				traffic_list.append(traffic)
-				traffic = myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
-				traffic_list.append(traffic)
 		myixia.start_traffic()
-
-		console_timer(30,msg=f"Testcase #{testcase}:After start ixia traffic, wait for 30s")
-		myixia.collect_stats()
-		if myixia.check_traffic() == True:
-			print(f"Test Case #{testcase} Passed: Delete static ISL trunk and reboot")
-		else:
-			print(f"Test Case #{testcase} Failed: Delete static ISL trunk and reboot")
-		print_double_line()
+		myixia.check_traffic()
 		myixia.stop_traffic()
-		myixia.stop_protocol()
-		try:
-			for traffic in traffic_list:
-				traffic.remove()
-		except Exception as e:
-			ErrorNotify("Not able to remove traffic elements")
-
-	if testcase == 7 or test_all:
-		testcase = 7
-		description = "Manually create static ISL Trunk Test: delete system created Fortilink Trunk, then manually created static ISL trunk"
-		print_test_subject(testcase,description)
 		for sw in switches:
-			if sw.role == "tier1-sw1":
-				tier1_sw1 = sw
-			elif sw.role == "tier1-sw2":
-				tier1_sw2 = sw
+			sw.get_crash_log()
 
-
-		for trunk in tier1_sw1.trunk_list:
-			if "GT3KD" in trunk.name:
-				config = f"""
-				config switch trunk
-					delete {trunk.name}
-				end
-				end
-				"""
-				config_cmds_lines(tier1_sw1.console,config)
-				tier1_sw1.show_command("show switch trunk")
-
-				config = f"""
-				config switch trunk
-					edit mytrunk
-					set auto-isl 1
-					 set fortilink 1
-					 set mclag enable
-					 set members {tier1_sw1.uplink_port}
-					 set static-isl enable
-					 end
-				"""
-				config_cmds_lines(tier1_sw1.console,config,wait=2)
-				console_timer(10,msg=f"Testcase #{testcase}:After configuring static ISL manually on one device, wait for 10s")
-				tier1_sw1.show_command("show switch trunk")
-				break
-		for trunk in tier1_sw2.trunk_list:
-			if "GT3KD" in trunk.name:
-				config = f"""
-				config switch trunk
-					delete {trunk.name}
-				end
-				end
-				"""
-				config_cmds_lines(tier1_sw2.console,config)
-				tier1_sw2.show_command("show switch trunk")
-				config = f"""
-				config switch trunk
-					edit mytrunk
-					set auto-isl 1
-					 set fortilink 1
-					 set mclag enable
-					 set static-isl enable
-					 set members {tier1_sw2.uplink_port}
-					 end
-				"""
-				config_cmds_lines(tier1_sw2.console,config,wait=2)
-				console_timer(10,msg=f"Testcase #{testcase}:After configuring static ISL manually on one device, wait for 10s")
-				tier1_sw2.show_command("show switch trunk")
-				break
-			
-		console_timer(200,msg=f"Testcase #{testcase}:After configuring static ISL manually on all devices, wait for 200s")
-
-		tier1_sw1.show_command("show switch trunk")
-		tier1_sw2.show_command("show switch trunk")
-
-		myixia.start_protocol(wait=200)
-
-		for i in range(0,len(tb.ixia.port_active_list)-1):
-			for j in range(i+1,len(tb.ixia.port_active_list)):
-				myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
-				myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
-
-		myixia.start_traffic()
-
-		console_timer(400,msg=f"Testcase #{testcase}:After Disable static-isl and enable static-isl-auto-vlan, wait for 20s")
-		myixia.collect_stats()
-		if myixia.check_traffic() == True:
-			print(f"Test Case #{testcase} Passed: Disable static-isl and enable static-isl-auto-vlan")
-		else:
-			print(f"Test Case #{testcase} Failed: Disable static-isl and enable static-isl-auto-vlan")
-		print_double_line()
-		myixia.stop_traffic()
-		myixia.stop_protocol()
-		try:
-			for traffic in traffic_list:
-				traffic.remove()
-		except Exception as e:
-			ErrorNotify("Not able to remove traffic elements")
-
-##################################################################################################################################################
-##################################################################################################################################################
+ 

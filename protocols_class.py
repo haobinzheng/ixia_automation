@@ -4739,7 +4739,7 @@ class FortiSwitch:
         self.collect_linux_cmd_batch(cmd=command_list,sw_name=self.name)
 
     def show_command(self,cmd):
-        switch_show_cmd(self.dut,cmd)
+        return switch_show_cmd(self.dut,cmd)
 
     def show_command_linux(self,cmd):
         switch_show_cmd_linux(self.dut,cmd)
@@ -6000,6 +6000,7 @@ class FortiSwitch_XML(FortiSwitch):
             self.password = kwargs['password']
         else:
             self.password = device_xml.password
+        self.ixia_ports = device_xml.ixia_ports
         self.tb=kwargs['topo_db']
         self.version = None
         self.image_prefix = None
@@ -6038,6 +6039,22 @@ class FortiSwitch_XML(FortiSwitch):
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
+
+    def clear_crash_log(self):
+        config = f"""
+        diagnose debug crashlog clear
+        """
+        config_cmds_lines(self.console,config)
+
+    def get_crash_log(self):
+        output = self.show_command("diagnose debug crashlog get")
+        for line in output:
+            if "diagnose debug crashlog get" in line:
+                continue
+            matched = re.match(r"[0-9a-zA-Z]+",line)
+            if matched:
+                Info(f"!!!!!!!!!! Crash Log was found at {self.hostname} !!!!!!!!!!")
+
 
     def config_sw_after_factory_xml(self):
         config_mgmt_mode = f"""
@@ -6436,7 +6453,7 @@ class FortiSwitch_XML(FortiSwitch):
 
     def config_auto_isl_port_group(self):
         Info("Start configuring MCLAG auto isl port group")
-        if len(self.down_links) == 0:
+        if len(self.down_links) == 0 or "tier1" not in self.role:
             return
         for pod in self.down_links_pod:
             ports = " ".join(self.down_links_pod[pod])

@@ -807,7 +807,7 @@ def switch_show_cmd(tn,cmd,**kwargs):
 			pass
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
-	# tprint(dir(output))
+	#tprint(dir(output))
 	# tprint(type(output))
 	#tprint(out_list)
 	for i in out_str_list:
