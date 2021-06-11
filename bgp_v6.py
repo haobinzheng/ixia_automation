@@ -3058,7 +3058,7 @@ if testcase == 60611 or test_all or IPV6:
         set protocol bgp
             config rule
                 edit 1
-                        set set-aspath "1111"
+                    set set-aspath "1111"
                 next
             end
     next

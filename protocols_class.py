@@ -6036,6 +6036,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.fortigate_links = []
         self.lldp_neighbors_list = []
         self.managed = False
+        self.ftg_console = None. # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches()
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
@@ -6049,7 +6050,7 @@ class FortiSwitch_XML(FortiSwitch):
     def get_crash_log(self):
         output = self.show_command("diagnose debug crashlog get")
         for line in output:
-            if "diagnose debug crashlog get" in line:
+            if "diagnose debug crashlog get" in line or self.hostname in line:
                 continue
             matched = re.match(r"[0-9a-zA-Z]+",line)
             if matched:
@@ -6105,6 +6106,85 @@ class FortiSwitch_XML(FortiSwitch):
         #     relogin_if_needed(dut)
         # image = find_dut_image(dut)
         # tprint(f"============================ {dut_name} software image = {image} ============")
+
+    def ftg_sw_upgrade(self,*args,**kwargs):
+         
+        build = settings.build_548d
+        tprint("================ Upgrading FSWs {self.serial_number} via Fortigate =============")
+        samples = """
+        S248EFTF18002594 # get system status
+        
+        S248EFTF18002594 # get system status
+        Version: FortiSwitch-248E-FPOE v6.4.0,build0470,210205 (Interim)
+        Serial-Number: S248EFTF18002594
+        BIOS version: 04000004
+        System Part-Number: P21940-02
+        Burn in MAC: 70:4c:a5:d4:43:d2
+        Hostname: S248EFTF18002594
+        Distribution: International
+        Branch point: 470
+        System time: Wed Dec 31 17:21:44 1969
+
+        image_name = FSW_248E_POE-v7-build0022-FORTINET.out
+        """
+
+        if "build" in kwargs:
+            build = int(kwargs['build'])
+            build = f"{build:04}"
+        else:
+            ErrorNotify("Software build number is missing. Exmaple: build=xxx.  Exiting program")
+            exit(-1)
+        if "version" in kwargs:
+            version = kwargs['version']
+        else:
+            version = "v6"
+        dut = self.console
+        dut_name = self.name
+
+        fgt1 = self.ftg_console
+
+
+        cmds = """
+        conf vdom
+        edit root
+        conf switch-controller global
+        set https-image-push enable
+        end
+        """
+        config_cmds_lines(fgt1,cmds)
+
+        image_name = f"{self.image_prefix}-{version}-build{build}-FORTINET.out"
+
+        dprint(f"image name = {image_name}")
+
+        switch_exec_cmd(fgt1,'config global')
+        cmd = f"execute switch-controller switch-software upload tftp {image_name} 10.105.19.19"
+        switch_exec_cmd(fgt1, cmd)
+        sleep(60)
+        cmd = "execute switch-controller switch-software list-available"
+        switch_show_cmd(fgt1,cmd)
+        switch_exec_cmd(fgt1, "end")
+
+        switch_exec_cmd(fgt1, "config vdom")
+        switch_exec_cmd(fgt1, "edit root")
+        cmd = "execute switch-controller switch-software upgrade S548DN4K17000133 S548DN-IMG.swtp"
+        switch_exec_cmd(fgt1, cmd,wait=30)
+
+        console_timer(10,msg="upgrading S548DN4K17000133 S548DN-IMG.swtp")
+        cmd = "execute switch-controller switch-software upgrade S548DF4K16000653 S548DF-IMG.swtp"
+        switch_exec_cmd(fgt1, cmd,wait=30)
+        console_timer(200,msg="upgrading S548DF4K16000653 S548DF-IMG.swtp, wait for 200 secs for tier-2 switches to download image")
+
+        cmd = "execute switch-controller switch-software upgrade S548DF4K17000028 S548DF-IMG.swtp"
+        switch_exec_cmd(fgt1, cmd,wait=30)
+        console_timer(10,msg="upgrading S548DF4K17000028 S548DF-IMG.swtp")
+        cmd = "execute switch-controller switch-software upgrade S548DF4K17000014 S548DF-IMG.swtp"
+        switch_exec_cmd(fgt1, cmd,wait=30)
+        console_timer(10,msg="upgrading S548DF4K17000014 S548DF-IMG.swtp")
+        cmd = "execute switch-controller get-upgrade-status"
+        switch_show_cmd_name(fgt1_dir,cmd)
+
+        return result
 
 
     def fsw_upgrade_v2(self,*args,**kwargs):
@@ -6494,6 +6574,7 @@ class FortiGate_XML(FortiSwitch):
             self.pwd = kwargs['password']
         else:
             self.pwd = device_xml.password
+        self.ixia_ports = device_xml.ixia_ports
         self.tb=kwargs['topo_db']
         self.physical_ports = []
         self.port_mac_pair = {}
@@ -6528,6 +6609,7 @@ class FortiGate_XML(FortiSwitch):
         self.ha_ports_db = device_xml.ha_ports
         self.ixia_ports_db = device_xml.ixia_ports
         self.managed_switches_list = []
+        self.switch_custom_cmds_list = []
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.pwd,platform="fortigate")
         self.local_discovery()
         self.change_hostname()
@@ -6630,6 +6712,8 @@ class FortiGate_XML(FortiSwitch):
             else:
                 result = True
         return result
+
+
 
     def config_default_policy(self,*args,**kwargs):
         config = """
@@ -6784,7 +6868,30 @@ class FortiGate_XML(FortiSwitch):
             """
             config_cmds_lines(self.console,config) 
 
-       
+    def config_switch_custom_cmds(self,*args,**kwargs):
+        self.config_custom_console_output()
+        self.config_custom_timeout()
+
+    def config_custom_console_output(self,*args,**kwargs):
+        if "vdom" in kwargs:
+            vdom_name = kwargs['vdom']
+        else:
+            vdom_name = "root"
+        name = "console_output"
+        config = f"""
+        config vdom
+        edit {vdom_name}
+        config switch-controller custom-command
+            edit {name}
+                set command "config system console %0a set output standard %0a end %0a"
+            next
+            end
+            end
+        end
+        """
+        config_cmds_lines(self.console,config)
+        self.switch_custom_cmds_list.append(name)
+        return name
 
     def config_custom_timeout(self,*args,**kwargs):
         if "vdom" in kwargs:
@@ -6804,6 +6911,7 @@ class FortiGate_XML(FortiSwitch):
         end
         """
         config_cmds_lines(self.console,config)
+        self.switch_custom_cmds_list.append(name)
         return name
 
     def unconfig_fortilink(self,*args,**kwargs):
@@ -6886,6 +6994,90 @@ class FortiGate_XML(FortiSwitch):
                 set fortilink-split-interface disable
                 set switch-controller-nac {fortilink_name}
                 set lacp-mode active
+                next
+            end
+            end
+            """
+        config_cmds_lines(self.console,config)
+        self.fortilink_interfaces.append(fortilink_name)
+        self.fortilink_just_configued.append(fortilink_name)
+        sleep(2)
+        show_cmds = f"""
+        config vdom
+            edit root
+                config system interface
+                    edit {fortilink_name}
+                        show 
+        """
+        self.fgt_show_commands(show_cmds)
+
+    def config_fortilink_switch(self,*args,**kwargs):
+        sample = """
+        config vdom
+        edit root
+        config system interface
+            edit "fortilink1"
+            set vdom "root"
+            set fortilink enable
+            set ip 192.168.255.1 255.255.255.0
+            set allowaccess ping fabric
+            set type aggregate
+            set member "port15" "port16"
+            set device-identification enable
+            set lldp-reception enable
+            set lldp-transmission enable
+            set snmp-index 50
+            set auto-auth-extension-device enable
+            set fortilink-split-interface disable
+            set switch-controller-nac "fortilink1"
+            set swc-first-create 127
+            set lacp-mode active
+            next
+        end
+        """
+        if "domain" in kwargs:
+            domain = kwargs['domain']
+        else:
+            domain = "root"
+
+        if "name" in kwargs:
+            fortilink_name = kwargs['name']
+        else:
+            fortilink_name = "Myfortilink"
+
+        if "ip_addr" in kwargs:
+            ip_addr = kwargs['ip_addr']
+        else:
+            ip_addr = f"192.168.1.1 255.255.255.0"
+
+        fortilink_ports = " ".join(self.fortilink_ports)
+
+        config = f"""
+        config system switch-interface
+            edit {fortilink_name}
+            set vdom "root"
+            set member {fortilink_ports}
+            set type switch
+            next
+        end
+        """
+        config_cmds_lines(self.console,config)
+
+
+        config = f"""
+            config vdom
+            edit root
+            config system interface
+                edit {fortilink_name}
+                set vdom {domain}
+                set fortilink enable
+                set allowaccess ping fabric
+                set type switch
+                set device-identification enable
+                set lldp-reception enable
+                set lldp-transmission enable
+                set auto-auth-extension-device enable
+                set switch-controller-nac {fortilink_name}
                 next
             end
             end
@@ -7195,6 +7387,8 @@ class FortiGate_XML(FortiSwitch):
                         if msw.switch_id == sw.serial_number:
                             sw.managed = True
                             msw.switch_obj = sw
+                            msw.switch_obj.ftg_console = self.console
+                            msw.ftg_console = self.console
         except Exception as e:
             print("Some managed switches are not recognized by the fortigate")
         self.managed_switches_list = managed_switches
@@ -7206,7 +7400,7 @@ class FortiGate_XML(FortiSwitch):
         set vdom-mode multi-vdom
         end
         """
-        config_cmds_lines(self.console,config)
+        config_cmds_lines(self.console,config,mode="slow")
         switch_wait_enter_yes(self.console,"Do you want to continue? (y/n)")
         sleep(2)
         self.fgt_relogin()

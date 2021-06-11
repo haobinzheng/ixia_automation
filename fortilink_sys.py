@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
 	global DEBUG
 	initial_testing = True
-	initial_config = False
+	initial_config = True
 	
 	args = parser.parse_args()
 
@@ -290,10 +290,11 @@ if __name__ == "__main__":
 
 		console_timer(100,msg='configuring firewall policy and sync, wait for 100 seconds')
          
-		fortilink_name = f"Myfortilink"
+		fortilink_name = "Myfortilink"
 		addr = f"192.168.1.1 255.255.255.0"
 		for fgt in fortigates:
 			fgt.config_fortilink(name=fortilink_name,ip_addr=addr)
+			#fgt.config_fortilink_switch()
 
 		for fgt in fortigates:
 			fgt.ha_sync(action="start")
@@ -315,12 +316,15 @@ if __name__ == "__main__":
 
 		#fgt_active.fgt_relogin()
 		managed_sw_list = fgt_active.discover_managed_switches(topology=tb)
-		fgt_active.config_custom_timeout()
+		#fgt_active.config_custom_timeout()
+		fgt_active.config_switch_custom_cmds()
+
 		for sw in managed_sw_list:
 			sw.print_managed_sw_info()
 			if sw.authorized and sw.up:
 				print(f"{sw.switch_id} is authorized and Up")
 				fgt_active.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
+				fgt_active.execute_custom_command(switch_name=sw.switch_id,cmd="console_output")
 			else:
 				print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
 
@@ -355,7 +359,12 @@ if __name__ == "__main__":
 						fgt.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
 					else:
 						print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
-		
+		if testcase == 0:
+			print("Set up only, Wait for 400 seconds and exit.....")
+			console_timer(600,msg='After configuring everything, wait for 400 seconds for network to discover topology')
+			exit(0)
+		else:
+			console_timer(600,msg='After configuring everything, wait for 400 seconds for network to discover topology')
 	if Reboot:
 		for sw in switches:
 			dut = sw.console
@@ -380,6 +389,17 @@ if __name__ == "__main__":
 	# 		switch = FortiSwitch_XML(d)
 	# 		switches.append(switch)
 
+	for fgt in fortigates:
+		if fgt.mode == "Active":
+			fgta = fgt
+
+	#fortilink_name = "Myswitch"
+	fortilink_name = "Myfortilink"
+
+	end_end = f"""
+		end
+		end
+	"""
 	system_interfaces_config = f"""
 		config vdom
 			edit root
@@ -389,7 +409,9 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set interface "Myfortilink"
+		        set interface {fortilink_name}
+		        set switch-controller-igmp-snooping enable
+		        set switch-controller-dhcp-snooping enable
 		        set vlanid 11
 		    next
 		    edit "marktingvlan12"
@@ -397,7 +419,9 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set interface "Myfortilink"
+		        set switch-controller-igmp-snooping enable
+		        set switch-controller-dhcp-snooping enable
+		        set interface {fortilink_name}
 		        set vlanid 12
 		    next
 		    edit "hrvlan13"
@@ -405,7 +429,9 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set interface "Myfortilink"
+		        set switch-controller-igmp-snooping enable
+		        set switch-controller-dhcp-snooping enable
+		        set interface {fortilink_name}
 		        set vlanid 13
 		    next
 		    edit "financevlan14"
@@ -413,7 +439,9 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set interface "Myfortilink"
+		        set switch-controller-igmp-snooping enable
+		        set switch-controller-dhcp-snooping enable
+		        set interface {fortilink_name}
 		        set vlanid 14
 		    next
 		    edit "tacvlan15"
@@ -421,16 +449,91 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set interface "Myfortilink"
+		        set switch-controller-igmp-snooping enable
+		        set switch-controller-dhcp-snooping enable
+		        set interface {fortilink_name}
 		        set vlanid 15
 		    next
+		    edit {fgta.ixia_ports[0]}
+		        set vdom "root"
+		        set ip 172.168.1.1 255.255.255.0
+		        set allowaccess ping https ssh snmp http fgfm speed-test
+		        set type physical
+		end
+		end
+		config vdom
+			edit root
+			conf system dhcp server
+			edit 7
+			        set dns-service default
+			        set default-gateway 172.168.1.1
+			        set netmask 255.255.255.0
+			        set interface "port13"
+			        config ip-range
+			            edit 1
+			                set start-ip 172.168.1.2
+			                set end-ip 172.168.1.254
+			            next
+			        end
+			    next
+			end
+		end
 		end
 		"""
+
+	system_interfaces_config_scale = f"""
+		config vdom
+			edit root
+			config system interface
+		"""
+	vlans = []
+	for i in range(100,600):
+		config = f"""
+			edit vlan_{i}
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set interface {fortilink_name}
+		        set switch-controller-igmp-snooping enable
+		        set dhcp-snooping trusted
+		        set vlanid {i}
+		    next
+		"""
+		system_interfaces_config_scale += config
+		vlans.append(f"vlan_{i}")
+	vlans_string = " ".join(vlans)
+
+	config = f"""
+	    edit {fgta.ixia_ports[0]}
+	        set vdom "root"
+	        set ip 172.168.1.1 255.255.255.0
+	        set allowaccess ping https ssh snmp http fgfm speed-test
+	        set type physical
+	    next
+	end
+	end
+	"""
+	system_interfaces_config_scale += config
+
+	delete_system_interfaces_config_scale = f"""
+		config vdom
+			edit root
+			config system interface
+		"""
+	for v in vlans:
+		config = f"""
+		delete {v}
+		"""
+		delete_system_interfaces_config_scale += config
+
+	delete_system_interfaces_config_scale += end_end
+
 	fortilink_settings_config = f"""
 		 config vdom
 			edit root
 			conf switch-controller fortilink-settings 
-    			edit "Myfortilink"
+    			edit {fortilink_name}
         			config nac-ports
 			            set onboarding-vlan "onboarding"
 			            set lan-segment enabled
@@ -439,33 +542,88 @@ if __name__ == "__main__":
 			        end
 			    next
 			end
+		end
 		"""
+
+	vlans_string = vlans_string + " engvlan11 financevlan14 hrvlan13 marktingvlan12 tacvlan15 voice video"
+	fortilink_settings_config_scale = f"""
+		 config vdom
+			edit root
+			conf switch-controller fortilink-settings 
+    			edit {fortilink_name}
+        			config nac-ports
+			            set onboarding-vlan "onboarding"
+			            set lan-segment enabled
+			            set nac-lan-interface "nac_segment"
+			            set nac-segment-vlans {vlans_string}
+			        end
+			    next
+			end
+		end
+		"""
+
 	mac_policy_config = f"""
 		config vdom
 		edit root
 		conf switch-controller  mac-policy 
 		    edit "eng"
-		        set fortilink "Myfortilink"
+		        set fortilink {fortilink_name}
 		        set vlan "engvlan11"
 		    next
 		    edit "hr"
-		        set fortilink "Myfortilink"
+		        set fortilink {fortilink_name}
 		        set vlan "hrvlan13"
 		    next
 		    edit "marketing"
-		        set fortilink "Myfortilink"
+		        set fortilink {fortilink_name}
 		        set vlan "marktingvlan12"
 		    next
 		    edit "tac"
-		        set fortilink "Myfortilink"
+		        set fortilink {fortilink_name}
 		        set vlan "tacvlan15"
 		    next
 		    edit "finance"
-		        set fortilink "Myfortilink"
+		        set fortilink {fortilink_name}
 		        set vlan "financevlan14"
 		    next
 		end
+		end
 		"""
+
+	mac_policy_config_scale = f"""
+		config vdom
+		edit root
+		conf switch-controller  mac-policy 
+	"""
+	for v in vlans:
+		config = f"""
+		    edit {v}
+		        set fortilink {fortilink_name}
+		        set vlan {v}
+		    next
+		"""
+		
+		mac_policy_config_scale += config
+
+	config = f"""
+		end
+		end
+	"""
+	mac_policy_config_scale += config
+
+	delete_mac_policy_config_scale = f"""
+		config vdom
+		edit root
+		conf switch-controller  mac-policy 
+	"""
+	for v in vlans:
+		config = f"""
+		    delete {v}
+		"""
+		delete_mac_policy_config_scale += config
+
+	 
+	delete_mac_policy_config_scale += end_end
 
 	user_nacpolicy_config = f"""
 		config vdom
@@ -473,26 +631,62 @@ if __name__ == "__main__":
 		config user nac-policy
 		    edit "eng-users"
 		        set mac "00:11:**:**:**:**"
-		        set switch-fortilink "Myfortilink"
+		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "eng"
 		    next
 		    edit "marketing-users"
 		        set mac "00:12:**:**:**:**"
-		        set switch-fortilink "Myfortilink"
+		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "marketing"
 		    next
 		    edit "hr-users"
 		        set mac "00:13:**:**:**:**"
-		        set switch-fortilink "Myfortilink"
+		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "hr"
 		    next
 		    edit "finance-users"
 		        set mac "00:14:**:**:**:**"
-		        set switch-fortilink "Myfortilink"
+		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "finance"
 		    next
 		end
+		end
 	"""
+
+	macs = increment_mac_address(start_mac="00:11:00:00:00:00",num=500)
+
+	user_nacpolicy_config_scale = f"""
+		config vdom
+		edit root
+		config user nac-policy
+	"""
+	for v,m in zip(vlans,macs):
+		config = f"""
+		    edit {v}
+		        set mac {m}
+		        set switch-fortilink {fortilink_name}
+		        set switch-mac-policy {v}
+		    next
+		"""
+		user_nacpolicy_config_scale += config
+	config = f"""
+		end
+		end
+	"""
+	user_nacpolicy_config_scale += config 
+
+	delete_user_nacpolicy_config_scale = f"""
+		config vdom
+		edit root
+		config user nac-policy
+	"""
+	for v,m in zip(vlans,macs):
+		config = f"""
+		    delete {v}
+		"""
+		delete_user_nacpolicy_config_scale += config
+ 
+	delete_user_nacpolicy_config_scale += end_end
 
 	user_nacpolicy_config_unmatched = f"""
 		config vdom
@@ -500,24 +694,25 @@ if __name__ == "__main__":
 		config user nac-policy
 		    edit "eng-users"
 		        set mac "88:11:**:**:**:**"
-		        set switch-fortilink "Myfortilink"
+		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "eng"
 		    next
 		    edit "marketing-users"
 		        set mac "88:12:**:**:**:**"
-		        set switch-fortilink "Myfortilink"
+		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "marketing"
 		    next
 		    edit "hr-users"
 		        set mac "88:13:**:**:**:**"
-		        set switch-fortilink "Myfortilink"
+		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "hr"
 		    next
 		    edit "finance-users"
 		        set mac "88:14:**:**:**:**"
-		        set switch-fortilink "Myfortilink"
+		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "finance"
 		    next
+		end
 		end
 	"""
 	delete_system_interfaces_config = f"""
@@ -531,12 +726,13 @@ if __name__ == "__main__":
 		 	delete "financevlan14"
 		  	delete "tacvlan15"
 		end
+		end
 	"""
 	delete_fortilink_settings_config = f"""
 		 config vdom
 			edit root
 			conf switch-controller fortilink-settings 
-    			edit "Myfortilink"
+    			edit {fortilink_name}
         			config nac-ports
 			            set onboarding-vlan "onboarding"
 			            set lan-segment disable
@@ -546,7 +742,7 @@ if __name__ == "__main__":
 			    next
 			end
 	"""
-	delet_mac_policy_config = f"""
+	delete_mac_policy_config = f"""
 		config vdom
 		edit root
 		conf switch-controller mac-policy 
@@ -555,6 +751,7 @@ if __name__ == "__main__":
 		    delete "marketing"
 		    delete  "tac"
 		    delete "finance"
+		end
 		end
 	"""
 	delete_user_nacpolicy_config = f"""
@@ -566,11 +763,10 @@ if __name__ == "__main__":
 		   	delete "hr-users"
 		    delete "finance-users"
 		end
+		end
 	"""
 
-	for fgt in fortigates:
-		if fgt.mode == "Active":
-			fgta = fgt
+
 
 	if initial_config:
 		nac_config = system_interfaces_config + fortilink_settings_config + mac_policy_config + user_nacpolicy_config
@@ -588,7 +784,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -625,7 +821,7 @@ if __name__ == "__main__":
 	portList_v4_v6 = []
 	for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 		module,port = p.split("/")
-		portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,1])
+		portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,10])
 
 	print(portList_v4_v6)
 
@@ -645,7 +841,11 @@ if __name__ == "__main__":
 		myixia.collect_stats()
 		myixia.check_traffic()
 		myixia.stop_traffic()
-	 
+
+	for sw in switches:
+		sw.get_crash_log()
+
+
 	if testcase == 1 or test_all:
 		testcase = 1
 		myixia.start_traffic()
@@ -663,7 +863,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -686,7 +886,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -723,7 +923,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -751,7 +951,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -788,7 +988,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -820,7 +1020,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -857,7 +1057,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -889,7 +1089,7 @@ if __name__ == "__main__":
 				for port in msw.switch_obj.ixia_ports:
 					config = f"""
 					config vdom
-						config root
+						edit root
 							config switch-controller managed-switch
 								edit {msw.switch_id}
 								config ports
@@ -909,4 +1109,198 @@ if __name__ == "__main__":
 		for sw in switches:
 			sw.get_crash_log()
 
+	if testcase == 5 or test_all:
+		testcase = 5
+		description = "switch port changed from dynaic to nac, longevity"
+		print_test_subject(testcase,description)
+		myixia.start_traffic()
+		for sw in switches:
+			sw.clear_crash_log()
+		managed_sw_list = fgta.discover_managed_switches(topology=tb)
+		fgta.config_custom_timeout()
+		for msw in managed_sw_list:
+			msw.print_managed_sw_info()
+			if msw.authorized and msw.up:
+				print(f"{msw.switch_id} is authorized and Up")
+				fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+				if len(msw.switch_obj.ixia_ports) == 0:
+					continue
+				for port in msw.switch_obj.ixia_ports:
+					config = f"""
+					config vdom
+						edit root
+							config switch-controller managed-switch
+								edit {msw.switch_id}
+								config ports
+									edit {port}
+										set access-mode dynamic
+									next
+								end
+							end
+					end
+					"""
+					config_cmds_lines(fgta.console,config)
+		console_timer(20,msg=f"Testcase #{testcase}:After disabling access-mode nac, wait for 20s")
+
+
+		for i in range(2):
+			delete_nac_config = delete_user_nacpolicy_config + delete_mac_policy_config + delete_fortilink_settings_config + delete_system_interfaces_config 
+			config_cmds_lines(fgta.console,delete_nac_config)
+
+			console_timer(60,msg=f"Testcase #{testcase}:After deleting all the NAC configuration, wait for 60s")
+	 
+			nac_config = system_interfaces_config + fortilink_settings_config + mac_policy_config + user_nacpolicy_config
+			config_cmds_lines(fgta.console,nac_config)
+
+			console_timer(120,msg=f"Testcase #{testcase}:After finishing all the NAC configuration, wait for 120s")
+
+			for msw in managed_sw_list:
+				msw.print_managed_sw_info()
+				if msw.authorized and msw.up:
+					print(f"{msw.switch_id} is authorized and Up")
+					fgta.execute_custom_command(switch_name=msw.switch_id,cmd="timeout")
+					if len(msw.switch_obj.ixia_ports) == 0:
+						continue
+					for port in msw.switch_obj.ixia_ports:
+						config = f"""
+						config vdom
+							edit root
+								config switch-controller managed-switch
+									edit {msw.switch_id}
+									config ports
+										edit {port}
+											set access-mode nac
+										next
+									end
+								end
+						end
+						"""
+						config_cmds_lines(fgta.console,config)
+			console_timer(20,msg=f"Testcase #{testcase}:After enabling access-mode nac, wait for 20s")
+
+			myixia.stop_traffic()
+			myixia.stop_protocol()
+			sleep(10)
+			myixia.start_protocol(wait=200)
+			myixia.start_traffic()
+			myixia.check_traffic()
+			for sw in switches:
+				sw.get_crash_log()
+
+
+	if testcase == 6 or test_all:
+		testcase = 6
+		description = "IGMP snooping"
+		print_test_subject(testcase,description)
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+		igmp_ports = ["source","host","host","querier"]
+		for topo, role in zip(myixia.topologies,igmp_ports):
+			topo.igmp_role = role
+		for topo in myixia.topologies:
+			topo.add_dhcp_client()
+			if topo.igmp_role == "host":
+				topo.add_igmp_host_v4(start_addr="239.1.1.1",num=10)
+			elif topo.igmp_role == "querier":
+				topo.add_igmp_querier_v4()
+
+		myixia.start_protocol(wait=200)
+
+		for sw in switches:
+			sw.fsw_show_cmd("get switch igmp-snooping group")
+			sw.fsw_show_cmd("get switch mld-snooping group")
+
+		myixia.create_mcast_traffic_v4(src_topo=myixia.topologies[0].topology, start_group="239.1.1.1",traffic_name="t0_239_1_1_1",num=10,tracking_name="Tracking_1")
+		myixia.start_traffic()
+		console_timer(30,msg="Wait for 30s after started multicast traffic")
+		myixia.collect_stats()
+		myixia.check_traffic()
+
+	if testcase == 7 or test_all:
+		testcase = 7
+		description = "Broadcast"
+		print_test_subject(testcase,description)
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+		for topo in myixia.topologies:
+			topo.add_dhcp_client()
+
+		myixia.start_protocol(wait=200)
+
+		for i in range(0,len(tb.ixia.port_active_list)):
+			myixia.create_traffic_destination_v4(src_topo=myixia.topologies[i].topology, dst="255.255.255.255",traffic_name=f"t{i}_broadcast",tracking_name=f"Tracking_{i+1}_v4",rate=1)
  
+		myixia.start_traffic()
+		myixia.collect_stats()
+		myixia.check_traffic()
+		myixia.stop_traffic()
+
+	if testcase == 8 or test_all:
+		testcase = 8
+		description = "Broadcast testing using dhcp clients"
+		portList_v4_v6 = []
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,50])
+
+		print_test_subject(testcase,description)
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+		for topo in myixia.topologies:
+			topo.add_dhcp_client()
+
+		myixia.start_protocol(wait=200)
+
+	if testcase == 9 or test_all:
+		testcase = 9
+		description = "Scale MAC Policy and user nac-policy"
+		while True:
+			keyin = input(f"Do you want to configure the scaled configuration(Y/N): ")
+			nac_config = system_interfaces_config_scale + fortilink_settings_config_scale + mac_policy_config_scale + user_nacpolicy_config_scale
+			config_cmds_lines(fgta.console,nac_config,mode="fast")
+
+
+		while True:
+			keyin = input(f"Do you want to delete the scaled configuration(Y/N): ")
+			if keyin.upper() == "Y":
+				print("!!!!! Deleting all the scaled LAN Segment related configuration")
+				delete_nac_config = delete_user_nacpolicy_config_scale + delete_mac_policy_config_scale + delete_fortilink_settings_config + delete_system_interfaces_config_scale
+				config_cmds_lines(fgta.console,delete_nac_config,mode="fast")
+				break
+			else:
+				break
+
+		while True:
+			keyin = input(f"Do you want to reboot all switches(Y/N): ")
+			if keyin.upper() == "Y":
+				for sw in switches:
+					sw.switch_reboot()
+					console_timer(600,msg='After switches are rebooted, wait for 600 seconds')
+					break
+			else:
+				break
+				
+		while True:
+			keyin = input(f"Do you want to delete the scaled configuration(Y/N): ")
+			if keyin.upper() == "Y":
+				print("!!!!! Deleting all the scaled LAN Segment related configuration")
+				delete_nac_config = delete_user_nacpolicy_config_scale + delete_mac_policy_config_scale + delete_fortilink_settings_config + delete_system_interfaces_config_scale
+				config_cmds_lines(fgta.console,delete_nac_config,mode="fast")
+				break
+		keyin = input(f"Do you want to configure the scaled configuration(Y/N): ")
+		if keyin.upper() == "Y":
+			print("Start to configure scaled mac policy and user policy")
+			nac_config = system_interfaces_config_scale + fortilink_settings_config_scale + mac_policy_config_scale + user_nacpolicy_config_scale
+			config_cmds_lines(fgta.console,nac_config,mode="fast")
+
+		while True:
+			keyin = input(f"Do you want to delete the scaled configuration(Y/N): ")
+			if keyin.upper() == "Y":
+				print("!!!!! Deleting all the scaled LAN Segment related configuration")
+				delete_nac_config = delete_user_nacpolicy_config_scale + delete_mac_policy_config_scale + delete_fortilink_settings_config + delete_system_interfaces_config_scale
+				config_cmds_lines(fgta.console,delete_nac_config,mode="fast")
+				break
+
+
+
+
+
+
+	 

@@ -137,6 +137,7 @@ class IXIA_TOPOLOGY:
             ethernet = self.ethernet,
             name = self.dhcp_client_name
             )
+        self.ipv4_session = self.dhcp_client
 
     def add_dhcp_server(self,*args,**kwargs):
         self.dhcp_server = ixia_rest_create_dhcp_server(
@@ -147,6 +148,8 @@ class IXIA_TOPOLOGY:
             ethernet = self.ethernet,
             name = self.dhcp_server_name
             )
+        self.ipv4_session = self.dhcp_client
+
     def dhcp_server_gw(self,*args,**kwargs):
         if "gateway" in kwargs:
             gateway = kwargs['gateway']
@@ -820,8 +823,10 @@ class IXIA:
         #self.create_topologies()
         if "vlan" in kwargs:
             self.start_vlan = kwargs['vlan']
+            self.vlan = True
         else:
-            self.start_vlan = 10
+            self.start_vlan = 0
+            self.vlan = False
         self.topologies = self.create_ixia_topologies()
          
 
@@ -888,6 +893,21 @@ class IXIA:
         )
 
 
+    def create_traffic_destination_v4(self,*args,**kwargs):
+        src_topo = kwargs['src_topo']
+        traffic_name = kwargs['traffic_name']
+        tracking_name = kwargs['tracking_name']
+        destination = kwargs['dst']
+        traffic_item = ixia_rest_create_ip_traffic_destination_v4(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork,
+        src = src_topo,
+        dst = destination,
+        name= traffic_name,
+        tracking_name = tracking_name,
+        )
+
     def create_traffic(self,*args,**kwargs):
         src_topo = kwargs['src_topo']
         dst_topo = kwargs['dst_topo']
@@ -953,7 +973,7 @@ class IXIA:
     )
     def check_traffic(self):
         if check_traffic_detail(self.flow_stats_list) == False:
-            tprint("========================= Failed: significant traffic loss ============")
+            tprint("========================= Failed: significant packet loss ============")
             return False
         else:
             tprint("========================= Passed: traffic is passed without packet loss ============")
@@ -1113,7 +1133,7 @@ def ixia_rest_create_topology(*args,**kwargs):
         
         ethernet.Mac.Increment(start_value=mac_start, step_value='00:00:00:00:00:01')
 
-        if int(multi) > 1:
+        if int(multi) > 1 and int(start_vlan) > 0:
             vlans = ethernet.Vlan.find()
             vlans.VlanId.Increment(start_value=start_vlan, step_value=1)
             ethernet.EnableVlans.Single("True")
@@ -1448,6 +1468,43 @@ def ixia_rest_stop_protocols(*args,**kwargs):
             try_counter += 1
             if debugMode == False and 'session' in locals():
                 wait_time += 10
+
+def ixia_rest_create_ip_traffic_destination_v4(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        src_topo = kwargs['src']
+        destination = kwargs["dst"]
+        traffic_name = kwargs['name']
+        tracking_name = kwargs['tracking_name']
+         
+        ixNetwork.info('Create IPv4 Multicast Traffic Item')
+        trafficItem = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType="ipv4",TransmitMode='sequential')
+
+        ixNetwork.info('Adding IPv4 endpoint flow group')
+
+        trafficItem.EndpointSet.add(Sources=src_topo, Destinations=destination)
+        # trafficItem.Tracking.find()[0].TrackBy = [tracking_group]
+        
+
+        # # Note: A Traffic Item could have multiple EndpointSets (Flow groups).
+        # #       Therefore, ConfigElement is a list.
+        ixNetwork.info('Configuring config elements')
+        configElement = trafficItem.ConfigElement.find()[0]
+        configElement.FrameRate.update(Type='percentLineRate', Rate=3)
+        #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+        configElement.TransmissionControl.update(Type='continuous')
+        configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
+        configElement.FrameSize.FixedSize = 1000
+        
+        trafficItem.Generate()
+
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
 
 def ixia_rest_create_mcast_traffic_v4(*args,**kwargs):
     debugMode = False

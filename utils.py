@@ -780,6 +780,21 @@ def switch_show_cmd_linux(tn,cmd,**kwargs):
 		tprint(i)
 	return out_str_list
 
+def increment_mac_address(*args,**kwargs):
+	start_mac = kwargs['start_mac']
+	num = kwargs['num']
+
+	#mac="0xaabbccdd0000"
+	mac = "0x"+start_mac.replace(":","")
+	mac_addresses = []
+	for i in range(num):
+	    mac = "{:012X}".format(int(mac, 16) + 1)
+	    new_mac = (':'.join(mac[i]+mac[i+1] for i in range(0, len(mac), 2)))
+	    mac_addresses.append(new_mac)
+	print(mac_addresses)
+	return mac_addresses
+
+
 def switch_show_cmd(tn,cmd,**kwargs):
 	#relogin_if_needed(tn)
 	if 't' in kwargs:
