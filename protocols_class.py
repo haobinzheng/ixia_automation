@@ -6036,7 +6036,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.fortigate_links = []
         self.lldp_neighbors_list = []
         self.managed = False
-        self.ftg_console = None. # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches()
+        self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches()
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
@@ -6055,6 +6055,7 @@ class FortiSwitch_XML(FortiSwitch):
             matched = re.match(r"[0-9a-zA-Z]+",line)
             if matched:
                 Info(f"!!!!!!!!!! Crash Log was found at {self.hostname} !!!!!!!!!!")
+                output = self.show_command("diagnose debug crashlog read")
 
 
     def config_sw_after_factory_xml(self):
@@ -6154,6 +6155,7 @@ class FortiSwitch_XML(FortiSwitch):
         config_cmds_lines(fgt1,cmds)
 
         image_name = f"{self.image_prefix}-{version}-build{build}-FORTINET.out"
+        upgrade_name = f"{self.image_prefix}-{version}-build{build}-IMG.swtp"
 
         dprint(f"image name = {image_name}")
 
@@ -6167,24 +6169,29 @@ class FortiSwitch_XML(FortiSwitch):
 
         switch_exec_cmd(fgt1, "config vdom")
         switch_exec_cmd(fgt1, "edit root")
-        cmd = "execute switch-controller switch-software upgrade S548DN4K17000133 S548DN-IMG.swtp"
-        switch_exec_cmd(fgt1, cmd,wait=30)
-
-        console_timer(10,msg="upgrading S548DN4K17000133 S548DN-IMG.swtp")
-        cmd = "execute switch-controller switch-software upgrade S548DF4K16000653 S548DF-IMG.swtp"
-        switch_exec_cmd(fgt1, cmd,wait=30)
-        console_timer(200,msg="upgrading S548DF4K16000653 S548DF-IMG.swtp, wait for 200 secs for tier-2 switches to download image")
-
-        cmd = "execute switch-controller switch-software upgrade S548DF4K17000028 S548DF-IMG.swtp"
-        switch_exec_cmd(fgt1, cmd,wait=30)
-        console_timer(10,msg="upgrading S548DF4K17000028 S548DF-IMG.swtp")
-        cmd = "execute switch-controller switch-software upgrade S548DF4K17000014 S548DF-IMG.swtp"
-        switch_exec_cmd(fgt1, cmd,wait=30)
-        console_timer(10,msg="upgrading S548DF4K17000014 S548DF-IMG.swtp")
+        ###########################
+        cmd = "execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name}"
+        switch_exec_cmd(fgt1, cmd,wait=60)
+        console_timer(200,msg=f"upgrading {self.serial_number} to {upgrade_name}, wait for 200s to upgrade")
         cmd = "execute switch-controller get-upgrade-status"
-        switch_show_cmd_name(fgt1_dir,cmd)
+        switch_show_cmd(fgt1,cmd)
+        ##################################
+        sample = f"""
+        FG2K5E3917900021-Active (root) # execute switch-controller get-upgrade-status 
+                Device    Running-version                                Status      Next-boot
+        ===================================================================================================================
+        VDOM : root
+        S548DN4K17000133  S548DN-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
+        S548DF4K16000653  S548DF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
+        S248EFTF18003119  S248EF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
+        S248EFTF18002509  S248EF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
+        S248EFTF18003105  S248EF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
+        S248EFTF18003278  S248EF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
+        S248EFTF18002594  S248EF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
+        S248EFTF18002618  S248EF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
+        """
 
-        return result
+        return True
 
 
     def fsw_upgrade_v2(self,*args,**kwargs):

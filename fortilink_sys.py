@@ -545,7 +545,7 @@ if __name__ == "__main__":
 		end
 		"""
 
-	vlans_string = vlans_string + " engvlan11 financevlan14 hrvlan13 marktingvlan12 tacvlan15 voice video"
+	# vlans_string = vlans_string + " engvlan11 financevlan14 hrvlan13 marktingvlan12 tacvlan15 voice video"
 	fortilink_settings_config_scale = f"""
 		 config vdom
 			edit root
@@ -1276,7 +1276,7 @@ if __name__ == "__main__":
 					break
 			else:
 				break
-				
+
 		while True:
 			keyin = input(f"Do you want to delete the scaled configuration(Y/N): ")
 			if keyin.upper() == "Y":
@@ -1298,6 +1298,29 @@ if __name__ == "__main__":
 				config_cmds_lines(fgta.console,delete_nac_config,mode="fast")
 				break
 
+
+	if testcase == 10 or test_all:
+		testcase = 10
+		description = "Scale MAC Policy and user nac-policy and config and delete "
+		i = 1
+
+		for sw in switches:
+			sw.clear_crash_log()
+			
+		while True:
+			print(f"================ This is the #{i} iterating config/delete =============== ")
+
+			print("!!!!! Deleting all the scaled LAN Segment related configuration")
+			delete_nac_config = delete_user_nacpolicy_config_scale + delete_mac_policy_config_scale + delete_fortilink_settings_config + delete_system_interfaces_config_scale
+			config_cmds_lines(fgta.console,delete_nac_config,mode="fast")
+
+			nac_config = system_interfaces_config_scale + fortilink_settings_config_scale + mac_policy_config_scale + user_nacpolicy_config_scale
+			config_cmds_lines(fgta.console,nac_config,mode="fast")
+			sleep(30)
+			i +=1
+
+			for sw in switches:
+				sw.get_crash_log()
 
 
 
