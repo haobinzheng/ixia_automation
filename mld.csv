@@ -1,0 +1,204 @@
+"Path","QAID","Objective","Release","Priority","Autotest","Step","Expect","Note"
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975106","Default mode for MLD Snooping; Proxy; Querier are disabled","7.0","High","Yes","FSW_Regression, 951949","Pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975107","Enable and Disable mld-snooping-querier only if mld-snooping enabled","7.0","High","Yes","FSW_Regression,951952","Pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975108","Ipv6-querier-addr does not accept address with all 0s","7.0","High","Yes","FSW_Regression,951954","Pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975109","Ipv6-querier-addr does not accept multicast address FF00:: 8","7.0","High","Yes","FSW_Regression,951956","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975110","Enable and Disable mld-snooping-fast-leave","7.0","High","Yes","FSW_Regression,951958","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975111","mld-static-group ipv6-mcast-addr not accept IPv6 unicast address","7.0","High","Yes","FSW_Regression,951961","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975112","Delete and add mld-static-group","7.0","High","Yes","FSW_Regression,951964","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975113","Deleting trunk interface with vlan configured mld-static-group is not allowed","7.0","High","Yes","FSW_Regression,951969","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975114","Enable and Disable mld-proxy only if mld-snooping enabled","7.0","High","Yes","FSW_Regression, 951951","Pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975115","Enable and Disable mld-snooping","7.0","Critical","Yes","FSW_Regression, 951950","Pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975117","Config ipv6-querier-addr only if mld-snooping-querier enabled","7.0","High","Yes","FSW_Regression, 951953","Pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975118","Ipv6-querier-addr does not accept loopback address ::1 128","7.0","High","Yes","FSW_Regression, 951955","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975119","Default mode for MLD Fast Leave is enabled","7.0","High","Yes","FSW_Regression,951957","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975120","Config mld-static-group only if mld-snooping enabled","7.0","High","Yes","FSW_Regression,951959","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975121","Config multiple mld-static-group with different ipv6-mcast-addr","7.0","High","Yes","FSW_Regression,951963","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975122","Deleting vlan with mld-static-group from port or trunk is not allowed","7.0","High","Yes","FSW_Regression,951967","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975123","Enable and Disable flood-unknown-multicast under switch global","7.0","High","Yes","FSW_Regression,951971","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975124","mld-static-group not accept well-known IPv6 mcast addr FF02 or FF0x","7.0","High","Yes","FSW_Regression,951960","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975125","Config mld-static-group with multiple member ports","7.0","High","Yes","FSW_Regression,951962","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975126","Config multiple mld-static-group with same ipv6-mcast-addr is not allowed","7.0","High","Yes","FSW_Regression,951964","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975127","Deleting vlan with mld-static-group configured is not allowed","7.0","High","Yes","FSW_Regression,951966","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975128","Disable mld-snooping when mld-static-group configured is not allowed","7.0","High","Yes","FSW_Regression,951968","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975129","Default mode flood-unknown-multicast under switch global is disabled","7.0","High","Yes","FSW_Regression,951970","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975130","Config switch mld-snooping globals; mld-aging-time","7.0","High","Yes","FSW_Regression,951972","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975131","Config switch mld-snooping globals; mld-leave-response-timeout","7.0","High","Yes","FSW_Regression, 951973","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975132","Config switch mld-snooping globals; mld-query-interval","7.0","High","Yes","FSW_Regression,951974","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975133","Default mlds-flood-reports and mcast-flood-traffic are disabled in switch inte","7.0","High","No","FSW_Regression, 951975","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975134","Enable and Disable mlds-flood-reports under switch interface","7.0","High","Yes","FSW_Regression,951976","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975135","Enable and Disable mcast-flood-traffic under switch interface","7.0","High","Yes","FSW_Regression,951977","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975150","Get switch mld-snooping globals","7.0","High","Yes","FSW_Regression,951977","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975151","Get switch mld-snooping group","7.0","High","Yes","FSW_Regression,951979","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975152","Get switch mld-snooping static-group","7.0","High","Yes","FSW_Regression,951980","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975153","Get switch mld-snooping status","7.0","High","Yes","FSW_Regression,951981","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975154","Verify MLD Snooping settings persistency after switch reboot","7.0","High","Yes","FSW_Regression,951984","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","975156","Execute clear switch mld-snooping","7.0","High","Yes","FSW_Regression,951982","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983377","Basic MLD on single vlan","7.0","Critical","Yes","FSW_ThreeDevices_Regression,951958","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983378","unknown mcast traffic only forward to mrouter port","7.0","High","Yes","FSW_ThreeDevices_Regression,951987
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983379","MLD packets validation on query; report and leave; GSQ packets","7.0","High","Yes","FSW_ThreeDevices_Regression,951988
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983380","MLD Snooping and IGMP Snooping Co-exist","7.0","High","Yes","FSW_ThreeDevices_Regression,951989
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983381","Mrouter port as physical port; MLD query received on physical port","7.0","High","Yes","FSW_ThreeDevices_Regression,951990
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983382","Mrouter port as trunk port; MLD query received on trunk port","7.0","High","Yes","FSW_ThreeDevices_Regression,951991
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983383","Group member port as physical port; MLD report received on physical port","7.0","Critical","Yes","FSW_ThreeDevices_Regression,951992
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983384","Multiple groups subscribed on the physical port or trunk port","7.0","High","Yes","FSW_ThreeDevices_Regression,951994
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983385","Multiple mrouter ports on same vlan on different ports","7.0","High","Yes","FSW_ThreeDevices_Regression,951995
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983386","General Query flooded out on all ports in the vlan if mld-snooping disabled","7.0","High","Yes","FSW_ThreeDevices_Regression,951997
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983388","General Query flooded out all ports in the vlan when mld-snooping enabled","7.0","High","Yes","FSW_ThreeDevices_Regression,951998
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983389","MLD Reports flooded out on all ports in the vlan if mld disabled","7.0","High","Yes","FSW_ThreeDevices_Regression,951999
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983390","MLD Done flooded out on all ports in the vlan if mld disabled","7.0","High","Yes","FSW_ThreeDevices_Regression,952002
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983391","Query entry refreshed with new query and aged out 180s when no more querier","7.0","High","Yes","FSW_ThreeDevices_Regression,952007
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983392","Fast Leave enabled by default; group entry deleted immediately upon MLD Done received","7.0","High","Yes","FSW_ThreeDevices_Regression,952008
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983393","Fast Leave disabled , group aged out","7.0","High","Yes","FSW_ThreeDevices_Regression,952009
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983394","Silent leave; Group entry aged out timer; default 300s","7.0","High","Yes","FSW_ThreeDevices_Regression,952010
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983395","Silent leave; Group entry aged out timer; user defined 15-3600s","7.0","High","Yes","FSW_ThreeDevices_Regression,952011
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983460","Disable and Enable MLD-Snooping","7.0","High","Yes","FSW_ThreeDevices_Regression,952015
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983462","MLD Snooping after switch reboot","7.0","High","Yes","FSW_ThreeDevices_Regression,952017
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983464","unknown mcast data traffic with flood-unknown-multicast disabled and enabled","7.0","High","Yes","FSW_ThreeDevices_Regression,952079
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983465","MLD-Snooping with IGMP-Snooping","7.0","High","Yes","FSW_ThreeDevices_Regression,952101
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983466","MLD-Proxy with IGMP-Proxy","7.0","High","Yes","FSW_ThreeDevices_Regression,952102
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983467","MLD-snooping with DHCPv6-snooping","7.0","High","Yes","FSW_ThreeDevices_Regression,952103
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983468","Shut and no shut mrouter port; query entry flushed","7.0","High","Yes","FSW_ThreeDevices_Regression,952108
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983469","Shut and no shut mrouter port; query entry and group entries on the same port flushed","7.0","High","Yes","FSW_ThreeDevices_Regression,952109
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983470","Mrouter port and group learned on the same port during STP topology change","7.0","High","Yes","FSW_ThreeDevices_Regression,952110
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983471","Shut and no shut group member port; group entries flushed","7.0","High","Yes","FSW_ThreeDevices_Regression,952111
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983473","Shut and no shut group member trunk port; group entries flushed","7.0","High","Yes","FSW_ThreeDevices_Regression,952113
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983474","Single static-group on single member port in a vlan","7.0","High","Yes","FSW_ThreeDevices_Regression,952054
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983475","Single static-group on multiple members in a vlan","7.0","High","Yes","FSW_ThreeDevices_Regression,952055
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983476","Multiple static-groups on multiple members in a vlan","7.0","High","Yes","FSW_ThreeDevices_Regression,952057
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983477","Multiple static-groups on multiple members in a vlans","7.0","High","Yes","FSW_ThreeDevices_Regression,952058
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983478","Dynamically learned group and static-group on same port same group","7.0","High","Yes","FSW_ThreeDevices_Regression,952059
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983479","Dynamically learned and static-group on same port same group; static-group deleted","7.0","High","Yes","FSW_ThreeDevices_Regression,952061
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983480","Dynamically learned and static-group on same port different groups","7.0","High","Yes","FSW_ThreeDevices_Regression,952065
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983481","Dynamically learned and static-group on different ports","7.0","High","Yes","FSW_ThreeDevices_Regression,952066
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983482","Delete and add static-group","7.0","High","Yes","FSW_ThreeDevices_Regression,9520667","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983483","Mld-static-group and igmp-static-group co-exist","7.0","High","Yes","FSW_ThreeDevices_Regression,952068","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983484","Mld-static-group after reboot","7.0","High","Yes","FSW_ThreeDevices_Regression,952069","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983485","Report suppression for hosts on same port joining same group","7.0","Critical","Yes","FSW_ThreeDevices_Regression,952018","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983486","Report suppression for hosts on different ports joining same group","7.0","High","Yes","FSW_ThreeDevices_Regression,952019
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983487","Report suppression for hosts on trunk port","7.0","High","Yes","FSW_ThreeDevices_Regression,952021
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983489","Fast leave enabled; no GSQ sent by proxy; group deleted immediately","7.0","High","Yes","FSW_ThreeDevices_Regression,952022
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983491","Fast leave enabled; multiple Done from hosts on same port; no leave suppression","7.0","Critical","Yes","FSW_ThreeDevices_Regression,952023
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983492","Fast leave enabled; multiple Done from hosts on different ports; leave suppression","7.0","High","Yes","FSW_ThreeDevices_Regression,952024
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983494","Fast leave disabled; GSQ sent by proxy for each leave","7.0","Critical","Yes","FSW_ThreeDevices_Regression,952026
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983495","GSQ sent by proxy for leaves on same VLAN for same group on same port","7.0","High","Yes","FSW_ThreeDevices_Regression,952027
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983497","GSQ sent by proxy for each leave; proxy leave sent only on the last leave","7.0","High","Yes","FSW_ThreeDevices_Regression,952030
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983500","Silent leave; proxy leave sent after group entry aged out; default timer 300s","7.0","High","Yes","FSW_ThreeDevices_Regression,952032
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983501","Silent leave; proxy leave sent after group entry aged out; user-defined timer","7.0","Critical","Yes","FSW_ThreeDevices_Regression,952034
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983502","Silent leave; mrouter port aged out before group entry aged out; no proxy leave","7.0","High","Yes","FSW_ThreeDevices_Regression,952035
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983504","Proxy report Src IP when no SVI configured with IPv6 address","7.0","Critical","Yes","FSW_ThreeDevices_Regression,952036
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983505","Proxy report Src IP when SVI configured with IPv6 address","7.0","High","Yes","FSW_ThreeDevices_Regression,952037
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983506","Proxy leave Src IP when no SVI configured with IPv6 address","7.0","High","Yes","FSW_ThreeDevices_Regression,952038
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983507","Proxy leave Src IP when SVI configured with IPv6 address","7.0","High","Yes","FSW_ThreeDevices_Regression,952039
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983508","GSQ Src IP when no SVI configured with IPv6 address","7.0","High","Yes","FSW_ThreeDevices_Regression,952040
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983509","GSQ Src IP when SVI configured with IPv6 address","7.0","High","Yes","FSW_ThreeDevices_Regression,952041
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983510","MLD packets validation on query; report and leave; GSQ packets with proxy","7.0","High","Yes","FSW_ThreeDevices_Regression,952042
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983511","Disable and Enable mld-proxy on switch VLAN","7.0","High","Yes","FSW_ThreeDevices_Regression,952043
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983512","Disable and Enable mld-snooping with mld-proxy","7.0","High","Yes","FSW_ThreeDevices_Regression,952044
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983513","MLD Proxy and IGMP Proxy Co-exist","7.0","High","Yes","FSW_ThreeDevices_Regression,952045
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983514","MLD proxy after reboot","7.0","High","Yes","FSW_ThreeDevices_Regression,952046
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983515","General Query sent out with mld-snooping-querier enabled","7.0","High","Yes","FSW_ThreeDevices_Regression,952047
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983516","Switch VLAN Querier with mld-snooping enable/disable with reboot after config","7.0","High","Yes","FSW_ThreeDevices_Regression,952051
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983517","Mld-query-interval; user-defined timer","7.0","High","Yes","FSW_ThreeDevices_Regression,952050
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983521","Mlds-flood-report enabled on port with MLD Snooping","7.0","High","Yes","FSW_ThreeDevices_Regression,952093
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983522","Mlds-flood-report enabled on port with MLD proxy","7.0","High","Yes","FSW_ThreeDevices_Regression,952094","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983523","Mcast-flood-traffic enabled on port; known IPv6 mcast traffic","7.0","High","Yes","FSW_ThreeDevices_Regression,952095","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983524","Mcast-flood-traffic enabled on port; unknown IPv6 mcast traffic","7.0","High","Yes","FSW_ThreeDevices_Regression,952096","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983526","Enable and Disable mlds-flood-report and mcast-flood-traffic when both mld-snooping and igmp-snooping enabled","7.0","High","Yes","FSW_ThreeDevices_Regression,952099","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983527","Enable and Disable mlds-flood-report and mcast-flood-traffic when mld-snooping enabled ","7.0","High","Yes","FSW_ThreeDevices_Regression,952100
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983528","Continuous MLD reports and leaves overnight with traffic","7.0","High","Yes","FSW_ThreeDevices_Regression,952134
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983529","Maximum MLD reports and leaves sending rate can be processed","7.0","Critical","Yes","FSW_ThreeDevices_Regression,952133
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983530","Proxy report sent out of mrouter port after mld-static-group configured","7.0","High","Yes","FSW_ThreeDevices_Regression,952070
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983532","Proxy leave sent out of mrouter port after mld-static-group deleted","7.0","High","Yes","FSW_ThreeDevices_Regression,952072
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983533","Proxy leave sent out of mrouter port after last mld-static-group deleted","7.0","High","Yes","FSW_ThreeDevices_Regression,952073
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983534","Proxy leave sent out after the last leave from dynamic and static-group","7.0","High","Yes","FSW_ThreeDevices_Regression,952074
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983535","Dynamic and static-group on same port; GSQ sent after leave received for dynamic group","7.0","High","Yes","FSW_ThreeDevices_Regression,952075
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983536","MLD static-group and mld-proxy after reboot","7.0","High","Yes","FSW_ThreeDevices_Regression,952076
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983537","Multiple Queriers at switch vlan","7.0","Critical","Yes","FSW_ThreeDevices_Regression,952048
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983538","known mcast data traffic with flood-unknown-multicast disabled and enabled","7.0","High","Yes","FSW_ThreeDevices_Regression,952081
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983540","Shut and no shut mrouter trunk port; query entry flushed","7.0","High","Yes","FSW_ThreeDevices_Regression,952112
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983541","Add, delete, and re-add SVI when query port present","7.0","High","Yes","FSW_ThreeDevices_Regression,954097
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983542","Add and delete SVI when no query port","7.0","High","Yes","FSW_ThreeDevices_Regression,954098
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983543","Fast leave enabled; proxy leave on different VLANs","7.0","High","Yes","FSW_ThreeDevices_Regression,952025
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983544","Reboot with mld-snooping while mld-snooping-querier enabled","7.0","High","Yes","FSW_ThreeDevices_Regression,952052
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","983545","Mld-query-interval with expiration check","7.0","High","Yes","FSW_ThreeDevices_Regression,952049
+","pass",""
+"/FSW-OS/HQ-Automation/Multicast/MLDSnooping/","984483","IPv6 L2 unknown mcast data traffic with flood-unknown-multicast disabled and enabled","7.0","High","Yes","FSW_ThreeDevices_Regression,952085","pass",""

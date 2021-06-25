@@ -16,7 +16,10 @@ class IXIA_TOPOLOGY:
         self.mac_start = kwargs['mac_start']
         self.start_vlan = kwargs['start_vlan']
         self.bgpv4_network = None
+        self.ospf2_network = None
         self.bgpv6_network = None
+        self.isis_network = None
+        self.igp_network = None
         self.bgp_as =  None
         self.bgp_name = f"BGP_{self.name}"
         self.bgp_name_v6 = f"BGPv6_{self.name}"
@@ -36,6 +39,8 @@ class IXIA_TOPOLOGY:
         self.multiplier = kwargs['multiplier']
         self.igmp_v4 = None
         self.igmp_role = None
+        self.ospf2 = None
+        self.ipv4_pool_ospf = None
         self.ethernet,self.device_group,self.topology = ixia_rest_create_topology(
         platform = self.ixia.testPlatform, 
         session = self.ixia.Session,
@@ -47,7 +52,7 @@ class IXIA_TOPOLOGY:
         multiplier = self.multiplier,    
         mac_start = self.mac_start,
         start_vlan = self.start_vlan
-        )     
+        )    
 
     def add_mld_host(self,*args,**kwargs):
         start_addr = kwargs['start_addr']
@@ -242,6 +247,43 @@ class IXIA_TOPOLOGY:
             ixnet = self.ixia.ixNetwork,     
             start_ip = kwargs['start_ip'],
             prefix = prefix
+        )
+
+    def add_ospfv2(self,*args,**kwargs):
+        self.ospf_name = "ospf_version2"
+         
+        self.ospf2 = ixia_rest_create_ospf_v2(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = self.ospf_name,
+            device_group = self.device_group,
+            ip = self.ipv4_session,
+            networks_start_ip =self.ospf2_network ,
+        )
+
+    def add_network_group(self,*args,**kwargs):
+        num = kwargs['num']
+        networks_start_ip = kwargs["networks_start_ip"]
+        group_name = kwargs['group_name']
+        self.ipv4_pool_ospf = ixia_rest_create_network_group(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            device_group = self.device_group,
+            networks_number = num,
+            networks_start_ip =self.isis_network,
+            network_group_name = group_name
+        )
+
+    def add_isis(self,*args,**kwargs):
+        self.isis_name = "isis_router"
+        self.ospf2 = ixia_rest_create_isis(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            name = self.isis_name,
+            device_group = self.device_group,
+            ip = self.ipv4_session,
+            networks_start_ip =self.isis_network,
+            ethernet = self.ethernet,
         )
 
     def add_bgp(self,*args,**kwargs):
@@ -986,7 +1028,7 @@ class IXIA:
             platform = self.testPlatform, 
             session = self.Session,
             ixnet = self.ixNetwork,
-            wait = 40,
+            wait = wait_time,
         )
 
     def stop_protocol(self,*args, **kwargs):
@@ -1904,6 +1946,65 @@ def ixia_rest_create_igmp_querier_v4(*args,**kwargs):
     igmp = ipv4.IgmpQuerier.add(Name=igmp_host_name)
     igmp.IgmpStartQuerier()
     return igmp
+
+def ixia_rest_create_ospf_v2(*args,**kwargs):
+    testplatform = kwargs['platform']
+    ospf_name = kwargs['name']
+    device_group = kwargs['device_group']
+    ipv4 = kwargs['ip']
+    ixNetwork = kwargs['ixnet']
+    network_start_address = kwargs['networks_start_ip']
+
+    ixNetwork.info(f'Configuring Ospfv2 {ospf_name}')
+    ospf2 = ipv4.Ospfv2.add(Name=ospf_name)
+    ospf2.AreaId.Single(0)
+    
+    #ospf2.NetworkType.Increment(start_value="172.1.1.1", step_value="0.0.0.1")
+    #ospf2.NetworkType.Increment()
+    # network_group_name = "ospf_network_group"
+    # ixNetwork.info(f'Configuring Network Group {network_group_name}')
+    # networkGroup = device_group.NetworkGroup.add(Name=network_group_name, Multiplier=network_group_number)
+    # ipv4PrefixPool = networkGroup.Ipv4PrefixPools.add(NumberOfAddresses='1')
+    # ipv4PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0.0.0.1')
+    # ipv4PrefixPool.PrefixLength.Single(32)
+    return ospf2 
+
+def ixia_rest_create_isis(*args,**kwargs):
+    testplatform = kwargs['platform']
+    isis_name = kwargs['name']
+    device_group = kwargs['device_group']
+    ipv4 = kwargs['ip']
+    ethernet_handle = kwargs['ethernet']
+    ixNetwork = kwargs['ixnet']
+    network_start_address = kwargs['networks_start_ip']
+
+    ixNetwork.info(f'Configuring isis {isis_name}')
+    isisl3 = ethernet_handle.IsisL3.add(Name=isis_name)
+    isisl3.LevelType.Single("level2")
+    
+    # network_group_name = "isis_network_group"
+    # ixNetwork.info(f'Configuring Network Group {network_group_name}')
+    # networkGroup = device_group.NetworkGroup.add(Name=network_group_name, Multiplier=network_group_number)
+    # ipv4PrefixPool = networkGroup.Ipv4PrefixPools.add(NumberOfAddresses='1')
+    # ipv4PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0.0.0.1')
+    # ipv4PrefixPool.PrefixLength.Single(32)
+    return isisl3 
+
+def ixia_rest_create_network_group(*args,**kwargs):
+    testplatform = kwargs['platform']
+    device_group = kwargs['device_group']
+    ixNetwork = kwargs['ixnet']
+    network_group_number = kwargs['networks_number']
+    network_start_address = kwargs['networks_start_ip']
+    network_group_name = kwargs["network_group_name"]
+
+
+    ixNetwork.info(f'Configuring Network Group {network_group_name}')
+    networkGroup = device_group.NetworkGroup.add(Name=network_group_name, Multiplier=network_group_number)
+    ipv4PrefixPool = networkGroup.Ipv4PrefixPools.add(NumberOfAddresses='1')
+    ipv4PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0.0.0.1')
+    ipv4PrefixPool.PrefixLength.Single(32)
+
  
 def ixia_rest_create_bgp(*args,**kwargs):
     testplatform = kwargs['platform']

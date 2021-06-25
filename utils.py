@@ -876,18 +876,31 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 		wait_time = int(kwargs["wait"])
 	else:
 		wait_time = 0.2
-	if "mode" in kwargs:
-		config_mode = kwargs["mode"]
-	else:
-		config_mode = "slow"
 
 	if "feedback" in kwargs:
 		feedback = kwargs['feedback']
 	else:
 		feedback = False
 
+
+	if "mode" in kwargs:
+		config_mode = kwargs["mode"]
+	elif "device" in kwargs:
+		device= kwargs['device']
+		current_time = time.time()
+		if device.last_cmd_time == None:
+			config_mode = "fast"
+		elif (current_time - device.last_cmd_time) < 100:
+			config_mode = "fast"
+		else:
+			config_mode = "slow"
+		device.last_cmd_time = current_time
+	else:
+		config_mode = "slow"
+
 	if config_mode == "fast":
 		wait_time = 0.1
+
 	b= cmdblock.split("\n")
 	b = [x.strip() for x in b if x.strip()]
 	config_return_list = []

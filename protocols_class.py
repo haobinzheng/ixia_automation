@@ -1668,6 +1668,42 @@ class Ospf_Neighbor_v6:
         tprint(f"Neighbor OSPPv3 Duration: {self.duration}")
         tprint(f"Neighbor OSPFv3 Interface: {self.interface}")
 
+
+class Router_ISIS:
+    def __init__(self,*args,**kargs):
+        self.switch = args[0]
+        self.dut = self.switch.console
+        self.neighbor_list = []
+        self.neighbor_list_v6 = []
+        #self.change_router_id(self.switch.loop0_ip)
+
+    def config_interface_isis(self,*args,**kwargs):
+        interface = kwargs["interface"]
+        isis_level = kwargs["circuit_type"]
+
+        config = f"""
+        config router isis
+        config interface
+            edit {interface}
+                set circuit-type {isis_level}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.dut,config,device=self.switch)
+
+    def config_net(self,*args,**kwargs):
+        isis_net = kwargs['net']
+        config = f"""
+        config router isis
+            config net
+                edit 1
+                    set net {isis_net}
+                next
+            end
+        """
+        config_cmds_lines(self.dut,config,device=self.switch)
+
 class Router_OSPF:
     def __init__(self,*args,**kargs):
         self.switch = args[0]
@@ -1675,6 +1711,55 @@ class Router_OSPF:
         self.neighbor_list = []
         self.neighbor_list_v6 = []
         #self.change_router_id(self.switch.loop0_ip)
+
+    def config_general(self,*args,**kwargs):
+
+        router_id = kwargs["router_id"]
+        area_ip = kwargs["area"]
+
+        #area_ip should mostly be 0.0.0.0
+        config = f"""
+        config router ospf
+        set router-id {router_id}
+        config area
+            edit {area_ip}
+            next
+        end
+        end
+        """
+
+        config_cmds_lines(self.dut,config,device=self.switch)
+
+    def config_network(self,*args,**kwargs):
+        index = kwargs["index"]
+        ip = kwargs["ip"]
+        mask = kwargs["mask"]
+
+        config = f"""
+        config router ospf
+        config network
+            edit {index}
+            set area 0.0.0.0
+            set prefix {ip} {mask}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.dut,config,device=self.switch)
+
+    def config_interface_ospf(self,*args,**kwargs):
+        interface = kwargs["interface"]
+
+        config = f"""
+        config router ospf
+        config interface
+            edit {interface}
+            next
+        end
+        end
+        """
+        config_cmds_lines(self.dut,config,device=self.switch)
+
 
     def remove_ospf_all(self):
         self.remove_ospf_v4()
@@ -4418,6 +4503,7 @@ class FortiSwitch:
         self.model = find_dut_model(self.console)
         self.router_ospf = Router_OSPF(self)
         self.router_bgp = Router_BGP(self)
+        self.router_isis = Router_ISIS(self)
         self.access_list= Router_access_list(self)
         self.route_map = Router_route_map(self)
         self.aspath_list = Router_aspath_list(self)
@@ -6000,6 +6086,7 @@ class FortiSwitch_XML(FortiSwitch):
             self.password = kwargs['password']
         else:
             self.password = device_xml.password
+        self.last_cmd_time = None
         self.ixia_ports = device_xml.ixia_ports
         self.tb=kwargs['topo_db']
         self.version = None
@@ -6040,6 +6127,26 @@ class FortiSwitch_XML(FortiSwitch):
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
+        self.router_ospf = Router_OSPF(self)
+        self.router_isis = Router_ISIS(self)
+        self.system_interfaces_list = None
+
+    def config_vlan_interface(self,*args,**kwargs):
+        vlan = kwargs["vlan"]
+        ip = kwargs["ip"]
+        mask = kwargs['mask']
+
+        vlan_id = re.match(r"vlan([0-9]+)",vlan).group(1)
+        config = f"""
+        config system interface
+            edit {vlan}
+            set ip {ip} {mask}
+            set vlanid {vlan_id}
+            set interface "internal"
+            next
+            end
+            """
+        config_cmds_lines(self.console,config,device=self)
 
     def clear_crash_log(self):
         config = f"""
@@ -6048,14 +6155,17 @@ class FortiSwitch_XML(FortiSwitch):
         config_cmds_lines(self.console,config)
 
     def get_crash_log(self):
+        found = False
         output = self.show_command("diagnose debug crashlog get")
         for line in output:
             if "diagnose debug crashlog get" in line or self.hostname in line:
                 continue
             matched = re.match(r"[0-9a-zA-Z]+",line)
             if matched:
-                Info(f"!!!!!!!!!! Crash Log was found at {self.hostname} !!!!!!!!!!")
-                output = self.show_command("diagnose debug crashlog read")
+                found = True
+        if found:
+            Info(f"!!!!!!!!!! Crash Log was found at {self.hostname} !!!!!!!!!!")
+            output = self.show_command("diagnose debug crashlog read")
 
 
     def config_sw_after_factory_xml(self):
@@ -6643,6 +6753,13 @@ class FortiGate_XML(FortiSwitch):
         execute ha synchronize {action}
         """
         config_cmds_lines(self.console,config)
+
+    def ha_failover(self,*args,**kwargs):
+        config = f"""
+        config global
+        """
+        config_cmds_lines(self.console,config)
+        switch_interactive_exec(self.console,"execute ha failover set","Do you want to continue? (y/n)")
 
     def fgt_upgrade_v2(self,*args,**kwargs):
         samples = """

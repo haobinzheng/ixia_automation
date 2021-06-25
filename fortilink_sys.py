@@ -304,6 +304,8 @@ if __name__ == "__main__":
 		for fgt in fortigates:
 			if fgt.mode == "Active":
 				fgt_active = fgt
+			else:
+			 	fgt_passive = fgt
 	
 		for sw in switches:
 			sw.switch_reboot()
@@ -391,7 +393,12 @@ if __name__ == "__main__":
 
 	for fgt in fortigates:
 		if fgt.mode == "Active":
+			fgt_active = fgt
 			fgta = fgt
+		else:
+		 	fgt_passive = fgt
+		 	fgtp = fgt
+
 
 	#fortilink_name = "Myswitch"
 	fortilink_name = "Myfortilink"
@@ -525,7 +532,7 @@ if __name__ == "__main__":
 		config = f"""
 		delete {v}
 		"""
-		delete_system_interfaces_config_scale += config
+	delete_system_interfaces_config_scale += config
 
 	delete_system_interfaces_config_scale += end_end
 
@@ -545,7 +552,7 @@ if __name__ == "__main__":
 		end
 		"""
 
-	# vlans_string = vlans_string + " engvlan11 financevlan14 hrvlan13 marktingvlan12 tacvlan15 voice video"
+	#vlans_string = vlans_string + " engvlan11 financevlan14 hrvlan13 marktingvlan12 tacvlan15 voice video"
 	fortilink_settings_config_scale = f"""
 		 config vdom
 			edit root
@@ -728,6 +735,7 @@ if __name__ == "__main__":
 		end
 		end
 	"""
+
 	delete_fortilink_settings_config = f"""
 		 config vdom
 			edit root
@@ -845,6 +853,8 @@ if __name__ == "__main__":
 	for sw in switches:
 		sw.get_crash_log()
 
+	if testcase == 0:
+		print("Just do a intial_testing and exiting....")
 
 	if testcase == 1 or test_all:
 		testcase = 1
@@ -1302,25 +1312,53 @@ if __name__ == "__main__":
 	if testcase == 10 or test_all:
 		testcase = 10
 		description = "Scale MAC Policy and user nac-policy and config and delete "
-		i = 1
-
+		 
 		for sw in switches:
 			sw.clear_crash_log()
+
+		for i in range(2):
+			print(f"================ This is the #{i+1} iterating config/delete =============== ")
 			
-		while True:
-			print(f"================ This is the #{i} iterating config/delete =============== ")
+			# nac_config = system_interfaces_config_scale + fortilink_settings_config_scale + mac_policy_config_scale + user_nacpolicy_config_scale
+			# config_cmds_lines(fgta.console,nac_config,mode="slow")
+			# sleep(30)
 
 			print("!!!!! Deleting all the scaled LAN Segment related configuration")
 			delete_nac_config = delete_user_nacpolicy_config_scale + delete_mac_policy_config_scale + delete_fortilink_settings_config + delete_system_interfaces_config_scale
-			config_cmds_lines(fgta.console,delete_nac_config,mode="fast")
+			config_cmds_lines(fgta.console,delete_nac_config,mode="slow")
 
 			nac_config = system_interfaces_config_scale + fortilink_settings_config_scale + mac_policy_config_scale + user_nacpolicy_config_scale
-			config_cmds_lines(fgta.console,nac_config,mode="fast")
+			config_cmds_lines(fgta.console,nac_config,mode="slow")
 			sleep(30)
+
 			i +=1
 
-			for sw in switches:
-				sw.get_crash_log()
+			# for sw in switches:
+			# 	sw.get_crash_log()
+
+	if testcase == 11 or test_all:
+		testcase = 11
+		description = "Fortigate HA failover"
+		 
+		myixia.stop_protocol()
+
+		for i in range(10):
+
+			fgt_active.ha_failover()
+			sleep(60)
+
+			myixia.start_protocol(wait=200)
+
+			sleep(300)
+
+			myixia.stop_protocol()
+
+			fgt_passive.ha_failover()
+			sleep(60)
+
+			myixia.start_protocol(wait=200)
+			sleep(300)
+
 
 
 
