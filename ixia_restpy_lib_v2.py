@@ -5,6 +5,7 @@ from utils import *
 # Import the RestPy module
 from ixnetwork_restpy.testplatform.testplatform import TestPlatform
 from ixnetwork_restpy.assistants.statistics.statviewassistant import StatViewAssistant
+from ixnetwork_restpy import SessionAssistant
 
 
 class IXIA_TOPOLOGY:
@@ -115,6 +116,14 @@ class IXIA_TOPOLOGY:
         # ip = kwargs['ip']
         # gw = kwargs['gw']
         # mask = kwargs['mask']
+        if "gateway" in kwargs:
+            gateway_mode = kwargs['gateway']
+        else:
+            gateway_mode = "default"
+        if "ip_incremental" in kwargs:
+            ip_incremental = kwargs["ip_incremental"]
+        else:
+            ip_incremental = "0.0.1.0"
         self.ipv4_session = ixia_rest_create_ip(
         platform = self.ixia.testPlatform, 
         session = self.ixia.Session,
@@ -123,7 +132,9 @@ class IXIA_TOPOLOGY:
         gw_start_ip = self.ipv4_gw,
         ethernet = self.ethernet,
         maskbits = self.ipv4_mask,
-        ip_name = self.ipv4_name
+        ip_name = self.ipv4_name,
+        gateway_mode = gateway_mode,
+        ip_incremental = ip_incremental,
     )
 
     def add_ptp(self,*args,**kwargs):
@@ -272,6 +283,14 @@ class IXIA_TOPOLOGY:
             networks_number = num,
             networks_start_ip =self.isis_network,
             network_group_name = group_name
+        )
+
+    def remove_network_group(self,*args,**kwargs):
+     
+        self.ipv4_pool_ospf = ixia_rest_remove_network_group(
+            platform = self.ixia.testPlatform,
+            ixnet = self.ixia.ixNetwork,
+            device_group = self.device_group,
         )
 
     def add_isis(self,*args,**kwargs):
@@ -965,6 +984,43 @@ class IXIA:
         tracking_group = tracking_name,
         )
 
+    def create_traffic_raw(self,*args,**kwargs):
+        src_port = kwargs['src_port']
+        dst_port = kwargs['dst_port']
+        traffic_name = kwargs['traffic_name']
+        tracking_name = kwargs['tracking_name']
+        traffic_item = ixia_rest_create_traffic_raw(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork,
+        src = kwargs['src_port'],
+        dst = kwargs['dst_port'],
+        name= kwargs['traffic_name'],
+        tracking_group = kwargs['tracking_name'],
+        src_topo = kwargs['src_topo'],
+        dst_topo = kwargs['dst_topo']
+        )
+
+     
+
+    def create_traffic_raw_icmp(self,*args,**kwargs):
+        traffic_item = ixia_rest_create_traffic_raw_icmp(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork,
+        src = kwargs['src_port'],
+        dst = kwargs['dst_port'],
+        name= kwargs['traffic_name'],
+        tracking_group = kwargs['tracking_name'],
+        src_topo = kwargs['src_topo'],
+        dst_topo = kwargs['dst_topo'],
+        dst_ip = kwargs['dst_ip'],
+        rate = kwargs['rate'],
+        count = kwargs['count'],
+        dst_mac = kwargs['dst_mac']
+        )
+        return traffic_item
+
     def create_traffic_v6(self,*args,**kwargs):
         src_topo = kwargs['src_topo']
         dst_topo = kwargs['dst_topo']
@@ -1206,13 +1262,20 @@ def ixia_rest_create_ip(*args,**kwargs):
         ethernet = kwargs['ethernet']
         ip_prefix = kwargs['maskbits']
         ip_name = kwargs['ip_name']
+        gateway_mode = kwargs['gateway_mode']
+        ip_incremental = kwargs['ip_incremental']
 
         ixNetwork.info('Configuring IPv4')
         ipv4 = ethernet.Ipv4.add(Name=ip_name)
-        ipv4.Address.Increment(start_value=start_ip, step_value='0.0.1.0')
+        ipv4.Address.Increment(start_value=start_ip, step_value=ip_incremental)
         # ipv4.address.RandomMask(fixed_value=16)
         print(dir(ipv4.Address))
-        ipv4.GatewayIp.Increment(start_value=gw_start_ip, step_value='0.0.1.0')
+        if gateway_mode == "default":
+            ixNetwork.info('Configuring IPv4 with gateway being incremented')
+            ipv4.GatewayIp.Increment(start_value=gw_start_ip, step_value=ip_incremental)
+        elif gateway_mode == "fixed":
+            ixNetwork.info('Configuring IPv4 with gateway being fixed')
+            ipv4.GatewayIp.Single(gw_start_ip)
         ipv4.Prefix.Single(ip_prefix)
         address = ipv4.Address
         # testPlatform.info(address.prefix)
@@ -1698,6 +1761,362 @@ def ixia_rest_create_traffic(*args,**kwargs):
             return None
 
 
+def ixia_rest_create_traffic_raw(*args,**kwargs):
+    debugMode = False
+    try:
+        def createPacketHeader(trafficItemObj, packetHeaderToAdd=None, appendToStack=None): 
+            configElement = trafficItemObj.ConfigElement.find()[0]
+
+            # Do the followings to add packet headers on the new traffic item
+
+            # Uncomment this to show a list of all the available protocol templates to create (packet headers)
+            # for protocolHeader in ixNetwork.Traffic.ProtocolTemplate.find():
+            #     ixNetwork.info('Protocol header: --{}--'.format(protocolHeader.StackTypeId))
+
+            # 1> Get the <new packet header> protocol template from the ProtocolTemplate list.
+            packetHeaderProtocolTemplate = ixNetwork.Traffic.ProtocolTemplate.find(StackTypeId=packetHeaderToAdd)
+            ixNetwork.info('protocolTemplate: {}'.format(packetHeaderProtocolTemplate))
+
+            # 2> Append the <new packet header> object after the specified packet header stack.
+            appendToStackObj = configElement.Stack.find(StackTypeId=appendToStack)
+            ixNetwork.info('appendToStackObj: {}'.format(appendToStackObj))
+            appendToStackObj.Append(Arg2=packetHeaderProtocolTemplate)
+
+            # 3> Get the new packet header stack to use it for appending an IPv4 stack after it.
+            # Look for the packet header object and stack ID.
+            packetHeaderStackObj = configElement.Stack.find(StackTypeId=packetHeaderToAdd)
+            
+            # 4> In order to modify the fields, get the field object
+            packetHeaderFieldObj = packetHeaderStackObj.Field.find()
+            ixNetwork.info('packetHeaderFieldObj: {}'.format(packetHeaderFieldObj))
+            
+            # 5> Save the above configuration to the base config file.
+            #ixNetwork.SaveConfig(Files('baseConfig.ixncfg', local_file=True))
+
+            return packetHeaderFieldObj
+
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        src_port = kwargs['src']
+        dst_port = kwargs['dst']
+        traffic_name = kwargs['name']
+        tracking_group = kwargs['tracking_group']
+        src_topo = kwargs['src_topo']
+        dst_topo = kwargs['dst_topo']
+
+
+        ixNetwork.info('Create a raw traffic item')
+        rawTrafficItemObj = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType='raw',TransmitMode='sequential')
+      
+        #Assign ports
+        # portList=[src_port,dst_port]
+        # portMap = session.PortMapAssistant()
+        # vport = dict()
+        # for index,port in enumerate(portList):
+        #     portName = 'Port_{}'.format(index+1) 
+        #     vport[portName] = portMap.Map(IpAddress=port[0], CardId=port[1], PortId=port[2], Name=portName)
+
+        # portMap.Connect(forceTakePortOwnership)
+
+        ixNetwork.info('Add source and destination endpoints')
+        #rawTrafficItemObj.EndpointSet.add(Sources=vport['Port_1'].Protocols.find(), Destinations=vport['Port_2'].Protocols.find())
+        rawTrafficItemObj.EndpointSet.add(Sources=src_port.Protocols.find(), Destinations=dst_port.Protocols.find())
+        configElement = rawTrafficItemObj.ConfigElement.find()[0]
+        configElement.FrameRate.update(Type='percentLineRate', Rate=10)
+        configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+        configElement.FrameSize.FixedSize = 1000
+      
+        # The Ethernet packet header doesn't need to be created.
+        # It is there by default. Just do a find for the Ethernet stack object.
+        ethernetStackObj = ixNetwork.Traffic.TrafficItem.find(Name=traffic_name).ConfigElement.find()[0].Stack.find(StackTypeId='ethernet$')
+
+        # NOTE: If you are using virtual ports (IxVM), you must use the Destination MAC address of 
+        #       the IxVM port from your virtual host (ESX-i host or KVM)
+        ixNetwork.info('Configuring Ethernet packet header')
+        ethernetDstField = ethernetStackObj.Field.find(DisplayName='Destination MAC Address')
+        ethernetDstField.ValueType = 'increment'
+        ethernetDstField.StartValue = dst_topo.mac_start
+        ethernetDstField.StepValue = "00:00:00:00:00:00"
+        ethernetDstField.CountValue = 1
+
+        ethernetSrcField = ethernetStackObj.Field.find(DisplayName='Source MAC Address')
+        ethernetSrcField.ValueType = 'increment'
+        ethernetSrcField.StartValue = src_topo.mac_start
+        ethernetSrcField.StepValue = "00:00:00:00:00:00"
+        ethernetSrcField.CountValue = 1
+
+        # VLAN
+        vlanFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^vlan$', appendToStack='ethernet$')
+        vlanIdField = vlanFieldObj.find(DisplayName='VLAN-ID')
+        vlanIdField.SingleValue = 103
+            
+        vlanPriorityField = vlanFieldObj.find(DisplayName='VLAN Priority')
+        vlanPriorityField.Auto = False
+        vlanPriorityField.SingleValue = 3
+
+        # PFC QUEUE
+        pfcQueueObj = ethernetStackObj.Field.find(DisplayName='PFC Queue')
+        pfcQueueObj.ValueType = 'valueList'
+        pfcQueueObj.ValueList = [1, 3, 5, 7]
+
+        # PFC PAUSE: PFC PAUSE (802.1Qbb)
+        pauseFrameObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='pfcPause', appendToStack='ethernet$')
+        pauseFrameField = pauseFrameObj.find(DisplayName='Control opcode')
+        pauseFrameField.ValueType = 'singleValue'
+        pauseFrameField.SingleValue = 103
+
+        pauseFrameQueue0 = pauseFrameObj.find(DisplayName='PFC Queue 0')
+        pauseFrameQueue0.ValueType = 'singleValue'
+        pauseFrameQueue0.SingleValue = 'abcd'
+
+        pauseFrameQueue1 = pauseFrameObj.find(DisplayName='PFC Queue 1')
+        pauseFrameQueue2 = pauseFrameObj.find(DisplayName='PFC Queue 2')
+        pauseFrameQueue3 = pauseFrameObj.find(DisplayName='PFC Queue 3')
+        pauseFrameQueue4 = pauseFrameObj.find(DisplayName='PFC Queue 4')
+        pauseFrameQueue5 = pauseFrameObj.find(DisplayName='PFC Queue 5')
+        pauseFrameQueue6 = pauseFrameObj.find(DisplayName='PFC Queue 6')
+
+
+        # IPv4
+        ipv4FieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='ipv4', appendToStack='^vlan$')
+        ipv4SrcField = ipv4FieldObj.find(DisplayName='Source Address')
+        ipv4SrcField.ValueType = 'increment'
+        ipv4SrcField.StartValue = src_topo.ipv4
+        ipv4SrcField.StepValue = '0.0.0.1'
+        ipv4SrcField.CountValue = 1
+
+        # Example on how to create a custom list of ip addresses
+        ipv4DstField = ipv4FieldObj.find(DisplayName='Destination Address')
+        ipv4DstField.ValueType = 'valueList'
+        ipv4DstField.ValueList = ['1.1.1.2', '1.1.1.3', '1.1.1.4', '1.1.1.5']    
+
+        # DSCP configurations and references
+
+        # For IPv4 TOS/Precedence:  Field/4
+        #    000 Routine, 001 Priority, 010 Immediate, 011 Flash, 100 Flash Override,
+        #    101 CRITIC/ECP, 110 Internetwork Control, 111 Network Control
+        ipv4PrecedenceField = ipv4FieldObj.find(DisplayName='Precedence')
+        ipv4PrecedenceField.ActiveFieldChoice = True
+        ipv4PrecedenceField.FieldValue = '011 Flash'
+
+        # For IPv4 Raw priority: Field/3
+        #ipv4RawPriorityField = ipv4FieldObj.find(DisplayName='Raw priority')
+        #ipv4RawPriorityField.ActiveFieldChoice = True
+        #ipv4RawPriorityField.ValueType = 'increment'
+        #ipv4RawPriorityField.StartValue = 3
+        #ipv4RawPriorityField.StepValue = 1
+        #ipv4RawPriorityField.CountValue = 9
+
+        # For IPv4 Default PHB
+        #   Field/10: Default PHB
+        #   Field/12: Class selector PHB
+        #   Field/14: Assured forwarding PHB
+        #   Field/15: Expedited forwarding PHB
+        #
+        #   For Class selector, if singleValue: Goes by 8bits:
+        #       Precedence 1 = 8
+        #       Precedence 2 = 16
+        #       Precedence 3 = 24
+        #       Precedence 4 = 32
+        #       Precedence 5 = 40
+        #       Precedence 6 = 48
+        #       Precedence 7 = 56
+        #
+        # DisplayName options: 
+        #     'Default PHB' = Field/10 
+        #     'Class selector PHB' = Field/12
+        #     'Assured forwarding PHB" = Field/14
+        #     'Expedited forwarding PHB" = Field/16 
+        #ipv4DefaultPHBField = ipv4FieldObj.find(DisplayName='Class selector')
+        ipv4DefaultPHBField = ipv4FieldObj.find(DisplayName='Default PHB')
+
+        ipv4DefaultPHBField.ActiveFieldChoice = True
+        ipv4DefaultPHBField.ValueType = 'singleVaoue' ;# singleValue, increment
+        ipv4DefaultPHBField.SingleValue = 56
+        # Below is for increment 
+        #ipv4DefaultPHBField.StartValue = 3
+        #ipv4DefaultPHBField.StepValue = 1
+        #ipv4DefaultPHBField.CountValue = 9
+
+        # Example to show appending UDP after the IPv4 header
+        udpFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^udp$', appendToStack='ipv4')
+        udpSrcField = udpFieldObj.find(DisplayName='UDP-Source-Port')
+        udpSrcField.Auto = False
+        udpSrcField.SingleValue = 1000
+
+        udpDstField = udpFieldObj.find(DisplayName='UDP-Dest-Port')
+        udpDstField.Auto = False
+        udpDstField.SingleValue = 1001
+
+        # Example to show appending TCP after the IPv4 header
+        tcpFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='tcp', appendToStack='ipv4')
+        tcpSrcField = tcpFieldObj.find(DisplayName='TCP-Source-Port')
+        tcpSrcField.Auto = False
+        tcpSrcField.ValueType = 'valueList'
+        tcpSrcField.ValueList = ['1002', '1005', '1007']
+
+        tcpDstField = tcpFieldObj.find(DisplayName='TCP-Dest-Port')
+        tcpDstField.Auto = False
+        tcpDstField.SingleValue = 1003
+
+        # Example to show appending ICMP after the IPv4 header
+        icmpFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='icmpv9', appendToStack='ipv4')
+
+
+        # Optional: Enable tracking to track your packet headers:
+        #    
+        #    Other trackings: udpUdpSrcPrt0, udpUdpDstPrt0,tcpTcpSrcPrt0, tcpTcpDstPrt0, vlanVlanId0, vlanVlanUserPriority0
+        #    On an IxNetwork GUI (Windows or Web UI), add traffic item trackings.
+        #    Then go on the API browser to view the tracking fields.
+        rawTrafficItemObj.Tracking.find().TrackBy = ['udpUdpSrcPrt0', 'udpUdpDstPrt0']
+
+        ###### original 
+        # ixNetwork.info('Add endpoint flow group')
+        # trafficItem.EndpointSet.add(Sources=src_topo, Destinations=dst_topo)
+        # # trafficItem.Tracking.find()[0].TrackBy = [tracking_group]
+        
+
+        # # # Note: A Traffic Item could have multiple EndpointSets (Flow groups).
+        # # #       Therefore, ConfigElement is a list.
+        # ixNetwork.info('Configuring config elements')
+        # configElement = trafficItem.ConfigElement.find()[0]
+
+
+
+        # configElement.FrameRate.update(Type='percentLineRate', Rate=3)
+        # #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+        # configElement.TransmissionControl.update(Type='continuous')
+        # configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
+        # configElement.FrameSize.FixedSize = 1000
+        
+        # trafficItem.Generate()
+        # return trafficItem
+        ########## original 
+
+
+    except Exception as errMsg:
+        ixNetwork.debug('\n%s' % traceback.format_exc())
+        if debugMode == False and 'session' in locals():
+            session.remove()
+
+
+
+def createPacketHeader(ixNetwork,trafficItemObj, packetHeaderToAdd=None, appendToStack=None): 
+    configElement = trafficItemObj.ConfigElement.find()[0]
+
+    # Do the followings to add packet headers on the new traffic item
+
+    # Uncomment this to show a list of all the available protocol templates to create (packet headers)
+    # for protocolHeader in ixNetwork.Traffic.ProtocolTemplate.find():
+    #     ixNetwork.info('Protocol header: --{}--'.format(protocolHeader.StackTypeId))
+
+    # 1> Get the <new packet header> protocol template from the ProtocolTemplate list.
+    packetHeaderProtocolTemplate = ixNetwork.Traffic.ProtocolTemplate.find(StackTypeId=packetHeaderToAdd)
+    ixNetwork.info('protocolTemplate: {}'.format(packetHeaderProtocolTemplate))
+
+    # 2> Append the <new packet header> object after the specified packet header stack.
+    appendToStackObj = configElement.Stack.find(StackTypeId=appendToStack)
+    ixNetwork.info('appendToStackObj: {}'.format(appendToStackObj))
+    appendToStackObj.Append(Arg2=packetHeaderProtocolTemplate)
+
+    # 3> Get the new packet header stack to use it for appending an IPv4 stack after it.
+    # Look for the packet header object and stack ID.
+    packetHeaderStackObj = configElement.Stack.find(StackTypeId=packetHeaderToAdd)
+    
+    # 4> In order to modify the fields, get the field object
+    packetHeaderFieldObj = packetHeaderStackObj.Field.find()
+    ixNetwork.info('packetHeaderFieldObj: {}'.format(packetHeaderFieldObj))
+    
+    # 5> Save the above configuration to the base config file.
+    #ixNetwork.SaveConfig(Files('baseConfig.ixncfg', local_file=True))
+
+    return packetHeaderFieldObj
+
+
+def ixia_rest_create_traffic_raw_icmp(*args,**kwargs):
+    debugMode = False
+     
+    session = kwargs['session']
+    testPlatform = kwargs['platform']
+    ixNetwork = kwargs['ixnet']
+    src_port = kwargs['src']
+    dst_port = kwargs['dst']
+    traffic_name = kwargs['name']
+    tracking_group = kwargs['tracking_group']
+    src_topo = kwargs['src_topo']
+    dst_topo = kwargs['dst_topo']
+    dst_ip = kwargs['dst_ip'],
+    rate = kwargs['rate'],
+    count = kwargs['count'],
+    dst_mac = kwargs['dst_mac']
+
+
+    ixNetwork.info('Create a raw traffic item')
+    rawTrafficItemObj = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType='raw',TransmitMode='sequential')
+  
+    print(f"!!!!!!!!!! rate = {rate}, count = {count}!!!!!!!!!!, dst_mac = {dst_mac} !!!!! ")
+    ixNetwork.info('Add source and destination endpoints')
+    rawTrafficItemObj.EndpointSet.add(Sources=src_port.Protocols.find(), Destinations=dst_port.Protocols.find())
+    configElement = rawTrafficItemObj.ConfigElement.find()[0]
+    configElement.FrameRate.update(Type='percentLineRate', Rate=10)
+    configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+    configElement.FrameSize.FixedSize = 1000
+  
+    # The Ethernet packet header doesn't need to be created.
+    # It is there by default. Just do a find for the Ethernet stack object.
+    ethernetStackObj = ixNetwork.Traffic.TrafficItem.find(Name=traffic_name).ConfigElement.find()[0].Stack.find(StackTypeId='ethernet$')
+
+    # NOTE: If you are using virtual ports (IxVM), you must use the Destination MAC address of 
+    #       the IxVM port from your virtual host (ESX-i host or KVM)
+    ixNetwork.info('Configuring Ethernet packet header')
+    ethernetDstField = ethernetStackObj.Field.find(DisplayName='Destination MAC Address')
+    ethernetDstField.ValueType = 'increment'
+    ethernetDstField.StartValue = dst_mac
+    ethernetDstField.StepValue = "00:00:00:00:00:00"
+    ethernetDstField.CountValue = 1
+
+    ethernetSrcField = ethernetStackObj.Field.find(DisplayName='Source MAC Address')
+    ethernetSrcField.ValueType = 'increment'
+    ethernetSrcField.StartValue = src_topo.mac_start
+    ethernetSrcField.StepValue = "00:00:00:00:00:00"
+    ethernetSrcField.CountValue = 1000
+
+    # IPv4
+    ipv4FieldObj = createPacketHeader(ixNetwork,rawTrafficItemObj, packetHeaderToAdd='ipv4', appendToStack='ethernet$')
+    ipv4SrcField = ipv4FieldObj.find(DisplayName='Source Address')
+    ipv4SrcField.ValueType = 'increment'
+    ipv4SrcField.StartValue = src_topo.ipv4
+    ipv4SrcField.StepValue = '0.0.0.1'
+    ipv4SrcField.CountValue = 1
+
+    print(f"!!!!!!!!!! dst ip = {dst_ip} !!!!!!!!!!")
+    # Example on how to create a custom list of ip addresses
+    ipv4DstField = ipv4FieldObj.find(DisplayName='Destination Address')
+    ipv4DstField.ValueType = 'valueList'
+    ipv4DstField.ValueList = ["100.1.1.1"]    
+
+    # DSCP configurations and references
+
+    # For IPv4 TOS/Precedence:  Field/4
+    #    000 Routine, 001 Priority, 010 Immediate, 011 Flash, 100 Flash Override,
+    #    101 CRITIC/ECP, 110 Internetwork Control, 111 Network Control
+    ipv4PrecedenceField = ipv4FieldObj.find(DisplayName='Precedence')
+    ipv4PrecedenceField.ActiveFieldChoice = True
+    ipv4PrecedenceField.FieldValue = '011 Flash'
+
+     
+    ipv4DefaultPHBField = ipv4FieldObj.find(DisplayName='Default PHB')
+
+    ipv4DefaultPHBField.ActiveFieldChoice = True
+    ipv4DefaultPHBField.ValueType = 'singleVaoue' ;# singleValue, increment
+    ipv4DefaultPHBField.SingleValue = 56
+     
+    # Example to show appending ICMP after the IPv4 header
+    icmpFieldObj = createPacketHeader(ixNetwork,rawTrafficItemObj, packetHeaderToAdd='icmpv9', appendToStack='ipv4')
+
+     
+ 
 def ixia_rest_create_traffic_v6(*args,**kwargs):
     debugMode = False
     try:
@@ -2005,6 +2424,17 @@ def ixia_rest_create_network_group(*args,**kwargs):
     ipv4PrefixPool.NetworkAddress.Increment(start_value=network_start_address, step_value='0.0.0.1')
     ipv4PrefixPool.PrefixLength.Single(32)
 
+def ixia_rest_remove_network_group(*args,**kwargs):
+    testplatform = kwargs['platform']
+    device_group = kwargs['device_group']
+    ixNetwork = kwargs['ixnet']
+
+    networkgroup = device_group.NetworkGroup.find()
+    networkgroup.remove()
+
+    # ixNetwork.info(f'Removing Network Group')
+    # device_group.NetworkGroup.remove()
+
  
 def ixia_rest_create_bgp(*args,**kwargs):
     testplatform = kwargs['platform']
@@ -2209,6 +2639,11 @@ def ixia_rest_change_route_properties(*args, **kwargs):
             bgpiprouteproperty.EnableFlapping.Increment(start_value=start_ip, step_value='0.0.0.1')
         
     #testplatform.info(bgpiprouteproperty2.MultiExitDiscriminator.Values)
+
+
+
+
+ 
  
 if __name__ == "__main__":
     apiServerIp = '10.105.19.19'

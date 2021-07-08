@@ -1677,6 +1677,9 @@ class Router_ISIS:
         self.neighbor_list_v6 = []
         #self.change_router_id(self.switch.loop0_ip)
 
+    def show_isis_neighbor_v4(self):
+        switch_show_cmd(self.dut, "get router info isis neighbor")
+
     def config_interface_isis(self,*args,**kwargs):
         interface = kwargs["interface"]
         isis_level = kwargs["circuit_type"]
@@ -2028,7 +2031,7 @@ class Router_OSPF:
         switch_show_cmd(self.dut, "get router info6 ospf neighbor")
 
     def show_ospf_neighbor_v4(self):
-        switch_show_cmd(self.dut, "get router info6 ospf neighbor")
+        switch_show_cmd(self.dut, "get router info ospf neighbor")
 
     def show_ospf_neighbor_v64(self):
         switch_show_cmd(self.dut, "get router info6 ospf neighbor")

@@ -871,7 +871,7 @@ def split_f_string_lines(cmdblock):
 	return b
 
 def config_cmds_lines(dut,cmdblock,*args,**kwargs):
-	handle_prompt_before_commands(dut)
+	
 	if "wait" in kwargs:
 		wait_time = int(kwargs["wait"])
 	else:
@@ -900,6 +900,8 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 
 	if config_mode == "fast":
 		wait_time = 0.1
+	else:
+		handle_prompt_before_commands(dut)
 
 	b= cmdblock.split("\n")
 	b = [x.strip() for x in b if x.strip()]
@@ -2216,6 +2218,31 @@ The remote host key has changed. Do you want to accept the new key and continue 
 		print("Something unexpected is happens, handle later")
 		print(output)
 		return False
+
+
+def increment_32(ip,num):
+	bytes = ip.split('.')
+	ibytes = [int(i) for i in bytes]
+	newip_list = [ip]
+	for i in range(num-1):
+		ibytes[3] += 1
+		if ibytes[3] > 255:
+			ibytes[2] += 1
+			ibytes[3] = 0
+			if ibytes[2] > 255:
+				ibytes[1]+= 1
+				ibytes[2] = 0
+				if ibytes[1] > 255:
+					ibytes[0]+= 1
+					ibytes[1] = 0
+					if ibytes[0] > 224:
+						print("The range is too big for IPv4")
+						return newip_list
+		newip = ".".join(str(i) for i in ibytes)
+		newip_list.append(newip)
+	print(newip_list)
+	return newip_list
+
 
 def increment_24(ip,num):
 	bytes = ip.split('.')

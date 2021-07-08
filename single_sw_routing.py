@@ -246,10 +246,10 @@ if __name__ == "__main__":
 		description = "ospf scale for single switch/router"
 		print_test_subject(testcase,description)
 		sw = switches[0]
-		num = 20
+		num = 30
 		
 		portList_v4_v6 = []
-		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list[:1],mac_list,net4_list,gw4_list,net6_list,gw6_list): #port_active_list decides size
 			module,port = p.split("/")
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,num]) #num determine how many multipliers 
 
@@ -259,110 +259,50 @@ if __name__ == "__main__":
 		iplist = increment_24(vlan_ip,num)
 		start_vlan = 1
 		vlan_list = [f"vlan{i}" for i in range(1,num+1)]
-		# i = 0
-		# svi_config = f"""
-		# config system interface
-		# """
-		# for ip in iplist:
-		# 	config = f"""
-		# 	edit vlan{start_vlan+i}
-		# 	set ip {ip} 255.255.255.0
-		# 	set vlanid {start_vlan+i}
-		# 	set interface "internal"
-		# 	next
-		# 	"""
-		# 	i += 1
-		# 	svi_config += config
-		# config = f"""
-		# end
-		# """
-		# svi_config += config
 
-		# print(svi_config)
-		# config_cmds_lines(sw.console,svi_config,mode="fast")
+		preconfig = False
 
-		# ospf_config = f"""
-		# config router ospf
-		# set router-id 1.1.1.1
-		# config area
-		#     edit 0.0.0.0
-		#     next
-		# end
-		# config interface
-		# """
-
-
-		# for i in range(num):
-		#     config = f"""
-		#     edit vlan{i+1}
-		#     next
-		#     """
-		#     ospf_config += config
-		# config = f"""
-		# end
-		# """
-		# ospf_config += config
-
-		# config = f"""
-		# config network
-		# """
-		# ospf_config += config
-
-		# i = 1
-		# for ip in iplist:
-		# 	config = f"""
-		#     edit {i}
-		# 	set area 0.0.0.0
-		# 	set prefix {ip} 255.255.255.0
-		# 	next
-		# 	"""
-		# 	ospf_config += config
-		# 	i += 1
-		# config = f"""
-		# end
-		# end
-		# """
-		# ospf_config += config
-
-		# print(ospf_config)
-		# config_cmds_lines(sw.console,ospf_config,mode="fast")
-
-		print(f"!!!!!!!!!!!!!!Switch's ixia ports = {sw.ixia_ports} ")
-		for ip,vlan in zip(iplist,vlan_list):
-			sw.config_vlan_interface(vlan=vlan,ip=ip,mask="255.255.255.0")
-			
+		router_isis = sw.router_isis
 		router_ospf = sw.router_ospf
-		router_ospf.config_general(router_id="1.1.1.1",area="0.0.0.0")
-		for vlan in vlan_list:
-			router_ospf.config_interface_ospf(interface=vlan)
 
-		i = 1
-		for ip_net in iplist:
-			router_ospf.config_network(index=i,ip=ip_net,mask="255.255.255.0")
-			i += 1
+		if preconfig == True:
+			print(f"!!!!!!!!!!!!!!Switch's ixia ports = {sw.ixia_ports} ")
+			for ip,vlan in zip(iplist,vlan_list):
+				sw.config_vlan_interface(vlan=vlan,ip=ip,mask="255.255.255.0")
+				
+			
+			router_ospf.config_general(router_id="1.1.1.1",area="0.0.0.0")
+			for vlan in vlan_list:
+				router_ospf.config_interface_ospf(interface=vlan)
 
-		isis_router = sw.router_isis
-		isis_router.config_net(net="49.0001.0001.0001.0001.00")	 
-		for vlan in vlan_list:
-			isis_router.config_interface_isis(interface=vlan,circuit_type="level-2")
+			i = 1
+			for ip_net in iplist:
+				router_ospf.config_network(index=i,ip=ip_net,mask="255.255.255.0")
+				i += 1
 
-		
-		start_vlan = 1
-		if start_vlan == 1:
-			for port in sw.ixia_ports:
-				port_config = f"""
-				conf switch  interface
-		 		edit {port}
-				set native-vlan 1000
-		 		end
-				"""
-				config_cmds_lines(sw.console,port_config,mode="fast")
+			
+			isis_router.config_net(net="49.0001.0001.0001.0001.00")	 
+			for vlan in vlan_list:
+				isis_router.config_interface_isis(interface=vlan,circuit_type="level-2")
+
+			
+			start_vlan = 1
+			if start_vlan != None:
+				for port in sw.ixia_ports:
+					port_config = f"""
+					conf switch  interface
+			 		edit {port}
+					set native-vlan 1000
+			 		end
+					"""
+					config_cmds_lines(sw.console,port_config,mode="fast")
 
 
 		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6,vlan=start_vlan)
 
 		for topo,net4 in zip(myixia.topologies,ipv4_networks):
-			topo.igp_network = net4	 
+			topo.igp_network = net4	
+			print_attributes(topo)
 
 		for topo in myixia.topologies:
 			#topo.add_ipv6()
@@ -371,115 +311,144 @@ if __name__ == "__main__":
 			topo.add_isis()
 			topo.add_network_group(num=1000,networks_start_ip=topo.igp_network,group_name="IGP network group")
 
-		myixia.start_protocol(wait=500)
-		exit()
+		myixia.start_protocol(wait=50)
 
-		 
+		router_ospf.show_ospf_neighbor_v4()
+		router_isis.show_isis_neighbor_v4()
+
+		myixia.stop_protocol()
+
+		console_timer(30,msg="Wait for 30s after stopping protocols")
+		for topo in myixia.topologies:
+			topo.remove_network_group()
+
+		sleep(20)
+		for topo in myixia.topologies:
+			topo.add_network_group(num=300,networks_start_ip=topo.igp_network,group_name="IGP network group")
+
+		myixia.start_protocol(wait=50)
+		router_ospf.show_ospf_neighbor_v4()
+		router_isis.show_isis_neighbor_v4()
+
+		sw.switch_reboot()
+		
+		router_ospf.show_ospf_neighbor_v4()
+		router_isis.show_isis_neighbor_v4()
 
 	if testcase == 2 or test_all:
 		testcase = 2
 		sys.stdout = Logger(f"Log/single_routing_{testcase}.log")
-		description = "scale pim with maximum entries within a multicast flow"
-		print_test_subject(testcase,description)
-		sw = switches[0]
-		num = 10
+		description = "scale ARP entries with traffic and flapping"
 		
+		mac_list = ["00:11:01:01:01:01","00:12:01:01:01:01","00:13:01:01:01:01","00:14:01:01:01:01","00:15:01:01:01:01","00:16:01:01:01:01","00:17:01:01:01:01","00:18:01:01:01:01"]
+		net4_list = ["100.1.1.2/16","100.1.100.2/16","10.1.1.213/24","10.1.1.214/24","10.1.1.215/24","10.1.1.216/24","10.1.1.217/24","10.1.1.218/24","10.1.1.219/24","10.1.1.220/24"]
+		gw4_list = ["100.1.100.2","100.1.1.2","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1"]
+		net6_list = ["2001:10:1:1::211/64","2001:10:1:1::212/64","2001:10:1:1::213/64","2001:10:1:1::214/64","2001:10:1:1::215/64","2001:10:1:1::216/64","2001:10:1:1::217/64","2001:10:1:1::218/64"]
+		gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
+
+
+		sw = switches[0]
+		num = 1000  #1k end hosts
+
+		vlan_ip = "100.1.1.2"
+		iplist_1 = increment_32(vlan_ip,num)
+
+		vlan_ip = "100.1.100.2"
+		iplist_2 = increment_32(vlan_ip,num)
+		
+
 		portList_v4_v6 = []
 		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
-			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,num])
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,num]) #num determine how many multipliers 
 
 		print(portList_v4_v6)
 
-		config = f"""
-		diag debug application pimd -1
-		"""
-		config_cmds_lines(sw.console,config,mode="fast")
+		vlan_ip = "100.1.1.1"
+		vlan_interface_name = "vlan1"
 
-		vlan_ip = "10.1.1.1"
-		iplist = increment_24(vlan_ip,num)
-		start_vlan = 10
-		i = 0
-		svi_config = f"""
-		config system interface
-		"""
-		for ip in iplist:
-			config = f"""
-			edit vlan{start_vlan+i}
-			set ip {ip} 255.255.255.0
-			set vlanid {start_vlan+i}
-			set interface "internal"
-			next
-			"""
-			i += 1
-			svi_config += config
-		config = f"""
-		end
-		"""
-		svi_config += config
+		preconfig = True
 
-		print(svi_config)
-		config_cmds_lines(sw.console,svi_config,mode="fast")
+		if preconfig == True:
+			print(f"!!!!!!!!!!!!!!Switch's ixia ports = {sw.ixia_ports} ")
+			sw.config_vlan_interface(vlan=vlan_interface_name,ip=vlan_ip,mask="255.255.0.0")
+				
+			for port in sw.ixia_ports:
+				port_config = f"""
+				conf switch  interface
+		 		edit {port}
+				set native-vlan 1
+		 		end
+				"""
+				config_cmds_lines(sw.console,port_config,mode="fast")
 
-		start_vlan = 10
-		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6,vlan=start_vlan)
+
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+
 		for topo in myixia.topologies:
 			#topo.add_ipv6()
-			topo.add_ipv4()
+			#topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+			topo.add_ipv4(ip_incremental="0.0.0.1")
+			print_attributes(topo)
 
-		myixia.start_protocol(wait=200)
+		myixia.start_protocol(wait=10)
 
-		num_mcast = 1000
-		mcast_ip = "239.1.1.1"
-		mcast_ip_list = increment_24(mcast_ip,num_mcast)
-		src_ip = "10.1.1.2"
-		flows_config = f"""
-		config router multicast-flow
-			    edit 1
-		            config flows
-		"""
-		i = 1
-		for mcast_ip in mcast_ip_list:
-			config = f"""
-		        edit {i}
-		            set group-addr {mcast_ip}
-		            set source-addr {src_ip}
-		        next
-			"""
-			i += 1
-			flows_config += config
+		traffic_item = myixia.create_traffic_raw_icmp(
+		src_port=myixia.vport_holder_list[0],
+		dst_port=myixia.vport_holder_list[1],
+		src_topo=myixia.topologies[0],
+		dst_topo=myixia.topologies[1],
+		dst_ip="100.1.1.1",
+		dst_mac="70:4c:a5:c8:7f:83",
+		traffic_name="port0_to_port1_icmp",
+		tracking_name="Tracking_1_icmp",
+		rate=0.1,
+		count=10000
+		)
 
-		config = f"""
-		end
-		next 
-		end
-		"""
-		flows_config += config
-		print(flows_config)
-		config_cmds_lines(sw.console,flows_config,mode="fast")
+		# myixia.create_traffic_raw_icmp(src_port=myixia.vport_holder_list[1],\
+		# 	dst_port=myixia.vport_holder_list[0],\
+		# 	src_topo=myixia.topologies[1],\
+		# 	dst_topo=myixia.topologies[0],\
+		# 	dst_ip="100.1.1.1",\
+		# 	traffic_name="port1_to_port0",\
+		# 	tracking_name="Tracking_2")
 
-		mcast_config = f"""
-		config router multicast
-	       config interface
-		"""
-		num_vlan = 10
-		for i in range(1,num_vlan+1):
-			vlan_number = start_vlan + i
-			config = f"""
-	            edit vlan{vlan_number}
-	                set pim-mode ssm-mode
-	                set multicast-flow 1
-	            next
-	        """
-			mcast_config += config
-		config = f"""
-			end
-		set multicast-routing enable
-		end
-		"""
-		mcast_config += config
-		print(mcast_config)
-		config_cmds_lines(sw.console,mcast_config,mode="fast",feedback=True)
+		myixia.start_traffic()
+		sleep(5)
+		myixia.collect_stats()
+		sleep(5)
+		myixia.check_traffic()
+		sleep(10)
+		myixia.stop_traffic()
+		sleep(5)
+		#myixia.stop_protocol()
+		exit()
+		# myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t0",tracking_name="Tracking_1")
+		# myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t0_to_t1",tracking_name="Tracking_2")
+
+		while True:
+			for ip in iplist_1:
+				switch_exec_cmd(sw.console,f"execute ping {ip} ")
+
+			for ip in iplist_2:
+				switch_exec_cmd(sw.console,f"execute ping {ip} ")
+
+		while True:
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.collect_stats()
+			sleep(5)
+			myixia.check_traffic()
+			sleep(10)
+			myixia.stop_traffic()
+			sleep(5)
+			myixia.stop_protocol()
+			sleep(10)
+			myixia.start_protocol(wait=20)
+			sleep(5)
+
 
 	if testcase == 3 or test_all:
 		testcase = 3
