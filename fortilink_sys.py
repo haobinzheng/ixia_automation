@@ -1349,16 +1349,23 @@ if __name__ == "__main__":
 
 			myixia.start_protocol(wait=200)
 
-			sleep(300)
+			myixia.start_traffic()
+			console_timer(30,msg="Wait for 30s after started multicast traffic")
+			myixia.collect_stats()
+			myixia.check_traffic()
+			myixia.stop_traffic()
 
 			myixia.stop_protocol()
 
 			fgt_passive.ha_failover()
 			sleep(60)
-
 			myixia.start_protocol(wait=200)
-			sleep(300)
-
+			myixia.start_traffic()
+			console_timer(30,msg="Wait for 30s after started multicast traffic")
+			myixia.collect_stats()
+			myixia.check_traffic()
+			myixia.stop_traffic()
+			myixia.stop_protocol()
 
 
 
