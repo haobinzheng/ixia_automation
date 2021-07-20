@@ -365,7 +365,6 @@ if __name__ == "__main__":
 						fgt.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
 					else:
 						print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
-		fgt_active.config_ftg_ixia_port(port=fgt_active.ixia_ports[0],ip="172.168.1.1",mask="255.255.255.0",dhcp_start="172.168.1.2",dhcp_end="172.168.1.254")
 		if testcase == 0:
 			print("Set up only, Wait for 400 seconds and exit.....")
 			console_timer(600,msg='After configuring everything, wait for 400 seconds for network to discover topology')

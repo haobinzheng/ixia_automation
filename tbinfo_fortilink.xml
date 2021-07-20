@@ -131,7 +131,7 @@
   <location location=" " > </location>
 </dev10>
 
- <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.19:11009">
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
  </trafgen1>
  <connections>
   <link1 link="dev9:port1,dev10:port1" type="ha_link" mode="Copper"> </link1>

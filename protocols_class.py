@@ -7636,6 +7636,45 @@ class FortiGate_XML(FortiSwitch):
                 """
             config_cmds_lines(self.console,config)
 
+    def config_ftg_ixia_port(self,*args,**kwargs):
+        port = kwargs['port']
+        ip = kwargs['ip']
+        mask = kwargs['mask']
+        dhcp_start = kwargs["dhcp_start"]
+        dhcp_end = kwargs["dhcp_end"]
+
+        config = f"""
+        config vdom
+            edit root
+            config system interface
+            edit {port}
+                set vdom "root"
+                set ip {ip} {mask}
+                set allowaccess ping https ssh snmp http fgfm speed-test
+                set type physical
+        end
+        end
+        config vdom
+            edit root
+            conf system dhcp server
+            edit 7
+                    set dns-service default
+                    set default-gateway {ip}
+                    set netmask {mask}
+                    set interface {port}
+                    config ip-range
+                        edit 1
+                            set start-ip {dhcp_start}
+                            set end-ip {dhcp_end}
+                        next
+                    end
+                next
+            end
+        end
+        end
+        """
+        config_cmds_lines(self.console,config)
+
 class tbinfo():
     def __init__(self,*args, **kwargs):
         self.devices = None
