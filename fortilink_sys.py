@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
 
 	global DEBUG
-	initial_testing = True
+	initial_testing = False
 	initial_config = True
 	
 	args = parser.parse_args()
