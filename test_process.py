@@ -1,6 +1,9 @@
 import os
 import time
-from console_util  import  *
+# from console_util  import  *
+from snmp_cmds import snmpwalk
+import subprocess
+
 
 def monitor_dut():
 	host1 = "10.105.50.63"
@@ -20,5 +23,37 @@ def monitor_dut():
 	print("Success rate = {:.2%}".format(sucess_count/total))
 	print("Failure rate = {:.2%}".format(fail_count/total))
 
+def fsw_snmp_walk():
+	host1 = "10.105.241.18"
+	host2 = "10.105.241.116"
+	res = snmpwalk(
+ 	ipaddress=host1,
+ 	oid='.1.3.6.1.2.1.1.4.0',
+	community='public')
+	print(res)
+
+	res = snmpwalk(
+ 	ipaddress=host2,
+ 	oid="all",
+	community='public')
+	print(res)
+
+def shell_snmp_walk(ip):
+	print(f"ip = {ip}")
+	cmd = f"snmpwalk -v1 -c public {ip}"
+	p = subprocess.Popen("snmpwalk -v1 -c public 10.105.241.116", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+	while True:
+		line = p.stdout.readline()
+		if not line:
+			break
+  	#the real code does filtering here
+		print (f"snmpwalk: {line.rstrip()}")
+	# for line in p.stdout.readlines():
+	# 	print (line)
+	# retval = p.wait()
+
 if __name__ == "__main__":
-	monitor_dut()
+	#monitor_dut()
+	#fsw_snmp_walk()
+	shell_snmp_walk()

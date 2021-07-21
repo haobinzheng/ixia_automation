@@ -4,7 +4,7 @@ from optparse import OptionParser
 import re, sys
 import telnetlib
 import pdb
-import paramiko
+#import paramiko
 import time
 
 #sys.path.append('/home/jimhe/git-repo/automation/lib/util')

@@ -3,7 +3,7 @@ import sys
 import time
 import logging
 import traceback
-import paramiko
+#import paramiko
 import time
 from time import sleep
 import re
@@ -17,7 +17,7 @@ from console_util  import  *
 import pexpect
 from threading import Thread
 import subprocess
-import spur
+#import spur
 import multiprocessing
 
 #from ixia_ngfp_lib import *
