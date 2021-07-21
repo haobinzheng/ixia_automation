@@ -38,20 +38,16 @@ def fsw_snmp_walk():
 	community='public')
 	print(res)
 
-def shell_snmp_walk(ip):
-	print(f"ip = {ip}")
-	cmd = f"snmpwalk -v1 -c public {ip}"
-	p = subprocess.Popen("snmpwalk -v1 -c public 10.105.241.116", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+def shell_snmp_walk():
+	while True: 
+		p = subprocess.Popen("snmpwalk -v1 -c public 10.105.241.116", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-	while True:
-		line = p.stdout.readline()
-		if not line:
-			break
-  	#the real code does filtering here
-		print (f"snmpwalk: {line.rstrip()}")
-	# for line in p.stdout.readlines():
-	# 	print (line)
-	# retval = p.wait()
+		while True:
+			line = p.stdout.readline()
+			if not line:
+				break
+			print (f"snmpwalk: {line.rstrip()}")
+	 
 
 if __name__ == "__main__":
 	#monitor_dut()
