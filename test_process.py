@@ -47,6 +47,16 @@ def shell_snmp_walk():
 			if not line:
 				break
 			print (f"snmpwalk: {line.rstrip()}")
+
+		p = subprocess.Popen("snmpwalk -v1 -c public 10.105.241.18", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+		while True:
+			line = p.stdout.readline()
+			if not line:
+				break
+			print (f"snmpwalk: {line.rstrip()}")
+	 
+
 	 
 
 if __name__ == "__main__":
