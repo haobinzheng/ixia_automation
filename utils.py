@@ -217,6 +217,13 @@ def dprint(msg):
 		else:
 			tprint("Debug: {}".format(msg))
 
+def print_output_list(msg):
+	if type(msg) == list:
+		for m in msg:
+			tprint(f"{m}")
+	else:
+		tprint(f"Debug: {msg}")
+
 def debug(msg):
 	# global DEBUG
 	#print(f"DEBUG Mode = {settings.DEBUG}")
@@ -549,7 +556,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	sleep(timeout)
 	output = tn.read_very_eager()
-	print(output)
+	#print(output)
 	#output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
@@ -575,6 +582,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	# good_out_list = out_str_list[index:]
 	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
 	debug(good_out_list)
+	print_output_list(good_out_list)
 	return good_out_list
 
 def show_execute_cmd(tn,cmd,**kwargs):

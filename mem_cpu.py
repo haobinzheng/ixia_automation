@@ -238,7 +238,9 @@ if __name__ == "__main__":
 
 			sw.fsw_show_cmd("fnsysctl ps -lw")
 			sw.fsw_show_cmd("diagnose switch physical-ports io-stats cumulative")
+			print_dash_line()
 		sleep(300)
+		print_double_line()
 	
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
