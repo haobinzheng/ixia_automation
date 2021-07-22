@@ -6080,7 +6080,7 @@ class FortiSwitch:
     def fsw_show_cmd(self,cmd):
         dut = self.console
         result = collect_show_cmd(dut,cmd,t=3)
-        print_collect_show(result)
+        #print_collect_show(result)
 
 class FortiSwitch_XML(FortiSwitch):
     def __init__(self,*args,**kwargs):
