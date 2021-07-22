@@ -230,6 +230,7 @@ if __name__ == "__main__":
 		# 	exit()
 	while True:
 		for sw in switches:
+			tprint(f"---------------------------------- switch name {sw.name} --------------------------------------")
 			try:
 				result = loop_command_output(sw.console,"fnsysctl top")
 			except (BrokenPipeError,EOFError,UnicodeDecodeError) as e:
@@ -238,7 +239,6 @@ if __name__ == "__main__":
 
 			sw.fsw_show_cmd("fnsysctl ps -lw")
 			sw.fsw_show_cmd("diagnose switch physical-ports io-stats cumulative")
-			print_dash_line()
 		sleep(300)
 		print_double_line()
 	
