@@ -230,7 +230,7 @@ if __name__ == "__main__":
 		# 	exit()
 	while True:
 		for sw in switches:
-			tprint(f"---------------------------------- switch name {sw.name} --------------------------------------")
+			tprint(f"---------------------------------- cpu-memory-iostats: {sw.name} --------------------------------------")
 			try:
 				result = loop_command_output(sw.console,"fnsysctl top")
 			except (BrokenPipeError,EOFError,UnicodeDecodeError) as e:
