@@ -2437,6 +2437,35 @@ def dut_commands_proc(ip,dut_name,cmds_list,show_cmds_list,filename, event):
 			dut = reliable_telnet(ip,sig=event)
 			continue
 
+def parse_sysfnctl_top(result):
+    sample = """
+    Mem: 297460K used, 201788K free, 7416K shrd, 1104K buff, 67860K cached
+    CPU:  44% usr  42% sys   0% nic   8% idle   0% io   0% irq   4% sirq
+    Load average: 3.51 3.64 3.48 2/125 2246
+      PID  PPID USER     STAT   VSZ %VSZ CPU %CPU COMMAND
+     1254     1 0        R    46328   9%   0  57% /bin/snmpd
+      398     2 0        SW<      0   0%   0   5% [bcmL2X.1]
+      390     2 0        SW<      0   0%   0   4% [bcmL2X.0]
+     1132     1 0        S    45808   9%   0   3% /bin/ctrld
+      401     2 0        SW<      0   0%   0   3% [bcmCNTR.0]
+      400     2 0        SW<      0   0%   0   3% [bcmLINK.1]
+      576     2 0        SW<      0   0%   0   2% [bcmCNTR.1]
+     1143     1 0        S    45940   9%   0   2% /bin/lldpmedd
+      394     2 0        SW<      0   0%   0   2% [bcmLINK.0]
+     1148     1 0        S    46088   9%   0   2% /bin/fortilinkd
+     1135     1 0        S    46008   9%   0   2% /bin/lpgd
+      396     2 0        SW<      0   0%   0   2% [bcmMEM_SCAN.1]
+     1134     1 0        S    46300   9%   0   1% /bin/stpd
+     3864     2 0        SW       0   0%   0   1% [kworker/0:2]
+     1094     1 0        S N  46084   9%   0   0% /bin/igmpsnoopingd
+     1138     1 0        S    45884   9%   0   0% /bin/l2d
+     2098  1620 0        R <   2336   0%   0   0% {sysctl} top
+     1140     1 0        S    45920   9%   0   0% /bin/l2dbg
+     1093     1 0        S    45508   9%   0   0% /bin/alertd
+     1144     1 0        S    45496   9%   0   0% /bin/dmid
+    """
+    pass
+
 def ixia_monitor_traffic(monitor_file,stop):
 	while not stop():
 		ixia_clear_traffic_stats()

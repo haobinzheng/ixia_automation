@@ -25,7 +25,7 @@ from test_process import *
 
 
 if __name__ == "__main__":
-
+	sys.stdout = Logger("Log/mem_cpu.log")
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
 	parser.add_argument("-test", "--testcase", type=str, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
@@ -108,13 +108,14 @@ if __name__ == "__main__":
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
+	######## skipping it for ixia trouble shooting
 	switches = []
 	for d in tb.devices:
 		switch = FortiSwitch_XML(d,topo_db=tb)
 		switches.append(switch)
 	for c in tb.connections:
 		c.update_devices_obj(switches)
-
+	####### skipping it for ixia trouble shooting 
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
 
@@ -227,14 +228,18 @@ if __name__ == "__main__":
 
 		# if testcase == 0:
 		# 	exit()
-	# for c in tb.connections:
-	# 	c.unshut_all_ports()
-	# switches = []
-	# for d in tb.devices:
-	# 	if d.active:
-	# 		switch = FortiSwitch_XML(d)
-	# 		switches.append(switch)
+	while True:
+		for sw in switches:
+			try:
+				result = loop_command_output(sw.console,"fnsysctl top")
+			except (BrokenPipeError,EOFError,UnicodeDecodeError) as e:
+				debug(f"Having problem to collect fnsysctl top command on {sw.name}")
+				continue
 
+			sw.fsw_show_cmd("fnsysctl ps -lw")
+			sw.fsw_show_cmd("diagnose switch physical-ports io-stats cumulative")
+		sleep(2)
+	
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]
@@ -258,7 +263,7 @@ if __name__ == "__main__":
 		topo.add_ipv4()
 		
 	myixia.start_protocol(wait=20)
-	
+
 	for i in range(0,len(tb.ixia.port_active_list)-1):
 		for j in range(i+1,len(tb.ixia.port_active_list)):
 			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)

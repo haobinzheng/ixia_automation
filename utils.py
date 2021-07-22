@@ -2986,7 +2986,7 @@ def loop_command_output(dut,cmd,**kwargs):
 		timeout = 3
 	result = collect_show_cmd(dut,cmd,t=timeout)
 	send_ctrl_c_cmd(dut)
-	debug(result) 
+	print(result) 
 	return (result)
 
 def seperate_ip_mask(ip_addr):

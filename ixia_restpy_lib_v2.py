@@ -889,7 +889,14 @@ class IXIA:
             self.start_vlan = 0
             self.vlan = False
         self.topologies = self.create_ixia_topologies()
+        self.transmitmode()
          
+    def transmitmode(self):
+        preferences = self.Session.Ixnetwork.Globals.Preferences
+        print(f"transmit mode before change !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!{preferences.TransmitMode}")
+        preferences.update(TransmitMode="Sequential")
+        preferences.TransmitMode = "Sequential"
+        print(f"transmit mode after change!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!{preferences.TransmitMode}")
 
     def create_ixia_topologies(self):
         i = 0
@@ -2662,10 +2669,15 @@ if __name__ == "__main__":
     # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
     
     ipv6_portList = [[ixChassisIpList[0], 4,16,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
-    [ixChassisIpList[0], 10, 6,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
+    [ixChassisIpList[0], 10, 5,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
 ]
     myixia = IXIA(apiServerIp,ixChassisIpList,ipv6_portList)
 
+
+    myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
+    myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
+
+    exit()
     myixia.topologies[0].add_ipv6()
     myixia.topologies[0].add_dhcp_server()
     myixia.topologies[0].dhcp_server_gw()
