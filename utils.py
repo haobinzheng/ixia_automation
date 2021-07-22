@@ -515,6 +515,24 @@ def clean_show_output_recursive(out_str_list,cmd):
 			out_str_list.pop(0)
 			return clean_show_output_recursive(out_str_list,cmd)
 
+def print_show_cmd(tn,cmd,**kwargs):
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 5
+	#relogin_if_needed(tn)
+	handle_prompt_before_commands(tn)
+	original_cmd = cmd
+	cmd_bytes = convert_cmd_ascii_n(cmd)
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	tn.write(cmd_bytes)
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	sleep(timeout)
+	output = tn.read_very_eager()
+	print(output)
+
 def collect_show_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:
 		timeout = kwargs['t']
@@ -2986,7 +3004,6 @@ def loop_command_output(dut,cmd,**kwargs):
 		timeout = 3
 	result = collect_show_cmd(dut,cmd,t=timeout)
 	send_ctrl_c_cmd(dut)
-	print(result) 
 	return (result)
 
 def seperate_ip_mask(ip_addr):

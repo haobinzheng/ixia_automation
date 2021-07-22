@@ -6134,6 +6134,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.router_isis = Router_ISIS(self)
         self.system_interfaces_list = None
 
+
     def config_vlan_interface(self,*args,**kwargs):
         vlan = kwargs["vlan"]
         ip = kwargs["ip"]
