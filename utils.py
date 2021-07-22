@@ -549,7 +549,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	sleep(timeout)
 	output = tn.read_very_eager()
-	debug(output)
+	print(output)
 	#output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
@@ -3003,6 +3003,7 @@ def loop_command_output(dut,cmd,**kwargs):
 	else:
 		timeout = 3
 	result = collect_show_cmd(dut,cmd,t=timeout)
+	#print_show_cmd(dut,cmd,t=timeout)
 	send_ctrl_c_cmd(dut)
 	return (result)
 
