@@ -235,8 +235,6 @@ if __name__ == "__main__":
 	# 		switch = FortiSwitch_XML(d)
 	# 		switches.append(switch)
 
-
-	sleep(100000000)
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]

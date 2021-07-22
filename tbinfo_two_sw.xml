@@ -15,7 +15,7 @@
  <dev2 type="FSW" hostname="S248EPTF18001946" model="S224E">
   <console ip="10.105.241.44" line="2083"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.241.12" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <mgmt ip="10.105.241.18" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
   <tftp ip="10.105.19.19" local_ip="10.105.241.12" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
@@ -30,6 +30,6 @@
   <link1 link="dev1:port1,dev2:port1" type="trunk_link" mode="Copper"> </link1>
   <link2 link="dev1:port2,dev2:port2" type="trunk_link" mode="Copper"> </link2>
   <link3 link="dev1:port13,trafgen1:4/16" type="ixia_link" mode="copper"> </link3>
-  <link4 link="dev2:port13,trafgen1:10/6" type="ixia_link" mode="copper"> </link4>
+  <link4 link="dev2:port13,trafgen1:10/5" type="ixia_link" mode="copper"> </link4>
  </connections>
 </testbed>
