@@ -897,6 +897,9 @@ class IXIA:
         preferences.update(TransmitMode="Sequential")
         preferences.TransmitMode = "Sequential"
         print(f"transmit mode after change!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!{preferences.TransmitMode}")
+        for vport in self.vport_holder_list:
+            print(vport.TxMode)
+            vport.TxMode = 'Sequential'
 
     def create_ixia_topologies(self):
         i = 0
