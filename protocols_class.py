@@ -6654,9 +6654,9 @@ class FortiSwitch_XML(FortiSwitch):
 
     def config_auto_isl_port_group(self):
         Info("Start configuring MCLAG auto isl port group")
-        Info("switch role = {self.role}")
-        Info("switch down_links = {self.down_links}")
-        Info("switch down_links_pod = {self.down_links_pod}")
+        Info(f"switch role = {self.role}")
+        Info(f"switch down_links = {self.down_links}")
+        Info(f"switch down_links_pod = {self.down_links_pod}")
         #For 2 tiers MC-LAG, you need the following two lines:
         # if len(self.down_links) == 0 or "tier1" not in self.role:
         #     return
