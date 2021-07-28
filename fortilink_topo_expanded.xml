@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testtopo>
+ <dev1 type="FSW" role="tier1-1-1"> </dev1>
+ <dev2 type="FSW" role="tier1-1-1"> </dev2>
+ <dev3 type="FSW" role="tier2-1-1"> </dev3>
+ <dev4 type="FSW" role="tier2-1-1"> </dev4>
+ <dev5 type="FSW" role="tier3-1-1"> </dev5>
+ <dev6 type="FSW" role="tier3-1-1"> </dev6>
+ <dev7 type="FSW" role="tier3-2-1"> </dev7>
+ <dev8 type="FSW" role="tier3-2-1"> </dev8>
+ <dev9 type="FGT" role="FGT_Active-1"> </dev9>
+ <dev10 type="FGT" role="FGT_Passive-1"> </dev10>
+ <dev11 type="FSW" role="tier3-3-1"> </dev11>
+ <dev12 type="FSW" role="tier3-3-1"> </dev12>
+ <trafgen1 type="IXIA" model="IXIA" role="trafgen"> </trafgen1>
+ <connections>
+  <link1 link="dev9,dev10" type="ha_link"> </link1>
+  <link2 link="dev9,dev10" type="ha_link"> </link2>
+  <link3 link="dev9,dev1" type="tier1_link"> </link3>
+  <link4 link="dev9,dev2" type="tier1_link"> </link4>
+  <link5 link="dev10,dev1" type="tier1_link"> </link5>
+  <link6 link="dev10,dev2" type="tier1_link"> </link6>
+  <link7 link="dev8,trafgen1" type="ixia_link"> </link7>
+  <link8 link="dev3,trafgen1" type="ixia_link"> </link8>
+  <link9 link="dev1,trafgen1" type="ixia_link"> </link9>
+  <link10 link="dev9,trafgen1" type="ixia_link"> </link10>
+  <link11 link="dev10,trafgen1" type="ixia_link"> </link11>
+ </connections>
+</testtopo>
