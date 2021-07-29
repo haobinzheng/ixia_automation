@@ -40,11 +40,6 @@ if __name__ == "__main__":
 	parser.add_argument("-ug", "--sa_upgrade", type = str,help="FSW software upgrade in standlone mode. For debug image enter -1. Example: v6-193,v7-5,-1(debug image)")
 	parser.add_argument("-fg", "--fgt_upgrade", type = str,help="Fortigate software upgrade. For debug image enter -1. Example: v6-193,v7-5,-1(debug image)")
 
-
-	global DEBUG
-	initial_testing = True
-	initial_config = False
-	
 	args = parser.parse_args()
 
 	if args.maintainence:
@@ -253,7 +248,7 @@ if __name__ == "__main__":
 		for sw in switches:
 			sw.switch_factory_reset()
 
-		console_timer(600,msg='After switches are factory reset, wait for 600 seconds')
+		console_timer(1200,msg='After switches are factory reset, wait for 600 seconds')
 
 		for sw in switches:
 			sw.sw_relogin()
@@ -311,7 +306,7 @@ if __name__ == "__main__":
 	
 		for sw in switches:
 			sw.switch_reboot()
-		console_timer(600,msg='After switches are rebooted, wait for 600 seconds')
+		console_timer(1200,msg='After switches are rebooted, wait for 900 seconds')
 
 		for sw in switches:
 			print_attributes(sw)
@@ -326,11 +321,11 @@ if __name__ == "__main__":
 		for sw in managed_sw_list:
 			sw.print_managed_sw_info()
 			if sw.authorized and sw.up:
-				print(f"{sw.switch_id} is authorized and Up")
+				tprint(f"{sw.switch_id} is authorized and Up")
 				fgt_active.execute_custom_command(switch_name=sw.switch_id,cmd="timeout")
 				fgt_active.execute_custom_command(switch_name=sw.switch_id,cmd="console_output")
 			else:
-				print(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
+				tprint(f"{sw.switch_id} is Not authorized or Not up. Authorized={sw.authorized}, Up={sw.up}")
 
 		#Configure mclag_icl links
 		fgt_active.config_msw_mclag_icl()
@@ -348,6 +343,7 @@ if __name__ == "__main__":
 			print_attributes(fgt)
 		
 		for sw in switches:
+			print("After configurig everything, discover switch network again")
 			sw.sw_network_discovery()
 			print_attributes(sw)
 
@@ -395,6 +391,10 @@ if __name__ == "__main__":
 	# 	if d.active:
 	# 		switch = FortiSwitch_XML(d)
 	# 		switches.append(switch)
+
+	global DEBUG
+	initial_testing = True
+	initial_config = True
 
 	for fgt in fortigates:
 		if fgt.mode == "Active":
@@ -499,7 +499,7 @@ if __name__ == "__main__":
 			config system interface
 		"""
 	vlans = []
-	for i in range(100,600):
+	for i in range(100,105):
 		config = f"""
 			edit vlan_{i}
 		        set vdom "root"

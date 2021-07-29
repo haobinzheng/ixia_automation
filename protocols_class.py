@@ -6471,6 +6471,9 @@ class FortiSwitch_XML(FortiSwitch):
 
     def sw_network_discovery(self,*args,**kwargs):
         self.discover_fortiswitch_lldp()
+        print(f"!!!!!!!!!!================= Important: Network Discovery Result ================= !!!!!!!")
+        print(f"switch hostname = {self.hostname}")
+        print(f"switch role = {self.role}")
         print(f"Fortilink ports = {self.fortigate_links}")
         print(f"ICL ports = {self.icl_links}")
         print(f"Uplinke ports = {self.up_links}")

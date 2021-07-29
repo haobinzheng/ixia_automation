@@ -131,10 +131,10 @@
   <location location=" " > </location>
 </dev10>
 
-<dev11 type="FSW" hostname="S148FFTF20000096" model="148F">
-  <console ip="10.105.240.44" line="2035"> </console>
+<dev11 type="FSW" hostname="S148FPTF20000096" model="148F">
+  <console ip="10.105.240.44" line="2036"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.201.154" netmask="255.255.255.252" gateway="10.105.50.254" port="port24"> </mgmt>
+  <mgmt ip="10.105.201.154" netmask="255.255.255.252" gateway="10.105.201.153" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.105.253.57" port="18"> </pdu>
   <tftp ip="10.105.19.19" local_ip="10.105.201.154" gateway="10.105.201.153" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
@@ -144,17 +144,17 @@
   <location location="324/3/15" > </location>
 </dev11>
 
-<dev12 type="FSW" hostname="S148FFTF20000097" model="148F">
-  <console ip="10.105.240.44" line="2034"> </console>
+<dev12 type="FSW" hostname="S148FPTF20000097" model="148F">
+  <console ip="10.105.240.44" line="2037"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.201.6" netmask="255.255.255.252" gateway="10.105.201.5" port="port24"> </mgmt>
+  <mgmt ip="10.105.201.22" netmask="255.255.255.252" gateway="10.105.201.21" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.105.253.57" port="18"> </pdu>
-  <tftp ip="10.105.19.19" local_ip="10.105.201.6" gateway="10.105.201.5" netmask="255.255.255.252" > </tftp>
+  <tftp ip="10.105.19.19" local_ip="10.105.201.22" gateway="10.105.201.21" netmask="255.255.255.252" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
   <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
   <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
-  <location location="324/3/6" > </location>
+  <location location="324/3/7" > </location>
 </dev12>
 
  <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
@@ -171,6 +171,6 @@
   <link9 link="dev1:port13,trafgen1:7/2" type="ixia_link" mode="Copper"> </link9>
   <link10 link="dev9:port13,trafgen1:7/10" type="ixia_link" mode="Copper"> </link10>
   <link11 link="dev10:port13,trafgen1:7/5" type="ixia_link" mode="Copper"> </link11>
-  <link12 link="dev11:port25,trafgen1:4/16" type="ixia_link" mode="Copper"> </link12>
+  <link12 link="dev12:port35,trafgen1:4/16" type="ixia_link" mode="Copper"> </link12>
  </connections>
 </testbed>
