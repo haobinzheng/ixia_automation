@@ -115,20 +115,20 @@
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
   <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
   <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
-  <location location=" " > </location>
+  <location location="R21-41-42 " > </location>
 </dev9>
 
 <dev10 type="FGT" hostname="FG2K5E3917900029" model="FortiGate-2500E">
   <console ip="10.105.50.1" line="2090"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.111" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
-  <pdu model="RARITAN" ip="10.105.50.113" port="2"> </pdu>
+  <pdu model="RARITAN" ip="10.105.50.113" port="3"> </pdu>
   <tftp ip="10.105.19.19" local_ip="10.105.50.111" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
   <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
   <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
-  <location location=" " > </location>
+  <location location="R20-41-42 " > </location>
 </dev10>
 
 <dev11 type="FSW" hostname="S148FPTF20000096" model="148F">
@@ -157,7 +157,7 @@
   <location location="324/3/7" > </location>
 </dev12>
 
- <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.19:11009">
  </trafgen1>
  <connections>
   <link1 link="dev9:port1,dev10:port1" type="ha_link" mode="Copper"> </link1>

@@ -129,7 +129,7 @@ if __name__ == "__main__":
 			switch = FortiSwitch_XML(d,topo_db=tb)
 			switches.append(switch)
 			devices.append(switch)
-		elif d.type == "FGT" and d.active == True:
+		elif d.type == "FGT" and d.active == True and d.role == "FGT_Active-1":
 			fgt = FortiGate_XML(d,topo_db=tb)
 			fortigates.append(fgt)
 			devices.append(fgt)
@@ -466,6 +466,35 @@ if __name__ == "__main__":
 		        set interface {fortilink_name}
 		        set vlanid 15
 		    next
+		    edit "salesvlan16"
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set switch-controller-igmp-snooping enable
+		        set switch-controller-dhcp-snooping enable
+		        set interface {fortilink_name}
+		        set vlanid 16
+		    next
+		    edit "acctvlan17"
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set switch-controller-igmp-snooping enable
+		        set switch-controller-dhcp-snooping enable
+		        set interface {fortilink_name}
+		        set vlanid 17
+		    next
+		    edit "secvlan18"
+		        set vdom "root"
+		        set device-identification enable
+		        set role lan
+		        set switch-controller-access-vlan enable
+		        set switch-controller-igmp-snooping enable
+		        set switch-controller-dhcp-snooping enable
+		        set interface {fortilink_name}
+		        set vlanid 18
 		    edit {fgta.ixia_ports[0]}
 		        set vdom "root"
 		        set ip 172.168.1.1 255.255.255.0
@@ -550,7 +579,7 @@ if __name__ == "__main__":
 			            set onboarding-vlan "onboarding"
 			            set lan-segment enabled
 			            set nac-lan-interface "nac_segment"
-			            set nac-segment-vlans "engvlan11" "financevlan14" "hrvlan13" "marktingvlan12" "tacvlan15" "voice" "video"
+			            set nac-segment-vlans "engvlan11" "financevlan14" "hrvlan13" "marktingvlan12" "tacvlan15" "salesvlan16" "acctvlan17" "voice" "secvlan18" "video"
 			        end
 			    next
 			end
@@ -582,22 +611,35 @@ if __name__ == "__main__":
 		        set fortilink {fortilink_name}
 		        set vlan "engvlan11"
 		    next
-		    edit "hr"
-		        set fortilink {fortilink_name}
-		        set vlan "hrvlan13"
-		    next
 		    edit "marketing"
 		        set fortilink {fortilink_name}
 		        set vlan "marktingvlan12"
 		    next
-		    edit "tac"
+		    edit "hr"
 		        set fortilink {fortilink_name}
-		        set vlan "tacvlan15"
+		        set vlan "hrvlan13"
 		    next
 		    edit "finance"
 		        set fortilink {fortilink_name}
 		        set vlan "financevlan14"
 		    next
+		    edit "tac"
+		        set fortilink {fortilink_name}
+		        set vlan "tacvlan15"
+		    next
+		    edit "sales"
+		        set fortilink {fortilink_name}
+		        set vlan "salesvlan16"
+		    next
+		    edit "acct"
+		        set fortilink {fortilink_name}
+		        set vlan "acctvlan17"
+		    next
+		    edit "sec"
+		        set fortilink {fortilink_name}
+		        set vlan "secvlan18"
+		    next
+		    
 		end
 		end
 		"""
@@ -660,6 +702,26 @@ if __name__ == "__main__":
 		        set mac "00:14:**:**:**:**"
 		        set switch-fortilink {fortilink_name}
 		        set switch-mac-policy "finance"
+		    next
+		    edit "tac-users"
+		        set mac "00:15:**:**:**:**"
+		        set switch-fortilink {fortilink_name}
+		        set switch-mac-policy "tac"
+		    next
+		    edit "sales-users"
+		        set mac "00:16:**:**:**:**"
+		        set switch-fortilink {fortilink_name}
+		        set switch-mac-policy "sales"
+		    next
+		    edit "acct-users"
+		        set mac "00:17:**:**:**:**"
+		        set switch-fortilink {fortilink_name}
+		        set switch-mac-policy "acct"
+		    next
+		    edit "sec-users"
+		        set mac "00:18:**:**:**:**"
+		        set switch-fortilink {fortilink_name}
+		        set switch-mac-policy "sec"
 		    next
 		end
 		end
@@ -733,10 +795,11 @@ if __name__ == "__main__":
 			config system interface
 			delete "engvlan11"
 	 		delete "marktingvlan12"
-	 
 		    delete "hrvlan13"
 		 	delete "financevlan14"
 		  	delete "tacvlan15"
+		  	delete "salesvlan16"
+		  	delete "acctvlan17"
 		end
 		end
 	"""
@@ -764,6 +827,8 @@ if __name__ == "__main__":
 		    delete "marketing"
 		    delete  "tac"
 		    delete "finance"
+		    delete "sales"
+		    delete "acct"
 		end
 		end
 	"""
@@ -775,6 +840,8 @@ if __name__ == "__main__":
 		    delete "marketing-users"
 		   	delete "hr-users"
 		    delete "finance-users"
+		    delete "sales-users"
+		    delete "acct-users"
 		end
 		end
 	"""
