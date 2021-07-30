@@ -393,8 +393,6 @@ if __name__ == "__main__":
 	# 		switches.append(switch)
 
 	global DEBUG
-	initial_testing = True
-	initial_config = True
 
 	for fgt in fortigates:
 		if fgt.mode == "Active":
@@ -846,6 +844,9 @@ if __name__ == "__main__":
 		end
 	"""
 
+	initial_testing = True
+	initial_config = False
+	inital_testing_only = True
 
 
 	if initial_config:
@@ -921,6 +922,9 @@ if __name__ == "__main__":
 		myixia.collect_stats()
 		myixia.check_traffic()
 		myixia.stop_traffic()
+		if inital_testing_only:
+			tprint("=============== Initial tesitng only, bye! ==================")
+			exit()
 
 	for sw in switches:
 		sw.get_crash_log()
