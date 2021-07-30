@@ -902,7 +902,7 @@ if __name__ == "__main__":
 	portList_v4_v6 = []
 	for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 		module,port = p.split("/")
-		portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,5])
+		portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,10])
 
 	print(portList_v4_v6)
 
@@ -913,10 +913,17 @@ if __name__ == "__main__":
 	if initial_testing:
 		myixia.start_protocol(wait=200)
 
-		for i in range(0,len(tb.ixia.port_active_list)-1):
-			for j in range(i+1,len(tb.ixia.port_active_list)):
-				myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
-				myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
+		for i in range(0,len(tb.ixia.port_active_list)):
+			if i == 3:
+				continue
+			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[3].topology,traffic_name=f"t{i+1}_to_t4_v4",tracking_name=f"Tracking_{i+1}_4_v4",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t4_to_t{i+1}_v4",tracking_name=f"Tracking_4_{i+1}_v4",rate=1)
+
+
+		# for i in range(0,len(tb.ixia.port_active_list)-1):
+		# 	for j in range(i+1,len(tb.ixia.port_active_list)):
+		# 		myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
+		# 		myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
 
 		myixia.start_traffic()
 		myixia.collect_stats()
