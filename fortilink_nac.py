@@ -845,7 +845,7 @@ if __name__ == "__main__":
 	"""
 
 	initial_testing = True
-	initial_config = False
+	initial_config = True
 	inital_testing_only = False
 
 
@@ -1510,10 +1510,14 @@ if __name__ == "__main__":
 		vlan_list = [11,12,13,14,15,16,17,18]
 		device_list = tb.ixia.device_list_active
 
+		print(f"~~~~~~~~~~~~~~~~ device_list = {device_list}")
+
 		portList_v4_v6 = []
 		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,1])
+
+
 
 		for ixia_port,dev,vlan in zip(portList_v4_v6,device_list,vlan_list):
 			if "FG2K" not in dev:
