@@ -24,6 +24,7 @@
   <link8 link="dev3,trafgen1" type="ixia_link"> </link8>
   <link9 link="dev1,trafgen1" type="ixia_link"> </link9>
   <link10 link="dev9,trafgen1" type="ixia_link"> </link10>
+  <link11 link="dev12,trafgen1" type="ixia_link"> </link11>
   <link12 link="dev12,trafgen1" type="ixia_link"> </link12>
  </connections>
 </testtopo>

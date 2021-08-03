@@ -1279,7 +1279,9 @@ def ixia_rest_create_topology(*args,**kwargs):
         ethernet = deviceGroup.Ethernet.add(Name=ether_name)
         
         ethernet.Mac.Increment(start_value=mac_start, step_value='00:00:00:00:00:01')
-
+        if start_vlan == "vlan_null":
+            return ethernet,deviceGroup,topology
+            
         if int(multi) >= 1 and int(start_vlan) > 0:
             vlans = ethernet.Vlan.find()
             vlans.VlanId.Increment(start_value=start_vlan, step_value=1)
