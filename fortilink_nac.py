@@ -1508,6 +1508,8 @@ if __name__ == "__main__":
 		net6_list = ["2001:10:1:1::211/64","2001:10:1:1::212/64","2001:10:1:1::213/64","2001:10:1:1::214/64","2001:10:1:1::215/64","2001:10:1:1::216/64","2001:10:1:1::217/64","2001:10:1:1::218/64"]
 		gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
 		vlan_list = [11,12,13,14,15,16,17,18]
+		device_list = tb.ixia.device_list_active
+
 		portList_v4_v6 = []
 		for p,m,n4,g4,n6,g6,v in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
@@ -1519,14 +1521,17 @@ if __name__ == "__main__":
 		for topo in myixia.topologies:
 			topo.add_dhcp_client()
 
+		for topo,dev in zip(myixia.topologies,device_list):
+			topo.connected_device = dev
 		
 		myixia.start_protocol(wait=200)
 
 		
 		for i in range(0,len(tb.ixia.port_active_list)-1):
 			for j in range(i+1,len(tb.ixia.port_active_list)):
-				myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
-				myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
+				if "FG2K" in myixia.topologies[i].connected_device or "FG2K" in myixia.topologies[j].connected_device:
+					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
+					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
 
 		myixia.start_traffic()
 		myixia.collect_stats()
