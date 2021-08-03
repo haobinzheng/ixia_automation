@@ -7831,6 +7831,12 @@ class IXIA_XML():
         self.active = False
         self.port_list = []
         self.port_active_list = []
+        self.device_list = []
+        self.device_list_obj = []
+        self.device_port_list = []
+        self.device_list_active = []
+        self.device_port_list_active = []
+        self.port_dev_pair_list = []
 
 
     def print_ixia_info(self):
@@ -7845,9 +7851,18 @@ class IXIA_XML():
     def update_ixia_portList(self,connections):
         for c in connections:
             if "trafgen" in c.right_device:
+                
+                self.device_list.append(c.left_device_obj.hostname)
+                self.device_list_obj.append(c.left_device_obj)
+                self.device_port_list.append(c.left_port)
                 self.port_list.append(c.right_port)
                 if c.active:
+                    port_dev_pair = {}
                     self.port_active_list.append(c.right_port)
+                    self.device_list_active.append(c.left_device_obj.hostname)
+                    self.device_port_list_active.append(c.left_port)
+                    port_dev_pair[c.right_port] = c.left_device_obj.hostname
+                    self.port_dev_pair_list.append(port_dev_pair)
 
             
 class Device_XML():

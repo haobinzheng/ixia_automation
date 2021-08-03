@@ -42,6 +42,11 @@ class IXIA_TOPOLOGY:
         self.igmp_role = None
         self.ospf2 = None
         self.ipv4_pool_ospf = None
+        self.connected_device = None # This is to be updated at application codes. Device name ixia topo connected to
+        if "start_vlan_different" in kwargs:
+            self.start_vlan_different = kwargs["start_vlan_different"]
+        else:
+            self.start_vlan_different = None
         self.ethernet,self.device_group,self.topology = ixia_rest_create_topology(
         platform = self.ixia.testPlatform, 
         session = self.ixia.Session,
@@ -52,7 +57,7 @@ class IXIA_TOPOLOGY:
         ether_name = self.ether_name,
         multiplier = self.multiplier,    
         mac_start = self.mac_start,
-        start_vlan = self.start_vlan
+        start_vlan = self.start_vlan,
         )    
 
     def add_mld_host(self,*args,**kwargs):
@@ -878,6 +883,11 @@ class IXIA:
         self.apiServerIp = args[0]
         self.ixChassisIpList = args[1]
         self.portList = args[2]
+        if "different_vlan" in kwargs:
+            different_vlan = kwargs['different_vlan']
+        else:
+            different_vlan = False
+
         # self.protocol = kwargs["protocol"]
         #self.bgp_start_as = kwargs["start_as"]
         self.testPlatform,self.Session,self.ixNetwork,self.vport_holder_list = ixia_rest_connect_chassis(self.apiServerIp,self.ixChassisIpList,self.portList)
@@ -888,7 +898,10 @@ class IXIA:
         else:
             self.start_vlan = 0
             self.vlan = False
-        self.topologies = self.create_ixia_topologies()
+        if different_vlan == False:
+            self.topologies = self.create_ixia_topologies()
+        else:
+            self.topologies = self.create_ixia_topologies_different_vlan()
         self.transmitmode()
          
     def transmitmode(self):
@@ -922,6 +935,32 @@ class IXIA:
                 ipv6_gw=self.portList[i][7],
                 multiplier=self.portList[i][8],
                 start_vlan=self.start_vlan
+            )
+            topo_list.append(topo)
+            i += 1
+        return topo_list
+
+    def create_ixia_topologies_different_vlan(self):
+        i = 0
+        bgp_as = None
+        topo_list = []
+        for port in self.vport_holder_list:
+            print(self.portList[i][3])
+            topo = IXIA_TOPOLOGY(self,port,
+                name=f"Topology_{i+1}",
+                dg_name=f"DG{i+1}",
+                ether_name=f"Ethernet_{i+1}",
+                ipv4_name=f"IPv4_{i+1}",
+                ipv6_name=f"IPv6_{i+1}",
+                dhcp_client_name=f"DHCP_Client_{i+1}",
+                dhcp_server_name=f"DHCP_Server_{i+1}",
+                mac_start=self.portList[i][3],
+                ipv4= self.portList[i][4],
+                ipv4_gw= self.portList[i][5],
+                ipv6=self.portList[i][6],
+                ipv6_gw=self.portList[i][7],
+                multiplier=self.portList[i][8],
+                start_vlan=self.portList[i][9],
             )
             topo_list.append(topo)
             i += 1
@@ -1241,7 +1280,7 @@ def ixia_rest_create_topology(*args,**kwargs):
         
         ethernet.Mac.Increment(start_value=mac_start, step_value='00:00:00:00:00:01')
 
-        if int(multi) > 1 and int(start_vlan) > 0:
+        if int(multi) >= 1 and int(start_vlan) > 0:
             vlans = ethernet.Vlan.find()
             vlans.VlanId.Increment(start_value=start_vlan, step_value=1)
             ethernet.EnableVlans.Single("True")
