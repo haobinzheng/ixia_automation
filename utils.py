@@ -582,7 +582,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	# good_out_list = out_str_list[index:]
 	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
 	debug(good_out_list)
-	#print_output_list(good_out_list)
+	print_output_list(good_out_list)
 	return good_out_list
 
 def show_execute_cmd(tn,cmd,**kwargs):

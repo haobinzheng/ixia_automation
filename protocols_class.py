@@ -6086,7 +6086,7 @@ class FortiSwitch:
     def sw_fnsysctl_process(self,lw_list):
         lw_dict = {}
         for item in lw_list:
-            #print(item)
+            print(item)
             if "PID" in item or "VSZ" in item:
                 continue 
             item_list = item.split()
