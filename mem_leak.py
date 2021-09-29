@@ -248,7 +248,7 @@ if __name__ == "__main__":
 						print(f"No memory leak | {k}: before ={lw_old_dict[k]}, now = {v}")
 			lw_old_dict = lw_current_dict
 			# sw.fsw_show_cmd("diagnose switch physical-ports io-stats cumulative")
-		sleep(10)
+		sleep(300)
 		print_double_line()
 	
 	apiServerIp = tb.ixia.ixnetwork_server_ip
