@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testbed name="hb-tb">
- <dev1 type="FSW" hostname="S248EP3X17000032" model="S248E">
-  <console ip="10.105.240.144" line="2094"> </console>
+ <dev1 type="FSW" hostname="S124EF4N17000029" model="S124E">
+  <console ip="10.105.241.144" line="2087"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.241.116" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <mgmt ip="10.105.201.190" netmask="255.255.255.252" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
   <tftp ip="10.105.19.19" local_ip="10.105.241.12" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
@@ -12,10 +12,10 @@
   <license licenses="QJ6NP-LTEJE-ST4H3-VF7JD-SPCAE-E88Q4-6,X594Y-JNBFT-P9B7K-LRV8E-2DB3Q-9HKTR-T"> </license>
   <rack rack_num="324/5/6"> </rack>
  </dev1>
- <dev2 type="FSW" hostname="S248EPTF18001946" model="S248E">
-  <console ip="10.105.241.44" line="2083"> </console>
+ <dev2 type="FSW" hostname="S424EPTF19000006" model="S424E">
+  <console ip="10.105.241.144" line="2003"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.241.18" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <mgmt ip="10.105.241.128" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
   <tftp ip="10.105.19.19" local_ip="10.105.241.12" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
@@ -24,12 +24,13 @@
   <license licenses="QJ6NP-LTEJE-ST4H3-VF7JD-SPCAE-E88Q4-6,X594Y-JNBFT-P9B7K-LRV8E-2DB3Q-9HKTR-T"> </license>
   <rack rack_num="324/7/18"> </rack>
  </dev2>
- <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.19:11009">
  </trafgen1>
  <connections>
   <link1 link="dev1:port1,dev2:port1" type="trunk_link" mode="Copper"> </link1>
   <link2 link="dev1:port2,dev2:port2" type="trunk_link" mode="Copper"> </link2>
-  <link3 link="dev1:port13,trafgen1:4/16" type="ixia_link" mode="copper"> </link3>
-  <link4 link="dev2:port13,trafgen1:10/5" type="ixia_link" mode="copper"> </link4>
+  <link3 link="dev1:port3,dev2:port3" type="trunk_link" mode="Copper"> </link3>
+  <link4 link="dev1:port23,trafgen1:6/10" type="ixia_link" mode="copper"> </link4>
+  <link5 link="dev2:port23,trafgen1:6/11" type="ixia_link" mode="copper"> </link5>
  </connections>
 </testbed>

@@ -6080,7 +6080,23 @@ class FortiSwitch:
     def fsw_show_cmd(self,cmd):
         dut = self.console
         result = collect_show_cmd(dut,cmd,t=3)
+        return result
         #print_collect_show(result)
+
+    def sw_fnsysctl_process(self,lw_list):
+        lw_dict = {}
+        for item in lw_list:
+            #print(item)
+            if "PID" in item or "VSZ" in item:
+                continue 
+            item_list = item.split()
+            if len(item_list) < 10:
+                continue
+            #print(item_list)
+            lw_dict[item_list[9]] = int(item_list[5])
+
+        # print(lw_dict)
+        return lw_dict
 
 class FortiSwitch_XML(FortiSwitch):
     def __init__(self,*args,**kwargs):

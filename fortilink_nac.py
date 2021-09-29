@@ -420,7 +420,7 @@ if __name__ == "__main__":
 		        set role lan
 		        set switch-controller-access-vlan enable
 		        set interface {fortilink_name}
-		        set switch-controller-igmp-snooping enable
+		        set switch-controller-igmp-snooping disable
 		        set switch-controller-dhcp-snooping enable
 		        set vlanid 11
 		    next
@@ -429,7 +429,7 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set switch-controller-igmp-snooping enable
+		        set switch-controller-igmp-snooping disable
 		        set switch-controller-dhcp-snooping enable
 		        set interface {fortilink_name}
 		        set vlanid 12
@@ -439,7 +439,7 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set switch-controller-igmp-snooping enable
+		        set switch-controller-igmp-snooping disable
 		        set switch-controller-dhcp-snooping enable
 		        set interface {fortilink_name}
 		        set vlanid 13
@@ -449,7 +449,7 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set switch-controller-igmp-snooping enable
+		        set switch-controller-igmp-snooping disable
 		        set switch-controller-dhcp-snooping enable
 		        set interface {fortilink_name}
 		        set vlanid 14
@@ -459,7 +459,7 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set switch-controller-igmp-snooping enable
+		        set switch-controller-igmp-snooping disable
 		        set switch-controller-dhcp-snooping enable
 		        set interface {fortilink_name}
 		        set vlanid 15
@@ -469,7 +469,7 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set switch-controller-igmp-snooping enable
+		        set switch-controller-igmp-snooping disable
 		        set switch-controller-dhcp-snooping enable
 		        set interface {fortilink_name}
 		        set vlanid 16
@@ -479,7 +479,7 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set switch-controller-igmp-snooping enable
+		        set switch-controller-igmp-snooping disable
 		        set switch-controller-dhcp-snooping enable
 		        set interface {fortilink_name}
 		        set vlanid 17
@@ -489,7 +489,7 @@ if __name__ == "__main__":
 		        set device-identification enable
 		        set role lan
 		        set switch-controller-access-vlan enable
-		        set switch-controller-igmp-snooping enable
+		        set switch-controller-igmp-snooping disable
 		        set switch-controller-dhcp-snooping enable
 		        set interface {fortilink_name}
 		        set vlanid 18
@@ -905,7 +905,7 @@ if __name__ == "__main__":
 	portList_v4_v6 = []
 	for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 		module,port = p.split("/")
-		portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,10])
+		portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,200])
 
 	print(portList_v4_v6)
 
@@ -919,11 +919,11 @@ if __name__ == "__main__":
 	if initial_testing:
 		myixia.start_protocol(wait=200)
 
-		for i in range(0,len(tb.ixia.port_active_list)):
-			if i == 3:
-				continue
-			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[3].topology,traffic_name=f"t{i+1}_to_t4_v4",tracking_name=f"Tracking_{i+1}_4_v4",rate=1)
-			myixia.create_traffic(src_topo=myixia.topologies[3].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t4_to_t{i+1}_v4",tracking_name=f"Tracking_4_{i+1}_v4",rate=1)
+		for i in range(0,len(tb.ixia.port_active_list)-1):
+			for j in range(i+1,len(tb.ixia.port_active_list)):
+				if "FG2K" in myixia.topologies[i].connected_device or "FG2K" in myixia.topologies[j].connected_device:
+					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
+					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
 
 
 		# for i in range(0,len(tb.ixia.port_active_list)-1):
@@ -944,6 +944,7 @@ if __name__ == "__main__":
 
 	if testcase == 0:
 		print("Just do a intial_testing and exiting....")
+		exit(0)
 
 	if testcase == 1 or test_all:
 		testcase = 1
@@ -1141,6 +1142,7 @@ if __name__ == "__main__":
 
 	if testcase == 4 or test_all:
 		testcase = 4
+		description = "negative: change port nac--> static --> nac, user unmatched"
 		myixia.start_traffic()
 		for sw in switches:
 			sw.clear_crash_log()
@@ -1500,7 +1502,7 @@ if __name__ == "__main__":
 
 	if testcase == 13 or test_all:
 		testcase = 13
-		description = "Each port is individually vlan tagged"
+		description = "Each port is individually vlan tagged with its user vlan, won't work"
 
 		mac_list = ["00:11:01:01:01:01","00:12:02:01:01:01","00:13:03:01:01:01","00:14:04:01:01:01","00:15:05:01:01:01","00:16:06:01:01:01","00:17:07:01:01:01","00:18:08:01:01:01"]
 		net4_list = ["10.1.1.211/24","10.1.1.212/24","10.1.1.213/24","10.1.1.214/24","10.1.1.215/24","10.1.1.216/24","10.1.1.217/24","10.1.1.218/24","10.1.1.219/24","10.1.1.220/24"]
@@ -1518,10 +1520,10 @@ if __name__ == "__main__":
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,1])
 
 
-
+		print(portList_v4_v6)
 		for ixia_port,dev,vlan in zip(portList_v4_v6,device_list,vlan_list):
 			if "FG2K" not in dev:
-				ixia_port.apppend(vlan)
+				ixia_port.append(vlan)
 			else:
 				ixia_port.append("vlan_null")
 
@@ -1537,6 +1539,13 @@ if __name__ == "__main__":
 		myixia.start_protocol(wait=200)
 
 		
+		for sw in switches:
+			if len(sw.ixia_ports) >= 1:
+				sw.show_command("show switch vlan")
+				sw.show_command("show switch acl ingress")
+				for port in sw.ixia_ports:
+					sw.show_command(f"show switch interface {port}")
+
 		for i in range(0,len(tb.ixia.port_active_list)-1):
 			for j in range(i+1,len(tb.ixia.port_active_list)):
 				if "FG2K" in myixia.topologies[i].connected_device or "FG2K" in myixia.topologies[j].connected_device:
@@ -1548,6 +1557,97 @@ if __name__ == "__main__":
 		myixia.check_traffic()
 		myixia.stop_traffic()
 
+	if testcase == 14 or test_all:
+		testcase = 14
+		description = "Each port is vlan tagged with primary vlan, won't work"
+
+		mac_list = ["00:11:01:01:01:01","00:12:02:01:01:01","00:13:03:01:01:01","00:14:04:01:01:01","00:15:05:01:01:01","00:16:06:01:01:01","00:17:07:01:01:01","00:18:08:01:01:01"]
+		net4_list = ["10.1.1.211/24","10.1.1.212/24","10.1.1.213/24","10.1.1.214/24","10.1.1.215/24","10.1.1.216/24","10.1.1.217/24","10.1.1.218/24","10.1.1.219/24","10.1.1.220/24"]
+		gw4_list = ["10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1"]
+		net6_list = ["2001:10:1:1::211/64","2001:10:1:1::212/64","2001:10:1:1::213/64","2001:10:1:1::214/64","2001:10:1:1::215/64","2001:10:1:1::216/64","2001:10:1:1::217/64","2001:10:1:1::218/64"]
+		gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
+		vlan_list = [4088,4088,4088,4088,4088,4088,4088,4088]
+		device_list = tb.ixia.device_list_active
+
+		print(f"~~~~~~~~~~~~~~~~ device_list = {device_list}")
+
+		portList_v4_v6 = []
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,1])
+
+
+		print(portList_v4_v6)
+		for ixia_port,dev,vlan in zip(portList_v4_v6,device_list,vlan_list):
+			if "FG2K" not in dev:
+				ixia_port.append(vlan)
+			else:
+				ixia_port.append("vlan_null")
+
+		print(portList_v4_v6)
+
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6,different_vlan=True)
+		for topo in myixia.topologies:
+			topo.add_dhcp_client()
+
+		for topo,dev in zip(myixia.topologies,device_list):
+			topo.connected_device = dev
+		
+		myixia.start_protocol(wait=200)
+
+		
+		for sw in switches:
+			if len(sw.ixia_ports) >= 1:
+				sw.show_command("show switch vlan")
+				sw.show_command("show switch acl ingress")
+				for port in sw.ixia_ports:
+					sw.show_command(f"show switch interface {port}")
+
+		for i in range(0,len(tb.ixia.port_active_list)-1):
+			for j in range(i+1,len(tb.ixia.port_active_list)):
+				if "FG2K" in myixia.topologies[i].connected_device or "FG2K" in myixia.topologies[j].connected_device:
+					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
+					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
+
+		myixia.start_traffic()
+		myixia.collect_stats()
+		myixia.check_traffic()
+		myixia.stop_traffic()
+
+	if testcase == 15 or test_all:
+		testcase = 15
+		description = "Same segment can communicate with each other"
+
+		mac_list = ["00:11:01:01:01:01","00:12:02:01:01:01","00:13:03:01:01:01","00:14:04:01:01:01","00:15:05:01:01:01","00:16:06:01:01:01","00:17:07:01:01:01","00:18:08:01:01:01"]
+		net4_list = ["10.1.1.211/24","10.1.1.212/24","10.1.1.213/24","10.1.1.214/24","10.1.1.215/24","10.1.1.216/24","10.1.1.217/24","10.1.1.218/24","10.1.1.219/24","10.1.1.220/24"]
+		gw4_list = ["10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1"]
+		net6_list = ["2001:10:1:1::211/64","2001:10:1:1::212/64","2001:10:1:1::213/64","2001:10:1:1::214/64","2001:10:1:1::215/64","2001:10:1:1::216/64","2001:10:1:1::217/64","2001:10:1:1::218/64"]
+		gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
+
+		portList_v4_v6 = []
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,10])
+
+		print(portList_v4_v6)
+
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+		for topo in myixia.topologies:
+			topo.add_dhcp_client()
+
+		
+		myixia.start_protocol(wait=200)
+
+		
+		for i in range(0,len(tb.ixia.port_active_list)-1):
+			for j in range(i+1,len(tb.ixia.port_active_list)):
+				myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
+				myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
+
+		myixia.start_traffic()
+		myixia.collect_stats()
+		myixia.check_traffic()
+		myixia.stop_traffic()
 
 
 
