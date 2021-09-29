@@ -238,7 +238,7 @@ if __name__ == "__main__":
 				debug(f"Having problem to collect fnsysctl top command on {sw.name}")
 				continue
 
-			sw.fsw_show_cmd("diagnose test application fpmd 1")
+			#sw.fsw_show_cmd("diagnose test application fpmd 1")
 			lw_list = sw.fsw_show_cmd("fnsysctl ps -lw")
 			lw_current_dict = sw.sw_fnsysctl_process(lw_list)
 			if bool(lw_old_dict):
