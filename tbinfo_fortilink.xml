@@ -115,7 +115,7 @@
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
   <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
   <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
-  <location location=" " > </location>
+  <location location="R21-41-42 " > </location>
 </dev9>
 
 <dev10 type="FGT" hostname="FG2K5E3917900029" model="FortiGate-2500E">
@@ -128,7 +128,7 @@
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
   <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
   <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
-  <location location=" " > </location>
+  <location location="R20-41-42" > </location>
 </dev10>
 
  <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
@@ -140,10 +140,9 @@
   <link4 link="dev9:port4,dev2:port1" type="tier1_link" mode="Copper"> </link4>
   <link5 link="dev10:port3,dev1:port2" type="tier1_link" mode="Copper"> </link5>
   <link6 link="dev10:port4,dev2:port2" type="tier1_link" mode="Copper"> </link6>
-  <link7 link="dev8:port9,trafgen1:7/9" type="ixia_link" mode="Copper"> </link7>
-  <link8 link="dev3:port13,trafgen1:7/11" type="ixia_link" mode="Copper"> </link8>
-  <link9 link="dev1:port13,trafgen1:7/2" type="ixia_link" mode="Copper"> </link9>
-  <link10 link="dev9:port13,trafgen1:7/10" type="ixia_link" mode="Copper"> </link10>
-  <link11 link="dev10:port13,trafgen1:7/5" type="ixia_link" mode="Copper"> </link11>
+  <link7 link="dev4:port13,trafgen1:10/6" type="ixia_link" mode="Copper"> </link7>
+  <link8 link="dev2:port13,trafgen1:6/11" type="ixia_link" mode="Copper"> </link8>
+  <link9 link="dev6:port13,trafgen1:7/10" type="ixia_link" mode="Copper"> </link9>
+  <link10 link="dev9:port13,trafgen1:6/10" type="ixia_link" mode="Copper"> </link10>
  </connections>
 </testbed>

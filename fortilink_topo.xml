@@ -18,10 +18,9 @@
   <link4 link="dev9,dev2" type="tier1_link"> </link4>
   <link5 link="dev10,dev1" type="tier1_link"> </link5>
   <link6 link="dev10,dev2" type="tier1_link"> </link6>
-  <link7 link="dev8,trafgen1" type="ixia_link"> </link7>
-  <link8 link="dev3,trafgen1" type="ixia_link"> </link8>
-  <link9 link="dev1,trafgen1" type="ixia_link"> </link9>
+  <link7 link="dev4,trafgen1" type="ixia_link"> </link7>
+  <link8 link="dev2,trafgen1" type="ixia_link"> </link8>
+  <link9 link="dev6,trafgen1" type="ixia_link"> </link9>
   <link10 link="dev9,trafgen1" type="ixia_link"> </link10>
-  <link11 link="dev10,trafgen1" type="ixia_link"> </link11>
  </connections>
 </testtopo>
