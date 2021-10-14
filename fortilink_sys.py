@@ -134,7 +134,7 @@ if __name__ == "__main__":
 			switch = FortiSwitch_XML(d,topo_db=tb)
 			switches.append(switch)
 			devices.append(switch)
-		elif d.type == "FGT" and d.active == True and d.role == "FGT_Active-1"
+		elif d.type == "FGT" and d.active == True and d.role == "FGT_Active-1":
 			fgt = FortiGate_XML(d,topo_db=tb)
 			fortigates.append(fgt)
 			devices.append(fgt)
