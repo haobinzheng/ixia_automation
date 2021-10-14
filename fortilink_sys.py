@@ -860,6 +860,7 @@ if __name__ == "__main__":
 
 	if testcase == 0:
 		print("Just do a intial_testing and exiting....")
+		exit()
 
 	if testcase == 1 or test_all:
 		testcase = 1
