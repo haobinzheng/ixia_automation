@@ -6775,6 +6775,7 @@ class FortiGate_XML(FortiSwitch):
         config system global
         set hostname {name}
         end
+        end
         """
         config_cmds_lines(self.console,config)
 
