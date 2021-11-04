@@ -878,6 +878,62 @@ class BGPv4_IXIA_TOPOLOGY(IXIA_TOPOLOGY):
         mac_start = self.mac_start,
         )     
 
+class IXIA_Classic:
+    def __init__(self,*args,**kwargs):
+        self.apiServerIp = args[0]
+        self.ixChassisIpList = args[1]
+        self.portList = args[2]
+        if "different_vlan" in kwargs:
+            different_vlan = kwargs['different_vlan']
+        else:
+            different_vlan = False
+
+        # self.protocol = kwargs["protocol"]
+        #self.bgp_start_as = kwargs["start_as"]
+        self.testPlatform,self.Session,self.ixNetwork,self.vport_holder_list = ixia_rest_connect_chassis(self.apiServerIp,self.ixChassisIpList,self.portList)
+        #self.transmitmode()
+
+
+    def create_mstp(self,*args,**kwargs):
+        if "mode" in kwargs:
+            mode = kwargs['mode']
+        else:
+            mode = "mstp"
+
+        for port in self.vport_holder_list:
+        # add an interface
+            stp = port.Protocols.find().Stp
+            stp.Enabled = True
+            bridge = stp.Bridge.add()
+            bridge.Mode = mode
+            bridge.Enabled = True
+            bridge.BridgeTopologyChange()
+            msti = bridge.Msti
+            msti.add(Enabled=True,Mac="00:00:00:00:00:01",MstiId=1, MstiName="instance 1", Priority=4096, UpdateRequired=None, VlanStart=1, VlanStop=4000)
+            #STP VLANs for use with PVST+/RPVST, Not for MSTP
+            # vlan = bridge.Vlan  
+            # vlan.add()
+            #vlan.add(Enabled=True,Mac="00:10:10:10:10:10",Priority=4096,VlanId=4001)
+            interface = bridge.Interface
+            interface.add()
+            interface.Enabled = True
+            cist = bridge.Cist
+            bool = True
+            msti.TopologyChange()
+            bridge.BridgeTopologyChange()
+            # ipv4 = interface.Ipv4.add(Ip='1.1.1.1', Gateway='1.1.2.1')
+
+            # # enable bgp
+            # bgp = vport.Protocols.find().Bgp
+            # bgp.Enabled = True
+
+            # # add a bgp neighbor range
+            # neighbor_range = bgp.NeighborRange.add(Interfaces=interface, Enabled=True, EnableBgpId=True)
+
+            # # verify the neighbor range has been added on the server
+            # assert(len(neighbor_range.find()) == 1)
+
+
 class IXIA:
     def __init__(self,*args,**kwargs):
         self.apiServerIp = args[0]
@@ -1117,7 +1173,9 @@ class IXIA:
         platform = self.testPlatform, 
         session = self.Session,
         ixnet = self.ixNetwork, 
-    )
+        )
+        sleep(5)
+
     def check_traffic(self):
         if check_traffic_detail(self.flow_stats_list) == False:
             tprint("========================= Failed: significant packet loss ============")
@@ -2264,7 +2322,7 @@ def ixia_rest_clear_stats(*args,**kwargs):
         ixNetwork = kwargs['ixnet']
 
         ixNetwork.ClearPortsAndTrafficStats()
-        console_timer(20,msg="wait 20s for traffic stats to cleared")
+        console_timer(10,msg="wait 10s for traffic stats to cleared")
         #The following line print out all rows stats at once
         #Assistant(ixNetwork, 'Traffic Item Statistics')
         # ixNetwork.info('{}\n'.format(flowStatistics))
@@ -2283,35 +2341,40 @@ def ixia_rest_collect_stats(*args,**kwargs):
 
         #The following line print out all rows stats at once
         flowStatistics = StatViewAssistant(ixNetwork, 'Flow Statistics')
-        print(flowStatistics)
-        print(dir(flowStatistics))
-        print(type(flowStatistics))
-        print("--------------------------------------------------------")
-        print(flowStatistics.Rows)
-        print(dir(flowStatistics.Rows))
-        print(type(flowStatistics))
+        dprint(flowStatistics)
+        dprint(dir(flowStatistics))
+        dprint(type(flowStatistics))
+        dprint("--------------------------------------------------------")
+        dprint(flowStatistics.Rows)
+        dprint(dir(flowStatistics.Rows))
+        dprint(type(flowStatistics))
         # ixNetwork.info('{}\n'.format(flowStatistics))
         flow_stats_list = []
         for rowNumber,flowStat in enumerate(flowStatistics.Rows):
             flowStat_dict = {}
             ixNetwork.info('\n\nSTATS: {}\n\n'.format(flowStat))
-            ixNetwork.info('\nRow:{}  TxPort:{}  RxPort:{}  TxFrames:{}  RxFrames:{}  Delta:{} Tx Rate:{}\n'.format(
+            ixNetwork.info('\nRow:{}  TxPort:{}  RxPort:{}  TxFrames:{}  RxFrames:{}  Delta:{} Tx Frame Rate:{}\n'.format(
                 rowNumber, flowStat['Tx Port'], flowStat['Rx Port'],
-                flowStat['Tx Frames'], flowStat['Rx Frames'],flowStat["Frames Delta"],flowStat["Tx Rate (Bps)"]))
+                flowStat['Tx Frames'], flowStat['Rx Frames'],flowStat["Frames Delta"],flowStat["Tx Frame Rate"]))
             flowStat_dict['Tx Port'] = flowStat['Tx Port'] 
             flowStat_dict['Tx Port'] = flowStat['Tx Port']
             flowStat_dict['Tx Frames'] = int(flowStat['Tx Frames'])
             flowStat_dict['Rx Frames'] = int(flowStat['Rx Frames'])
             flowStat_dict["Frames Delta"] = int(flowStat["Frames Delta"])
-            flowStat_dict['Loss %'] = float((flowStat['Loss %']))
+            flowStat_dict['Loss %'] = (flowStat['Loss %'])
             flowStat_dict["Tx Rate (Bps)"] = (flowStat["Tx Rate (Bps)"])
             flowStat_dict['Traffic Item'] =  flowStat['Traffic Item']
             flowStat_dict['Flow Group'] =    flowStat['Flow Group']
-            flowStat_dict['Tx Frame Rate'] = (flowStat['Tx Frame Rate'])
-            flowStat_dict['Tx Rate (bps)'] = (flowStat['Tx Rate (bps)'])
+            flowStat_dict['Tx Frame Rate'] = float(flowStat['Tx Frame Rate'])
+            flowStat_dict['Tx Rate (bps)'] = float(flowStat['Tx Rate (bps)'])
+            try:
+                flowStat_dict["Loss Time"] = flowStat_dict["Frames Delta"]/flowStat_dict['Tx Frame Rate']
+            except Exception as e:
+                print("Exception mostly likely caused by devided by zero")
+                flowStat_dict["Loss Time"] = "N/A"
             flow_stats_list.append(flowStat_dict)
 
-        print(flow_stats_list)
+        dprint(flow_stats_list)
         return flow_stats_list
 
         # flowStatistics = StatViewAssistant(ixNetwork, 'Traffic Item Statistics')
@@ -2697,8 +2760,8 @@ def ixia_rest_change_route_properties(*args, **kwargs):
  
  
 if __name__ == "__main__":
-    apiServerIp = '10.105.252.120'
-    #apiServerIp = '10.105.19.19'
+    #apiServerIp = '10.105.252.120'
+    apiServerIp = '10.105.19.31'
     ixChassisIpList = ['10.105.241.234']
 
     # apiServerIp = '10.105.0.119'
@@ -2712,9 +2775,12 @@ if __name__ == "__main__":
     # [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
     # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
     
-    ipv6_portList = [[ixChassisIpList[0], 4,16,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
-    [ixChassisIpList[0], 10, 5,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
-]
+    ipv6_portList = [[ixChassisIpList[0], 4,3,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
+    [ixChassisIpList[0], 4, 4,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
+]   
+    myixia = IXIA_Classic(apiServerIp,ixChassisIpList,ipv6_portList)
+    myixia.create_mstp()
+    exit()
     myixia = IXIA(apiServerIp,ixChassisIpList,ipv6_portList)
 
 

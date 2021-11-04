@@ -6269,6 +6269,11 @@ class FortiSwitch_XML(FortiSwitch):
             version = kwargs['version']
         else:
             version = "v6"
+
+        if "tftp_server" in kwargs:
+            tftp_server = kwargs['tftp_server']
+        else:
+            tftp_server = "10.105.19.31"
         dut = self.console
         dut_name = self.name
 
@@ -6290,7 +6295,7 @@ class FortiSwitch_XML(FortiSwitch):
         dprint(f"image name = {image_name}")
 
         switch_exec_cmd(fgt1,'config global')
-        cmd = f"execute switch-controller switch-software upload tftp {image_name} 10.105.19.19"
+        cmd = f"execute switch-controller switch-software upload tftp {image_name} {tftp_server}"
         switch_exec_cmd(fgt1, cmd)
         sleep(60)
         cmd = "execute switch-controller switch-software list-available"
@@ -6545,14 +6550,16 @@ class FortiSwitch_XML(FortiSwitch):
                     lldp.remote_port = lldp_dict["Port-ID"]
                     lldp_obj_list.append(lldp)
                     lldp_dict_list.append(lldp_dict)
-                    print("############################### Debug ########################")
-                    print(f"Debug: Looking for this neighbor: {lldp.remote_system}")
+                    dprint("############################### Debug ########################")
+                    dprint(f"Debug: Looking for this neighbor: {lldp.remote_system}")
                     for device in self.tb.devices:
+                        if device.serial_number == None:
+                            continue
                         if (lldp.remote_system == device.hostname or lldp.remote_system == device.discovered_hostname \
                             or device.serial_number in lldp.remote_system) \
                             and self.serial_number != device.serial_number:
-                            print(f"===== Debug:device hostname: {device.hostname}")
-                            print(f"===== Debug: device discovered hostname: {device.discovered_hostname}")
+                            dprint(f"===== Debug:device hostname: {device.hostname}")
+                            dprint(f"===== Debug: device discovered hostname: {device.discovered_hostname}")
                             lldp.remote_system_role = device.role
                             if "FGT" in device.role and 'tier' in self.role:
                                 self.fortigate_links.append(lldp.local_port)
@@ -6587,9 +6594,14 @@ class FortiSwitch_XML(FortiSwitch):
 
         self.lldp_dict_list = lldp_dict_list
         self.lldp_obj_list = lldp_obj_list
-        print(self.lldp_dict_list)
+        dprint(self.lldp_dict_list)
 
 
+    def shut_port(self,port):
+        switch_shut_port(self.console,port)
+
+    def unshut_port(self,port):
+        switch_unshut_port(self.console,port)
 
     def switch_factory_reset(self):
         tprint(f":::::::::: Factory resetting {self.hostname} :::::::::::")

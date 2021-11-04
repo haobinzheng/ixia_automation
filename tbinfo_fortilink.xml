@@ -131,7 +131,20 @@
   <location location="R20-41-42" > </location>
 </dev10>
 
- <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.31:11009">
+<dev11 type="FSW" hostname="S224DFTF19000009" model="S224D">
+  <console ip="10.105.241.144" line="2080"> </console>
+  <login username="admin" password="Fortinet123!"> </login>
+  <mgmt ip="10.105.241.112" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.105.253.57" port="18"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+  <location location="324/8/11" > </location>
+</dev11>
+
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
  </trafgen1>
  <connections>
   <link1 link="dev9:port1,dev10:port1" type="ha_link" mode="Copper"> </link1>
@@ -143,6 +156,7 @@
   <link7 link="dev4:port13,trafgen1:10/6" type="ixia_link" mode="Copper"> </link7>
   <link8 link="dev2:port13,trafgen1:6/11" type="ixia_link" mode="Copper"> </link8>
   <link9 link="dev6:port13,trafgen1:7/10" type="ixia_link" mode="Copper"> </link9>
-  <link10 link="dev9:port13,trafgen1:6/10" type="ixia_link" mode="Copper"> </link10>
+  <link10 link="dev9:port13,trafgen1:7/4" type="ixia_link" mode="Copper"> </link10>
+  <link11 link="dev11:port13,trafgen1:6/13" type="ixia_link" mode="Copper"> </link11>
  </connections>
 </testbed>
