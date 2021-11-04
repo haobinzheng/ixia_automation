@@ -440,16 +440,32 @@ def switch_flap_port(tn, port):
 	switch_unshut_port(tn,port)
 
 def switch_shut_port(tn,port):
-	switch_configure_cmd(tn,"config switch physical")
-	switch_configure_cmd(tn,"edit {}".format(port))
-	switch_configure_cmd(tn,"set status down")
-	switch_configure_cmd(tn,"end")
+
+	config = f"""
+		config switch physical
+		edit {port}
+		set status down
+		end
+		"""
+	config_cmds_lines(tn,config)
+
+	# switch_configure_cmd(tn,"config switch physical")
+	# switch_configure_cmd(tn,"edit {}".format(port))
+	# switch_configure_cmd(tn,"set status down")
+	# switch_configure_cmd(tn,"end")
 
 def switch_unshut_port(tn,port):
-	switch_configure_cmd(tn,"config switch physical")
-	switch_configure_cmd(tn,"edit {}".format(port))
-	switch_configure_cmd(tn,"set status up")
-	switch_configure_cmd(tn,"end")
+	config = f"""
+		config switch physical
+		edit {port}
+		set status up
+		end
+		"""
+	config_cmds_lines(tn,config)
+	# switch_configure_cmd(tn,"config switch physical")
+	# switch_configure_cmd(tn,"edit {}".format(port))
+	# switch_configure_cmd(tn,"set status up")
+	# switch_configure_cmd(tn,"end")
 
 def switch_system_interface_shut(tn,port):
 	fgt_shut_port(tn,port)

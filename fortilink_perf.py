@@ -453,8 +453,6 @@ if __name__ == "__main__":
 	
 	myixia.start_traffic()
 
-
-
 	################################# repeated test steps ################################
 	def reboot_testing():
 		for sw in switches:
@@ -646,7 +644,7 @@ if __name__ == "__main__":
 		index += 1
 	console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
 	test_log.write(f"============================================================================================================\n")
-	test_log.write(f"================ Enable split-brian-detect/ Enable hut ports. Performance tesing ===================\n")
+	test_log.write(f"================ Enable split-brian-detect/ Enable shut-ports. Performance tesing ===================\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
 	reboot_testing()
