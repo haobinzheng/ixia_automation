@@ -629,7 +629,20 @@ def show_execute_cmd(tn,cmd,**kwargs):
 	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
 	print_cmd_output_from_list(good_out_list)
 	debug(good_out_list)
-	
+
+def collect_long_execute_cmd(tn,cmd,**kwargs):
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 8
+	#relogin_if_needed(tn)
+	original_cmd = cmd
+	cmd_bytes = convert_cmd_ascii_n(cmd)
+	tn.write(cmd_bytes)
+	output = switch_read_console_output(tn,timeout = timeout)
+	good_out_list = clean_show_output_recursive(output,original_cmd)
+	print(good_out_list)
+	return good_out_list
 
 def collect_execute_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:
@@ -644,7 +657,7 @@ def collect_execute_cmd(tn,cmd,**kwargs):
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	sleep(timeout)
 	output = tn.read_very_eager()
-	debug(output)
+	print(output)
 	#output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
@@ -657,7 +670,7 @@ def collect_execute_cmd(tn,cmd,**kwargs):
 		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
 
 	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
-	debug(good_out_list)
+	print(good_out_list)
 	return good_out_list
 
 def process_show_command(output):

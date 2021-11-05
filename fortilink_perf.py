@@ -400,7 +400,7 @@ if __name__ == "__main__":
 	for fgt in fortigates:
 		if fgt.mode == "Active":
 			fgt_active = fgt
-			fgta = fgt
+			fgta = fgt # build another easy alias
 		else:
 		 	fgt_passive = fgt
 		 	fgtp = fgt
@@ -409,12 +409,22 @@ if __name__ == "__main__":
 	#fortilink_name = "Myswitch"
 	fortilink_name = "Myfortilink"
 	
+	
+	########################### FTG and FSW discoveries, many things need to disvoer here######
+	#discover managed switches. updated some information such ftg console in each switch.
+	managed_sw_list = fgta.discover_managed_switches(topology=tb)
+
 	for sw in switches:
 		sw.sw_network_discovery()
 		print_attributes(sw)
 
 	for fgt in fortigates:
 		print_attributes(fgt)
+	###########################################################################################
+
+	for sw in switches:
+		sw.ftg_sw_upgrade(build=55,version='v7',tftp_server="10.105.252.120")
+		exit()
 
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
@@ -459,6 +469,8 @@ if __name__ == "__main__":
 			if sw.tier == None:
 				continue
 			test_log.write(f"========   Performance on Reboot Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
+			sw.print_show_command("show switch global")
+			sw.print_show_command("diagnose switch mclag icl")
 			myixia.clear_stats()
 			sw.switch_reboot()
 			console_timer(30,msg=f"After rebooting switch, wait for 30s and log traffic stats")
@@ -478,6 +490,8 @@ if __name__ == "__main__":
 		for sw in switches:
 			if len(sw.icl_links) > 0:
 				test_log.write(f"======== Shut/Unshut ICL Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ========\n")
+				sw.print_show_command("show switch global")
+				sw.print_show_command("diagnose switch mclag icl")
 				myixia.clear_stats()
 				for port in sw.icl_links:
 					sw.shut_port(port)
@@ -498,7 +512,7 @@ if __name__ == "__main__":
 
 				console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
 	
-	####################################### No Slit-brin-detect ###########################
+	################################# Disable Slit-brin-detect Perf Testing ########################## 
 	for sw in switches:
 		if sw.tier == None:
 			continue
@@ -511,58 +525,13 @@ if __name__ == "__main__":
 	console_timer(300,msg=f"After disabling split-brain-detect, wait for 300s ")
 
 	test_log.write(f"===========================================================================================\n")
-	test_log.write(f"================ Disable split-brian-detect. Performance tesing on Reboot   ===================\n")
+	test_log.write(f"					 Disable split-brian-detect. Performance testing 			\n")
 	test_log.write(f"===========================================================================================\n")
 	reboot_testing()
 	icl_testing()
-	# for sw in switches:
-	# 	if sw.tier == None:
-	# 		continue
-	# 	test_log.write(f"================No split-brian-detect. Performance on Reboot Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ===================\n")
-	# 	myixia.clear_stats()
-	# 	sw.switch_reboot()
-	# 	console_timer(30,msg=f"After rebooting switch, wait for 30s and log traffic stats")
-	# 	myixia.collect_stats()
-	# 	for flow in myixia.flow_stats_list:
-	# 		test_log.write(f"Loss Time rebooting Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
 
-	# 	#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
-
-	# 	myixia.clear_stats()
-	# 	console_timer(360,msg=f"After rebooting, wait for 360s and log traffic stats")
-	# 	myixia.collect_stats()
-	# 	for flow in myixia.flow_stats_list:
-	# 		test_log.write(f"Loss Time restore from reboot Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
-
-		#console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
-
-	# for sw in switches:
-	# 	if len(sw.icl_links) > 0:
-	# 		test_log.write(f"================No split-brian-detect. Shut/Unshut ICL Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ========\n")
-	# 		myixia.clear_stats()
-	# 		for port in sw.icl_links:
-	# 			sw.shut_port(port)
-	# 		console_timer(10,msg=f"After shutting ICL port {port}, wait for 10s and log traffic stats")
-	# 		myixia.collect_stats()
-	# 		for flow in myixia.flow_stats_list:
-	# 			test_log.write(f"Loss Time shutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Loss Time']}\n")
-
-	# 		#console_timer(30,msg=f"After shutting ICL port {port}, wait for 30s before unshut ICL ports")
-
-	# 		myixia.clear_stats()
-	# 		for port in sw.icl_links:
-	# 			sw.unshut_port(port)
-	# 		console_timer(10,msg=f"After unshutting ICL port {port}, wait for 10s and log traffic stats")
-	# 		myixia.collect_stats()
-	# 		for flow in myixia.flow_stats_list:
-	# 			test_log.write(f"Loss Time unshutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Loss Time']}\n")
-
-	# 		console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
-
-
-
-
-	####################################### Slit-brin-detect/No Shut ports ###########################
+ 
+	####################################### Enable Slit-brin-detect/No Shut ports Perf Testing ###########################
 	index = 0
 	for sw in switches:
 		if sw.tier == None:
@@ -578,56 +547,11 @@ if __name__ == "__main__":
 		index += 1
 	console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
 	test_log.write(f"============================================================================================================\n")
-	test_log.write(f"================ Enable split-brian-detect/Disable shut ports. Performance tesing  ===================\n")
+	test_log.write(f"				Enable split-brian-detect/Disable shut ports. Performance tesing  			\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
 	reboot_testing()
 	icl_testing()
-
-
-
-	# for sw in switches:
-	# 	if sw.tier == None:
-	# 		continue
-	# 	test_log.write(f"======== Enable split brain/No shut ports. Performance on Reboot Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
-	# 	myixia.clear_stats()
-	# 	sw.switch_reboot()
-	# 	console_timer(30,msg=f"After rebooting switch, wait for 30s and log traffic stats")
-	# 	myixia.collect_stats()
-	# 	for flow in myixia.flow_stats_list:
-	# 		test_log.write(f"Loss Time rebooting Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
-
-	# 	#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
-
-	# 	myixia.clear_stats()
-	# 	console_timer(360,msg=f"After rebooting, wait for 360s and log traffic stats")
-	# 	myixia.collect_stats()
-	# 	for flow in myixia.flow_stats_list:
-	# 		test_log.write(f"Loss Time restore from reboot Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
-
-
-	# for sw in switches:
-	# 	if len(sw.icl_links) > 0:
-	# 		test_log.write(f"========Enable split brain/No shut ports.Shut/Unshut ICL Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ========\n")
-	# 		myixia.clear_stats()
-	# 		for port in sw.icl_links:
-	# 			sw.shut_port(port)
-	# 		console_timer(10,msg=f"After shutting ICL port {port}, wait for 10s and log traffic stats")
-	# 		myixia.collect_stats()
-	# 		for flow in myixia.flow_stats_list:
-	# 			test_log.write(f"Loss Time shutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Loss Time']}\n")
-
-			#console_timer(30,msg=f"After shutting ICL port {port}, wait for 30s before unshut ICL ports")
-
-			# myixia.clear_stats()
-			# for port in sw.icl_links:
-			# 	sw.unshut_port(port)
-			# console_timer(10,msg=f"After unshutting ICL port {port}, wait for 10s and log traffic stats")
-			# myixia.collect_stats()
-			# for flow in myixia.flow_stats_list:
-			# 	test_log.write(f"Loss Time unshutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Loss Time']}\n")
-
-			# console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
 
 	####################################### Enable Slit-brin-detect/Enable Shut ports ###########################
 	index = 0
@@ -644,7 +568,7 @@ if __name__ == "__main__":
 		index += 1
 	console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
 	test_log.write(f"============================================================================================================\n")
-	test_log.write(f"================ Enable split-brian-detect/ Enable shut-ports. Performance tesing ===================\n")
+	test_log.write(f"		 Enable split-brian-detect/ Enable shut-ports. Performance tesing 			\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
 	reboot_testing()
