@@ -469,7 +469,7 @@ if __name__ == "__main__":
 			if sw.tier == None:
 				continue
 			test_log.write(f"========   Performance on Reboot Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
-			sw.print_show_interesting("diagnose switch mclag icl",logger=test_log,"dormant candidate","split-brain")
+			sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
 			myixia.clear_stats()
 			sw.switch_reboot()
 			console_timer(30,msg=f"After rebooting switch, wait for 30s and log traffic stats")
@@ -489,7 +489,7 @@ if __name__ == "__main__":
 		for sw in switches:
 			if len(sw.icl_links) > 0:
 				test_log.write(f"======== Shut/Unshut ICL Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ========\n")
-				sw.print_show_interesting("diagnose switch mclag icl",logger=test_log,"dormant candidate","split-brain")
+				sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
 				myixia.clear_stats()
 				for port in sw.icl_links:
 					sw.shut_port(port)
@@ -521,7 +521,7 @@ if __name__ == "__main__":
 			if sw.tier == None:
 				continue
 			test_log.write(f"========   Performance on Upgrade Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
-			sw.print_show_interesting("diagnose switch mclag icl",logger=test_log,"dormant candidate","split-brain")
+			sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
 			myixia.clear_stats()
 			sw.ftg_sw_upgrade_no_wait(build=55,version='v7',tftp_server="10.105.252.120")
 			console_timer(60,msg=f"After start upgrading switch, wait for 30s and log traffic stats")
