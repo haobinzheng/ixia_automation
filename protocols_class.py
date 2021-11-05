@@ -6321,10 +6321,12 @@ class FortiSwitch_XML(FortiSwitch):
 
 
         cmds = """
+        end
         conf vdom
         edit root
         conf switch-controller global
         set https-image-push enable
+        end
         end
         """
         config_cmds_lines(fgt1,cmds)
@@ -6335,22 +6337,34 @@ class FortiSwitch_XML(FortiSwitch):
         dprint(f"image name = {image_name}")
 
         switch_exec_cmd(fgt1,'config global')
+
+        cmd = f"execute switch-controller switch-software delete all"
+        switch_interactive_exec(fgt1,cmd,"Do you want to continue? (y/n)")
         cmd = f"execute switch-controller switch-software upload tftp {image_name} {tftp_server}"
 
-        output = collect_long_execute_cmd(fgt1,cmd,timeout = 10)
-        for line in output:
-            if "Image Saving" in line:
-                upgrade_name = line.split()[2]
+        output = ftg_collect_execute_cmd(fgt1,cmd,timeout=20)
+        tprint(f"output of upload tftp command = {output}")
+
+        # for line in output:
+        #     if "Image Saving" in line:
+        #         upgrade_name = line.split()[2]
         #switch_exec_cmd(fgt1, cmd)
-        #sleep(60)
+        console_timer(20,msg=f"Sleep for 20s after uploading image from tftp server")
+
         cmd = "execute switch-controller switch-software list-available"
-        switch_show_cmd(fgt1,cmd)
+        #switch_show_cmd(fgt1,cmd)
+        output = ftg_collect_execute_cmd(fgt1,cmd)
+        tprint(f"output of  switch-software list-available = {output}")
         switch_exec_cmd(fgt1, "end")
+        regex = r"S[0-9a-z.\-A-Z]+swtp"
+        for line in output:
+            if "IMG.swtp" in line:
+                upgrade_name = line.split()[0]
 
         switch_exec_cmd(fgt1, "config vdom")
         switch_exec_cmd(fgt1, "edit root")
         ###########################
-        cmd = "execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name}"
+        cmd = f"execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name}"
         switch_exec_cmd(fgt1, cmd,wait=60)
         console_timer(200,msg=f"upgrading {self.serial_number} to {upgrade_name}, wait for 200s to upgrade")
         cmd = "execute switch-controller get-upgrade-status"
@@ -6373,6 +6387,135 @@ class FortiSwitch_XML(FortiSwitch):
 
         return True
 
+    def ftg_sw_upgrade_no_wait(self,*args,**kwargs):
+         
+        build = settings.build_548d
+        tprint(f"================ Upgrading FSWs {self.serial_number} via Fortigate =============")
+        samples = """
+        S248EFTF18002594 # get system status
+        
+        S248EFTF18002594 # get system status
+        Version: FortiSwitch-248E-FPOE v6.4.0,build0470,210205 (Interim)
+        Serial-Number: S248EFTF18002594
+        BIOS version: 04000004
+        System Part-Number: P21940-02
+        Burn in MAC: 70:4c:a5:d4:43:d2
+        Hostname: S248EFTF18002594
+        Distribution: International
+        Branch point: 470
+        System time: Wed Dec 31 17:21:44 1969
+
+        image_name = FSW_248E_POE-v7-build0022-FORTINET.out
+        """
+
+        ftp_sample = """
+        FG2K5E3917900021-Active (global) # execute switch-controller switch-software upload tftp FSW_548D_FPOE-v7-build0055-FORTINET.out 10.105.252.120
+
+        Downloading file FSW_548D_FPOE-v7-build0055-FORTINET.out from tftp server 10.105.252.120...
+        ############################
+        Image checking ...
+        Image MD5 calculating ...
+        Image Saving S548DF-v7.0-build055-IMG.swtp ...
+        Successful!
+
+        File Syncing...
+
+        FG2K5E3917900021-Active (global) # execute switch-controller switch-software list-available 
+
+        ImageName                              ImageSize(B)   ImageInfo               Uploaded Time  
+        S248EF-v7.0-build048-IMG.swtp          29377410       S248EF-v7.0-build048    Mon Aug 16 14:59:27 2021
+        S548DF-v7.0-build048-IMG.swtp          30113665       S548DF-v7.0-build048    Mon Aug 16 14:56:46 2021
+        S148FF-v7.0-build043-IMG.swtp          22917068       S148FF-v7.0-build043    Wed Jul 28 12:01:42 2021
+        S548DF-v7.0-build055-IMG.swtp          30157077       S548DF-v7.0-build055    Thu Nov  4 20:07:33 2021
+
+        FG2K5E3917900021-Active (global) # execute switch-controller switch-software upload tftp FSW_548D-v7-build0055-FORTINET.out 10.105.252.120
+
+        Downloading file FSW_548D-v7-build0055-FORTINET.out from tftp server 10.105.252.120...
+        ############################
+        Image checking ...
+        Image MD5 calculating ...
+        Image Saving S548DN-v7.0-build055-IMG.swtp ...
+        Successful!
+
+        File Syncing...
+
+        FG2K5E3917900021-Active (global) # execute switch-controller switch-software list-available 
+
+        ImageName                              ImageSize(B)   ImageInfo               Uploaded Time  
+        S248EF-v7.0-build048-IMG.swtp          29377410       S248EF-v7.0-build048    Mon Aug 16 14:59:27 2021
+        S548DN-v7.0-build055-IMG.swtp          30151901       S548DN-v7.0-build055    Thu Nov  4 20:13:34 2021
+        S548DF-v7.0-build048-IMG.swtp          30113665       S548DF-v7.0-build048    Mon Aug 16 14:56:46 2021
+        S148FF-v7.0-build043-IMG.swtp          22917068       S148FF-v7.0-build043    Wed Jul 28 12:01:42 2021
+        S548DF-v7.0-build055-IMG.swtp          30157077       S548DF-v7.0-build055    Thu Nov  4 20:07:33 2021
+        """
+        if "build" in kwargs:
+            build = int(kwargs['build'])
+            build = f"{build:04}"
+        else:
+            ErrorNotify("Software build number is missing. Exmaple: build=xxx.  Exiting program")
+            exit(-1)
+        if "version" in kwargs:
+            version = kwargs['version']
+        else:
+            version = "v7"  # version should be provided when callign this API, but if lazy just assume v7
+
+        if "tftp_server" in kwargs:
+            tftp_server = kwargs['tftp_server']
+        else:
+            tftp_server = "10.105.252.120"
+        dut = self.console
+        dut_name = self.name
+
+        fgt1 = self.ftg_console
+
+        cmds = """
+        end
+        conf vdom
+        edit root
+        conf switch-controller global
+        set https-image-push enable
+        end
+        end
+        """
+        config_cmds_lines(fgt1,cmds)
+
+        image_name = f"{self.image_prefix}-{version}-build{build}-FORTINET.out"
+        #upgrade_name = f"{self.image_prefix}-{version}-build{build}-IMG.swtp"
+
+        dprint(f"image name = {image_name}")
+
+        switch_exec_cmd(fgt1,'config global')
+
+        cmd = f"execute switch-controller switch-software delete all"
+        switch_interactive_exec(fgt1,cmd,"Do you want to continue? (y/n)")
+        cmd = f"execute switch-controller switch-software upload tftp {image_name} {tftp_server}"
+
+        output = ftg_collect_execute_cmd(fgt1,cmd,timeout=20)
+        tprint(f"output of upload tftp command = {output}")
+
+        # for line in output:
+        #     if "Image Saving" in line:
+        #         upgrade_name = line.split()[2]
+        #switch_exec_cmd(fgt1, cmd)
+        console_timer(20,msg=f"Sleep for 20s after uploading image from tftp server")
+
+        cmd = "execute switch-controller switch-software list-available"
+        #switch_show_cmd(fgt1,cmd)
+        output = ftg_collect_execute_cmd(fgt1,cmd)
+        tprint(f"output of  switch-software list-available = {output}")
+        switch_exec_cmd(fgt1, "end")
+        regex = r"S[0-9a-z.\-A-Z]+swtp"
+        for line in output:
+            if "IMG.swtp" in line:
+                upgrade_name = line.split()[0]
+
+        switch_exec_cmd(fgt1, "config vdom")
+        switch_exec_cmd(fgt1, "edit root")
+        ###########################
+        cmd = f"execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name}"
+        switch_exec_cmd(fgt1,cmd)
+        switch_exec_cmd(fgt1, "end")
+        return True
 
     def fsw_upgrade_v2(self,*args,**kwargs):
         samples = """

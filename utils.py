@@ -635,14 +635,43 @@ def collect_long_execute_cmd(tn,cmd,**kwargs):
 		timeout = kwargs['t']
 	else:
 		timeout = 8
+	if "prompt" in kwargs:
+		prompt = kwargs['prompt']
+	else:
+		prompt = "# "
 	#relogin_if_needed(tn)
 	original_cmd = cmd
 	cmd_bytes = convert_cmd_ascii_n(cmd)
 	tn.write(cmd_bytes)
-	output = switch_read_console_output(tn,timeout = timeout)
+	output = switch_read_console_output(tn,timeout = timeout,prompt = prompt)
 	good_out_list = clean_show_output_recursive(output,original_cmd)
 	print(good_out_list)
 	return good_out_list
+
+def ftg_collect_execute_cmd(tn,cmd,**kwargs):
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 8
+	#relogin_if_needed(tn)
+	original_cmd = cmd
+	cmd_bytes = convert_cmd_ascii_n(cmd)
+	tn.write(cmd_bytes)
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+	sleep(timeout)
+	output = tn.read_very_eager()
+	print(output)
+	#output = tn.read_until(("# ").encode('ascii'))
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).strip(' \r')
+		out_str_list.append(o_str)
+	
+	print(out_str_list)
+	return out_str_list
 
 def collect_execute_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:
@@ -1023,7 +1052,11 @@ def switch_read_console_output(tn,**kwargs):
 		t = kwargs['timeout']
 	else:
 		t = 10
-	output = tn.read_until(("# ").encode('ascii'),timeout=t)
+	if "prompt" in kwargs:
+		prompt = kwargs['prompt']
+	else:
+		prompt = "# "
+	output = tn.read_until((prompt).encode('ascii'),timeout=t)
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
 	out_str_list = []

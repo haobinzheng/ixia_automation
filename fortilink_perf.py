@@ -422,9 +422,9 @@ if __name__ == "__main__":
 		print_attributes(fgt)
 	###########################################################################################
 
-	for sw in switches:
-		sw.ftg_sw_upgrade(build=55,version='v7',tftp_server="10.105.252.120")
-		exit()
+	# for sw in switches:
+	# 	sw.ftg_sw_upgrade(build=55,version='v7',tftp_server="10.105.252.120")
+	# 	exit()
 
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
@@ -511,6 +511,29 @@ if __name__ == "__main__":
 					test_log.write(f"Loss Time unshutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Loss Time']}\n")
 
 				console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
+
+	def upgrade_testing():
+		for sw in switches:
+			if sw.tier == None:
+				continue
+			test_log.write(f"========   Performance on Upgrade Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
+			sw.print_show_command("show switch global")
+			sw.print_show_command("diagnose switch mclag icl")
+			myixia.clear_stats()
+			sw.ftg_sw_upgrade_no_wait(build=55,version='v7',tftp_server="10.105.252.120")
+			console_timer(60,msg=f"After rebooting switch, wait for 30s and log traffic stats")
+			myixia.collect_stats()
+			for flow in myixia.flow_stats_list:
+				test_log.write(f"Loss Time upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
+
+			#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
+
+			myixia.clear_stats()
+			console_timer(360,msg=f"After rebooting, wait for 360s and log traffic stats")
+			myixia.collect_stats()
+			for flow in myixia.flow_stats_list:
+				test_log.write(f"Loss Time restore from reboot Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
+				
 	
 	################################# Disable Slit-brin-detect Perf Testing ########################## 
 	for sw in switches:
@@ -527,6 +550,7 @@ if __name__ == "__main__":
 	test_log.write(f"===========================================================================================\n")
 	test_log.write(f"					 Disable split-brian-detect. Performance testing 			\n")
 	test_log.write(f"===========================================================================================\n")
+	upgrade_testing()
 	reboot_testing()
 	icl_testing()
 
@@ -550,6 +574,7 @@ if __name__ == "__main__":
 	test_log.write(f"				Enable split-brian-detect/Disable shut ports. Performance tesing  			\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
+	upgrade_testing()
 	reboot_testing()
 	icl_testing()
 
@@ -571,5 +596,6 @@ if __name__ == "__main__":
 	test_log.write(f"		 Enable split-brian-detect/ Enable shut-ports. Performance tesing 			\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
+	upgrade_testing()
 	reboot_testing()
 	icl_testing()
