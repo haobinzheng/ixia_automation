@@ -538,12 +538,16 @@ def clean_show_output_recursive(out_str_list,cmd):
 			out_str_list.pop(0)
 			return clean_show_output_recursive(out_str_list,cmd)
 
-def print_show_cmd(tn,cmd,**kwargs):
+def print_show_cmd(tn,cmd,*args,**kwargs):
 	if 't' in kwargs:
 		timeout = kwargs['t']
 	else:
 		timeout = 5
 	#relogin_if_needed(tn)
+	if "logger" in kwargs:
+		mylogger = kwargs["logger"]
+	else:
+		mylogger = None
 	handle_prompt_before_commands(tn)
 	original_cmd = cmd
 	cmd_bytes = convert_cmd_ascii_n(cmd)
@@ -554,7 +558,16 @@ def print_show_cmd(tn,cmd,**kwargs):
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	sleep(timeout)
 	output = tn.read_very_eager()
-	print(output)
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).strip(' \r')
+		out_str_list.append(o_str)
+	for out_str in out_str_list:
+		tprint(f"{str(out_str)}\n")
+		if mylogger != None:
+			mylogger.write(f"{str(out_str)}\n")
 
 def collect_show_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:

@@ -6896,8 +6896,45 @@ class FortiSwitch_XML(FortiSwitch):
             """
             config_cmds_lines(self.console,config)
 
-    def print_show_command(self,cmd):
-        print_show_cmd(self.console,cmd)
+    def print_show_interesting(self,cmd,*args,**kwargs):
+        tn = self.console
+        if 't' in kwargs:
+            timeout = kwargs['t']
+        else:
+            timeout = 5
+        #relogin_if_needed(tn)
+        if "logger" in kwargs:
+            mylogger = kwargs["logger"]
+        else:
+            mylogger = None
+        handle_prompt_before_commands(tn)
+        original_cmd = cmd
+        cmd_bytes = convert_cmd_ascii_n(cmd)
+        tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+        tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+        tn.write(cmd_bytes)
+        tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+        tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+        sleep(timeout)
+        output = tn.read_very_eager()
+        out_list = output.split(b'\r\n')
+        encoding = 'utf-8'
+        out_str_list = []
+        for o in out_list:
+            o_str = o.decode(encoding).strip(' \r')
+            out_str_list.append(o_str)
+        for out_str in out_str_list:
+            for key in args:
+                if key in out_str:
+                    tprint(f"{str(key)}\n")
+                    if mylogger != None:
+                        mylogger.write(f"{str(key)}\n")
+
+    def print_show_command(self,cmd,*args,**kwargs):
+        if "logger" in kwargs:
+            print_show_cmd(self.console,cmd,logger=kwargs["logger"])
+        else:
+            print_show_cmd(self.console,cmd)
 
     #config_lines are defined with """ """
     def config_cmds(self,config_lines):

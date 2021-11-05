@@ -469,8 +469,7 @@ if __name__ == "__main__":
 			if sw.tier == None:
 				continue
 			test_log.write(f"========   Performance on Reboot Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
-			sw.print_show_command("show switch global")
-			sw.print_show_command("diagnose switch mclag icl")
+			sw.print_show_interesting("diagnose switch mclag icl",logger=test_log,"dormant candidate","split-brain")
 			myixia.clear_stats()
 			sw.switch_reboot()
 			console_timer(30,msg=f"After rebooting switch, wait for 30s and log traffic stats")
@@ -490,16 +489,21 @@ if __name__ == "__main__":
 		for sw in switches:
 			if len(sw.icl_links) > 0:
 				test_log.write(f"======== Shut/Unshut ICL Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ========\n")
-				sw.print_show_command("show switch global")
-				sw.print_show_command("diagnose switch mclag icl")
+				sw.print_show_interesting("diagnose switch mclag icl",logger=test_log,"dormant candidate","split-brain")
 				myixia.clear_stats()
 				for port in sw.icl_links:
 					sw.shut_port(port)
 				console_timer(10,msg=f"After shutting ICL port {port}, wait for 10s and log traffic stats")
-				myixia.collect_stats()
-				for flow in myixia.flow_stats_list:
-					test_log.write(f"Loss Time shutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Loss Time']}\n")
-
+				try:
+					myixia.collect_stats()
+					for flow in myixia.flow_stats_list:
+						test_log.write(f"Loss Time shutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}:{flow['Loss Time']}\n")
+				except Exception as e:
+					tprint("Something is wrong in collecting traffic stats, try it again in 10 seconds.......")
+					sleep(10)
+					myixia.collect_stats()
+					for flow in myixia.flow_stats_list:
+						test_log.write(f"Loss Time shutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}:{flow['Loss Time']}\n")
 				#console_timer(30,msg=f"After shutting ICL port {port}, wait for 30s before unshut ICL ports")
 
 				myixia.clear_stats()
@@ -508,7 +512,7 @@ if __name__ == "__main__":
 				console_timer(10,msg=f"After unshutting ICL port {port}, wait for 10s and log traffic stats")
 				myixia.collect_stats()
 				for flow in myixia.flow_stats_list:
-					test_log.write(f"Loss Time unshutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Loss Time']}\n")
+					test_log.write(f"Loss Time unshutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}:{flow['Loss Time']}\n")
 
 				console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
 
@@ -517,11 +521,10 @@ if __name__ == "__main__":
 			if sw.tier == None:
 				continue
 			test_log.write(f"========   Performance on Upgrade Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
-			sw.print_show_command("show switch global")
-			sw.print_show_command("diagnose switch mclag icl")
+			sw.print_show_interesting("diagnose switch mclag icl",logger=test_log,"dormant candidate","split-brain")
 			myixia.clear_stats()
 			sw.ftg_sw_upgrade_no_wait(build=55,version='v7',tftp_server="10.105.252.120")
-			console_timer(60,msg=f"After rebooting switch, wait for 30s and log traffic stats")
+			console_timer(60,msg=f"After start upgrading switch, wait for 30s and log traffic stats")
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
@@ -532,7 +535,7 @@ if __name__ == "__main__":
 			console_timer(360,msg=f"After rebooting, wait for 360s and log traffic stats")
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
-				test_log.write(f"Loss Time restore from reboot Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
+				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
 				
 	
 	################################# Disable Slit-brin-detect Perf Testing ########################## 
