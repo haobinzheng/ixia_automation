@@ -1124,6 +1124,16 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		return out_str_list
 
 
+def telnet_send_cmd(tn,cmd,*args,**kwargs):
+	cmd = convert_cmd_ascii_n(cmd) #convert_cmd_ascii_n has appended return at the end
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.read_until((">").encode('ascii'),timeout=2)
+	tn.write(cmd)
+	time.sleep(2)
+	tn.read_until((">").encode('ascii'),timeout=2)
+	#tn.expect(["#", ">","> ",">  ",">	"])
+
 def switch_configure_cmd_cisco(tn,cmd,**kwargs):
 	if 'mode' in kwargs:
 		mode = kwargs['mode']
@@ -1328,6 +1338,40 @@ def reliable_telnet(ip_address,*args,**kwargs):
 		else:
 			return handle
 
+def telnet_apc(ip_address,**kwargs):
+	tprint(f"APC IP interface = {str(ip_address)}")
+	if "password" in kwargs:
+		pwd = kwargs["password"]
+	else:
+		pwd = 'apc'
+	if "user" in kwargs:
+		user = kwargs['user']
+	else:
+		user = 'apc'
+	#switch_login(ip_address,console_port)
+	try:
+		tn = telnetlib.Telnet(ip_address,23,10)
+	except Exception as e: 
+		tprint("!!!!!!!!!!!Telnet is either time out or not response from device, Need to retry later")
+		# sleep(2)
+		# tn = telnetlib.Telnet(ip_address,console_port_int)
+		return False
+
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.read_until(("User Name : ").encode('ascii'),timeout=5)
+	tn.write((user + '\n').encode('ascii'))
+	tn.read_until(("Password: ").encode('ascii'),timeout=5)
+	tn.write((pwd + '\n').encode('ascii'))
+	tn.read_until((">").encode('ascii'),timeout=5)
+	# tn.write(('' + '\n').encode('ascii'))
+	# tn.write(('' + '\n').encode('ascii'))
+	tn.write(('about' + '\n').encode('ascii'))
+	sleep(2)
+	output = tn.read_very_eager()
+	print(output)
+	return tn
 
 def telnet_connection(ip_address,**kwargs):
 	tprint(f"Device management interface = {str(ip_address)}")
@@ -3264,86 +3308,108 @@ def switch_factory_reset_nologin(dut_dir):
 	switch_interactive_exec(dut,"execute factoryreset","Do you want to continue? (y/n)") 
 
 
-if __name__ == "__main__":
-	# reliable_telnet("10.105.50.59")
-	# exit()
-	# test_ssh()
-	# exit()
-	# scp_file(file="MCLAG_Perf_548D_no_mac_log.xlsx")
-	# scp_file(file="MCLAG_Perf_548D_mac_log.xlsx")
-	# exit()
-	# debug("test debug")
-	# exit()
-	cisco_com = "10.105.241.243"
-	cisco_port = 2045
-	dut1_com = "10.105.241.144"
-	dut1_port = 2071
-	dut2_com = "10.105.241.243"
-	dut2_port = 2035
-	dut3_com = "10.105.240.144"
-	dut3_port = 2070
-	dut4_com = "10.105.50.1"
-	dut4_port = 2078
-
-	dut1_com_2 = "10.105.50.1"
-	dut1_port_2 = 2074
-	dut2_com_2 = "10.105.50.1"
-	dut2_port_2 = 2081
-	dut3_com_2 = "10.105.50.2"
-	dut3_port_2 = 2077
-	dut4_com_2 = "10.105.50.2"
-	dut4_port_2 = 2078
-
-	# dut1 = get_switch_telnet_connection(dut1_com,dut1_port)
-	# tprint(dir(dut1))
-	dut = get_switch_telnet_connection_new(dut3_com,dut3_port)
-	ping_ipv4(dut,ip="10.1.1.1")
-	ping_ipv6(dut,ip="2001:1:1:1::1")
-	exit()
-	dut = get_switch_telnet_connection_new(dut2_com,dut2_port)
-	dut = get_switch_telnet_connection_new(dut1_com,dut1_port)
-	find_dut_prompt(dut)
-	exit()
-	image = find_dut_image(dut)
-	print(image)
-	exit()
-	switch_exec_reboot(dut1,device="DUT")
-	# result = switch_show_cmd(dut,"diag switch physical linerate up")
-	# tprint(result)
-	settings.DEBUG = True
-	prompt = switch_find_login_prompt_new(dut)
-	print (prompt)
-	exit()
-	# port = find_active_trunk_port(dut)
-	# print("active_port:{}".format(port))
-	# port_list = find_inactive_trunk_port(dut)
-	# print("inactive ports: {}".format(port_list))
-	# image = find_dut_image(dut)
-	# print("image running on this device: {}".format(image))
-	# print("**********************")
-
-	# dut = get_switch_telnet_connection(dut4_com_2,dut4_port_2)
-	# port = find_active_trunk_port(dut)
-	# print("active_port:{}".format(port))
-	# port_list = find_inactive_trunk_port(dut)
-	# print("inactive ports: {}".format(port_list))
-
-	exit()
-	tprint(dir(dut1))
-	tprint(dut1.host)
-	tprint("sleep 90 seconds for console to timeout")
-	sleep(90)
-	# dut2 = get_switch_telnet_connection(dut2_com,dut2_port)
-	# dut3 = get_switch_telnet_connection(dut3_com,dut3_port)
-	# dut4 = get_switch_telnet_connection(dut4_com,dut4_port)
-	if switch_find_login_prompt(dut1) == True:
-		switch_login(dut1)
-	# result = switch_show_cmd(dut1,"show switch trunk")
-	# result = switch_show_cmd(dut1,"diagnose switch mclag peer-consistency-check")
-	# result = switch_show_cmd(dut1,"get switch lldp neighbors-summary")
-	#tprint(result)
-	#tprint(result)
-
-
 # if __name__ == "__main__":
+# 	# reliable_telnet("10.105.50.59")
+# 	# exit()
+# 	# test_ssh()
+# 	# exit()
+# 	# scp_file(file="MCLAG_Perf_548D_no_mac_log.xlsx")
+# 	# scp_file(file="MCLAG_Perf_548D_mac_log.xlsx")
+# 	# exit()
+# 	# debug("test debug")
+# 	# exit()
+
+# 	cisco_com = "10.105.241.243"
+# 	cisco_port = 2045
+# 	dut1_com = "10.105.241.144"
+# 	dut1_port = 2071
+# 	dut2_com = "10.105.241.243"
+# 	dut2_port = 2035
+# 	dut3_com = "10.105.240.144"
+# 	dut3_port = 2070
+# 	dut4_com = "10.105.50.1"
+# 	dut4_port = 2078
+
+# 	dut1_com_2 = "10.105.50.1"
+# 	dut1_port_2 = 2074
+# 	dut2_com_2 = "10.105.50.1"
+# 	dut2_port_2 = 2081
+# 	dut3_com_2 = "10.105.50.2"
+# 	dut3_port_2 = 2077
+# 	dut4_com_2 = "10.105.50.2"
+# 	dut4_port_2 = 2078
+
+# 	# dut1 = get_switch_telnet_connection(dut1_com,dut1_port)
+# 	# tprint(dir(dut1))
+# 	dut = get_switch_telnet_connection_new(dut3_com,dut3_port)
+# 	ping_ipv4(dut,ip="10.1.1.1")
+# 	ping_ipv6(dut,ip="2001:1:1:1::1")
+# 	exit()
+# 	dut = get_switch_telnet_connection_new(dut2_com,dut2_port)
+# 	dut = get_switch_telnet_connection_new(dut1_com,dut1_port)
+# 	find_dut_prompt(dut)
+# 	exit()
+# 	image = find_dut_image(dut)
+# 	print(image)
+# 	exit()
+# 	switch_exec_reboot(dut1,device="DUT")
+# 	# result = switch_show_cmd(dut,"diag switch physical linerate up")
+# 	# tprint(result)
+# 	settings.DEBUG = True
+# 	prompt = switch_find_login_prompt_new(dut)
+# 	print (prompt)
+# 	exit()
+# 	# port = find_active_trunk_port(dut)
+# 	# print("active_port:{}".format(port))
+# 	# port_list = find_inactive_trunk_port(dut)
+# 	# print("inactive ports: {}".format(port_list))
+# 	# image = find_dut_image(dut)
+# 	# print("image running on this device: {}".format(image))
+# 	# print("**********************")
+
+# 	# dut = get_switch_telnet_connection(dut4_com_2,dut4_port_2)
+# 	# port = find_active_trunk_port(dut)
+# 	# print("active_port:{}".format(port))
+# 	# port_list = find_inactive_trunk_port(dut)
+# 	# print("inactive ports: {}".format(port_list))
+
+# 	exit()
+# 	tprint(dir(dut1))
+# 	tprint(dut1.host)
+# 	tprint("sleep 90 seconds for console to timeout")
+# 	sleep(90)
+# 	# dut2 = get_switch_telnet_connection(dut2_com,dut2_port)
+# 	# dut3 = get_switch_telnet_connection(dut3_com,dut3_port)
+# 	# dut4 = get_switch_telnet_connection(dut4_com,dut4_port)
+# 	if switch_find_login_prompt(dut1) == True:
+# 		switch_login(dut1)
+# 	# result = switch_show_cmd(dut1,"show switch trunk")
+# 	# result = switch_show_cmd(dut1,"diagnose switch mclag peer-consistency-check")
+# 	# result = switch_show_cmd(dut1,"get switch lldp neighbors-summary")
+# 	#tprint(result)
+# 	#tprint(result)
+
+
+if __name__ == "__main__":
 # 	debug("test debug")
+    pdu = telnet_apc("10.105.253.57")
+    telnet_send_cmd(pdu,f"oloff 12")
+    sleep(2)
+    telnet_send_cmd(pdu,f"olon 12")
+    sleep(2)
+    exit()
+    tn = telnet_apc("10.105.50.114")
+    sequences = [1,2,1,9,1,3,"YES","\n"]
+    for s in sequences:
+        tprint(f"sending option {s}")
+        # if s != "YES" and s !="\n":
+        # 	tn.read_until(("> ").encode('ascii'),timeout=2)
+        # if s == "YES":
+        # 	tn.read_until((" : ").encode('ascii'),timeout=2)
+        # if s == "\n":
+        # 	tn.read_until(("...").encode('ascii'),timeout=2)
+        telnet_send_cmd(tn,str(s))
+        sleep(4)
+    send_ctrl_c_cmd(tn)
+    sleep(2)
+    telnet_send_cmd(tn,"4")

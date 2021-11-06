@@ -63,6 +63,12 @@ def parse_tbinfo_untangle(file):
                     dprint(ee)
                     device.console_ip = ee.get_attribute("ip")
                     device.console_line = ee.get_attribute("line")
+                elif ee.__dict__['_name'] == "pdu":
+                    dprint("-------this is pdu")
+                    dprint(ee)
+                    device.pdu_model = ee.get_attribute("model")
+                    device.pdu_ip = ee.get_attribute("ip")
+                    device.pdu_port = ee.get_attribute("port")
                 elif ee.__dict__['_name'] == "login":
                     dprint("------this is login")
                     dprint(ee)

@@ -6114,6 +6114,9 @@ class FortiSwitch_XML(FortiSwitch):
         self.hostname = device_xml.hostname
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
+        self.pdu_model = device_xml.pdu_model
+        self.pdu_ip = device_xml.pdu_ip
+        self.pdu_port = device_xml.pdu_port
         self.username = device_xml.username
         self.mgmt_ip = device_xml.mgmt_ip
         self.mgmt_netmask = device_xml.mgmt_netmask
@@ -6150,6 +6153,158 @@ class FortiSwitch_XML(FortiSwitch):
         self.router_isis = Router_ISIS(self)
         self.system_interfaces_list = None
 
+
+    def power_cycle(self,*args,**kwargs):
+        sample = """
+        (base) 21:48:55:~/Python/python/ixia_automation % telnet 10.105.50.114
+
+        Trying 10.105.50.114...
+        Connected to 10.105.50.114.
+        Escape character is '^]'.
+
+        User Name :
+        User Name : apc
+        Password  : ***
+
+
+        American Power Conversion               Network Management Card AOS      v3.7.4
+        (c) Copyright 2009 All Rights Reserved  Rack PDU APP                     v3.7.4
+        -------------------------------------------------------------------------------
+        Name      : rack8-b                                   Date : 11/23/2007
+        Contact   : Unknown                                   Time : 09:28:08
+        Location  : QA324-RACK-20:A:P1                        User : Administrator
+        Up Time   : 219 Days 10 Hours 40 Minutes              Stat : P+ N+ A+
+
+        Switched Rack PDU: Communication Established
+
+        ------- Control Console -------------------------------------------------------
+
+             1- Device Manager
+             2- Network
+             3- System
+             4- Logout
+
+             <ESC>- Main Menu, <ENTER>- Refresh, <CTRL-L>- Event Log
+        > 1
+
+        ------- Device Manager --------------------------------------------------------
+
+             1- Bank Management
+             2- Outlet Management
+             3- Power Supply Status
+             4- PDU Configuration
+
+             <ESC>- Back, <ENTER>- Refresh, <CTRL-L>- Event Log
+        > 2
+
+        ------- Outlet Management -----------------------------------------------------
+
+             1- Outlet Control/Configuration
+             2- Outlet Restriction
+
+             <ESC>- Back, <ENTER>- Refresh, <CTRL-L>- Event Log
+        > 1
+
+        ------- Outlet Control/Configuration ------------------------------------------
+
+             1- Outlet 1                 ON
+             2- Outlet 2                 ON
+             3- Outlet 3                 ON
+             4- Outlet 4                 ON
+             5- Outlet 5                 ON
+             6- Outlet 6                 ON
+             7- Outlet 7                 ON
+             8- Outlet 8                 ON
+             9- Outlet 9                 ON
+            10- Outlet 10                ON
+            11- Outlet 11                ON
+            12- Outlet 12                ON
+            13- Outlet 13                ON
+            14- Outlet 14                ON
+            15- Outlet 15                ON
+            16- Outlet 16                ON
+            17- Master Control/Configuration
+
+             <ESC>- Back, <ENTER>- Refresh, <CTRL-L>- Event Log
+        > 9
+
+        ------- Outlet 9 --------------------------------------------------------------
+
+                Name         : Outlet 9
+                Outlet       : 9
+                State        : ON
+                Bank         : 2
+
+             1- Control Outlet
+             2- Configure Outlet
+
+             ?- Help, <ESC>- Back, <ENTER>- Refresh, <CTRL-L>- Event Log
+        > 1
+
+        ------- Control Outlet --------------------------------------------------------
+
+                Name         : Outlet 9
+                Outlet       : 9
+                State        : ON
+                Bank         : 2
+
+             1- Immediate On
+             2- Immediate Off
+             3- Immediate Reboot
+             4- Delayed On
+             5- Delayed Off
+             6- Delayed Reboot
+             7- Cancel
+
+             ?- Help, <ESC>- Back, <ENTER>- Refresh, <CTRL-L>- Event Log
+        > 3
+                -----------------------------------------------------------------------
+                Immediate Reboot
+
+                This command will immediately shutdown
+                outlet 9 named 'Outlet 9', delay for 5 seconds,
+                and then restart.
+
+                Enter 'YES' to continue or <ENTER> to cancel : YES
+                Command successfully issued.
+
+                Press <ENTER> to continue...
+
+
+        ------- Control Outlet --------------------------------------------------------
+
+                Name         : Outlet 9
+                Outlet       : 9
+                State        : ON
+                Bank         : 2
+
+             1- Immediate On
+             2- Immediate Off
+             3- Immediate Reboot
+             4- Delayed On
+             5- Delayed Off
+             6- Delayed Reboot
+             7- Cancel
+
+             ?- Help, <ESC>- Back, <ENTER>- Refresh, <CTRL-L>- Event Log
+        >
+        """
+        pdu = telnet_apc(self.pdu_ip)
+        print( self.pdu_model)
+        if self.pdu_model == "RARITAN_C":
+            telnet_send_cmd(pdu,f"oloff {self.pdu_port} ")
+            sleep(2)
+            telnet_send_cmd(pdu,f"olon {self.pdu_port} ")
+            sleep(2)
+            telnet_send_cmd(pdu,"exit")
+        elif self.pdu_model == "RARITAN_M":
+            sequences = [1,2,1,self.pdu_port,1,3,"YES","\n"]
+            for s in sequences:
+                telnet_send_cmd(pdu,f"{s}")
+                sleep(2)
+            send_ctrl_c_cmd(pdu)
+            sleep(2)
+            telnet_send_cmd(pdu,"4")
 
     def config_vlan_interface(self,*args,**kwargs):
         vlan = kwargs["vlan"]
@@ -8145,6 +8300,9 @@ class Device_XML():
         self.serial_number = None
         self.discovered_hostname = None
         self.version = None
+        self.pdu_model = None
+        self.pdu_ip = None
+        self.pdu_port = None
         self.fortilink_ports = []
         self.fortigate_ports = []
         self.ha_ports = []

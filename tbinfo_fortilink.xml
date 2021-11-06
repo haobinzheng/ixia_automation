@@ -4,7 +4,7 @@
   <console ip="10.105.50.1" line="2078"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.21" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
-  <pdu model="RARITAN" ip="10.105.50.114" port="9"> </pdu>
+  <pdu model="RARITAN_M" ip="10.105.50.114" port="9"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -16,7 +16,7 @@
   <console ip="10.105.50.1" line="2079"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.22" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
-  <pdu model="RARITAN" ip="10.105.50.114" port="8"> </pdu>
+  <pdu model="RARITAN_M" ip="10.105.50.114" port="8"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -30,7 +30,7 @@
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.23" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
   <uplink port="port25"> </uplink>
-  <pdu model="RARITAN" ip="10.105.253.57" port="12"> </pdu>
+  <pdu model="RARITAN_C" ip="10.105.253.57" port="12"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -44,7 +44,7 @@
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.24" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
   <uplink port="port25"> </uplink>
-  <pdu model="RARITAN" ip="10.105.253.57" port="13"> </pdu>
+  <pdu model="RARITAN_C" ip="10.105.253.57" port="13"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -57,7 +57,7 @@
   <console ip="10.105.50.3" line="2073"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.25" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
-  <pdu model="RARITAN" ip="10.105.253.57" port="14"> </pdu>
+  <pdu model="RARITAN_C" ip="10.105.253.57" port="14"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -70,7 +70,7 @@
   <console ip="10.105.50.3" line="2072"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.26" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
-  <pdu model="RARITAN" ip="10.105.253.57" port="15"> </pdu>
+  <pdu model="RARITAN_C" ip="10.105.253.57" port="15"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -83,7 +83,7 @@
   <console ip="10.105.50.3" line="2071"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.27" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
-  <pdu model="RARITAN" ip="10.105.253.57" port="17"> </pdu>
+  <pdu model="RARITAN_C" ip="10.105.253.57" port="17"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -96,7 +96,7 @@
   <console ip="10.105.50.3" line="2070"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.50.28" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
-  <pdu model="RARITAN" ip="10.105.253.57" port="18"> </pdu>
+  <pdu model="RARITAN_C" ip="10.105.253.57" port="18"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -135,7 +135,7 @@
   <console ip="10.105.241.144" line="2080"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.241.112" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
-  <pdu model="RARITAN" ip="10.105.253.57" port="18"> </pdu>
+  <pdu model="NA" ip="10.105.253.57" port="18"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>

@@ -485,6 +485,28 @@ if __name__ == "__main__":
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time restore from reboot Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
 				
+	def power_cycle_testing():
+		for sw in switches:
+			if sw.tier == None:
+				continue
+			test_log.write(f"========   Performance on Power Cycle Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
+			sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
+			myixia.clear_stats()
+			sw.switch_reboot()
+			console_timer(30,msg=f"After power cycle switch, wait for 5s and log traffic stats")
+			myixia.collect_stats()
+			for flow in myixia.flow_stats_list:
+				test_log.write(f"Loss Time power cycle Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
+
+			#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
+
+			myixia.clear_stats()
+			console_timer(360,msg=f"After power cycle, wait for 360s and log traffic stats")
+			myixia.collect_stats()
+			for flow in myixia.flow_stats_list:
+				test_log.write(f"Loss Time restore from power cycle Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
+				
+
 	def icl_testing():
 		for sw in switches:
 			if len(sw.icl_links) > 0:
@@ -553,6 +575,7 @@ if __name__ == "__main__":
 	test_log.write(f"===========================================================================================\n")
 	test_log.write(f"					 Disable split-brian-detect. Performance testing 			\n")
 	test_log.write(f"===========================================================================================\n")
+	power_cycle_testing()
 	upgrade_testing()
 	reboot_testing()
 	icl_testing()
@@ -577,6 +600,7 @@ if __name__ == "__main__":
 	test_log.write(f"				Enable split-brian-detect/Disable shut ports. Performance tesing  			\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
+	power_cycle_testing()
 	upgrade_testing()
 	reboot_testing()
 	icl_testing()
@@ -599,6 +623,7 @@ if __name__ == "__main__":
 	test_log.write(f"		 Enable split-brian-detect/ Enable shut-ports. Performance tesing 			\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
+	power_cycle_testing()
 	upgrade_testing()
 	reboot_testing()
 	icl_testing()
