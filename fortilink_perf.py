@@ -499,7 +499,6 @@ if __name__ == "__main__":
 				test_log.write(f"Loss Time power cycle Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
 
 			#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
-
 			myixia.clear_stats()
 			console_timer(360,msg=f"After power cycle, wait for 360s and log traffic stats")
 			myixia.collect_stats()
@@ -527,7 +526,7 @@ if __name__ == "__main__":
 					for flow in myixia.flow_stats_list:
 						test_log.write(f"Loss Time shutting ICL ports at Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}:{flow['Loss Time']}\n")
 				#console_timer(30,msg=f"After shutting ICL port {port}, wait for 30s before unshut ICL ports")
-
+				sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
 				myixia.clear_stats()
 				for port in sw.icl_links:
 					sw.unshut_port(port)
@@ -552,7 +551,6 @@ if __name__ == "__main__":
 				test_log.write(f"Loss Time upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
 
 			#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
-
 			myixia.clear_stats()
 			console_timer(360,msg=f"After rebooting, wait for 360s and log traffic stats")
 			myixia.collect_stats()
