@@ -6926,9 +6926,9 @@ class FortiSwitch_XML(FortiSwitch):
         for out_str in out_str_list:
             for key in args:
                 if key in out_str:
-                    tprint(f"{str(key)}\n")
+                    tprint(f"{str(out_str)}\n")
                     if mylogger != None:
-                        mylogger.write(f"{str(key)}\n")
+                        mylogger.write(f"{str(out_str)}\n")
 
     def print_show_command(self,cmd,*args,**kwargs):
         if "logger" in kwargs:
