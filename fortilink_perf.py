@@ -12,7 +12,7 @@ from random import seed
 from random import randint 
 
 # Append paths to python APIs (Linux and Windows)
-
+from apc import *
 from utils import *
 #import settings 
 from test_process import * 
@@ -148,6 +148,12 @@ if __name__ == "__main__":
 	tb.switches = switches
 	tb.fortigates = fortigates
 
+	# Test pdu_cycle
+	# for sw in switches:
+	# 	sw.pdu_status()
+	# 	sw.pdu_cycle()
+
+	exit()
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
 
@@ -492,8 +498,8 @@ if __name__ == "__main__":
 			test_log.write(f"========   Performance on Power Cycle Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
 			sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
 			myixia.clear_stats()
-			sw.switch_reboot()
-			console_timer(30,msg=f"After power cycle switch, wait for 5s and log traffic stats")
+			sw.pdu_cycle()
+			console_timer(10,msg=f"After power cycle switch, wait for 10s and log traffic stats")
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time power cycle Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
@@ -571,7 +577,7 @@ if __name__ == "__main__":
 	console_timer(300,msg=f"After disabling split-brain-detect, wait for 300s ")
 
 	test_log.write(f"===========================================================================================\n")
-	test_log.write(f"					 Disable split-brian-detect. Performance testing 			\n")
+	test_log.write(f"					 Disable split-brian-detect.  			\n")
 	test_log.write(f"===========================================================================================\n")
 	power_cycle_testing()
 	upgrade_testing()
@@ -595,7 +601,7 @@ if __name__ == "__main__":
 		index += 1
 	console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
 	test_log.write(f"============================================================================================================\n")
-	test_log.write(f"				Enable split-brian-detect/Disable shut ports. Performance tesing  			\n")
+	test_log.write(f"				Enable split-brian-detect/Disable shut ports.  			\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
 	power_cycle_testing()
@@ -618,7 +624,7 @@ if __name__ == "__main__":
 		index += 1
 	console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
 	test_log.write(f"============================================================================================================\n")
-	test_log.write(f"		 Enable split-brian-detect/ Enable shut-ports. Performance tesing 			\n")
+	test_log.write(f"		 Enable split-brian-detect/ Enable shut-ports 			\n")
 	test_log.write(f"=============================================================================================================\n")
 	console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
 	power_cycle_testing()

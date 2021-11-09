@@ -11,6 +11,7 @@ from random import seed
 from random import randint 
 
 from utils import *
+from apc import *
 import settings 
 from test_process import * 
 from common_lib import *
@@ -6305,6 +6306,30 @@ class FortiSwitch_XML(FortiSwitch):
             send_ctrl_c_cmd(pdu)
             sleep(2)
             telnet_send_cmd(pdu,"4")
+
+    def pdu_status(self):
+        a = apc()
+        Status = {}
+        Status = a.get_status(self.pdu_ip, self.pdu_port)
+        print(Status)
+    
+    def pdu_on(self):
+        a = apc()
+        Status = {}
+        Status = a.set_off(self.pdu_ip, self.pdu_port)
+        print(Status)
+
+    def pdu_off(self):
+        a = apc()
+        Status = {}
+        Status = a.set_on(self.pdu_ip, self.pdu_port)
+        print(Status)
+
+    def pdu_cycle(self):
+        a = apc()
+        Status = {}
+        Status = a.set_reboot(self.pdu_ip, self.pdu_port)
+        print(Status)
 
     def config_vlan_interface(self,*args,**kwargs):
         vlan = kwargs["vlan"]
