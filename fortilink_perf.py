@@ -152,8 +152,7 @@ if __name__ == "__main__":
 	# for sw in switches:
 	# 	sw.pdu_status()
 	# 	sw.pdu_cycle()
-
-	exit()
+	#exit()
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
 
