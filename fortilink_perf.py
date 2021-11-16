@@ -185,7 +185,7 @@ if __name__ == "__main__":
 		for sw in switches:
 			if sw.tier == None:
 				continue
-			test_log.write(f"========  Upgrading SW on Tier{sw.tier}: {sw.name}({sw.hostname}) to version:{v} build {b} ============\n")
+			tprint(f"========  Upgrading SW on Tier{sw.tier}: {sw.name}({sw.hostname}) to version:{v} build {b} ============\n")
 			sw.ftg_sw_upgrade_no_wait(build=b,version=v,tftp_server="10.105.252.120")
 			console_timer(400,msg=f"Wait for 400s after starting to upgrade {sw.name}({sw.hostname}) ")
 		 
