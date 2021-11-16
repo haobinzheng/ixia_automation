@@ -181,20 +181,14 @@ if __name__ == "__main__":
 
 
 	if upgrade_fgt:
-		for fgt in fortigates:
-			v,b = sw_build.split('-')
-			result = fgt.fgt_upgrade_v2(build=b,version=v)
-			if not result:
-				tprint(f"############# Upgrade {fgt.name} to build #{sw_build} Fails ########### ")
-			else:
-				tprint(f"############# Upgrade {fgt.name} to build #{sw_build} is successful ############")
-
-		console_timer(400,msg="Wait for 400s after started upgrading all switches")
-		for fgt in fortigates:
-			dut = fgt.console
-			dut_name = fgt.name
-			fgt.fgt_relogin()
-
+		v,b = sw_build.split('-')
+		for sw in switches:
+			if sw.tier == None:
+				continue
+			test_log.write(f"========  Upgrading SW on Tier{sw.tier}: {sw.name}({sw.hostname}) to version:{v} build {b} ============\n")
+			sw.ftg_sw_upgrade_no_wait(build=b,version=v,tftp_server="10.105.252.120")
+			console_timer(400,msg=f"Wait for 400s after starting to upgrade {sw.name}({sw.hostname}) ")
+		 
 	if upgrade_sa:
 		for sw in switches:
 			v,b = sw_build.split('-')
