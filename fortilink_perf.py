@@ -156,7 +156,29 @@ if __name__ == "__main__":
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
 
+	for fgt in fortigates:
+		if fgt.mode == "Active":
+			fgt_active = fgt
+			fgta = fgt # build another easy alias
+		else:
+		 	fgt_passive = fgt
+		 	fgtp = fgt
 
+
+	#fortilink_name = "Myswitch"
+	fortilink_name = "Myfortilink"
+
+	########################### FTG and FSW discoveries, many things need to disvoer here######
+	#discover managed switches. updated some information such ftg console in each switch.
+	managed_sw_list = fgta.discover_managed_switches(topology=tb)
+
+	for sw in switches:
+		sw.sw_network_discovery()
+		print_attributes(sw)
+
+	for fgt in fortigates:
+		print_attributes(fgt)
+		
 	##################################### Pre-Test setup and configuration #############################
 
 	if maintainence:
@@ -248,16 +270,7 @@ if __name__ == "__main__":
 		# if testcase == 0:
 		# 	exit()
 
-	########################### FTG and FSW discoveries, many things need to disvoer here######
-	#discover managed switches. updated some information such ftg console in each switch.
-	managed_sw_list = fgta.discover_managed_switches(topology=tb)
 
-	for sw in switches:
-		sw.sw_network_discovery()
-		print_attributes(sw)
-
-	for fgt in fortigates:
-		print_attributes(fgt)
 
 	if setup: 
 		################ Will be uncommented this blocks
@@ -407,17 +420,7 @@ if __name__ == "__main__":
 	# 		switch = FortiSwitch_XML(d)
 	# 		switches.append(switch)
 
-	for fgt in fortigates:
-		if fgt.mode == "Active":
-			fgt_active = fgt
-			fgta = fgt # build another easy alias
-		else:
-		 	fgt_passive = fgt
-		 	fgtp = fgt
 
-
-	#fortilink_name = "Myswitch"
-	fortilink_name = "Myfortilink"
 	
 	
 
