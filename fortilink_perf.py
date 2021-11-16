@@ -190,7 +190,7 @@ if __name__ == "__main__":
 			sw.pdu_status()
 			sw.pdu_cycle()
 		console_timer(400,msg='After power cycling all switches, wait for 400 seconds')
-		
+
 	if maintainence:
 		for fgt in fortigates:
 			#print_attributes(fgt)
@@ -481,10 +481,13 @@ if __name__ == "__main__":
 	def reboot_testing():
 		for sw in switches:
 			## !!! Need to change to == None
+			#if sw.tier == None:
 			if sw.tier != 3:
 				continue
 			test_log.write(f"========   Performance on Reboot Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
 			sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
+			sw.print_show_command("diag switch trunk summary")
+			sw.print_show_command("diag switch trunk list")
 			myixia.clear_stats()
 			sw.switch_reboot()
 			console_timer(30,msg=f"After rebooting switch, wait for 30s and log traffic stats")
