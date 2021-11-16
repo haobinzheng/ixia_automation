@@ -34,6 +34,7 @@ if __name__ == "__main__":
 	parser.add_argument("-m", "--maintainence", help="Bring switches into standalone for maintainence", action="store_true")
 	parser.add_argument("-test", "--testcase", type=str, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
 	parser.add_argument("-b", "--boot", help="Perform reboot test", action="store_true")
+	parser.add_argument("-p", "--power_cycle", help="Perform power cycle", action="store_true")
 	parser.add_argument("-f", "--factory", help="Run the test after factory resetting all devices", action="store_true")
 	parser.add_argument("-v", "--verbose", help="Run the test in verbose mode with amble debugs info", action="store_true")
 	parser.add_argument("-s", "--setup_only", help="Setup testbed and IXIA only for manual testing", action="store_true")
@@ -115,6 +116,13 @@ if __name__ == "__main__":
 		Reboot = False
 		print_title("Reboot:No")
 
+	if args.power_cycle:
+		Power_cycle = True
+		print_title("Power_cycle:Yes")
+	else:
+		Power_cycle = False
+		print_title("Power_cycle:No")
+
 	if args.setup_only:
 		Setup_only = True
 		print_title("Set up Only:Yes")
@@ -148,11 +156,7 @@ if __name__ == "__main__":
 	tb.switches = switches
 	tb.fortigates = fortigates
 
-	# Test pdu_cycle
-	# for sw in switches:
-	# 	sw.pdu_status()
-	# 	sw.pdu_cycle()
-	#exit()
+
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
 
@@ -178,9 +182,15 @@ if __name__ == "__main__":
 
 	for fgt in fortigates:
 		print_attributes(fgt)
-		
+
 	##################################### Pre-Test setup and configuration #############################
 
+	if Power_cycle: 
+		for sw in switches:
+			sw.pdu_status()
+			sw.pdu_cycle()
+		console_timer(400,msg='After power cycling all switches, wait for 400 seconds')
+		
 	if maintainence:
 		for fgt in fortigates:
 			#print_attributes(fgt)
