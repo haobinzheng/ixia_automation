@@ -576,7 +576,7 @@ if __name__ == "__main__":
 				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
 				
 	for i in range(1,2):
-		test_log = Logger(f"Log/perf_result_cisco{i}.log")
+		test_log = Logger(f"Log/perf_result_fsw{i}.log")
 		################################# Disable Slit-brin-detect Perf Testing ########################## 
 		for sw in switches:
 			if sw.tier == None:
