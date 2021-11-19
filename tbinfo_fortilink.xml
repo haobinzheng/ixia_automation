@@ -157,6 +157,6 @@
   <link8 link="dev2:port13,trafgen1:6/11" type="ixia_link" mode="Copper"> </link8>
   <link9 link="dev6:port13,trafgen1:7/10" type="ixia_link" mode="Copper"> </link9>
   <link10 link="dev9:port13,trafgen1:7/4" type="ixia_link" mode="Copper"> </link10>
-  <link11 link="dev11:port13,trafgen1:6/13" type="ixia_link" mode="Copper"> </link11>
+  <link11 link="dev11:port13,trafgen1:11/1" type="ixia_link" mode="Copper"> </link11>
  </connections>
 </testbed>
