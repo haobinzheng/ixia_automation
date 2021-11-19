@@ -481,8 +481,8 @@ if __name__ == "__main__":
 	def reboot_testing():
 		for sw in switches:
 			## !!! Need to change to == None
-			#if sw.tier == None:
-			if sw.tier != 3:
+			if sw.tier == None:
+			#if sw.tier != 3:
 				continue
 			test_log.write(f"========   Performance on Reboot Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
 			sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
@@ -592,10 +592,10 @@ if __name__ == "__main__":
 		test_log.write(f"===========================================================================================\n")
 		test_log.write(f"					 Disable split-brian-detect.  			\n")
 		test_log.write(f"===========================================================================================\n")
-		#power_cycle_testing()
-		#upgrade_testing()
+		power_cycle_testing()
+		upgrade_testing()
 		reboot_testing()
-		#icl_testing()
+		icl_testing()
 
 	 
 		####################################### Enable Slit-brin-detect/No Shut ports Perf Testing ###########################
@@ -617,12 +617,12 @@ if __name__ == "__main__":
 		test_log.write(f"				Enable split-brian-detect/Disable shut ports.  			\n")
 		test_log.write(f"=============================================================================================================\n")
 		console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
-		# power_cycle_testing()
-		# upgrade_testing()
+		power_cycle_testing()
+		upgrade_testing()
 		reboot_testing()
-		# icl_testing()
+		icl_testing()
 
-		####################################### Enable Slit-brin-detect/Enable Shut ports ###########################
+		###################################### Enable Slit-brin-detect/Enable Shut ports ###########################
 		index = 0
 		for sw in switches:
 			if sw.tier == None:
@@ -640,7 +640,7 @@ if __name__ == "__main__":
 		test_log.write(f"		 Enable split-brian-detect/ Enable shut-ports 			\n")
 		test_log.write(f"=============================================================================================================\n")
 		console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
-		# power_cycle_testing()
-		# upgrade_testing()
+		power_cycle_testing()
+		upgrade_testing()
 		reboot_testing()
-		# icl_testing()
+		icl_testing()
