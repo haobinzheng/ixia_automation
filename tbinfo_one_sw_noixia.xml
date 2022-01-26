@@ -12,9 +12,4 @@
   <license licenses="QJ6NP-LTEJE-ST4H3-VF7JD-SPCAE-E88Q4-6,X594Y-JNBFT-P9B7K-LRV8E-2DB3Q-9HKTR-T"> </license>
   <rack rack_num="324/7/33"> </rack>
  </dev1>
- <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
- </trafgen1>
- <connections>
-  <link1 link="dev1:port1,trafgen1:4/3" type="ixia_link" mode="copper"> </link1>
- </connections>
 </testbed>

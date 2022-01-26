@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testtopo>
+ <dev1 type="FSW" role="DUT"> </dev1>
+</testtopo>

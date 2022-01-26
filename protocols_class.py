@@ -6154,6 +6154,8 @@ class FortiSwitch_XML(FortiSwitch):
         self.router_isis = Router_ISIS(self)
         self.system_interfaces_list = None
 
+    def exec_command(self,cmd):
+         switch_exec_cmd(self.console, cmd)
 
     def power_cycle(self,*args,**kwargs):
         sample = """
@@ -8146,13 +8148,14 @@ class tbinfo():
             d.print_info()
 
         print_double_line()
-        self.ixia.print_ixia_info()
+        if self.ixia != None:
+            self.ixia.print_ixia_info()
 
         print_double_line()
-
-        for c in self.connections:
-            print_dash_line()
-            c.print_connection_info()
+        if self.connections != None:
+            for c in self.connections:
+                print_dash_line()
+                c.print_connection_info()
 
 
 class Connection_XML():

@@ -46,6 +46,8 @@ def parse_tbinfo_untangle(file):
     print(obj.testbed.children)
     root_elements = getattr(obj.testbed,'children')
     devices = []
+    ixia = None  #this is to deal with topology with no IXIA
+    connections = None # This is to deal with topoloy with no connections
     for e in root_elements:
         name = e.__dict__['_name']
         print(name)
@@ -117,12 +119,19 @@ def parse_tbinfo_untangle(file):
                 connections.append(connection)
     tb = tbinfo()
     tb.devices = devices
-    tb.ixia = ixia
-    tb.connections = connections
-    for c in tb.connections:
-        c.update_obj(tb.devices,tb.ixia)
-    for c in tb.connections:
-        c.associate_ports_device()
+    if ixia != None:
+        tb.ixia = ixia
+    else:
+        tb.ixia = None
+    if connections != None:
+        tb.connections = connections
+        for c in tb.connections:
+            c.update_obj(tb.devices,tb.ixia)
+
+        for c in tb.connections:
+            c.associate_ports_device()
+    else:
+        tb.connections = None
     return tb
 
 def parse_testtopo_untangle(file,tb):
@@ -153,8 +162,8 @@ def parse_testtopo_untangle(file,tb):
                 if update_test_link(links,left,right,link_name) == False:
                     ErrorNotify ("parse_testtopo_untangle: Not able to find link in tbinfo")
                     exit()
-
-    tb.ixia.update_ixia_portList(tb.connections)
+    if tb.ixia != None:
+        tb.ixia.update_ixia_portList(tb.connections)
 
 # def bgp_testbed_init():
 #     dut1_com = "10.105.241.144"
