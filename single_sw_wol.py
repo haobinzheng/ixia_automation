@@ -222,7 +222,7 @@ if __name__ == "__main__":
 		description = "Wake On Lan Perfomance Testing"
 		print_test_subject(testcase,description)
 		sw = switches[0]
-		num = 100
+		num = 3600/5 * 24 
 
 		cmd_list = ["execute wake-on-lan 2 port7 00:11:11:11:11:11 1", "execute wake-on-lan 2 port7 00:11:11:11:11:11 2", "execute wake-on-lan 1 vlan1 00:22:22:22:22:22 1","execute wake-on-lan 1 vlan1 00:22:22:22:22:22 2"]
 
