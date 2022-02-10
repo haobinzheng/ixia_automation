@@ -1167,6 +1167,7 @@ class IXIA:
         session = self.Session,
         ixnet = self.ixNetwork, 
     )
+        return self.flow_stats_list
 
     def clear_stats(self):
         self.flow_stats_list = ixia_rest_clear_stats(

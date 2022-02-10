@@ -4327,6 +4327,126 @@ class Router_BGP:
         """
         config_cmds_lines(self.switch.console,bgp_config)
 
+
+
+class acl_counter_entry():
+    def __init__(self):
+        self.type = None
+        self.id = None
+        self.group = None
+        self.all_pkts = None
+        self.red_pkts = None 
+        self.yellow_pkts = None 
+        self.green_pkts = None 
+        self.all_bytes = None
+        self.red_bytes = None 
+        self.yellow_bytes = None 
+        self.green_bytes = None 
+        self.description = None 
+
+class acl_counter_class():
+    def __init__(self,cmd_output):
+        self.cmd_output = cmd_output
+        self.acl_counter_list = []
+        self.parse_cmd_output()
+
+    def parse_cmd_output(self):
+        example = """
+        ingress: 
+
+         ID     Group    Color     Packets                Bytes           description
+        _____________________________________________________________________________
+
+        1         1          all   212656               212656000                                                                             
+        1         1        green   769                  769000                                                                                
+        1         1       yellow   68                   68000                                                                                 
+        1         1          red   211819               211819000                                                                             
+         ID     Group    Color     Packets                Bytes           description
+        _____________________________________________________________________________
+
+        2         1          all   0                    0                                                                                     
+        2         1        green   0                    0                                                                                     
+        2         1       yellow   0                    0                                                                                     
+        2         1          red   0                    0                                                                                     
+
+        egress: 
+
+         ID     Group    Color     Packets                Bytes           description
+        _____________________________________________________________________________
+
+        1         1        green   0                    0                                                                                     
+        1         1       yellow   0                    0                                                                                     
+         ID     Group    Color     Packets                Bytes           description
+        _____________________________________________________________________________
+
+        2         1        green   0                    0                                                                                     
+        2         1       yellow   0                    0    
+        """
+        ingress_found = False
+        egress_found = False
+        acl_counter = None
+
+        for line in self.cmd_output:
+            if "ingress:" in line:
+                ingress_found = True
+                egress_found = False
+                continue
+            if "egress:" in line:
+                egress_found = True
+                ingress_found = False
+                continue
+            if "ID     Group    Color     Packets" in line:
+                if acl_counter != None:
+                    self.acl_counter_list.append(acl_counter)
+                acl_counter = acl_counter_entry()
+                acl_counter.type = "ingress" if ingress_found else "egress"
+                continue
+            # if "ID     Group    Color     Packets" in line:
+            #     acl_counter = acl_counter_entry()
+            #     self.acl_counter_list.append(acl_counter)
+            #     acl_counter.type = "egress" if egress_found else "ingress"
+            #     continue
+            if "get switch acl counters all" in line:
+                continue
+            if "all" in line:
+                line_list = line.split()
+                #print(f"All: {line_list}")
+                acl_counter.id = int(line_list[0])
+                acl_counter.group = int(line_list[1])
+                acl_counter.all_pkts = int(line_list[3])
+                acl_counter.all_bytes = int(line_list[4])
+                continue
+            if "green" in line:
+                line_list = line.split()
+                #print(f"green: {line_list}")
+                acl_counter.id = int(line_list[0])
+                acl_counter.group = int(line_list[1])
+                acl_counter.green_pkts = int(line_list[3])
+                acl_counter.green_bytes = int(line_list[4])
+                continue
+            if "yellow" in line:
+                line_list = line.split()
+                #print(f"yellow: {line_list}")
+                acl_counter.id = int(line_list[0])
+                acl_counter.group = int(line_list[1])
+                acl_counter.yellow_pkts = int(line_list[3])
+                acl_counter.yellow_bytes = int(line_list[4])
+            if "red" in line:
+                line_list = line.split()
+                #print(f"yellow: {line_list}")
+                acl_counter.id = int(line_list[0])
+                acl_counter.group = int(line_list[1])
+                acl_counter.red_pkts = int(line_list[3])
+                acl_counter.red_bytes = int(line_list[4])
+        self.acl_counter_list.append(acl_counter)
+         
+
+    def print_acl_counters(self):
+        for acl in self.acl_counter_list:
+            print(f"ID:{acl.id} | Type:{acl.type} | All:{acl.all_pkts} | Green:{acl.green_pkts} | Yellow:{acl.yellow_pkts} | Red:{acl.red_pkts}")
+
+
+
 class lldp_class():
     def __init__(self):
         self.type = None

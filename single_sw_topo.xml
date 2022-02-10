@@ -5,7 +5,5 @@
  <connections>
   <link1 link="dev1,trafgen1" type="ixia_link"> </link1>
   <link2 link="dev1,trafgen1" type="ixia_link"> </link2>
-  <link3 link="dev1,trafgen1" type="ixia_link"> </link3>
-  <link4 link="dev1,trafgen1" type="ixia_link"> </link4>
  </connections>
 </testtopo>
