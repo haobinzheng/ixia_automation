@@ -301,6 +301,7 @@ if __name__ == "__main__":
 		testcase = 1
 		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
 		description = "Ingress 4 Color counter types for 3032E: only ingress policer"
+		print(description)
 
 		results = []
 		for i in range(1):
@@ -403,6 +404,7 @@ if __name__ == "__main__":
 		testcase = 2
 		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
 		description = "Ingress 4 Color counter types for 3032E: Ingress and egress have different policers"
+		print(description)
 
 		results = []
 		for i in range(1):
