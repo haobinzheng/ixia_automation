@@ -303,7 +303,7 @@ if __name__ == "__main__":
 		description = "Ingress 4 Color counter types for 3032E: only ingress policer"
 
 		results = []
-		for i in range(100):
+		for i in range(1):
 			cmds = """
 			config switch acl ingress
 			delete 1
@@ -405,7 +405,7 @@ if __name__ == "__main__":
 		description = "Ingress 4 Color counter types for 3032E: Ingress and egress have different policers"
 
 		results = []
-		for i in range(100):
+		for i in range(1):
 			cmds = """
 			config switch acl ingress
 			delete 1
@@ -505,7 +505,7 @@ if __name__ == "__main__":
 					ingress_green_pkts = obj.green_pkts
 					continue
 
-				if obj.type == "egress" and ixia_rx ==obj.green_pkts and ingress_green_pkts == obj.green_pkts + obj.yellow_pkts:
+				if obj.type == "egress" and ixia_rx ==obj.green_pkts and abs(ingress_green_pkts - obj.green_pkts - obj.yellow_pkts) < 10:
 					egress_result = True 
 					print(f"Egress result: {egress_result}")
 			if ingress_result and egress_result:
