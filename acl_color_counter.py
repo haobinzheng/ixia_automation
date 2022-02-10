@@ -296,7 +296,7 @@ if __name__ == "__main__":
 	sw.exec_command(cmd)
 	sleep(10)
 
-
+	final_results = []
 	if testcase == 1 or test_all:
 		testcase = 1
 		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
@@ -391,9 +391,10 @@ if __name__ == "__main__":
 				if obj.all_pkts == 0:
 					continue 
 				else:
-					if ixia_tx  == obj.all_pkts and ixia_rx ==obj.green_pkts and ixia_drop == obj.yellow_pkts + obj.red_pkts:
+					if ixia_tx  == obj.all_pkts and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
 						test_result = True 
 			results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
+			final_results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 
 		for r in results:
@@ -512,14 +513,212 @@ if __name__ == "__main__":
 					print(f"Egress result: {egress_result}")
 			if ingress_result and egress_result:
 				test_result = True
-			results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
-			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
+			final_results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful successful: {test_result}")
 
 
 		for r in results:
 			print(r)
 			 
-	
+	if testcase == 3 or test_all:
+		testcase = 3
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Ingress 4 Color counter types for 3032E: ingress policer + Green counter"
+		print(description)
+
+		results = []
+		for i in range(1):
+			cmds = """
+			config switch acl ingress
+			delete 1
+			delete 2
+			end
+			config switch acl egress
+			delete 1
+			delete 2
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+   			delete 1
+    		delete 2
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+   			edit 1
+       			set guaranteed-bandwidth 2000
+        		set type ingress
+    		next
+    		edit 2
+        		set guaranteed-bandwidth 1000
+        		set type egress
+    		next
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl ingress
+		    edit 1
+		        config action
+		            set count enable
+		            set count-type green
+		            set policer 1
+		        end
+		        set ingress-interface "port1.1"         
+		    next
+			end
+			
+			"""
+			sw.config_cmds(cmds)
+			sleep(3)
+
+			cmd = "execute acl clear-counter all"
+			sw.exec_command(cmd)
+			sleep(3)
+			sw.show_command("get switch acl counters all")
+			myixia.start_traffic()
+			myixia.stop_traffic()
+			ixia_stats_list = myixia.collect_stats()
+			sleep(10)
+			ixia_tx = ixia_stats_list[0]['Tx Frames']
+			ixia_rx = ixia_stats_list[0]['Rx Frames']
+			ixia_drop = ixia_stats_list[0]['Frames Delta']
+			print(f"Total IXIA transmitted Packets = {ixia_tx}")
+			print(f"Total IXIA received Packets = {ixia_rx}")
+			print(f"Total packet dropped = {ixia_drop}")
+
+			cmd_output = sw.show_command("get switch acl counters all")
+			#print(cmd_output)
+			acl_counter_obj = acl_counter_class(cmd_output)
+			acl_counter_obj.print_acl_counters()
+			test_result = False
+			for obj in acl_counter_obj.acl_counter_list:
+				if obj.green_pkts == 0:
+					continue 
+				else:
+					if ixia_rx ==obj.green_pkts:
+						test_result = True 
+			results.append(f"#{i} Testing on 3032E with 4 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
+			final_results.append(f"#{i} Testing on 3032E with 4 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
+
+		for r in results:
+			print(r)
+
+	if testcase == 4 or test_all:
+		testcase = 4
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Ingress 4 Color counter types for 3032E: ingress policer + yellow + red"
+		print(description)
+
+		results = []
+		for i in range(1):
+			cmds = """
+			config switch acl ingress
+			delete 1
+			delete 2
+			end
+			config switch acl egress
+			delete 1
+			delete 2
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+   			delete 1
+    		delete 2
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+   			edit 1
+       			set guaranteed-bandwidth 2000
+        		set type ingress
+    		next
+    		edit 2
+        		set guaranteed-bandwidth 1000
+        		set type egress
+    		next
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl ingress
+		    edit 1
+		        config action
+		            set count enable
+		            set count-type yellow red
+		            set policer 1
+		        end
+		        set ingress-interface "port1.1"         
+		    next
+			end
+			config switch acl egress
+		    edit 1
+		        config action
+		            set count enable
+		            set count-type green yellow 
+		        end
+		        set interface "port1.2"         
+		    next
+			end
+			
+			"""
+			sw.config_cmds(cmds)
+			sleep(3)
+
+			cmd = "execute acl clear-counter all"
+			sw.exec_command(cmd)
+			sleep(3)
+			sw.show_command("get switch acl counters all")
+			myixia.start_traffic()
+			myixia.stop_traffic()
+			ixia_stats_list = myixia.collect_stats()
+			sleep(10)
+			ixia_tx = ixia_stats_list[0]['Tx Frames']
+			ixia_rx = ixia_stats_list[0]['Rx Frames']
+			ixia_drop = ixia_stats_list[0]['Frames Delta']
+			print(f"Total IXIA transmitted Packets = {ixia_tx}")
+			print(f"Total IXIA received Packets = {ixia_rx}")
+			print(f"Total packet dropped = {ixia_drop}")
+
+			cmd_output = sw.show_command("get switch acl counters all")
+			#print(cmd_output)
+			acl_counter_obj = acl_counter_class(cmd_output)
+			acl_counter_obj.print_acl_counters()
+			test_result = False
+			for obj in acl_counter_obj.acl_counter_list:
+				if obj.yellow_pkts == 0:
+					continue 
+				else:
+					if abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
+						test_result = True 
+			results.append(f"#{i} Testing on 3032E with 4 color ingress yellow + red counter-types successful: {test_result}")
+			final_results.append(f"#{i} Testing on 3032E with 4 color ingress yellow + red counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
+
+		for r in results:
+			print(r)
+	for r in final_results:
+		print(r)
 
 ##################################################################################################################################################
 ##################################################################################################################################################
