@@ -394,9 +394,8 @@ if __name__ == "__main__":
 					if ixia_tx  == obj.all_pkts and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
 						test_result = True 
 			results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
-			final_results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
-
+		final_results.append(f"#{testcase} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 		for r in results:
 			print(r)
 
@@ -514,10 +513,9 @@ if __name__ == "__main__":
 			if ingress_result and egress_result:
 				test_result = True
 			results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
-			final_results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
 			print(f"#{i} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful successful: {test_result}")
 
-
+		final_results.append(f"#{testcase} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
 		for r in results:
 			print(r)
 			 
@@ -609,9 +607,9 @@ if __name__ == "__main__":
 					if ixia_rx ==obj.green_pkts:
 						test_result = True 
 			results.append(f"#{i} Testing on 3032E with 4 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
-			final_results.append(f"#{i} Testing on 3032E with 4 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
 			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
-
+		
+		final_results.append(f"#{testcase} Testing on 3032E with 4 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
 		for r in results:
 			print(r)
 
@@ -712,11 +710,12 @@ if __name__ == "__main__":
 					if abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
 						test_result = True 
 			results.append(f"#{i} Testing on 3032E with 4 color ingress yellow + red counter-types successful: {test_result}")
-			final_results.append(f"#{i} Testing on 3032E with 4 color ingress yellow + red counter-types successful: {test_result}")
 			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 
+		final_results.append(f"#{testcase} Testing on 3032E with 4 color ingress yellow + red counter-types successful: {test_result}")
 		for r in results:
 			print(r)
+	print("================================== Final Results ====================================")
 	for r in final_results:
 		print(r)
 
