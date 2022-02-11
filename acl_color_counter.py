@@ -868,7 +868,7 @@ if __name__ == "__main__":
 		            set count-type all
 		            set policer 2
 		        end
-		        set ingress-interface "port1.2"         
+		        set egress-interface "port1.2"         
 		    next
 			end
 			
@@ -962,7 +962,7 @@ if __name__ == "__main__":
 		            set count-type green
 		            set policer 2
 		        end
-		        set ingress-interface "port1.2"         
+		        set egress-interface "port1.2"         
 		    next
 			end
 			
@@ -1057,7 +1057,7 @@ if __name__ == "__main__":
 		            set count-type yellow
 		            set policer 2
 		        end
-		        set ingress-interface "port1.2"         
+		        set egress-interface "port1.2"         
 		    next
 			end
 			
@@ -1151,7 +1151,7 @@ if __name__ == "__main__":
 		            set count-type yellow green
 		            set policer 2
 		        end
-		        set ingress-interface "port1.2"         
+		        set egress-interface "port1.2"         
 		    next
 			end
 			
