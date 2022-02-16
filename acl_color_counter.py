@@ -1874,7 +1874,7 @@ if __name__ == "__main__":
 					if obj.type == "ingress" and obj.all_pkts == 0:
 						continue 
 					elif obj.type == "egress" and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts) < 10:
- 						test_result =  True
+						test_result =  True
 						list_results.append(test_result)
 
 				results.append(f"#{i} Testing 2 color egress enable/disable counter  successful: {test_result}")
