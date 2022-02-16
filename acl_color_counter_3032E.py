@@ -25,7 +25,7 @@ from test_process import *
 
 
 if __name__ == "__main__":
-	sys.stdout = Logger(f"Log/ACL_counter_generic.log")
+	sys.stdout = Logger("Log/mem_cpu.log")
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
 	parser.add_argument("-test", "--testcase", type=str, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
@@ -38,8 +38,6 @@ if __name__ == "__main__":
 
 
 	global DEBUG
-	testcase_range = False
-
 	
 	args = parser.parse_args()
 
@@ -86,12 +84,8 @@ if __name__ == "__main__":
 				print_title(f"Test cases are  {testcase_list} ")
 				testcase_range = True
 			elif "-" in testcase:
-				testcase_list_str = testcase.split("-")
-				print(testcase_list_str)
-				start=int(testcase_list_str[0])
-				end = int(testcase_list_str[1])
-				for i in range(start,end+1):
-					testcase_list.append(i)
+				testcase_range = testcase.split("-")
+				testcase_list = [i for i in range(int(testcase_range[0]),int(testcase_range[1]+1))]
 				print_title(f"Test cases are  {testcase_list} ")
 				testcase_range = True
 		test_all = False
@@ -115,7 +109,7 @@ if __name__ == "__main__":
 	else:
 		Setup_only = False
 		print_title("Set up Only:No")
-	file = 'tbinfo_single_sw_color.xml'
+	file = 'tbinfo_single_sw.xml'
 	tb = parse_tbinfo_untangle(file)
 	testtopo_file = 'single_sw_topo.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
@@ -286,64 +280,6 @@ if __name__ == "__main__":
 	print(portList_v4_v6)
 
 	initial_testing = False
-	cmds = """
-	config switch acl ingress
-	delete 1
-	delete 2
-	delete 3
-	delete 4
-	end
-	config switch acl egress
-	delete 1
-	delete 2
-	delete 3
-	delete 4
-	end
-	"""
-	sw.config_cmds(cmds)
-	sleep(10)
-
-	cmds = """
-	config switch acl policer
-		delete 1
-	delete 2
-	delete 3
-	delete 4
-	delete 5
-	delete 6
-	delete 7
-	end
-	"""
-	sw.config_cmds(cmds)
-	sleep(10)
-
-	cmds = """
-	config system interface
-	    edit "vlan2"
-        set ip 10.1.1.1 255.255.255.0
-        set vlanid 2
-        set interface "internal"
-    next
-	end
-	config switch interface
-    edit "port1"
-        set native-vlan 2
-        set auto-discovery-fortilink enable
-    next
-	end
-
-	config switch interface
-    edit "port2"
-        set native-vlan 2
-        set auto-discovery-fortilink enable
-     next
-	end
-
-	"""
-	sw.config_cmds(cmds)
-	sleep(10)
-
-
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 	for topo in myixia.topologies:
 		topo.add_ipv4()
@@ -370,7 +306,8 @@ if __name__ == "__main__":
 	final_results = []
 	if testcase == 1 or test_all:
 		testcase = 1
-		description = "Ingress 2 Color counter types : only igress policer"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Ingress 4 Color counter types for 3032E: only ingress policer"
 		print(description)
 
 		results = []
@@ -417,12 +354,22 @@ if __name__ == "__main__":
 		    edit 1
 		        config action
 		            set count enable
-		            set count-type all
+		            set count-type all green yellow red
 		            set policer 1
 		        end
-		        set ingress-interface "port1"         
+		        set ingress-interface "port1.1"         
 		    next
 			end
+			config switch acl egress
+		    edit 1
+		        config action
+		            set count enable
+		            set count-type green yellow 
+		        end
+		        set interface "port1.2"         
+		    next
+			end
+			
 			"""
 			sw.config_cmds(cmds)
 			sleep(3)
@@ -451,18 +398,19 @@ if __name__ == "__main__":
 				if obj.all_pkts == 0:
 					continue 
 				else:
-					if abs(ixia_tx - obj.all_pkts) < 10:
+					if ixia_tx  == obj.all_pkts and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
 						test_result = True 
-			results.append(f"#{i} Testing 2 color ingress counter-types ALL successful: {test_result}")
-			print(f"#{i} Testing 2 color ingress counter-type ALL successful: {test_result}")
-		final_results.append(f"Testcase #{testcase} Testing 2 color ingress counter-types ALL successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 		for r in results:
 			print(r)
 
 	
 	if testcase == 2 or test_all:
 		testcase = 2
-		description = "Ingress 2 Color counter types : Ingress and egress have different policers"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Ingress 4 Color counter types for 3032E: Ingress and egress have different policers"
 		print(description)
 
 		results = []
@@ -509,10 +457,10 @@ if __name__ == "__main__":
 		    edit 1
 		        config action
 		            set count enable
-		            set count-type all
+		            set count-type all green yellow red
 		            set policer 1
 		        end
-		        set ingress-interface "port1"         
+		        set ingress-interface "port1.1"         
 		    next
 			end
 			
@@ -523,7 +471,7 @@ if __name__ == "__main__":
 		            set count-type green yellow 
 		            set policer 2
 		        end
-		        set interface "port2"         
+		        set interface "port1.2"         
 		    next
 			end
 			
@@ -539,7 +487,6 @@ if __name__ == "__main__":
 			myixia.start_traffic()
 			sleep(20)
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -564,24 +511,26 @@ if __name__ == "__main__":
 
 				if obj.type == "ingress" and ixia_tx  == obj.all_pkts:
 					ingress_result = True 
+					print(f"Ingress result: {ingress_result}")
 					ingress_green_pkts = obj.green_pkts
-					 
-				print(f"Ingress result: {ingress_result}")
-				if obj.type == "egress" and ixia_rx ==obj.green_pkts:
+					continue
+
+				if obj.type == "egress" and ixia_rx ==obj.green_pkts and abs(ingress_green_pkts - obj.green_pkts - obj.yellow_pkts) < 10:
 					egress_result = True 
-				print(f"Egress result: {egress_result}")
+					print(f"Egress result: {egress_result}")
 			if ingress_result and egress_result:
 				test_result = True
-			results.append(f"#{i} Testing on 2 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
-			print(f"#{i} Testing on 2 color ingress counter-types/Ingress and egress have different policers successful successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful successful: {test_result}")
 
-		final_results.append(f"Testcase #{testcase} Testing on 2 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 4 color ingress counter-types/Ingress and egress have different policers successful: {test_result}")
 		for r in results:
 			print(r)
 			 
 	if testcase == 3 or test_all:
 		testcase = 3
-		description = "Ingress 2 Color counter types: ingress policer + Green counter"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Ingress 4 Color counter types for 3032E: ingress policer + Green counter"
 		print(description)
 
 		results = []
@@ -631,7 +580,7 @@ if __name__ == "__main__":
 		            set count-type green
 		            set policer 1
 		        end
-		        set ingress-interface "port1"         
+		        set ingress-interface "port1.1"         
 		    next
 			end
 			
@@ -645,10 +594,8 @@ if __name__ == "__main__":
 			sw.show_command("get switch acl counters all")
 			myixia.start_traffic()
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
-
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
 			ixia_rx = ixia_stats_list[0]['Rx Frames']
 			ixia_drop = ixia_stats_list[0]['Frames Delta']
@@ -667,16 +614,17 @@ if __name__ == "__main__":
 				else:
 					if ixia_rx ==obj.green_pkts:
 						test_result = True 
-			results.append(f"#{i} Testing on 2 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
-			print(f"#{i} Testing on 2 color ingress counter-types successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 4 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 		
-		final_results.append(f"Testcase #{testcase} Testing on 2 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 4 color ingress/ingress policer + Green counter counter-types successful: {test_result}")
 		for r in results:
 			print(r)
 
 	if testcase == 4 or test_all:
 		testcase = 4
-		description = "Ingress 2 Color counter types: ingress policer + yellow + red"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Ingress 4 Color counter types for 3032E: ingress policer + yellow + red"
 		print(description)
 
 		results = []
@@ -726,7 +674,7 @@ if __name__ == "__main__":
 		            set count-type yellow red
 		            set policer 1
 		        end
-		        set ingress-interface "port1"         
+		        set ingress-interface "port1.1"         
 		    next
 			end
 			config switch acl egress
@@ -735,7 +683,7 @@ if __name__ == "__main__":
 		            set count enable
 		            set count-type green yellow 
 		        end
-		        set interface "port2"         
+		        set interface "port1.2"         
 		    next
 			end
 			
@@ -749,7 +697,6 @@ if __name__ == "__main__":
 			sw.show_command("get switch acl counters all")
 			myixia.start_traffic()
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -765,21 +712,22 @@ if __name__ == "__main__":
 			acl_counter_obj.print_acl_counters()
 			test_result = False
 			for obj in acl_counter_obj.acl_counter_list:
-				if obj.red_pkts == 0:
+				if obj.yellow_pkts == 0:
 					continue 
 				else:
-					if obj.type == "ingress" and abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
+					if abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
 						test_result = True 
-			results.append(f"#{i} Testing on 2 color ingress yellow + red counter-types successful: {test_result}")
-			print(f"#{i} Testing on 2 color ingress counter-types yellow + red successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 4 color ingress yellow + red counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 
-		final_results.append(f"Testcase #{testcase} Testing on 2 color ingress yellow + red counter-types successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 4 color ingress yellow + red counter-types successful: {test_result}")
 		for r in results:
 			print(r)
 
 	if testcase == 5 or test_all:
 		testcase = 5
-		description = "Ingress 2 Color counter types: ingress policer + green"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Ingress 4 Color counter types for 3032E: ingress policer + green + yellow + red"
 		print(description)
 
 		results = []
@@ -826,10 +774,10 @@ if __name__ == "__main__":
 		    edit 1
 		        config action
 		            set count enable
-		            set count-type green
+		            set count-type yellow red green
 		            set policer 1
 		        end
-		        set ingress-interface "port1"         
+		        set ingress-interface "port1.1"         
 		    next
 			end
 			
@@ -861,19 +809,24 @@ if __name__ == "__main__":
 				if obj.green_pkts == 0:
 					continue 
 				else:
-					if abs(ixia_rx - obj.green_pkts) < 10:
+					if ixia_rx == obj.green_pkts and abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
 						test_result = True 
-			results.append(f"#{i} Testing on 2 color ingress green counter-types successful: {test_result}")
-			print(f"#{i} Testing on 2 color ingress counter-types green successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 4 color ingress green + yellow + red counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 4 color ingress counter-types successful: {test_result}")
 
-		final_results.append(f"Testcase #{testcase} Testing on 2 color ingress green counter-types successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 4 color ingress yellow + red counter-types successful: {test_result}")
 		for r in results:
 			print(r)
+
+	print("================================== Final Results ====================================")
+	for r in final_results:
+		print(r)
 
 
 	if testcase == 6 or test_all:
 		testcase = 6
-		description = "Egress 2 Color counter types: egress policer All counter"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Egress 2 Color counter types for 3032E: egress policer All counter"
 		print(description)
 
 		results = []
@@ -923,7 +876,7 @@ if __name__ == "__main__":
 		            set count-type all
 		            set policer 2
 		        end
-		        set interface "port2"         
+		        set interface "port1.2"         
 		    next
 			end
 			
@@ -937,7 +890,6 @@ if __name__ == "__main__":
 			sw.show_command("get switch acl counters all")
 			myixia.start_traffic()
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -958,16 +910,17 @@ if __name__ == "__main__":
 				else:
 					if abs(obj.all_pkts - ixia_tx) < 10:
 						test_result = True 
-			results.append(f"#{i} Testing on 2 color egress All counte-type successful: {test_result}")
-			print(f"#{i} Testing on 2 color egress All counte-type successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 2 color egress All counte-type successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 2 color egress All counte-type successful: {test_result}")
 
-		final_results.append(f"Testcase #{testcase} Testing on 2 color egress All counte-type successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 2 color egress All counte-type successful: {test_result}")
 		for r in results:
 			print(r)
 
 	if testcase == 7 or test_all:
 		testcase = 7
-		description = "Egress 2 Color counter types: egress policer green counter"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Egress 2 Color counter types for 3032E: egress policer green counter"
 		print(description)
 
 		results = []
@@ -1017,7 +970,7 @@ if __name__ == "__main__":
 		            set count-type green
 		            set policer 2
 		        end
-		        set interface "port2"         
+		        set interface "port1.2"         
 		    next
 			end
 			
@@ -1031,7 +984,6 @@ if __name__ == "__main__":
 			sw.show_command("get switch acl counters all")
 			myixia.start_traffic()
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -1052,17 +1004,18 @@ if __name__ == "__main__":
 				else:
 					if abs(ixia_rx - obj.green_pkts) < 10:
 						test_result = True 
-			results.append(f"#{i} Testing 2 color egress green counte-type successful: {test_result}")
-			print(f"#{i} Testing 2 color egress green counte-type successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 2 color egress green counte-type successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 2 color egress green counte-type successful: {test_result}")
 
-		final_results.append(f"Testcase #{testcase} Testing on 2 color egress green counte-type successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 2 color egress green counte-type successful: {test_result}")
 		for r in results:
 			print(r)
 
 
 	if testcase == 8 or test_all:
 		testcase = 8
-		description = "Egress 2 Color counter types : egress policer yellow counter"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Egress 2 Color counter types for 3032E: egress policer yellow counter"
 		print(description)
 
 		results = []
@@ -1112,7 +1065,7 @@ if __name__ == "__main__":
 		            set count-type yellow
 		            set policer 2
 		        end
-		        set interface "port2"         
+		        set interface "port1.2"         
 		    next
 			end
 			
@@ -1126,7 +1079,6 @@ if __name__ == "__main__":
 			sw.show_command("get switch acl counters all")
 			myixia.start_traffic()
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -1147,16 +1099,17 @@ if __name__ == "__main__":
 				else:
 					if abs(ixia_drop - obj.yellow_pkts) < 10:
 						test_result = True 
-			results.append(f"#{i} Testing 2 color egress yellow counter-types successful: {test_result}")
-			print(f"#{i} Testing 2 color egress yellow counter-types successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 2 color egress yellow counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 2 color egress yellow counter-types successful: {test_result}")
 
-		final_results.append(f"Testcase #{testcase} Testing 2 color egress yellow counte-type successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 2 color egress yellow counte-type successful: {test_result}")
 		for r in results:
 			print(r)
 
 	if testcase == 9 or test_all:
 		testcase = 9
-		description = "Egress 2 Color counter types: egress policer green + yellow counter"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Egress 2 Color counter types for 3032E: egress policer green + yellow counter"
 		print(description)
 
 		results = []
@@ -1206,7 +1159,7 @@ if __name__ == "__main__":
 		            set count-type yellow green
 		            set policer 2
 		        end
-		        set interface "port2"         
+		        set interface "port1.2"         
 		    next
 			end
 			
@@ -1220,7 +1173,6 @@ if __name__ == "__main__":
 			sw.show_command("get switch acl counters all")
 			myixia.start_traffic()
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -1241,16 +1193,17 @@ if __name__ == "__main__":
 				else:
 					if abs(ixia_drop - obj.yellow_pkts) < 10 and abs(ixia_rx - obj.green_pkts) < 10:
 						test_result = True 
-			results.append(f"#{i} Testing 2 color egress green + yellow counter-types successful: {test_result}")
-			print(f"#{i} Testing 2 color egress green + yellow counter-types successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 2 color egress green + yellow counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E with 2 color egress green + yellow counter-types successful: {test_result}")
 
-		final_results.append(f"Testcase #{testcase} Testing 2 color egress green + yellow counte-type successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 2 color egress green + yellow counte-type successful: {test_result}")
 		for r in results:
 			print(r)
 
 	if testcase == 10 or test_all:
 		testcase = 10
-		description = "Egress 2 Color counter types: egress change policer with green + yellow counter"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Egress 2 Color counter types for 3032E: egress change policer with green + yellow counter"
 		print(description)
 
 		results = []
@@ -1315,7 +1268,7 @@ if __name__ == "__main__":
 			            set count-type yellow green
 			            set policer {p}
 			        end
-			        set interface "port2"         
+			        set interface "port1.2"         
 			    next
 				end
 				
@@ -1329,7 +1282,6 @@ if __name__ == "__main__":
 				sw.show_command("get switch acl counters all")
 				myixia.start_traffic()
 				myixia.stop_traffic()
-				sleep(10)
 				ixia_stats_list = myixia.collect_stats()
 				sleep(10)
 				ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -1351,20 +1303,21 @@ if __name__ == "__main__":
 						if abs(ixia_drop - obj.yellow_pkts) < 10 and abs(ixia_rx - obj.green_pkts) < 10:
 							test_result = True 
 							policer_results.append(test_result)
-				results.append(f"#{i} Testing 2 color egress change policers green + yellow counter-types successful: {test_result}")
-				print(f"#Testing 2 color egress change policers green + yellow counter-types successful: {test_result}")
+				results.append(f"#{i} Testing on 3032E with 2 color egress change policers green + yellow counter-types successful: {test_result}")
+				print(f"#Testing on 3032E with 2 color egress change policers green + yellow counter-types successful: {test_result}")
 
 		if policer_results.count(True) == len(policer_results):
 			test_result = True 
 		else:
 			test_result = False
-		final_results.append(f"Testcase #{testcase} Testing 2 color egress change policers green + yellow counte-type successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 2 color egress change policers green + yellow counte-type successful: {test_result}")
 		for r in results:
 			print(r)
 
 	if testcase == 11 or test_all:
 		testcase = 11
-		description = "Ingress 2 Color counter types: ingress enable/disable count-type"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Ingress 4 Color counter types for 3032E: ingress enable/disable count-type"
 		print(description)
 
 		cmds = """
@@ -1438,10 +1391,10 @@ if __name__ == "__main__":
 		    edit 1
 		        config action
 		            set count enable
-		            set count-type all
+		            set count-type all green yellow red
 		            set policer 1
 		        end
-		        set ingress-interface "port1"         
+		        set ingress-interface "port1.1"         
 		    next
 			end
 			config switch acl egress
@@ -1450,7 +1403,7 @@ if __name__ == "__main__":
 		            set count enable
 		            set count-type green yellow 
 		        end
-		        set interface "port2"         
+		        set interface "port1.2"         
 		    next
 			end
 			
@@ -1464,7 +1417,6 @@ if __name__ == "__main__":
 			sw.show_command("get switch acl counters all")
 			myixia.start_traffic()
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -1483,24 +1435,25 @@ if __name__ == "__main__":
 				if obj.all_pkts == 0:
 					continue 
 				else:
-					if ixia_tx  == obj.all_pkts:
+					if ixia_tx  == obj.all_pkts and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
 						test_result = True 
 				list_results.append(test_result)
-				results.append(f"#{i} Testing 2 color ingress counter-type enable/disable successful: {test_result}")
+				results.append(f"#{i} Testing on 3032E with 4 color ingress counter-type enable/disable successful: {test_result}")
 
 		if list_results.count(True) == len(list_results):
 			test_result = True 
 		else:
 			test_result = False
 
-		final_results.append(f"Testcase #{testcase} Testing 2 color ingress counter-type enable/disable successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E with 4 color ingress counter-type enable/disable successful: {test_result}")
 		for r in results:
 			print(r)
 		 
 
 	if testcase == 12 or test_all:
 		testcase = 12
-		description = "Egress 2 Color counter types: egress policer enable/disable counter-type"
+		sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+		description = "Egress 2 Color counter types for 3032E: egress policer enable/disable counter-type"
 		print(description)
 
 		cmds = """
@@ -1572,7 +1525,7 @@ if __name__ == "__main__":
 		            set count-type yellow green
 		            set policer 2
 		        end
-		        set interface "port2"         
+		        set interface "port1.2"         
 		    next
 			end
 			
@@ -1586,7 +1539,6 @@ if __name__ == "__main__":
 			sw.show_command("get switch acl counters all")
 			myixia.start_traffic()
 			myixia.stop_traffic()
-			sleep(10)
 			ixia_stats_list = myixia.collect_stats()
 			sleep(10)
 			ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -1609,22 +1561,27 @@ if __name__ == "__main__":
 						test_result = True 
 				list_results.append(test_result)
 
-			results.append(f"#{i} Testing egress enable/disable counter-types successful: {test_result}")
-			print(f"#{i} Testing egress enable/disable counter-type successful: {test_result}")
+			results.append(f"#{i} Testing on 3032E with 2 color egress enable/disable counter-types successful: {test_result}")
+			print(f"#{i} Testing on 3032E egress enable/disable counter-type successful: {test_result}")
 		if list_results.count(True) == len(list_results):
 			test_result = True 
 		else:
 			test_result = False
 
-		final_results.append(f"Testcase #{testcase} Testing engress counter-type enable/disable successful: {test_result}")
+		final_results.append(f"Testcase #{testcase} Testing on 3032E engress counter-type enable/disable successful: {test_result}")
 		for r in results:
 			print(r)
+	print("================================== Final Results ====================================")
+	for r in final_results:
+		print(r)
 
 
 	if testcase == 13 or test_all or testcase_range:
 		testcase = 13
 		if testcase_range and testcase in testcase_list:
-			description = "Ingress 2 Color counter types: ingress enable/disable count"
+		
+			sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+			description = "Ingress 4 Color counter types for 3032E: ingress enable/disable count"
 			print(description)
 
 			cmds = """
@@ -1699,10 +1656,10 @@ if __name__ == "__main__":
 			    edit 1
 			        config action
 			            set count enable
-			            set count-type all
+			            set count-type all green yellow red
 			            set policer 1
 			        end
-			        set ingress-interface "port1"         
+			        set ingress-interface "port1.1"         
 			    next
 				end
 				config switch acl egress
@@ -1711,7 +1668,7 @@ if __name__ == "__main__":
 			            set count enable
 			            set count-type green yellow 
 			        end
-			        set interface "port2"         
+			        set interface "port1.2"         
 			    next
 				end
 				
@@ -1725,7 +1682,6 @@ if __name__ == "__main__":
 				sw.show_command("get switch acl counters all")
 				myixia.start_traffic()
 				myixia.stop_traffic()
-				sleep(10)
 				ixia_stats_list = myixia.collect_stats()
 				sleep(10)
 				ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -1740,19 +1696,14 @@ if __name__ == "__main__":
 				acl_counter_obj = acl_counter_class(cmd_output)
 				acl_counter_obj.print_acl_counters()
 				test_result = False
-				ingress_result = False 
-				egress_result = False 
 				for obj in acl_counter_obj.acl_counter_list:
-					if obj.type == "ingress" and obj.all_pkts == 0:
+					if obj.all_pkts == 0:
 						continue 
-					elif obj.type == "ingress" and ixia_tx  == obj.all_pkts:
-						ingress_result = True
-
-					elif obj.type == "egress" and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts) < 10:
-						egress_result = True
-				test_result = ingress_result and egress_result
-				list_results.append(test_result)
-				results.append(f"#{i} Testing 2 color ingress counter-type enable/disable successful: {test_result}")
+					else:
+						if ixia_tx  == obj.all_pkts and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts - obj.red_pkts) < 10:
+							test_result = True 
+					list_results.append(test_result)
+					results.append(f"#{i} Testing on 3032E with 4 color ingress counter-type enable/disable successful: {test_result}")
 
 			if list_results.count(True) == len(list_results):
 				test_result = True 
@@ -1767,7 +1718,8 @@ if __name__ == "__main__":
 	if testcase == 14 or test_all or testcase_range:
 		testcase = 14
 		if testcase_range and testcase in testcase_list:
-			description = "Egress 2 Color counter types: egress enable/disable counter"
+			sys.stdout = Logger(f"Log/ACL_counter_{testcase}.log")
+			description = "Egress 2 Color counter types for 3032E: egress policer enable/disable counter"
 			print(description)
 
 			cmds = """
@@ -1839,7 +1791,7 @@ if __name__ == "__main__":
 			            set count-type yellow green
 			            set policer 2
 			        end
-			        set interface "port2"         
+			        set interface "port1.2"         
 			    next
 				end
 				
@@ -1853,7 +1805,6 @@ if __name__ == "__main__":
 				sw.show_command("get switch acl counters all")
 				myixia.start_traffic()
 				myixia.stop_traffic()
-				sleep(10)
 				ixia_stats_list = myixia.collect_stats()
 				sleep(10)
 				ixia_tx = ixia_stats_list[0]['Tx Frames']
@@ -1868,23 +1819,22 @@ if __name__ == "__main__":
 				acl_counter_obj = acl_counter_class(cmd_output)
 				acl_counter_obj.print_acl_counters()
 				test_result = False
-				ingress_result = False 
-				egress_result = False 
 				for obj in acl_counter_obj.acl_counter_list:
-					if obj.type == "ingress" and obj.all_pkts == 0:
+					if obj.yellow_pkts == 0:
 						continue 
-					elif obj.type == "egress" and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts) < 10:
- 						test_result =  True
-						list_results.append(test_result)
+					else:
+						if abs(ixia_drop - obj.yellow_pkts) < 10 and abs(ixia_rx - obj.green_pkts) < 10:
+							test_result = True 
+					list_results.append(test_result)
 
-				results.append(f"#{i} Testing 2 color egress enable/disable counter  successful: {test_result}")
-				print(f"#{i} Testing egress enable/disable counter  successful: {test_result}")
+				results.append(f"#{i} Testing on 3032E with 2 color egress enable/disable counter  successful: {test_result}")
+				print(f"#{i} Testing on 3032E egress enable/disable counter  successful: {test_result}")
 			if list_results.count(True) == len(list_results):
 				test_result = True 
 			else:
 				test_result = False
 
-			final_results.append(f"Testcase #{testcase} Testing egress counter-type enable/disable successful: {test_result}")
+			final_results.append(f"Testcase #{testcase} Testing on 3032E engress counter-type enable/disable successful: {test_result}")
 			for r in results:
 				print(r)
 

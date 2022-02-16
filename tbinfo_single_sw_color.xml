@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testbed name="hb-tb">
+ <dev1 type="FSW" hostname="S424EFTF19000002" model="424E">
+  <console ip="10.105.241.144" line="2096"> </console>
+  <login username="admin" password="Fortinet123!"> </login>
+  <mgmt ip="10.105.241.12" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>
+  <tftp ip="10.105.19.19" local_ip="10.105.241.12" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="QJ6NP-LTEJE-ST4H3-VF7JD-SPCAE-E88Q4-6,X594Y-JNBFT-P9B7K-LRV8E-2DB3Q-9HKTR-T"> </license>
+ </dev1>
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
+ </trafgen1>
+ <connections>
+  <link1 link="dev1:port1,trafgen1:4/16" type="ixia_link" mode="copper"> </link1>
+  <link2 link="dev1:port2,trafgen1:10/15" type="ixia_link" mode="copper"> </link2>
+  </connections>
+</testbed>
