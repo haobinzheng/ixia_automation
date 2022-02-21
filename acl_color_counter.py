@@ -352,7 +352,7 @@ if __name__ == "__main__":
 
 	for i in range(0,len(tb.ixia.port_active_list)-1):
 		for j in range(i+1,len(tb.ixia.port_active_list)):
-			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=1)
+			myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=30)
 			#myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=1)
 
 	
@@ -1254,7 +1254,7 @@ if __name__ == "__main__":
 		print(description)
 
 		results = []
-		for i in range(1):
+		for i in range(100):
 			cmds = """
 			config switch acl ingress
 			delete 1
@@ -1622,8 +1622,15 @@ if __name__ == "__main__":
 
 
 	if testcase == 13 or test_all or testcase_range:
-		testcase = 13
-		if testcase_range and testcase in testcase_list:
+		local_id = 13
+		if testcase == local_id or test_all:
+			execute = True 		
+		elif testcase_range and local_id in testcase_list:
+			execute = True 
+		else:
+			execute = False 
+		if execute:
+			testcase = local_id
 			description = "Ingress 2 Color counter types: ingress enable/disable count"
 			print(description)
 
@@ -1748,8 +1755,10 @@ if __name__ == "__main__":
 					elif obj.type == "ingress" and ixia_tx  == obj.all_pkts:
 						ingress_result = True
 
-					elif obj.type == "egress" and ixia_rx ==obj.green_pkts and abs(ixia_drop - obj.yellow_pkts) < 10:
+					elif obj.type == "egress" and ixia_rx ==obj.green_pkts:
 						egress_result = True
+				print(f"ingress_result = {ingress_result}")
+				print(f"egress_result = {egress_result}")
 				test_result = ingress_result and egress_result
 				list_results.append(test_result)
 				results.append(f"#{i} Testing 2 color ingress counter-type enable/disable successful: {test_result}")
@@ -1762,11 +1771,18 @@ if __name__ == "__main__":
 			final_results.append(f"Testcase #{testcase} Testing on 3032E with 4 color ingress counter-type enable/disable successful: {test_result}")
 			for r in results:
 				print(r)
-			 
+			
 
 	if testcase == 14 or test_all or testcase_range:
-		testcase = 14
-		if testcase_range and testcase in testcase_list:
+		local_id = 14
+		if testcase == local_id or test_all:
+			execute = True 		
+		elif testcase_range and local_id in testcase_list:
+			execute = True 
+		else:
+			execute = False 
+		if execute:
+			testcase = local_id
 			description = "Egress 2 Color counter types: egress enable/disable counter"
 			print(description)
 
@@ -1888,6 +1904,944 @@ if __name__ == "__main__":
 			for r in results:
 				print(r)
 
+	if testcase == 15 or test_all or testcase_range:
+		local_id = 15
+		if testcase == local_id or test_all:
+			execute = True 		
+		elif testcase_range and local_id in testcase_list:
+			execute = True 
+		else:
+			execute = False 
+		if execute:
+			testcase = local_id
+			description = "Ingress And Egress Multiple ACL counters on the same interface"
+			print(description)
+
+			cmds = """
+			config switch acl ingress
+			delete 1
+			delete 2
+			delete 3
+			delete 4
+			end
+			config switch acl egress
+			delete 1
+			delete 2
+			delete 3
+			delete 4
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+				delete 1
+			delete 2
+			delete 3
+			delete 4
+			delete 5
+			delete 6
+			delete 7
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+				edit 1
+	   			set guaranteed-bandwidth 2000
+	    		set type ingress
+			next
+			edit 2
+	    		set guaranteed-bandwidth 1000
+	    		set type egress
+			next
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			list_results = []
+			results = []
+			for i in range(1):
+
+				cmds = """
+				config switch acl ingress
+
+			    edit 1
+			        config action
+			            set count enable
+			            set count-type all
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 2
+			        config action
+			            set count enable
+			            set count-type green
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 3
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 4
+			        config action
+			            set count enable
+			            set count-type red
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 5
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 6
+			        config action
+			            set count enable
+			            set count-type green red
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 7
+			        config action
+			            set count enable
+			            set count-type yellow red
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+				end
+
+				config switch acl egress
+			    edit 1
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+
+			    edit 2
+			        config action
+			            set count enable
+			            set count-type green
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 3
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+
+			   	edit 4
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 5
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 6
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 7
+			        config action
+			            set count enable
+			            set count-type yellow green
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+				end
+				
+				"""
+				sw.config_cmds(cmds)
+				sleep(3)
+
+				cmd = "execute acl clear-counter all"
+				sw.exec_command(cmd)
+				sleep(3)
+				sw.show_command("get switch acl counters all")
+				myixia.start_traffic()
+				myixia.stop_traffic()
+				sleep(10)
+				ixia_stats_list = myixia.collect_stats()
+				sleep(10)
+				ixia_tx = ixia_stats_list[0]['Tx Frames']
+				ixia_rx = ixia_stats_list[0]['Rx Frames']
+				ixia_drop = ixia_stats_list[0]['Frames Delta']
+				print(f"Total IXIA transmitted Packets = {ixia_tx}")
+				print(f"Total IXIA received Packets = {ixia_rx}")
+				print(f"Total packet dropped = {ixia_drop}")
+
+				cmd_output = sw.show_command("get switch acl counters all")
+				#print(cmd_output)
+				acl_counter_obj = acl_counter_class(cmd_output)
+				acl_counter_obj.print_acl_counters()
+				test_result = False
+				ingress_result = False 
+				egress_result = False 
+				for obj in acl_counter_obj.acl_counter_list:
+					if obj.type == "ingress" and obj.all_pkts == 0:
+						continue 
+					elif obj.type == "egress" and ixia_rx ==obj.green_pkts:
+						test_result =  True
+						list_results.append(test_result)
+
+				results.append(f"#{i} Ingress And Egress Multiple ACL counters on the same interfacesuccessful: {test_result}")
+				print(f"#{i} Ingress And Egress Multiple ACL counters on the same interface successful: {test_result}")
+			if list_results.count(True) == len(list_results):
+				test_result = True 
+			else:
+				test_result = False
+
+			final_results.append(f"Testcase #{testcase} Ingress And Egress Multiple ACL counters on the same interface successful: {test_result}")
+			for r in results:
+				print(r)
+
+	if testcase == 16 or test_all or testcase_range:
+		local_id = 16
+		if testcase == local_id or test_all:
+			execute = True 		
+		elif testcase_range and local_id in testcase_list:
+			execute = True 
+		else:
+			execute = False 
+		if execute:
+			testcase = local_id
+			description = "Delete and configure Ingress and Egress ACL With Traffic"
+			print(description)
+
+			cmds = """
+			config switch acl ingress
+			delete 1
+			delete 2
+			delete 3
+			delete 4
+			end
+			config switch acl egress
+			delete 1
+			delete 2
+			delete 3
+			delete 4
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+				delete 1
+			delete 2
+			delete 3
+			delete 4
+			delete 5
+			delete 6
+			delete 7
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+				edit 1
+	   			set guaranteed-bandwidth 2000
+	    		set type ingress
+			next
+			edit 2
+	    		set guaranteed-bandwidth 1000
+	    		set type egress
+			next
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			list_results = []
+			results = []
+			sw.clear_crash_log()
+			myixia.start_traffic()
+			for i in range(1):
+
+				cmds = """
+				config switch acl ingress
+
+			    edit 1
+			        config action
+			            set count enable
+			            set count-type all
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 2
+			        config action
+			            set count enable
+			            set count-type green
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 3
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 4
+			        config action
+			            set count enable
+			            set count-type red
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 5
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 6
+			        config action
+			            set count enable
+			            set count-type green red
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 7
+			        config action
+			            set count enable
+			            set count-type yellow red
+			            set policer 1
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+				end
+
+				config switch acl egress
+			    edit 1
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+
+			    edit 2
+			        config action
+			            set count enable
+			            set count-type green
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 3
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+
+			   	edit 4
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 5
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 6
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 7
+			        config action
+			            set count enable
+			            set count-type yellow green
+			            set policer 2
+			        end
+			        set interface "port2"         
+			    next
+
+				end
+				
+				"""
+				sw.config_cmds(cmds)
+				sleep(3)
+
+				cmd = "execute acl clear-counter all"
+				sw.exec_command(cmd)
+				sleep(3)
+				sw.show_command("get switch acl counters all")
+ 
+			myixia.stop_traffic()
+			sw.find_crash()
+			sw.get_crash_debug()
+			found = sw.get_crash_log()
+			test_result = False if found else True
+
+			results.append(f"#{i} Delete and configure Ingress and Egress ACL With Traffic successful: {test_result}")
+
+			final_results.append(f"Testcase #{testcase} Delete and configure Ingress and Egress ACL With Traffic successful: {test_result}")
+
+	if testcase == 17 or test_all:
+		testcase = 17
+		description = "Ingress 2 Color counter types : Multiple Ingress ports in one ACL"
+		print(description)
+
+		results = []
+		for i in range(1):
+			cmds = """
+			config switch acl ingress
+				delete 1
+				delete 2
+				delete 3
+				delete 4
+				delete 5
+				delete 6
+				delete 7
+				delete 8
+			end
+			config switch acl egress
+				delete 1
+				delete 2
+				delete 3
+				delete 4
+				delete 5
+				delete 6
+				delete 7
+				delete 8
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+				delete 1
+				delete 2
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+			edit 1
+				set guaranteed-bandwidth 2000
+				set type ingress
+				next
+			edit 2
+				set guaranteed-bandwidth 1000
+				set type egress
+				next
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl ingress
+		    edit 1
+		        config action
+		            set count enable
+		            set count-type all
+		            set policer 1
+		        end
+		        set ingress-interface "port1" "port2" "port3" "port4" "port5" "port6" "port7" "port8" "port9"       
+		    next
+			end
+			
+			config switch acl egress
+		    edit 1
+		        config action
+		            set count enable
+		            set count-type green yellow 
+		            set policer 2
+		        end
+		        set interface "port2"         
+		    next
+			end
+			
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmd = "execute acl clear-counter all"
+			sw.exec_command(cmd)
+			sleep(3)
+
+			sw.show_command("get switch acl counters all")
+			myixia.start_traffic()
+			sleep(20)
+			myixia.stop_traffic()
+			sleep(10)
+			ixia_stats_list = myixia.collect_stats()
+			sleep(10)
+			ixia_tx = ixia_stats_list[0]['Tx Frames']
+			ixia_rx = ixia_stats_list[0]['Rx Frames']
+			ixia_drop = ixia_stats_list[0]['Frames Delta']
+			print(f"Total IXIA transmitted Packets = {ixia_tx}")
+			print(f"Total IXIA received Packets = {ixia_rx}")
+			print(f"Total packet dropped = {ixia_drop}")
+
+			cmd_output = sw.show_command("get switch acl counters all")
+			#print(cmd_output)
+			acl_counter_obj = acl_counter_class(cmd_output)
+			acl_counter_obj.print_acl_counters()
+			test_result = False
+			ingress_result = False
+			egress_result = False
+			for obj in acl_counter_obj.acl_counter_list:
+				if obj.type == "ingress" and obj.all_pkts == 0:
+					continue
+				if obj.type == "egress" and obj.green_pkts == 0:
+					continue
+
+				if obj.type == "ingress" and ixia_tx  == obj.all_pkts:
+					ingress_result = True 
+					ingress_green_pkts = obj.green_pkts
+					 
+				print(f"Ingress result: {ingress_result}")
+				if obj.type == "egress" and ixia_rx ==obj.green_pkts:
+					egress_result = True 
+				print(f"Egress result: {egress_result}")
+			if ingress_result and egress_result:
+				test_result = True
+			results.append(f"#{i} Multiple Ingress ports in one ACL successful: {test_result}")
+			print(f"#{i} Multiple Ingress ports in one ACL successful: {test_result}")
+
+		final_results.append(f"Testcase #{testcase} Multiple Ingress ports in one ACL successful: {test_result}")
+		for r in results:
+			print(r)
+
+	if testcase == 18 or test_all or testcase_range:
+		local_id = 18
+		if testcase == local_id or test_all:
+			execute = True 		
+		elif testcase_range and local_id in testcase_list:
+			execute = True 
+		else:
+			execute = False 
+		if execute:
+			testcase = local_id
+			description = "Multiple Ingress And Egress ACL counters with different policers"
+			print(f"===========Testcase #{testcase}: {description} ==========")
+
+			cmds = """
+			config switch acl ingress
+				delete 1
+				delete 2
+				delete 3
+				delete 4
+				delete 5
+				delete 6
+				delete 7
+				delete 8
+			end
+			config switch acl egress
+				delete 1
+				delete 2
+				delete 3
+				delete 4
+				delete 5
+				delete 6
+				delete 7
+				delete 8
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+				delete 1
+				delete 2
+				delete 3
+				delete 4
+				delete 5
+				delete 6
+				delete 7
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			cmds = """
+			config switch acl policer
+			edit 1
+	   			set guaranteed-bandwidth 10000
+	    		set type ingress
+			next
+			edit 2
+	    		set guaranteed-bandwidth 11000
+	    		set type ingress
+			next
+			edit 3
+	    		set guaranteed-bandwidth 12000
+	    		set type ingress
+			next
+
+			edit 4
+	    		set guaranteed-bandwidth 13000
+	    		set type ingress
+			next
+
+			edit 5
+	    		set guaranteed-bandwidth 15000
+	    		set type ingress
+			next
+
+			edit 6
+	    		set guaranteed-bandwidth 16000
+	    		set type ingress
+			next
+
+			edit 7
+	    		set guaranteed-bandwidth 17000
+	    		set type ingress
+			next
+
+			edit 8
+	    		set guaranteed-bandwidth 18000
+	    		set type ingress
+			next
+
+			edit 11
+	   			set guaranteed-bandwidth 5100
+	    		set type egress
+			next
+			edit 12
+	    		set guaranteed-bandwidth 5200
+	    		set type egress
+			next
+			edit 13
+	    		set guaranteed-bandwidth 5300
+	    		set type egress
+			next
+
+			edit 14
+	    		set guaranteed-bandwidth 5400
+	    		set type egress
+			next
+
+			edit 15
+	    		set guaranteed-bandwidth 5500
+	    		set type egress
+			next
+
+			edit 16
+	    		set guaranteed-bandwidth 5600
+	    		set type egress
+			next
+
+			edit 17
+	    		set guaranteed-bandwidth 5700
+	    		set type egress
+			next
+
+			edit 18
+	    		set guaranteed-bandwidth 5800
+	    		set type egress
+			next
+
+			end
+			"""
+			sw.config_cmds(cmds)
+			sleep(10)
+
+			list_results = []
+			results = []
+			for i in range(2):
+
+				cmds = """
+				config switch acl ingress
+
+			    edit 1
+			        config action
+			            set count enable
+			            set count-type all
+			            set policer 1
+			        end
+			        set ingress-interface "port1"       
+			    next
+
+			    edit 2
+			        config action
+			            set count enable
+			            set count-type green
+			            set policer 2
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 3
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 3
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 4
+			        config action
+			            set count enable
+			            set count-type red
+			            set policer 4
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 5
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 5
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 6
+			        config action
+			            set count enable
+			            set count-type green red
+			            set policer 6
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 7
+			        config action
+			            set count enable
+			            set count-type yellow red
+			            set policer 7
+			        end
+			        set ingress-interface "port1"         
+			    next
+
+			    edit 8
+			        config action
+			            set count enable
+			            set count-type yellow red
+			            set policer 8
+			        end
+			        set ingress-interface "port1"         
+			    next
+				end
+
+				config switch acl egress
+			    edit 1
+			        config action
+			            set count enable
+			            set count-type yellow green
+			            set policer 11
+			        end
+			        set interface "port2"         
+			    next
+
+
+			    edit 2
+			        config action
+			            set count enable
+			            set count-type green
+			            set policer 12
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 3
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 13
+			        end
+			        set interface "port2"         
+			    next
+
+
+			   	edit 4
+			        config action
+			            set count enable
+			            set count-type yellow
+			            set policer 14
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 5
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 15
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 6
+			        config action
+			            set count enable
+			            set count-type green yellow
+			            set policer 16
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 7
+			        config action
+			            set count enable
+			            set count-type yellow green
+			            set policer 17
+			        end
+			        set interface "port2"         
+			    next
+
+			    edit 8
+			        config action
+			            set count enable
+			            set count-type yellow green
+			            set policer 18
+			        end
+			        set interface "port2"         
+			    next
+
+				end
+				
+				"""
+				sw.config_cmds(cmds)
+				sleep(3)
+
+				cmd = "execute acl clear-counter all"
+				sw.exec_command(cmd)
+				sleep(3)
+				sw.show_command("get switch acl counters all")
+				myixia.start_traffic()
+				sleep(3600*24)
+				myixia.stop_traffic()
+				sleep(10)
+				ixia_stats_list = myixia.collect_stats()
+				sleep(10)
+				ixia_tx = ixia_stats_list[0]['Tx Frames']
+				ixia_rx = ixia_stats_list[0]['Rx Frames']
+				ixia_drop = ixia_stats_list[0]['Frames Delta']
+				print(f"Total IXIA transmitted Packets = {ixia_tx}")
+				print(f"Total IXIA received Packets = {ixia_rx}")
+				print(f"Total packet dropped = {ixia_drop}")
+
+				cmd_output = sw.show_command("get switch acl counters all")
+				#print(cmd_output)
+				acl_counter_obj = acl_counter_class(cmd_output)
+				acl_counter_obj.print_acl_counters()
+				test_result = False
+				ingress_result = False 
+				egress_result = False 
+				for obj in acl_counter_obj.acl_counter_list:
+					print(f"obj.type,obj.all,obj.green,obj.yellow = {obj.type},{obj.all_pkts},{obj.green_pkts},{obj.yellow_pkts}")
+					if obj.type == "ingress" and (obj.all_pkts == 0 or obj.all_pkts == None):
+						continue 
+					if obj.type == "egress" and (obj.green_pkts == 0 or (obj.green_pkts  == None)):
+						continue
+					if obj.type == "egress" and abs(ixia_rx- obj.green_pkts) < 20:
+						egress_result = True
+						continue
+					if obj.type == "ingress" and abs(obj.all_pkts - ixia_tx) < 20:
+						print("Found ingress none zero entry")
+						ingress_result = True 
+				print(f"ingress_result:{ingress_result}, egress_result:{egress_result}")
+				test_result = ingress_result and egress_result
+				results.append(f"#{i} Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
+				print(f"#{i} Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
+
+
+			final_results.append(f"Testcase #{testcase} Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
+			for r in results:
+				print(r)
+
+ 
 	print("================================== Final Results ====================================")
 	for r in final_results:
 		print(r)

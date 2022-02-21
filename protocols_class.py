@@ -6489,6 +6489,8 @@ class FortiSwitch_XML(FortiSwitch):
             Info(f"!!!!!!!!!! Crash Log was found at {self.hostname} !!!!!!!!!!")
             output = self.show_command("diagnose debug crashlog read")
 
+        return found
+
 
     def config_sw_after_factory_xml(self):
         config_mgmt_mode = f"""

@@ -1079,6 +1079,10 @@ class IXIA:
         dst_topo = kwargs['dst_topo']
         traffic_name = kwargs['traffic_name']
         tracking_name = kwargs['tracking_name']
+        if "rate" in kwargs:
+            traffic_rate = int(kwargs['rate'])
+        else:
+            traffic_rate = 3
         traffic_item = ixia_rest_create_traffic(
         platform = self.testPlatform, 
         session = self.Session,
@@ -1087,6 +1091,7 @@ class IXIA:
         dst = dst_topo,
         name= traffic_name,
         tracking_group = tracking_name,
+        rate = traffic_rate
         )
 
     def create_traffic_raw(self,*args,**kwargs):
@@ -1842,6 +1847,10 @@ def ixia_rest_create_traffic(*args,**kwargs):
         dst_topo = kwargs['dst']
         traffic_name = kwargs['name']
         tracking_group = kwargs['tracking_group']
+        if "rate" in kwargs:
+            traffic_rate = int(kwargs['rate'])
+        else:
+            traffic_rate = 3
 
         ixNetwork.info('Create Traffic Item')
         trafficItem = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType='ipv4',TransmitMode='sequential')
@@ -1855,7 +1864,7 @@ def ixia_rest_create_traffic(*args,**kwargs):
         # #       Therefore, ConfigElement is a list.
         ixNetwork.info('Configuring config elements')
         configElement = trafficItem.ConfigElement.find()[0]
-        configElement.FrameRate.update(Type='percentLineRate', Rate=3)
+        configElement.FrameRate.update(Type='percentLineRate', Rate=traffice_rate)
         #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
         configElement.TransmissionControl.update(Type='continuous')
         configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
