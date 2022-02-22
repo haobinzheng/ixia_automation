@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testbed name="hb-tb">
- <dev1 type="FSW" hostname="S424EFTF19000002" model="424E">
-  <console ip="10.105.241.144" line="2096"> </console>
+ <dev1 type="FSW" hostname="S548DN5018000387" model="548D">
+  <console ip="10.105.240.44" line="2010"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.241.12" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.160.37.20" port="9"> </pdu>

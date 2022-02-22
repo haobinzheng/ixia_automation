@@ -2978,7 +2978,7 @@ if __name__ == "__main__":
 
 			list_results = []
 			results = []
-			for i in range(10000):
+			for i in range(1):
 				cmds = """
 				config switch acl ingress
 
