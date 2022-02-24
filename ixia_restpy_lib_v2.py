@@ -1864,7 +1864,7 @@ def ixia_rest_create_traffic(*args,**kwargs):
         # #       Therefore, ConfigElement is a list.
         ixNetwork.info('Configuring config elements')
         configElement = trafficItem.ConfigElement.find()[0]
-        configElement.FrameRate.update(Type='percentLineRate', Rate=traffice_rate)
+        configElement.FrameRate.update(Type='percentLineRate', Rate=traffic_rate)
         #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
         configElement.TransmissionControl.update(Type='continuous')
         configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'

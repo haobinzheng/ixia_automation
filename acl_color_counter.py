@@ -2851,7 +2851,7 @@ if __name__ == "__main__":
 			execute = False 
 		if execute:
 			testcase = local_id
-			description = "Multiple Ingress And Egress ACL counters with different policers"
+			description = "Longevity testing: Multiple Ingress And Egress ACL counters with different policers"
 			print(f"===========Testcase #{testcase}: {description} ==========")
 
 			cmds = """
@@ -3174,11 +3174,11 @@ if __name__ == "__main__":
 						ingress_result = True 
 				print(f"ingress_result:{ingress_result}, egress_result:{egress_result}")
 				test_result = ingress_result and egress_result
-				results.append(f"#{i} Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
-				print(f"#{i} Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
+				results.append(f"#{i} Longevity testing:Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
+				print(f"#{i} Longevity testing:Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
 
 
-			final_results.append(f"Testcase #{testcase} Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
+			final_results.append(f"Testcase #{testcase} Longevity testing:Multiple Ingress And Egress ACL counters with different policers successful: {test_result}")
 			for r in results:
 				print(r)
  
