@@ -292,12 +292,24 @@ if __name__ == "__main__":
 	delete 2
 	delete 3
 	delete 4
+	delete 5
+	delete 6
+	delete 7
+	delete 8
+	delete 9
+	delete 10
 	end
 	config switch acl egress
 	delete 1
 	delete 2
 	delete 3
 	delete 4
+	delete 5
+	delete 6
+	delete 7
+	delete 8
+	delete 9
+	delete 10
 	end
 	"""
 	sw.config_cmds(cmds)
@@ -448,7 +460,7 @@ if __name__ == "__main__":
 			acl_counter_obj.print_acl_counters()
 			test_result = False
 			for obj in acl_counter_obj.acl_counter_list:
-				if obj.all_pkts == 0:
+				if obj.all_pkts == 0 or obj.all_pkts == None and obj.type == "ingress":
 					continue 
 				else:
 					if abs(ixia_tx - obj.all_pkts) < 10:
