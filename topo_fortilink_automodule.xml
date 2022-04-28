@@ -7,7 +7,6 @@
  <dev7 type="FSW" role="tier3-2-1"> </dev7>
  <dev8 type="FSW" role="tier3-2-1"> </dev8>
  <dev9 type="FGT" role="FGT_Active-1"> </dev9>
- <dev11 type="FSW" role="access_south"> </dev11>
  <trafgen1 type="IXIA" model="IXIA" role="trafgen"> </trafgen1>
  <connections>
   <link1 link="dev9,dev10" type="ha_link"> </link1>

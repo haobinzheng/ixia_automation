@@ -474,8 +474,7 @@ if __name__ == "__main__":
 		myixia.collect_stats()
 		myixia.check_traffic()
 		myixia.stop_traffic()
-		exit(1)
-	
+
 	myixia.start_traffic()
 
 	################################# repeated test steps ################################
@@ -560,6 +559,8 @@ if __name__ == "__main__":
 		for sw in switches:
 			if sw.tier == None:
 				continue
+			if sw.tier > 1: #Only test tier#1 switches upgrade
+				return
 			test_log.write(f"========   Performance on Upgrade Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
 			sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
 			myixia.clear_stats()
@@ -577,7 +578,7 @@ if __name__ == "__main__":
 				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
 				
 	for i in range(1,2):
-		test_log = Logger(f"Log/perf_result_fsw{i}.log")
+		test_log = Logger(f"Log/perf_automodule_{i}.log")
 		################################# Disable Slit-brin-detect Perf Testing ########################## 
 		for sw in switches:
 			if sw.tier == None:
@@ -591,57 +592,59 @@ if __name__ == "__main__":
 		console_timer(300,msg=f"After disabling split-brain-detect, wait for 300s ")
 
 		test_log.write(f"===========================================================================================\n")
-		test_log.write(f"					 Disable split-brian-detect.  			\n")
+		test_log.write(f"					 Use Automodule for two Tier#1 switches 			\n")
 		test_log.write(f"===========================================================================================\n")
-		power_cycle_testing()
+		#power_cycle_testing()
 		upgrade_testing()
-		reboot_testing()
-		icl_testing()
+		#reboot_testing()
+		#icl_testing()
+	
+	exit(0)
 
 	 
-		####################################### Enable Slit-brin-detect/No Shut ports Perf Testing ###########################
-		index = 0
-		for sw in switches:
-			if sw.tier == None:
-				continue
-			appendex = index%2
-			config = f"""
-			config switch global
-			set  mclag-split-brain-detect enable
-			set mclag-split-brain-priority {int(sw.tier)*10 + appendex}
-			end
-			"""
-			config_cmds_lines(sw.console,config)
-			index += 1
-		console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
-		test_log.write(f"============================================================================================================\n")
-		test_log.write(f"				Enable split-brian-detect/Disable shut ports.  			\n")
-		test_log.write(f"=============================================================================================================\n")
-		console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
-		power_cycle_testing()
-		upgrade_testing()
-		reboot_testing()
-		icl_testing()
+		# ####################################### Enable Slit-brin-detect/No Shut ports Perf Testing ###########################
+		# index = 0
+		# for sw in switches:
+		# 	if sw.tier == None:
+		# 		continue
+		# 	appendex = index%2
+		# 	config = f"""
+		# 	config switch global
+		# 	set  mclag-split-brain-detect enable
+		# 	set mclag-split-brain-priority {int(sw.tier)*10 + appendex}
+		# 	end
+		# 	"""
+		# 	config_cmds_lines(sw.console,config)
+		# 	index += 1
+		# console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
+		# test_log.write(f"============================================================================================================\n")
+		# test_log.write(f"				Enable split-brian-detect/Disable shut ports.  			\n")
+		# test_log.write(f"=============================================================================================================\n")
+		# console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
+		# power_cycle_testing()
+		# upgrade_testing()
+		# reboot_testing()
+		# icl_testing()
 
-		###################################### Enable Slit-brin-detect/Enable Shut ports ###########################
-		index = 0
-		for sw in switches:
-			if sw.tier == None:
-				continue
-			appendex = index%2
-			config = f"""
-			config switch global
-			set mclag-split-brain-all-ports-down enable
-			end
-			"""
-			config_cmds_lines(sw.console,config)
-			index += 1
-		console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
-		test_log.write(f"============================================================================================================\n")
-		test_log.write(f"		 Enable split-brian-detect/ Enable shut-ports 			\n")
-		test_log.write(f"=============================================================================================================\n")
-		console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
-		power_cycle_testing()
-		upgrade_testing()
-		reboot_testing()
-		icl_testing()
+		# ###################################### Enable Slit-brin-detect/Enable Shut ports ###########################
+		# index = 0
+		# for sw in switches:
+		# 	if sw.tier == None:
+		# 		continue
+		# 	appendex = index%2
+		# 	config = f"""
+		# 	config switch global
+		# 	set mclag-split-brain-all-ports-down enable
+		# 	end
+		# 	"""
+		# 	config_cmds_lines(sw.console,config)
+		# 	index += 1
+		# console_timer(300,msg=f"After enabling split-brain-detect, wait for 300s ")
+		# test_log.write(f"============================================================================================================\n")
+		# test_log.write(f"		 Enable split-brian-detect/ Enable shut-ports 			\n")
+		# test_log.write(f"=============================================================================================================\n")
+		# console_timer(300,msg=f"After enabling split-brain without shut-down ports wait for 300s to start testing")
+		# power_cycle_testing()
+		# upgrade_testing()
+		# reboot_testing()
+		# icl_testing()
