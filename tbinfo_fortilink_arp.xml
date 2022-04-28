@@ -144,7 +144,7 @@
   <location location="324/8/11" > </location>
 </dev11>
 
- <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.44:11009">
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.252.120:11009">
  </trafgen1>
  <connections>
   <link1 link="dev9:port1,dev10:port1" type="ha_link" mode="Copper"> </link1>
@@ -153,10 +153,8 @@
   <link4 link="dev9:port4,dev2:port1" type="tier1_link" mode="Copper"> </link4>
   <link5 link="dev10:port3,dev1:port2" type="tier1_link" mode="Copper"> </link5>
   <link6 link="dev10:port4,dev2:port2" type="tier1_link" mode="Copper"> </link6>
-  <link7 link="dev4:port13,trafgen1:10/6" type="ixia_link" mode="Copper"> </link7>
-  <link8 link="dev2:port13,trafgen1:6/11" type="ixia_link" mode="Copper"> </link8>
-  <link9 link="dev6:port13,trafgen1:12/8" type="ixia_link" mode="Copper"> </link9>
-  <link10 link="dev9:port13,trafgen1:7/14" type="ixia_link" mode="Copper"> </link10>
-  <link11 link="dev11:port13,trafgen1:11/1" type="ixia_link" mode="Copper"> </link11>
+  <link7 link="dev4:port13,trafgen1:4/16" type="ixia_link" mode="Copper"> </link7>
+  <link8 link="dev6:port13,trafgen1:12/8" type="ixia_link" mode="Copper"> </link8>
+  <link9 link="dev5:port13,trafgen1:10/15" type="ixia_link" mode="Copper"> </link9>
  </connections>
 </testbed>

@@ -32,8 +32,6 @@ if __name__ == "__main__":
 	parser.add_argument("-b", "--boot", help="Perform reboot test", action="store_true")
 	parser.add_argument("-f", "--factory", help="Run the test after factory resetting all devices", action="store_true")
 	parser.add_argument("-v", "--verbose", help="Run the test in verbose mode with amble debugs info", action="store_true")
-	parser.add_argument("-s", "--setup_only", help="Setup testbed and IXIA only for manual testing", action="store_true")
-	parser.add_argument("-i", "--interactive", help="Enter interactive mode for test parameters", action="store_true")
 	parser.add_argument("-ug", "--sa_upgrade", type = str,help="FSW software upgrade in standlone mode. For debug image enter -1. Example: v6-193,v7-5,-1(debug image)")
 
 
@@ -109,15 +107,10 @@ if __name__ == "__main__":
 		Reboot = False
 		print_title("Reboot:No")
 
-	if args.setup_only:
-		Setup_only = True
-		print_title("Set up Only:Yes")
-	else:
-		Setup_only = False
-		print_title("Set up Only:No")
-	file = 'tbinfo_single_sw_color.xml'
+ 
+	file = 'tbinfo_single_sw.xml'
 	tb = parse_tbinfo_untangle(file)
-	testtopo_file = 'single_sw_topo.xml'
+	testtopo_file = 'bgp_single_sw_topo.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
@@ -132,7 +125,7 @@ if __name__ == "__main__":
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
 
-
+	sw = switches[0]
 	##################################### Pre-Test setup and configuration #############################
 	if upgrade_sa:
 		for sw in switches:
@@ -189,39 +182,87 @@ if __name__ == "__main__":
 		# 	exit()
 
 	if setup: 
-		for sw in switches:
-			config = """
-			config system interface
-				edit "vlan1"
-				    set ip 10.1.1.1 255.255.255.0
-				            config ipv6
-				                set ip6-address 2001:10:1:1::1/64
-				                set ip6-allowaccess ping https http ssh telnet
-				                set dhcp6-information-request enable
-				            end
-				        set vlanid 1
-				        set interface "internal"
-				    next
-				end
-			config switch vlan
-				delete 20 
-				delete 1
-			end
-			config switch vlan
-			    edit 20
-			        set mld-snooping enable
-					set igmp-snooping enable
+		cmds = """
+		config system interface
+			edit "vlan1"
+				set allowaccess ping http ssh telnet
+			    set ip 10.1.1.1 255.255.255.0
+			            config ipv6
+			                set ip6-address 2001:10:1:1::1/64
+			                set ip6-allowaccess ping https http ssh telnet
+			                set dhcp6-information-request enable
+			            end
+			        set vlanid 1
+			        set interface "internal"
 			    next
-			    edit 1
-			        set igmp-snooping enable
-			        set mld-snooping enable
+			
+			edit "vlan2"
+				set allowaccess ping http ssh telnet
+			    set ip 10.1.2.1 255.255.255.0
+			            config ipv6
+			                set ip6-address 2001:10:1:2::1/64
+			                set ip6-allowaccess ping https http ssh telnet
+			                set dhcp6-information-request enable
+			            end
+			        set vlanid 2
+			        set interface "internal"
 			    next
+			 
+			edit "vlan3"
+				set allowaccess ping http ssh telnet
+			    set ip 10.1.3.1 255.255.255.0
+			            config ipv6
+			                set ip6-address 2001:10:1:3::1/64
+			                set ip6-allowaccess ping https http ssh telnet
+			                set dhcp6-information-request enable
+			            end
+			        set vlanid 3
+			        set interface "internal"
+			    next
+			 
+			edit "vlan4"
+				set allowaccess ping http ssh telnet
+			    set ip 10.1.4.1 255.255.255.0
+			            config ipv6
+			                set ip6-address 2001:10:1:4::1/64
+			                set ip6-allowaccess ping https http ssh telnet
+			                set dhcp6-information-request enable
+			            end
+			        set vlanid 4
+			        set interface "internal"
+			    next
+			 edit "loop0"
+		        set ip 1.1.1.1 255.255.255.255
+		        set allowaccess ping http ssh telnet
+		        set type loopback
+		        set snmp-index 44
+		        config ipv6
+		            set ip6-address 2001:1:1:1::1/128
+		            set ip6-allowaccess ping https http ssh telnet
+		            set dhcp6-information-request enable
+		        end
+    			next
 			end
-			conf switch igmp-snooping globals
-				set aging-time 300
+		"""
+		sw.config_cmds(cmds)
+		sleep(10)
+
+		vlan = 1
+
+		for port in sw.ixia_ports:
+			cmds = f"""
+			config switch interface
+		    edit {port}
+		        set native-vlan {vlan}
+		        set auto-discovery-fortilink enable
+		    next
 			end
+
 			"""
-			config_cmds_lines(sw.console,config)
+			sw.config_cmds(cmds)
+			sleep(2)
+			vlan += 1
+
 		# if testcase == 0:
 		# 	exit()
 
@@ -240,43 +281,24 @@ if __name__ == "__main__":
 			tprint(f"============================ {dut_name} software image = {image} ============")
 
 		# if testcase == 0:
-		# 	exit()
-	lw_old_dict = {}
-	# while True:
-	# 	for sw in switches:
-	# 		tprint(f"---------------------------------- cpu-memory-iostats: {sw.name} --------------------------------------")
-	# 		try:
-	# 			result = loop_command_output(sw.console,"fnsysctl top")
-	# 		except (BrokenPipeError,EOFError,UnicodeDecodeError) as e:
-	# 			debug(f"Having problem to collect fnsysctl top command on {sw.name}")
-	# 			continue
 
-	# 		#sw.fsw_show_cmd("diagnose test application fpmd 1")
-	# 		lw_list = sw.fsw_show_cmd("fnsysctl ps -lw")
-	# 		lw_current_dict = sw.sw_fnsysctl_process(lw_list)
-	# 		if bool(lw_old_dict):
-	# 			for k,v in lw_current_dict.items():
-	# 				if lw_old_dict[k] < lw_current_dict[k]:
-	# 					print(f"Potential memory leak | {k}: before ={lw_old_dict[k]}, now = {v}")
-	# 				else:
-	# 					print(f"No memory leak | {k}: before ={lw_old_dict[k]}, now = {v}")
-	# 		lw_old_dict = lw_current_dict
-	# 		# sw.fsw_show_cmd("diagnose switch physical-ports io-stats cumulative")
-	# 	sleep(300)
-	# 	print_double_line()
-	
-	sw = switches[0]
+
 	
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]
  
 
-	mac_list = ["00:11:01:01:01:01","00:12:01:01:01:01","00:13:01:01:01:01","00:14:01:01:01:01","00:15:01:01:01:01","00:16:01:01:01:01","00:17:01:01:01:01","00:18:01:01:01:01"]
-	net4_list = ["10.1.1.211/24","10.1.1.212/24","10.1.1.213/24","10.1.1.214/24","10.1.1.215/24","10.1.1.216/24","10.1.1.217/24","10.1.1.218/24","10.1.1.219/24","10.1.1.220/24"]
-	gw4_list = ["10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1"]
-	net6_list = ["2001:10:1:1::211/64","2001:10:1:1::212/64","2001:10:1:1::213/64","2001:10:1:1::214/64","2001:10:1:1::215/64","2001:10:1:1::216/64","2001:10:1:1::217/64","2001:10:1:1::218/64"]
-	gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
+	mac_list = ["00:11:01:01:01:01","00:12:01:01:01:01","00:13:01:01:01:01","00:14:01:01:01:01"]
+	net4_list = ["10.1.1.200/24","10.1.2.200/24","10.1.3.200/24","10.1.4.200/24"]
+	gw4_list = ["10.1.1.1","10.1.2.1","10.1.3.1","10.1.4.1"]
+	net6_list = ["2001:10:1:1::200/64","2001:10:1:2::200/64","2001:10:1:3::200/64","2001:10:1:4::200/64"]
+	gw6_list = ["2001:10:1:1::1","2001:10:1:2::1","2001:10:1:3::1","2001:10:1:4::1"]
+
+	ixia_ipv6_as_list = [65001,65002,65003,65004]
+	ipv6_networks = ["2001:101:1:1::1","2001:102:1:1::1","2001:103:1:1::1","2001:104:1:1::1"]
+	ipv4_networks = ["10.10.1.1","10.10.2.1","10.10.3.1","10.10.4.1"]
+
 
 	portList_v4_v6 = []
 	for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
@@ -285,82 +307,71 @@ if __name__ == "__main__":
 
 	print(portList_v4_v6)
 
-	initial_testing = False
-	cmds = """
-	config switch acl ingress
-	delete 1
-	delete 2
-	delete 3
-	delete 4
-	delete 5
-	delete 6
-	delete 7
-	delete 8
-	delete 9
-	delete 10
-	end
-	config switch acl egress
-	delete 1
-	delete 2
-	delete 3
-	delete 4
-	delete 5
-	delete 6
-	delete 7
-	delete 8
-	delete 9
-	delete 10
-	end
+
+
+	i = 1
+	sw.router_bgp.router_id = "1.1.1.1"
+	sw.router_bgp.config_bgp_basic()
+	for remote_ip_v4,remote_ip_v6,as_num in zip(net4_list,net6_list,ixia_ipv6_as_list):
+		sw.router_bgp.add_ebgp_peer(ip = remote_ip_v4,remote_as = as_num)
+		sw.router_bgp.add_ebgp_peer(ip = remote_ip_v6,remote_as = as_num)
+
+	acl6 = Router_access_list6(sw)
+	acl_names = ["acl_1","acl_2","acl_3","acl_4"]
+	for name,p in zip(acl_names,ipv6_networks):
+		acl6.config_acl6(acl_name=name,prefix=p)
+
+	sample = """
+	config router bgp
+	    config admin-distance6
+        edit 1
+            set distance 111
+            set neighbour-prefix6 2001:10:1:2::200/128
+        next
+        edit 2
+            set distance 222
+            set neighbour-prefix6 2001:10:1:3::200/128
+            set route6-list "admin-routes"
+        next
+    end
 	"""
-	sw.config_cmds(cmds)
-	sleep(10)
-
-	cmds = """
-	config switch acl policer
-		delete 1
-	delete 2
-	delete 3
-	delete 4
-	delete 5
-	delete 6
-	delete 7
-	end
-	"""
-	sw.config_cmds(cmds)
-	sleep(10)
-
-	cmds = """
-	config system interface
-	    edit "vlan2"
-        set ip 10.1.1.1 255.255.255.0
-        set vlanid 2
-        set interface "internal"
-    next
-	end
-	config switch interface
-    edit "port1"
-        set native-vlan 2
-        set auto-discovery-fortilink enable
-    next
-	end
-
-	config switch interface
-    edit "port2"
-        set native-vlan 2
-        set auto-discovery-fortilink enable
-     next
-	end
-
-	"""
-	sw.config_cmds(cmds)
-	sleep(10)
-
+	i = 100 
+	for n,a in zip(net6_list,acl_names):
+		config = f"""
+		config router bgp
+	    config admin-distance6
+        edit {i}
+            set distance {i}
+            set neighbour-prefix6 {n.split('/')[0]}/128
+            set route6-list {a}
+        next
+        end
+		"""
+		i += 2
+		sw.config_cmds(config)
 
 	myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 	for topo in myixia.topologies:
 		topo.add_ipv4()
+		topo.add_ipv6()
+
+	i = 1
+	for topo,net6,net4,as_num in zip(myixia.topologies,ipv6_networks,ipv4_networks,ixia_ipv6_as_list):
+		topo.bgpv6_network = net6
+		topo.bgpv4_network = net4
+		topo.bgp_as = as_num
+		topo.name = f"topo_{i}"
+		i +=1 
+
+	i = 0
+	for topo in myixia.topologies:
+		topo.add_bgp(dut_ip=gw4_list[i],bgp_type='external',num=10)
+		topo.add_bgp_v6(dut_ip=gw6_list[i],bgp_type='external',prefix_num=10)
+		i += 1
 		
 	myixia.start_protocol(wait=20)
+
+	exit()
 
 	for i in range(0,len(tb.ixia.port_active_list)-1):
 		for j in range(i+1,len(tb.ixia.port_active_list)):

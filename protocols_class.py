@@ -1512,9 +1512,51 @@ class Router_aspath_list:
     def clean_up(self):
         pass
 
+class Router_access_list6:
+
+    def __init__(self,*args,**kargs):
+        self.switch = args[0]
+
+    def config_acl6(self,*args,**kwargs):
+        sample = """
+        config router access-list6
+        edit "admin-routes"
+            config rule
+                edit 1
+                    set prefix6 "2001:103:1:1::1/128"
+                    set exact-match disable
+                next
+            end
+        next
+        end
+        """
+        acl_name = kwargs['acl_name']
+        prefix = kwargs['prefix']
+        if "/" in prefix:
+            prefix = prefix.split("/")[0]
+
+        config = f"""
+        config router access-list6
+        edit {acl_name}
+            config rule
+                edit 1
+                    set prefix6 {prefix}/128
+                next
+            end
+        next
+        end
+        """
+        config_cmds_lines(self.switch.console,config)
+
+
+
 class Router_access_list:
     def __init__(self,*args,**kargs):
         self.switch = args[0]
+
+    def config_acl(self,*args,**kwargs):
+        pass
+
 
     def acl_basic_config(self):
         basic_config_access_list(self.switch.console)
@@ -2643,8 +2685,17 @@ class Router_BGP:
         self.ospf_neighbors_address_loop0_v6 =  None
         self.ospf_neighbors_swlist_v6 =  None
         self.bgp_config_neighbors = None #Need to be found by using find_bgp_config_neighbors(dut)
+        self.local_as = 65000
         #self.route_map = Router_route_map()
 
+    def config_bgp_basic(self):
+        bgp_config = f"""
+        config router bgp
+            set as {self.local_as}
+            set router-id {self.router_id}
+        end
+        """
+        config_cmds_lines(self.switch.console,bgp_config)
 
     def clear_bgp_all(self):
         config = "execute router clear bgp all"
@@ -6240,6 +6291,8 @@ class FortiSwitch_XML(FortiSwitch):
         self.pdu_port = device_xml.pdu_port
         self.username = device_xml.username
         self.mgmt_ip = device_xml.mgmt_ip
+        self.loop0_ip = None
+        self.ebgp_as = None
         self.mgmt_netmask = device_xml.mgmt_netmask
         self.mgmt_gateway = device_xml.mgmt_gateway
         self.license = device_xml.license
@@ -6272,7 +6325,31 @@ class FortiSwitch_XML(FortiSwitch):
         self.switch_system_status()
         self.router_ospf = Router_OSPF(self)
         self.router_isis = Router_ISIS(self)
+        self.router_bgp = Router_BGP(self)
         self.system_interfaces_list = None
+        
+
+    def sw_add_ebgp_peer(self,*args,**kwargs):
+        ip = kwargs['ip']
+        remote_as = kwargs['remote_as']
+        local_as = kwargs['local_as']
+        router_id = kwargs['router_id']
+
+        if '/' in ip:
+            ip_addr,mask= seperate_ip_mask(ip)
+
+        bgp_config = f"""
+        config router bgp
+            set as {local_as}
+            set router-id {router_id}
+            config neighbor
+            edit {ip_addr}
+                set remote-as {remote_as}
+            next
+            end
+        end
+        """
+        config_cmds_lines(self.console,bgp_config)
 
     def exec_command(self,cmd):
          switch_exec_cmd(self.console, cmd)
