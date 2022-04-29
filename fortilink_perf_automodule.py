@@ -580,24 +580,60 @@ if __name__ == "__main__":
 	for i in range(1,2):
 		test_log = Logger(f"Log/perf_automodule_{i}.log")
 		################################# Disable Slit-brin-detect Perf Testing ########################## 
-		for sw in switches:
-			if sw.tier == None:
-				continue
-			config = f"""
-			config switch global
-			unset mclag-split-brain-detect
-			end
-			"""
-			config_cmds_lines(sw.console,config)
-		console_timer(300,msg=f"After disabling split-brain-detect, wait for 300s ")
 
+		cmds = f"""
+		conf vdom
+		edit root
+ 			config switch-controller  managed-switch
+ 				edit S548DF4K16000653
+ 					config ports
+ 						edit port49
+							set speed auto-module
+						end
+
+					next
+				edit S548DN4K17000133
+ 					config ports
+						edit port49
+						set speed auto-module
+						end
+					end
+			end
+		"""
+		config_cmds_lines(fgta.console,config)
+		sleep(10)
 		test_log.write(f"===========================================================================================\n")
-		test_log.write(f"					 Use Automodule for two Tier#1 switches 			\n")
+		test_log.write(f"					 Use Speed Automodule for two Tier#1 switches 			\n")
 		test_log.write(f"===========================================================================================\n")
-		#power_cycle_testing()
+		 
 		upgrade_testing()
-		#reboot_testing()
-		#icl_testing()
+
+		cmds = f"""
+		conf vdom
+		edit root
+ 			config switch-controller  managed-switch
+ 				edit S548DF4K16000653
+ 					config ports
+ 						edit port49
+							set speed 10000sr
+						end
+
+					next
+				edit S548DN4K17000133
+ 					config ports
+						edit port49
+						set speed 10000sr
+						end
+					end
+			end
+		"""
+		config_cmds_lines(fgta.console,config)
+		sleep(10)
+		test_log.write(f"===========================================================================================\n")
+		test_log.write(f"					 Use Speed 10000sr for two Tier#1 switches 			\n")
+		test_log.write(f"===========================================================================================\n")
+		 
+		upgrade_testing()
 	
 	exit(0)
 
