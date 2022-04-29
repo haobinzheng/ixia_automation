@@ -27,7 +27,7 @@ from ixia_restpy_lib_v2 import *
 
 if __name__ == "__main__":
 
-	sys.stdout = Logger("Log/fortilink_perf.log")
+	sys.stdout = Logger("Log/fortilink_perf_Auto_Module.log")
 	
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
@@ -577,7 +577,7 @@ if __name__ == "__main__":
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
 				
-	for i in range(1,2):
+	for i in range(1,3):
 		test_log = Logger(f"Log/perf_automodule_{i}.log")
 		################################# Disable Slit-brin-detect Perf Testing ########################## 
 
@@ -602,6 +602,26 @@ if __name__ == "__main__":
 		"""
 		config_cmds_lines(fgta.console,cmds)
 		sleep(300)
+		cmds = f"""
+		conf vdom
+		edit root
+ 			config switch-controller  managed-switch
+ 				edit S548DF4K16000653
+ 					config ports
+ 						edit port49
+							show
+						end
+
+					next
+				edit S548DN4K17000133
+ 					config ports
+						edit port49
+							show
+						end
+					end
+			end
+		"""
+		config_cmds_lines(fgta.console,cmds)
 		test_log.write(f"===========================================================================================\n")
 		test_log.write(f"					 Use Speed Automodule for two Tier#1 switches 			\n")
 		test_log.write(f"===========================================================================================\n")
@@ -629,6 +649,26 @@ if __name__ == "__main__":
 		"""
 		config_cmds_lines(fgta.console,cmds)
 		sleep(300)
+		cmds = f"""
+		conf vdom
+		edit root
+ 			config switch-controller  managed-switch
+ 				edit S548DF4K16000653
+ 					config ports
+ 						edit port49
+							show
+						end
+
+					next
+				edit S548DN4K17000133
+ 					config ports
+						edit port49
+							show
+						end
+					end
+			end
+		"""
+		config_cmds_lines(fgta.console,cmds)
 		test_log.write(f"===========================================================================================\n")
 		test_log.write(f"					 Use Speed 10000sr for two Tier#1 switches 			\n")
 		test_log.write(f"===========================================================================================\n")
