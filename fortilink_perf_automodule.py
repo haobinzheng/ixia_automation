@@ -600,7 +600,7 @@ if __name__ == "__main__":
 					end
 			end
 		"""
-		config_cmds_lines(fgta.console,config)
+		config_cmds_lines(fgta.console,cmds)
 		sleep(10)
 		test_log.write(f"===========================================================================================\n")
 		test_log.write(f"					 Use Speed Automodule for two Tier#1 switches 			\n")
@@ -627,7 +627,7 @@ if __name__ == "__main__":
 					end
 			end
 		"""
-		config_cmds_lines(fgta.console,config)
+		config_cmds_lines(fgta.console,cmds)
 		sleep(10)
 		test_log.write(f"===========================================================================================\n")
 		test_log.write(f"					 Use Speed 10000sr for two Tier#1 switches 			\n")
