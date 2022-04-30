@@ -579,7 +579,7 @@ if __name__ == "__main__":
 				
 	for i in range(1,3):
 		test_log = Logger(f"Log/perf_automodule_{i}.log")
-		################################# Disable Slit-brin-detect Perf Testing ########################## 
+		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
 
 		cmds = f"""
 		conf vdom
@@ -601,7 +601,7 @@ if __name__ == "__main__":
 			end
 		"""
 		config_cmds_lines(fgta.console,cmds)
-		sleep(300)
+		console_timer(300,msg=f"After configuring speed auto-module, wait for 300s ")
 		cmds = f"""
 		conf vdom
 		edit root
@@ -648,7 +648,7 @@ if __name__ == "__main__":
 			end
 		"""
 		config_cmds_lines(fgta.console,cmds)
-		sleep(300)
+		console_timer(300,msg=f"After configuring speed 10000sr, wait for 300s ")
 		cmds = f"""
 		conf vdom
 		edit root
@@ -674,6 +674,7 @@ if __name__ == "__main__":
 		test_log.write(f"===========================================================================================\n")
 		 
 		upgrade_testing()
+		console_timer(600,msg=f"After one test cyle, wait for 600s ")
 	
 	exit(0)
 
