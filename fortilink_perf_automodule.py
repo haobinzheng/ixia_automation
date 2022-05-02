@@ -560,7 +560,7 @@ if __name__ == "__main__":
 			if sw.tier == None:
 				continue
 			if sw.tier > 1: #Only test tier#1 switches upgrade
-				return
+				continue
 
 			cmds = f"""
 			conf switch physical-port
