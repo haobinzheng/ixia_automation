@@ -577,98 +577,98 @@ if __name__ == "__main__":
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
 				
-	cmds = f"""
-	conf vdom
-	edit root
-			config switch-controller  managed-switch
-				edit S548DF4K16000653
-					config ports
-						edit port49
-						set speed auto-module
-					end
+	# cmds = f"""
+	# conf vdom
+	# edit root
+	# 		config switch-controller  managed-switch
+	# 			edit S548DF4K16000653
+	# 				config ports
+	# 					edit port49
+	# 					set speed auto-module
+	# 				end
 
-				next
-			edit S548DN4K17000133
-					config ports
-					edit port49
-					set speed auto-module
-					end
-				end
-		end
-	"""
-	config_cmds_lines(fgta.console,cmds)
-	console_timer(300,msg=f"After configuring speed auto-module, wait for 300s ")
-	cmds = f"""
-	conf vdom
-	edit root
-			config switch-controller  managed-switch
-				edit S548DF4K16000653
-					config ports
-						edit port49
-						show
-					end
+	# 			next
+	# 		edit S548DN4K17000133
+	# 				config ports
+	# 				edit port49
+	# 				set speed auto-module
+	# 				end
+	# 			end
+	# 	end
+	# """
+	# config_cmds_lines(fgta.console,cmds)
+	# console_timer(300,msg=f"After configuring speed auto-module, wait for 300s ")
+	# cmds = f"""
+	# conf vdom
+	# edit root
+	# 		config switch-controller  managed-switch
+	# 			edit S548DF4K16000653
+	# 				config ports
+	# 					edit port49
+	# 					show
+	# 				end
 
-				next
-			edit S548DN4K17000133
-					config ports
-					edit port49
-						show
-					end
-				end
-		end
-	"""
-	config_cmds_lines(fgta.console,cmds)
-	for i in range(1,11):
-		test_log = Logger(f"Log/perf_automodule_{i}.log")
-		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
+	# 			next
+	# 		edit S548DN4K17000133
+	# 				config ports
+	# 				edit port49
+	# 					show
+	# 				end
+	# 			end
+	# 	end
+	# """
+	# config_cmds_lines(fgta.console,cmds)
+	# for i in range(1,11):
+	# 	test_log = Logger(f"Log/perf_automodule_{i}.log")
+	# 	################################# Port speed Auto-Module vs 10000sr Testing ########################## 
 
-		test_log.write(f"===========================================================================================\n")
-		test_log.write(f"					Test#{i}:Use Speed Automodule for two Tier#1 switches 			\n")
-		test_log.write(f"===========================================================================================\n")
+	# 	test_log.write(f"===========================================================================================\n")
+	# 	test_log.write(f"					Test#{i}:Use Speed Automodule for two Tier#1 switches 			\n")
+	# 	test_log.write(f"===========================================================================================\n")
 		 
-		upgrade_testing()
+	# 	upgrade_testing()
 
-	cmds = f"""
-	conf vdom
-	edit root
-			config switch-controller  managed-switch
-				edit S548DF4K16000653
-					config ports
-						edit port49
-						set speed 10000sr
-					end
+	# cmds = f"""
+	# conf vdom
+	# edit root
+	# 		config switch-controller  managed-switch
+	# 			edit S548DF4K16000653
+	# 				config ports
+	# 					edit port49
+	# 					set speed 10000sr
+	# 				end
 
-				next
-			edit S548DN4K17000133
-					config ports
-					edit port49
-					set speed 10000sr
-					end
-				end
-		end
-	"""
-	config_cmds_lines(fgta.console,cmds)
-	console_timer(300,msg=f"After configuring speed 10000sr, wait for 300s ")
-	cmds = f"""
-	conf vdom
-	edit root
-			config switch-controller  managed-switch
-				edit S548DF4K16000653
-					config ports
-						edit port49
-						show
-					end
+	# 			next
+	# 		edit S548DN4K17000133
+	# 				config ports
+	# 				edit port49
+	# 				set speed 10000sr
+	# 				end
+	# 			end
+	# 	end
+	# """
+	# config_cmds_lines(fgta.console,cmds)
+	# console_timer(300,msg=f"After configuring speed 10000sr, wait for 300s ")
+	# cmds = f"""
+	# conf vdom
+	# edit root
+	# 		config switch-controller  managed-switch
+	# 			edit S548DF4K16000653
+	# 				config ports
+	# 					edit port49
+	# 					show
+	# 				end
 
-				next
-			edit S548DN4K17000133
-					config ports
-					edit port49
-						show
-					end
-				end
-		end
-	"""
-	config_cmds_lines(fgta.console,cmds)
+	# 			next
+	# 		edit S548DN4K17000133
+	# 				config ports
+	# 				edit port49
+	# 					show
+	# 				end
+	# 			end
+	# 	end
+	# """
+	# config_cmds_lines(fgta.console,cmds)
 
 	for i in range(1,11):
 		test_log = Logger(f"Log/perf_10KSR_{i}.log")
