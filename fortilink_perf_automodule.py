@@ -562,7 +562,7 @@ if __name__ == "__main__":
 			if sw.tier > 1: #Only test tier#1 switches upgrade
 				return
 			test_log.write(f"========   Performance on Upgrade Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
-			sw.print_show_interesting("diagnose switch mclag icl","dormant candidate","split-brain",logger=test_log)
+			sw.print_show_interesting("show switch physical-port port49","speed",logger=test_log)
 			myixia.clear_stats()
 			sw.ftg_sw_upgrade_no_wait(build=55,version='v7',tftp_server="10.105.252.120")
 			console_timer(60,msg=f"After start upgrading switch, wait for 30s and log traffic stats")
@@ -577,104 +577,108 @@ if __name__ == "__main__":
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
 				
-	for i in range(1,3):
+	cmds = f"""
+	conf vdom
+	edit root
+			config switch-controller  managed-switch
+				edit S548DF4K16000653
+					config ports
+						edit port49
+						set speed auto-module
+					end
+
+				next
+			edit S548DN4K17000133
+					config ports
+					edit port49
+					set speed auto-module
+					end
+				end
+		end
+	"""
+	config_cmds_lines(fgta.console,cmds)
+	console_timer(300,msg=f"After configuring speed auto-module, wait for 300s ")
+	cmds = f"""
+	conf vdom
+	edit root
+			config switch-controller  managed-switch
+				edit S548DF4K16000653
+					config ports
+						edit port49
+						show
+					end
+
+				next
+			edit S548DN4K17000133
+					config ports
+					edit port49
+						show
+					end
+				end
+		end
+	"""
+	config_cmds_lines(fgta.console,cmds)
+	for i in range(1,11):
 		test_log = Logger(f"Log/perf_automodule_{i}.log")
 		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
 
-		cmds = f"""
-		conf vdom
-		edit root
- 			config switch-controller  managed-switch
- 				edit S548DF4K16000653
- 					config ports
- 						edit port49
-							set speed auto-module
-						end
-
-					next
-				edit S548DN4K17000133
- 					config ports
-						edit port49
-						set speed auto-module
-						end
-					end
-			end
-		"""
-		config_cmds_lines(fgta.console,cmds)
-		console_timer(300,msg=f"After configuring speed auto-module, wait for 300s ")
-		cmds = f"""
-		conf vdom
-		edit root
- 			config switch-controller  managed-switch
- 				edit S548DF4K16000653
- 					config ports
- 						edit port49
-							show
-						end
-
-					next
-				edit S548DN4K17000133
- 					config ports
-						edit port49
-							show
-						end
-					end
-			end
-		"""
-		config_cmds_lines(fgta.console,cmds)
 		test_log.write(f"===========================================================================================\n")
-		test_log.write(f"					 Use Speed Automodule for two Tier#1 switches 			\n")
+		test_log.write(f"					Test#{i}:Use Speed Automodule for two Tier#1 switches 			\n")
 		test_log.write(f"===========================================================================================\n")
 		 
 		upgrade_testing()
 
-		cmds = f"""
-		conf vdom
-		edit root
- 			config switch-controller  managed-switch
- 				edit S548DF4K16000653
- 					config ports
- 						edit port49
-							set speed 10000sr
-						end
-
-					next
-				edit S548DN4K17000133
- 					config ports
+	cmds = f"""
+	conf vdom
+	edit root
+			config switch-controller  managed-switch
+				edit S548DF4K16000653
+					config ports
 						edit port49
 						set speed 10000sr
-						end
 					end
-			end
-		"""
-		config_cmds_lines(fgta.console,cmds)
-		console_timer(300,msg=f"After configuring speed 10000sr, wait for 300s ")
-		cmds = f"""
-		conf vdom
-		edit root
- 			config switch-controller  managed-switch
- 				edit S548DF4K16000653
- 					config ports
- 						edit port49
-							show
-						end
 
-					next
-				edit S548DN4K17000133
- 					config ports
-						edit port49
-							show
-						end
+				next
+			edit S548DN4K17000133
+					config ports
+					edit port49
+					set speed 10000sr
 					end
-			end
-		"""
-		config_cmds_lines(fgta.console,cmds)
+				end
+		end
+	"""
+	config_cmds_lines(fgta.console,cmds)
+	console_timer(300,msg=f"After configuring speed 10000sr, wait for 300s ")
+	cmds = f"""
+	conf vdom
+	edit root
+			config switch-controller  managed-switch
+				edit S548DF4K16000653
+					config ports
+						edit port49
+						show
+					end
+
+				next
+			edit S548DN4K17000133
+					config ports
+					edit port49
+						show
+					end
+				end
+		end
+	"""
+	config_cmds_lines(fgta.console,cmds)
+
+	for i in range(1,11):
+		test_log = Logger(f"Log/perf_10KSR_{i}.log")
+		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
+
 		test_log.write(f"===========================================================================================\n")
-		test_log.write(f"					 Use Speed 10000sr for two Tier#1 switches 			\n")
+		test_log.write(f"					 Test#{i}:Use Speed 10000sr for two Tier#1 switches 			\n")
 		test_log.write(f"===========================================================================================\n")
 		 
 		upgrade_testing()
-		console_timer(600,msg=f"After one test cyle, wait for 600s ")
 	
 	exit(0)
 
