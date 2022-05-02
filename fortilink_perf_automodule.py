@@ -576,7 +576,7 @@ if __name__ == "__main__":
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
-				
+			console_timer(360,msg=f"After upgrading one switch, wait for 360s to start another switch upgrade")
 	# cmds = f"""
 	# conf vdom
 	# edit root
@@ -679,6 +679,7 @@ if __name__ == "__main__":
 		test_log.write(f"===========================================================================================\n")
 		 
 		upgrade_testing()
+
 	
 	exit(0)
 
