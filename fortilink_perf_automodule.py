@@ -556,21 +556,21 @@ if __name__ == "__main__":
 				console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
 
 	def upgrade_testing(*args,**kwargs):
-		for sw in switches:
-			if sw.tier == None:
-				continue
-			if sw.tier > 1: #Only test tier#1 switches upgrade
-				continue
+		# for sw in switches:
+		# 	if sw.tier == None:
+		# 		continue
+		# 	if sw.tier > 1: #Only test tier#1 switches upgrade
+		# 		continue
 
-			cmds = f"""
-			conf switch physical-port
-				edit port49
-					set speed {kwargs['speed']}
-				end
-			"""
-			config_cmds_lines(sw.console,cmds)
+		# 	cmds = f"""
+		# 	conf switch physical-port
+		# 		edit port49
+		# 			set speed {kwargs['speed']}
+		# 		end
+		# 	"""
+		# 	config_cmds_lines(sw.console,cmds)
 
-		sleep(10)
+		# sleep(10)
 
 		for sw in switches:
 			if sw.tier == None:
@@ -615,7 +615,7 @@ if __name__ == "__main__":
 		end
 	"""
 	config_cmds_lines(fgta.console,cmds)
-	console_timer(300,msg=f"After configuring speed auto-module, wait for 300s ")
+	console_timer(30,msg=f"After configuring speed auto-module, wait for 30s ")
 	cmds = f"""
 	conf vdom
 	edit root
@@ -636,6 +636,10 @@ if __name__ == "__main__":
 		end
 	"""
 	config_cmds_lines(fgta.console,cmds)
+
+	fgta.fgt_reboot()
+	console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
+
 	for i in range(1,3):
 		test_log = Logger(f"Log/perf_automodule_{i}.log")
 		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
@@ -687,6 +691,8 @@ if __name__ == "__main__":
 		end
 	"""
 	config_cmds_lines(fgta.console,cmds)
+	fgta.fgt_reboot()
+	console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
 
 	for i in range(1,3):
 		test_log = Logger(f"Log/perf_10KSR_{i}.log")

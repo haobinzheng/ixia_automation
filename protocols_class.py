@@ -7534,6 +7534,14 @@ class FortiGate_XML(FortiSwitch):
         config_cmds_lines(self.console,config)
         switch_interactive_exec(self.console,"execute factoryreset","Do you want to continue? (y/n)") 
 
+    def fgt_reboot(self):
+        tprint(f":::::::::: Rebooting Fortigate {self.hostname} :::::::::::")
+        config = """
+        config global
+        """
+        config_cmds_lines(self.console,config)
+        switch_interactive_exec(self.console,"execute reboot","Do you want to continue? (y/n)") 
+
     def fortigate_system_status(self,*args,**kwargs):
         sample = """
         FortiGate-2500E # get system status
