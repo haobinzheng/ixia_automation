@@ -556,24 +556,24 @@ if __name__ == "__main__":
 				console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
 
 	def upgrade_testing(*args,**kwargs):
-		speed = kwargs['speed']
-		if "10000" in speed:
-			for sw in switches:
-				if sw.tier == None:
-					continue
-				if sw.tier > 1: #Only test tier#1 switches upgrade
-					break
+		# speed = kwargs['speed']
+		# if "10000" in speed:
+		# 	for sw in switches:
+		# 		if sw.tier == None:
+		# 			continue
+		# 		if sw.tier > 1: #Only test tier#1 switches upgrade
+		# 			break
 
-				cmds = f"""
-				conf switch physical-port
-					edit port49
-						set speed {speed}
-					end
-				"""
-				config_cmds_lines(sw.console,cmds)
+		# 		cmds = f"""
+		# 		conf switch physical-port
+		# 			edit port49
+		# 				set speed {speed}
+		# 			end
+		# 		"""
+		# 		config_cmds_lines(sw.console,cmds)
 		
-		sleep(10)
-		speed = kwargs['speed']
+		# sleep(10)
+		# speed = kwargs['speed']
 		for sw in switches:
 			if sw.tier == None:
 				continue
@@ -590,21 +590,21 @@ if __name__ == "__main__":
 
 			#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
 			myixia.clear_stats()
-			console_timer(100,msg=f"After rebooting, wait for 100s and configure port speed")
-			if "10000" in speed:
-				for i in range(40):
-					cmds = f"""
-					conf switch physical-port
-						edit port49
-							set speed {speed}
-						end
-					"""
-					config_cmds_lines(sw.console,cmds)
-					sleep(2)
-					if sw.print_show_interesting("show switch physical-port port49","10000",logger=test_log):
-						break
-					else:
-						sleep(10)
+			console_timer(400,msg=f"After rebooting,measure packet loss again when switch come back online")
+			# if "10000" in speed:
+			# 	for i in range(40):
+			# 		cmds = f"""
+			# 		conf switch physical-port
+			# 			edit port49
+			# 				set speed {speed}
+			# 			end
+			# 		"""
+			# 		config_cmds_lines(sw.console,cmds)
+			# 		sleep(2)
+			# 		if sw.print_show_interesting("show switch physical-port port49","10000",logger=test_log):
+			# 			break
+			# 		else:
+			# 			sleep(10)
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
@@ -685,32 +685,32 @@ if __name__ == "__main__":
 				end
 		end
 	"""
-	config_cmds_lines(fgta.console,cmds)
-	console_timer(10,msg=f"After configuring speed 10000sr, wait for 10s ")
-	cmds = f"""
-	conf vdom
-	edit root
-			config switch-controller  managed-switch
-				edit S548DF4K16000653
-					config ports
-						edit port49
-						show
-					end
+	# config_cmds_lines(fgta.console,cmds)
+	# console_timer(10,msg=f"After configuring speed 10000sr, wait for 10s ")
+	# cmds = f"""
+	# conf vdom
+	# edit root
+	# 		config switch-controller  managed-switch
+	# 			edit S548DF4K16000653
+	# 				config ports
+	# 					edit port49
+	# 					show
+	# 				end
 
-				next
-			edit S548DN4K17000133
-					config ports
-					edit port49
-						show
-					end
-				end
-		end
-	"""
-	config_cmds_lines(fgta.console,cmds)
-	fgta.fgt_reboot()
-	console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
+	# 			next
+	# 		edit S548DN4K17000133
+	# 				config ports
+	# 				edit port49
+	# 					show
+	# 				end
+	# 			end
+	# 	end
+	# """
+	# config_cmds_lines(fgta.console,cmds)
+	# fgta.fgt_reboot()
+	# console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
 
-	for i in range(1,3):
+	for i in range(1,4):
 		test_log = Logger(f"Log/perf_10KSR_{i}.log")
 		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
 		test_log.write(f"===========================================================================================\n")
