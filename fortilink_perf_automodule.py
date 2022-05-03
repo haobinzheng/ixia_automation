@@ -556,22 +556,24 @@ if __name__ == "__main__":
 				console_timer(300,msg=f"After shut/unshut ICL at one switch wait for 300s for ICL to recover")
 
 	def upgrade_testing(*args,**kwargs):
-		# for sw in switches:
-		# 	if sw.tier == None:
-		# 		continue
-		# 	if sw.tier > 1: #Only test tier#1 switches upgrade
-		# 		continue
+		speed = kwargs['speed']
+		if "10000" in speed:
+			for sw in switches:
+				if sw.tier == None:
+					continue
+				if sw.tier > 1: #Only test tier#1 switches upgrade
+					break
 
-		# 	cmds = f"""
-		# 	conf switch physical-port
-		# 		edit port49
-		# 			set speed {kwargs['speed']}
-		# 		end
-		# 	"""
-		# 	config_cmds_lines(sw.console,cmds)
-
-		# sleep(10)
-
+				cmds = f"""
+				conf switch physical-port
+					edit port49
+						set speed {speed}
+					end
+				"""
+				config_cmds_lines(sw.console,cmds)
+		
+		sleep(10)
+		speed = kwargs['speed']
 		for sw in switches:
 			if sw.tier == None:
 				continue
@@ -581,74 +583,88 @@ if __name__ == "__main__":
 			sw.print_show_interesting("show switch physical-port port49","speed",logger=test_log)
 			myixia.clear_stats()
 			sw.ftg_sw_upgrade_no_wait(build=55,version='v7',tftp_server="10.105.252.120")
-			console_timer(60,msg=f"After start upgrading switch, wait for 30s and log traffic stats")
+			console_timer(60,msg=f"After start upgrading switch, wait for 60s and log traffic stats")
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===>{flow['Flow Group']}: {flow['Loss Time']}\n")
 
 			#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
 			myixia.clear_stats()
-			console_timer(360,msg=f"After rebooting, wait for 360s and log traffic stats")
+			console_timer(100,msg=f"After rebooting, wait for 100s and configure port speed")
+			if "10000" in speed:
+				for i in range(40)
+					cmds = f"""
+					conf switch physical-port
+						edit port49
+							set speed {speed}
+						end
+					"""
+					config_cmds_lines(sw.console,cmds)
+					sleep(2)
+					if sw.print_show_interesting("show switch physical-port port49","10000",logger=test_log):
+						break
+					else:
+						sleep(10)
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
 				test_log.write(f"Loss Time restore from upgrading Tier{sw.tier}:{sw.name}-{sw.hostname} ===> {flow['Flow Group']}: {flow['Loss Time']}\n")
 			console_timer(360,msg=f"After upgrading one switch, wait for 360s to start another switch upgrade")
 
 
-	cmds = f"""
-	conf vdom
-	edit root
-			config switch-controller  managed-switch
-				edit S548DF4K16000653
-					config ports
-						edit port49
-						set speed auto-module
-					end
+	# cmds = f"""
+	# conf vdom
+	# edit root
+	# 		config switch-controller  managed-switch
+	# 			edit S548DF4K16000653
+	# 				config ports
+	# 					edit port49
+	# 					set speed auto-module
+	# 				end
 
-				next
-			edit S548DN4K17000133
-					config ports
-					edit port49
-					set speed auto-module
-					end
-				end
-		end
-	"""
-	config_cmds_lines(fgta.console,cmds)
-	console_timer(30,msg=f"After configuring speed auto-module, wait for 30s ")
-	cmds = f"""
-	conf vdom
-	edit root
-			config switch-controller  managed-switch
-				edit S548DF4K16000653
-					config ports
-						edit port49
-						show
-					end
+	# 			next
+	# 		edit S548DN4K17000133
+	# 				config ports
+	# 				edit port49
+	# 				set speed auto-module
+	# 				end
+	# 			end
+	# 	end
+	# """
+	# config_cmds_lines(fgta.console,cmds)
+	# console_timer(30,msg=f"After configuring speed auto-module, wait for 30s ")
+	# cmds = f"""
+	# conf vdom
+	# edit root
+	# 		config switch-controller  managed-switch
+	# 			edit S548DF4K16000653
+	# 				config ports
+	# 					edit port49
+	# 					show
+	# 				end
 
-				next
-			edit S548DN4K17000133
-					config ports
-					edit port49
-						show
-					end
-				end
-		end
-	"""
-	config_cmds_lines(fgta.console,cmds)
+	# 			next
+	# 		edit S548DN4K17000133
+	# 				config ports
+	# 				edit port49
+	# 					show
+	# 				end
+	# 			end
+	# 	end
+	# """
+	# config_cmds_lines(fgta.console,cmds)
 
-	fgta.fgt_reboot()
-	console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
+	# fgta.fgt_reboot()
+	# console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
 
-	for i in range(1,3):
-		test_log = Logger(f"Log/perf_automodule_{i}.log")
-		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
+	# for i in range(1,3):
+	# 	test_log = Logger(f"Log/perf_automodule_{i}.log")
+	# 	################################# Port speed Auto-Module vs 10000sr Testing ########################## 
 
-		test_log.write(f"===========================================================================================\n")
-		test_log.write(f"					Test#{i}:Use Speed Automodule for two Tier#1 switches 			\n")
-		test_log.write(f"===========================================================================================\n")
+	# 	test_log.write(f"===========================================================================================\n")
+	# 	test_log.write(f"					Test#{i}:Use Speed Automodule for two Tier#1 switches 			\n")
+	# 	test_log.write(f"===========================================================================================\n")
 		 
-		upgrade_testing(speed="auto-module")
+	# 	upgrade_testing(speed="auto-module")
 
 	cmds = f"""
 	conf vdom
@@ -670,7 +686,7 @@ if __name__ == "__main__":
 		end
 	"""
 	config_cmds_lines(fgta.console,cmds)
-	console_timer(300,msg=f"After configuring speed 10000sr, wait for 300s ")
+	console_timer(10,msg=f"After configuring speed 10000sr, wait for 10s ")
 	cmds = f"""
 	conf vdom
 	edit root
@@ -697,14 +713,10 @@ if __name__ == "__main__":
 	for i in range(1,3):
 		test_log = Logger(f"Log/perf_10KSR_{i}.log")
 		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
-
 		test_log.write(f"===========================================================================================\n")
 		test_log.write(f"					 Test#{i}:Use Speed 10000sr for two Tier#1 switches 			\n")
-		test_log.write(f"===========================================================================================\n")
-		 
+		test_log.write(f"===========================================================================================\n")	 
 		upgrade_testing(speed="10000sr")
-
-	
 	exit(0)
 
 	 

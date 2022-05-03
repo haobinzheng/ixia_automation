@@ -7310,7 +7310,9 @@ class FortiSwitch_XML(FortiSwitch):
                     tprint(f"{str(out_str)}\n")
                     if mylogger != None:
                         mylogger.write(f"{str(out_str)}\n")
-
+                    return True
+        return False
+        
     def print_show_command(self,cmd,*args,**kwargs):
         if "logger" in kwargs:
             print_show_cmd(self.console,cmd,logger=kwargs["logger"])
