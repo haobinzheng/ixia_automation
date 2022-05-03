@@ -592,7 +592,7 @@ if __name__ == "__main__":
 			myixia.clear_stats()
 			console_timer(100,msg=f"After rebooting, wait for 100s and configure port speed")
 			if "10000" in speed:
-				for i in range(40)
+				for i in range(40):
 					cmds = f"""
 					conf switch physical-port
 						edit port49
