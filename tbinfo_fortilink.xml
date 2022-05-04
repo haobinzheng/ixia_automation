@@ -153,9 +153,9 @@
   <link4 link="dev9:port4,dev2:port1" type="tier1_link" mode="Copper"> </link4>
   <link5 link="dev10:port3,dev1:port2" type="tier1_link" mode="Copper"> </link5>
   <link6 link="dev10:port4,dev2:port2" type="tier1_link" mode="Copper"> </link6>
-  <link7 link="dev4:port13,trafgen1:10/6" type="ixia_link" mode="Copper"> </link7>
+  <link7 link="dev4:port13,trafgen1:12/8" type="ixia_link" mode="Copper"> </link7>
   <link8 link="dev2:port13,trafgen1:6/11" type="ixia_link" mode="Copper"> </link8>
-  <link9 link="dev4:port13,trafgen1:12/8" type="ixia_link" mode="Copper"> </link9>
+  <link9 link="dev6:port13,trafgen1:10/16" type="ixia_link" mode="Copper"> </link9>
   <link10 link="dev9:port13,trafgen1:7/14" type="ixia_link" mode="Copper"> </link10>
   <link11 link="dev11:port13,trafgen1:11/1" type="ixia_link" mode="Copper"> </link11>
  </connections>
