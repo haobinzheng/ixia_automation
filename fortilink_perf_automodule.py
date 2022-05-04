@@ -584,7 +584,7 @@ if __name__ == "__main__":
 			myixia.clear_stats()
 
 			#sw.ftg_sw_upgrade_no_wait(build=71,version='v7',tftp_server="10.105.252.120")
-			sw.switch_reboot()
+			sw.switch_reboot() # upgrade procedures are different for v6 and v6 images
 			console_timer(60,msg=f"After start upgrading switch, wait for 60s and log traffic stats")
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
@@ -658,7 +658,7 @@ if __name__ == "__main__":
 	# fgta.fgt_reboot()
 	# console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
 
-	for i in range(1,3):
+	for i in range(1,10):
 		test_log = Logger(f"Log/perf_automodule_{i}.log")
 		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
 
