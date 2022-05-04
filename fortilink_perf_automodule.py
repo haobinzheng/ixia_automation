@@ -590,7 +590,7 @@ if __name__ == "__main__":
 
 			#console_timer(20,msg=f"After rebooting , wait for 20s before measuring stats while device reboots")
 			myixia.clear_stats()
-			console_timer(400,msg=f"After rebooting,measure packet loss again when switch come back online")
+			console_timer(360,msg=f"After rebooting, wait 360s and measure packet loss again when switch come back online")
 			# if "10000" in speed:
 			# 	for i in range(40):
 			# 		cmds = f"""
