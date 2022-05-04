@@ -582,7 +582,7 @@ if __name__ == "__main__":
 			test_log.write(f"========   Performance on Upgrade Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
 			sw.print_show_interesting("show switch physical-port port49","speed",logger=test_log)
 			myixia.clear_stats()
-			sw.ftg_sw_upgrade_no_wait(build=55,version='v7',tftp_server="10.105.252.120")
+			sw.ftg_sw_upgrade_no_wait(build=71,version='v7',tftp_server="10.105.252.120")
 			console_timer(60,msg=f"After start upgrading switch, wait for 60s and log traffic stats")
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
@@ -656,15 +656,15 @@ if __name__ == "__main__":
 	# fgta.fgt_reboot()
 	# console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
 
-	# for i in range(1,3):
-	# 	test_log = Logger(f"Log/perf_automodule_{i}.log")
-	# 	################################# Port speed Auto-Module vs 10000sr Testing ########################## 
+	for i in range(1,3):
+		test_log = Logger(f"Log/perf_automodule_{i}.log")
+		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
 
-	# 	test_log.write(f"===========================================================================================\n")
-	# 	test_log.write(f"					Test#{i}:Use Speed Automodule for two Tier#1 switches 			\n")
-	# 	test_log.write(f"===========================================================================================\n")
+		test_log.write(f"===========================================================================================\n")
+		test_log.write(f"					Test#{i}:Use Speed Automodule for two Tier#1 switches 			\n")
+		test_log.write(f"===========================================================================================\n")
 		 
-	# 	upgrade_testing(speed="auto-module")
+		upgrade_testing(speed="auto-module")
 
 	cmds = f"""
 	conf vdom
@@ -710,14 +710,14 @@ if __name__ == "__main__":
 	# fgta.fgt_reboot()
 	# console_timer(600,msg=f"After rebooting Fortigate, wait for 10min ")
 
-	for i in range(1,4):
-		test_log = Logger(f"Log/perf_10KSR_{i}.log")
-		################################# Port speed Auto-Module vs 10000sr Testing ########################## 
-		test_log.write(f"===========================================================================================\n")
-		test_log.write(f"					 Test#{i}:Use Speed 10000sr for two Tier#1 switches 			\n")
-		test_log.write(f"===========================================================================================\n")	 
-		upgrade_testing(speed="10000sr")
-	exit(0)
+	# for i in range(1,4):
+	# 	test_log = Logger(f"Log/perf_10KSR_{i}.log")
+	# 	################################# Port speed Auto-Module vs 10000sr Testing ########################## 
+	# 	test_log.write(f"===========================================================================================\n")
+	# 	test_log.write(f"					 Test#{i}:Use Speed 10000sr for two Tier#1 switches 			\n")
+	# 	test_log.write(f"===========================================================================================\n")	 
+	# 	upgrade_testing(speed="10000sr")
+	# exit(0)
 
 	 
 		# ####################################### Enable Slit-brin-detect/No Shut ports Perf Testing ###########################
