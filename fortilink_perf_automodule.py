@@ -582,7 +582,9 @@ if __name__ == "__main__":
 			test_log.write(f"========   Performance on Upgrade Testing on Tier{sw.tier}: {sw.name}({sw.hostname}) ============\n")
 			sw.print_show_interesting("show switch physical-port port49","speed",logger=test_log)
 			myixia.clear_stats()
-			sw.ftg_sw_upgrade_no_wait(build=71,version='v7',tftp_server="10.105.252.120")
+
+			#sw.ftg_sw_upgrade_no_wait(build=71,version='v7',tftp_server="10.105.252.120")
+			sw.switch_reboot()
 			console_timer(60,msg=f"After start upgrading switch, wait for 60s and log traffic stats")
 			myixia.collect_stats()
 			for flow in myixia.flow_stats_list:
