@@ -1373,6 +1373,57 @@ def telnet_apc(ip_address,**kwargs):
 	print(output)
 	return tn
 
+def telnet_poe(ip_address,port,**kwargs):
+	tprint(f"POE Tester Console  = {str(ip_address),port}")
+	if "password" in kwargs:
+		pwd = kwargs["password"]
+	else:
+		pwd = 'apc'
+	if "user" in kwargs:
+		user = kwargs['user']
+	else:
+		user = 'apc'
+	#switch_login(ip_address,console_port)
+
+	# status = clear_console_line(ip_address,str(port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
+	# if status['status'] != 1:
+	# 	logger.console('unable clear console port %s' % console_port)
+	# time.sleep(1)
+	try:
+		tn = telnetlib.Telnet(ip_address,port,10)
+	except ConnectionRefusedError: 
+		tprint("!!!!!!!!!!!the console is being used, need to clear it first")
+		status = clear_console_line(ip_address,str(port),login_pwd='fortinet123', exec_pwd='fortinet123', prompt='#')
+		if status['status'] != 1:
+			logger.console('unable clear console port %s' % console_port)
+			exit()
+		sleep(2)
+		tn = telnetlib.Telnet(ip_address,port,10)
+
+	tn.write(('' + '\r\n').encode('utf-8'))
+	tn.write(('' + '\r\n').encode('utf-8'))
+	tn.write(('' + '\r\n').encode('utf-8'))
+	tn.write(('' + '\r\n').encode('utf-8'))
+	tn.write(('' + '\r').encode('utf-8'))
+	sleep(2)
+	tn.read_until((">").encode('utf-8'),timeout=5)
+	# print("start enter command......")
+	# #tn.write(('measure').encode('ascii'))
+	# tn.write(("measure" + "\r").encode("utf-8"))
+	# sleep(2)
+	# #output = tn.read_until((">").encode('ascii'),timeout=5)
+	# output = tn.read_very_eager()
+	# tn.write(("measure" + "\r").encode("utf-8"))
+	# sleep(2)
+	# output = tn.read_very_eager()
+	# print(output)
+
+	# tn.write(("status" + "\r").encode("utf-8"))
+	# sleep(2)
+	# output = tn.read_very_eager()
+	# print(output)
+	return tn
+
 def telnet_connection(ip_address,**kwargs):
 	tprint(f"Device management interface = {str(ip_address)}")
 	if "password" in kwargs:
@@ -3392,6 +3443,8 @@ def switch_factory_reset_nologin(dut_dir):
 
 if __name__ == "__main__":
 # 	debug("test debug")
+    poe_tester = telnet_poe("10.105.241.44", "2072")
+    exit()
     pdu = telnet_apc("10.105.253.57")
     telnet_send_cmd(pdu,f"oloff 12")
     sleep(2)

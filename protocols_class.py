@@ -6273,13 +6273,13 @@ class FortiSwitch:
 class FortiSwitch_XML(FortiSwitch):
     def __init__(self,*args,**kwargs):
         device_xml = args[0]
+        self.tb=kwargs['topo_db']
         if "password" in kwargs:
             self.password = kwargs['password']
         else:
             self.password = device_xml.password
         self.last_cmd_time = None
         self.ixia_ports = device_xml.ixia_ports
-        self.tb=kwargs['topo_db']
         self.version = None
         self.image_prefix = None
         self.name = device_xml.name
@@ -8427,14 +8427,14 @@ class Connection_XML():
                 self.left_device_obj = d
                 left_found = True
                 break
-        if left_found == False:
+        if left_found == False and ixia != None:
             if ixia.name == self.left_device:
                 self.left_device_obj = ixia
         for d in devices:
             if d.name == self.right_device:
                 self.right_device_obj = d
                 break
-        if right_found == False:
+        if right_found == False and ixia != None:
             if ixia.name == self.right_device:
                 self.right_device_obj = ixia
 
@@ -8565,3 +8565,85 @@ class Device_XML():
         print(f"License = {self.license}")
         print(f"Device actively used this the test topo = {self.active}")
         print(f"Device role in this the test topo = {self.role}")
+
+class POE_TESTER():
+    def __init__(self,*args,**kwargs):
+        device_xml = args[0]
+        self.tb=kwargs['topo_db']
+        self.console_ip = device_xml.console_ip
+        self.console_line = device_xml.console_line
+        self.console = telnet_poe(self.console_ip, self.console_line)
+
+    def poe_reset(self):
+        self.enter_poe_command(cmd ='reset')
+        sleep(2)
+        self.enter_poe_command(cmd ='connect on')
+        sleep(2)
+        self.enter_poe_command(cmd ='detect ok ')
+        sleep(2)
+        self.enter_poe_command(cmd ='class 0 ')
+        sleep(2)
+        self.enter_poe_command(cmd ='set 20')
+        sleep(2)
+        self.enter_poe_command(cmd ='auto on')
+        sleep(2)
+
+    def get_poe_command(self,*args,**kwargs):
+        tn = self.console
+        cmd = kwargs["cmd"]
+        tn.write(('' + '\r').encode('utf-8'))
+        sleep(2)
+        tn.read_until((">").encode('utf-8'),timeout=5)
+        print(f"start enter command......{cmd}")
+        #tn.write(('measure').encode('ascii'))
+        tn.write((cmd + "\r").encode("utf-8"))
+        sleep(2)
+        #output = tn.read_until((">").encode('ascii'),timeout=5)
+        output = tn.read_very_eager()
+        print(output)
+        out_list = self.parse_poe_output(output,cmd)
+        return out_list
+
+    def parse_poe_output(self,output,original_cmd):
+        out_list = output.split(b'\r\n')
+        encoding = 'utf-8'
+        out_str_list = []
+        for o in out_list:
+            o_str = o.decode(encoding).strip(' \r')
+            out_str_list.append(o_str)
+        good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
+        new_list = []
+        for item in good_out_list:
+            if original_cmd in item or ">" in item:
+                good_out_list.remove(item)
+
+        debug(good_out_list)
+        print_output_list(good_out_list)
+        return good_out_list
+
+    def enter_poe_command(self,*args,**kwargs):
+        tn = self.console
+        cmd = kwargs["cmd"]
+        tn.write(('' + '\r').encode('utf-8'))
+        sleep(1)
+        tn.read_until((">").encode('utf-8'),timeout=5)
+        print(f"start enter command......{cmd}")
+        #tn.write(('measure').encode('ascii'))
+        tn.write((cmd + "\r").encode("utf-8"))
+
+    def parse_measure_output(self,out_list):
+        power_dict = {}
+        for item in out_list:
+            p,v = item.split()
+            power_dict[p.strip(":")] = v 
+
+        return power_dict
+    
+    def parse_status_output(self,out_list):
+        power_dict = {}
+        for item in out_list:
+            p,d,v = item.split()
+            power_dict[p.strip(":")] = v 
+
+        return power_dict
+

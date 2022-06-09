@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testbed name="hb-tb">
+ <dev1 type="FSW" hostname="S108FFTV21000007" model="S108FFPOE">
+  <console ip="10.105.240.244" line="2070"> </console>
+  <login username="admin" password="Fortinet123!"> </login>
+  <mgmt ip="10.105.50.21" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
+  <pdu model="RARITAN_M" ip="10.105.50.114" port="9"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+  <location location="324/2/2" > </location>
+ </dev1>
+<dev2 type="POE" hostname="RT-PoE3N" model="RT-PoE3N">
+  <console ip="10.105.241.44" line="2072"> </console>
+  <login username="admin" password="Fortinet123!"> </login>
+  <mgmt ip="10.105.50.22" netmask="255.255.255.0" gateway="10.105.50.254" port="port24"> </mgmt>
+  <pdu model="RARITAN_M" ip="10.105.50.114" port="8"> </pdu>
+  <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
+  <location location="324/6/17" > </location>
+ </dev2>
+
+ <connections>
+  <link1 link="dev1:port1,dev2:port1" type="poe_link" mode="Copper"> </link1>
+  <link2 link="dev1:port2,dev2:port2" type="poe_link" mode="Copper"> </link2>
+  <link3 link="dev1:port3,dev2:port3" type="poe_link" mode="Copper"> </link3>
+ </connections>
+</testbed>
