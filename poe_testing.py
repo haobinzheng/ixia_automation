@@ -252,9 +252,9 @@ if __name__ == "__main__":
 	sw = switches[0]
 	################################# repeated test steps ################################
 	def warm_boot_testing():
-		p_poe = [1]
-		p_poe_fast = [2]
-		normal = [3]
+		p_poe = [1,2,3]
+		p_poe_fast = [4,5,6]
+		normal = [7,8]
 
 		p_poe_ports = p_poe + p_poe_fast
 		all_poe_ports = p_poe + p_poe_fast + normal
