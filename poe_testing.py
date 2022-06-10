@@ -23,6 +23,10 @@ from device_config import *
 from protocols_class import *
 from ixia_restpy_lib_v2 import *
 
+import random 
+def partition (list_in, n):
+    random.shuffle(list_in)
+    return [list_in[i::n] for i in range(n)]
 
 
 if __name__ == "__main__":
@@ -252,113 +256,152 @@ if __name__ == "__main__":
 	sw = switches[0]
 	################################# repeated test steps ################################
 	def warm_boot_testing():
-		p_poe = [1,2,3]
-		p_poe_fast = [4,5,6]
-		normal = [7,8]
 
-		p_poe_ports = p_poe + p_poe_fast
-		all_poe_ports = p_poe + p_poe_fast + normal
+		port_list = [1,2,3,4,5,6,7,8]
+		for j in range(100):
+			p_poe,p_poe_fast,normal = partition(port_list,3)
 
-		for p in p_poe:
-			config = f"""
-			config switch physical-port
-    			edit port{p}
-         		set poe-port-power PERPETUAL
-    			next
-			end
-			"""
-			config_cmds_lines(sw.console,config)	
-		for p in p_poe_fast:
-			config = f"""
-			config switch physical-port
-    			edit port{p}
-         		set poe-port-power PERPETUAL-FAST
-    			next
-			end
-			"""
-			config_cmds_lines(sw.console,config)
+			p_poe_ports = p_poe + p_poe_fast
+			all_poe_ports = p_poe + p_poe_fast + normal
+			print(f"Perpetual POE Ports = {p_poe}")
+			print(f"Perpetual Fast POE Ports = {p_poe_fast}")
+			print(f"Normal POE Ports = {normal}")
+			##############################################
+			# Configure DUT POE ports before test starts
+			##############################################
+			for p in p_poe:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		set poe-port-power PERPETUAL
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)	
+			for p in p_poe_fast:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		set poe-port-power PERPETUAL-FAST
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)
 
-		for p in normal:
-			config = f"""
-			config switch physical-port
-    			edit port{p}
-         		unset poe-port-power
-    			next
-			end
-			"""
-			config_cmds_lines(sw.console,config)
+			for p in normal:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		unset poe-port-power
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)
 
-		sleep(2)
-		tester.poe_reset()
-		output_list = tester.get_poe_command(cmd="status")
-		output_dict = tester.parse_status_output(output_list)
-		print(output_dict)
+			sleep(5)
 
-		ppoe_list_tester = []
-		regex = r'p([0-9]+)'
-		for k,v in output_dict.items():
-			if v == "1":
-				matched = re.search(regex,k)
-				if matched:
-					ppoe_list_tester.append(int(matched.group(1)))
-		all_poe_ports.sort()
-		ppoe_list_tester.sort()
-		print(all_poe_ports,ppoe_list_tester)
-
-		print_double_line()
-		if all_poe_ports != ppoe_list_tester:
-			print("Before Warm Boot, Switch perpetual ports list NOT Equal to POE Tester list")
-		else:
-			print("Before Warm Boot, Switch perpetual ports list Equal to POE Tester list")
-		print_double_line()
-
-		sw.switch_reboot()
-		
-		print_double_line()
-		for i in range(30):
+			##############################################
+			#  Setup POE tester before test starts
+			##############################################
+			tester.poe_reset()
+			sleep(5)
 			output_list = tester.get_poe_command(cmd="status")
 			output_dict = tester.parse_status_output(output_list)
 			print(output_dict)
+
+			result = True
 			ppoe_list_tester = []
+			regex = r'p([0-9]+)'
 			for k,v in output_dict.items():
 				if v == "1":
 					matched = re.search(regex,k)
 					if matched:
 						ppoe_list_tester.append(int(matched.group(1)))
+			all_poe_ports.sort()
 			ppoe_list_tester.sort()
-			p_poe_ports.sort()
-			print(ppoe_list_tester,p_poe_ports )
+			print(all_poe_ports,ppoe_list_tester)
 
-			if ppoe_list_tester != p_poe_ports:
-				print("Switch perpetual ports list NOT Equal to POE Tester list")
+			print_double_line()
+			if all_poe_ports != ppoe_list_tester:
+				print("Failed: Before Warm Boot, Switch All POE ports list is NOT Equal to All POE Tester list")
+				result = False
+				return result
 			else:
-				print("Switch perpetual ports list Equal to POE Tester list")
+				print("Before Warm Boot, Switch POE ports list is Equal to POE Tester list, Continue.....")
+			print_double_line()
 
-			sleep(1)
-		print_double_line()
-		console_timer(200,msg=f"After checking POE Tester for 30 seconds, wait for 200s ")
+			##############################################
+			#  Warm Boot Switch & check POE Tester
+			##############################################
+			sw.switch_reboot()
+			
+			print_double_line()
+			for i in range(50):
+				tester.poe_reset()
+				sleep(3)
+				output_list = tester.get_poe_command(cmd="status")
+				output_dict = tester.parse_status_output(output_list)
+				print(output_dict)
+				ppoe_list_tester = []
+				for k,v in output_dict.items():
+					if v == "1":
+						matched = re.search(regex,k)
+						if matched:
+							ppoe_list_tester.append(int(matched.group(1)))
+				ppoe_list_tester.sort()
+				p_poe_ports.sort()
+				print(f"POE Tester ports = {ppoe_list_tester}. Switch perpetual POE ports = {p_poe_ports}, Switch PoE ports = {all_poe_ports}" )
 
-		output_list = tester.get_poe_command(cmd="status")
-		output_dict = tester.parse_status_output(output_list)
-		print(output_dict)
+				if ppoe_list_tester != p_poe_ports:
+					if ppoe_list_tester == all_poe_ports:
+						print("Sucess: Switch has booted up, the POE Tester powered ports is Equal to All Switch POE port")
+						break
+					else:
+						print("Failed: Switch perpetual ports list NOT Equal to POE Tester list, STOP!")
+						result = False
+						return result
+				else:
+					print("Switch perpetual ports list Equal to POE Tester list, Continue....")
 
-		ppoe_list_tester = []
-		regex = r'p([0-9]+)'
-		for k,v in output_dict.items():
-			if v == "1":
-				matched = re.search(regex,k)
-				if matched:
-					ppoe_list_tester.append(int(matched.group(1)))
-		all_poe_ports.sort()
-		ppoe_list_tester.sort()
-		print(all_poe_ports,ppoe_list_tester)
+				sleep(2)
+	 
+			if result == False:
+				print_double_line()
+				print("Failed: During switch reboots, POE Perpetual ports are not working")
+				print(f"Switch Perpetual ports = {p_poe}")
+				print(f"Switch Perpetual Fast ports = {p_poe_fast}")
+				print(f"POE Tester ports received power = {ppoe_list_tester}")
+				print_double_line()
+				return result
 
-		print_double_line()
-		if all_poe_ports != ppoe_list_tester:
-			print("After Warm Boot, Switch perpetual ports list NOT Equal to POE Tester list")
-		else:
-			print("After Warm Boot, Switch perpetual ports list Equal to POE Tester list")
-		print_double_line()
+			console_timer(30,msg=f"Warm boot testing passed, wait for 30s for a final check ")
+
+			output_list = tester.get_poe_command(cmd="status")
+			output_dict = tester.parse_status_output(output_list)
+			print(output_dict)
+
+			ppoe_list_tester = []
+			regex = r'p([0-9]+)'
+			for k,v in output_dict.items():
+				if v == "1":
+					matched = re.search(regex,k)
+					if matched:
+						ppoe_list_tester.append(int(matched.group(1)))
+			all_poe_ports.sort()
+			ppoe_list_tester.sort()
+			print(all_poe_ports,ppoe_list_tester)
+
+			print_double_line()
+			if all_poe_ports != ppoe_list_tester:
+				print("Failed: After Warm Boot, Switch perpetual ports list NOT Equal to All POE Tester list")
+				result = False
+				return result
+			else:
+				print("Successul: finished one round of warm boot testing")
+			print_double_line()
+		
+
+		return result
 
 	warm_boot_testing()	
 	exit()
