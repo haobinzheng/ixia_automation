@@ -338,7 +338,7 @@ if __name__ == "__main__":
 			print_double_line()
 			for i in range(50):
 				tester.poe_reset()
-				sleep(3)
+				sleep(10)
 				output_list = tester.get_poe_command(cmd="status")
 				output_dict = tester.parse_status_output(output_list)
 				print(output_dict)
@@ -357,11 +357,11 @@ if __name__ == "__main__":
 						print("Sucess: Switch has booted up, the POE Tester powered ports is Equal to All Switch POE port")
 						break
 					else:
-						print("Failed: Switch perpetual ports list NOT Equal to POE Tester list, STOP!")
+						print("Failed: During warm boot, Switch perpetual ports list NOT Equal to POE Tester list, STOP!")
 						result = False
 						return result
 				else:
-					print("Switch perpetual ports list Equal to POE Tester list, Continue....")
+					print("During Reboot Switch perpetual ports list Equal to POE Tester list, Continue....")
 
 				sleep(2)
 	 
