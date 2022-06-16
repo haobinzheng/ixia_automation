@@ -979,6 +979,11 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 	else:
 		feedback = False
 
+	if "check_prompt" in kwargs:
+		check_prompt = kwargs["check_prompt"]
+	else:
+		check_prompt = False
+
 
 	if "mode" in kwargs:
 		config_mode = kwargs["mode"]
@@ -987,7 +992,7 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 		current_time = time.time()
 		if device.last_cmd_time == None:
 			config_mode = "fast"
-		elif (current_time - device.last_cmd_time) < 100:
+		elif (current_time - device.last_cmd_time) < 10:
 			config_mode = "fast"
 		else:
 			config_mode = "slow"
@@ -997,7 +1002,10 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 
 	if config_mode == "fast":
 		wait_time = 0.1
-	else:
+	# else:
+	# 	check_prompt = True
+
+	if check_prompt:
 		handle_prompt_before_commands(dut)
 
 	b= cmdblock.split("\n")
@@ -1174,6 +1182,19 @@ def switch_enter_yes(tn):
 	tn.write(answer)
 	time.sleep(2)
 
+def switch_interactive_exec_bios(tn,exec_cmd,prompt):
+	#relogin_if_needed(tn)
+	tprint(exec_cmd)
+	exec_cmd = exec_cmd
+	exec_cmd = convert_cmd_ascii(exec_cmd)
+	tn.write(exec_cmd)
+	time.sleep(1)
+
+	answer = convert_cmd_ascii('y')
+	#answer = convert_cmd_ascii('y' + '\n')
+	tn.write(answer)
+	time.sleep(1)
+
 def switch_interactive_exec(tn,exec_cmd,prompt):
 	#relogin_if_needed(tn)
 	tprint(exec_cmd)
@@ -1288,14 +1309,21 @@ def find_dut_prompt_cisco(tn):
 
 def find_dut_prompt(tn):
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
+	sleep(0.5)
 	tn.write(('' + '\n').encode('ascii'))
-	sleep(1) #added this line for fortigate 
+	sleep(0.5) #added this line for fortigate 
 	output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'

@@ -6524,6 +6524,118 @@ class FortiSwitch_XML(FortiSwitch):
         Status = a.set_on(self.pdu_ip, self.pdu_port)
         print(Status)
 
+    def pdu_cycle_bios(self):
+        a = apc()
+        Status = {}
+        Status = a.set_reboot(self.pdu_ip, self.pdu_port)
+        print(Status)
+        cmd = convert_cmd_ascii_n("R")
+        self.console.write(cmd)
+        sleep(0.5)
+        self.console.write(cmd)
+        sleep(0.5)
+        self.console.write(cmd)
+        sleep(0.5)
+        self.console.write(cmd)
+        sleep(0.5)
+        self.console.write(cmd)
+        sleep(0.5)
+        self.console.write(cmd)
+        sleep(0.5)
+        self.console.write(cmd)
+        sleep(0.5)
+        self.console.write(cmd)
+        sleep(0.5)
+
+    def get_poe_env(self):
+        sample = """
+        poe_port_legacy=
+        poe_guard_band=19
+        poe_power_bank=15
+        poe_power_policy=0
+        poe_priority_medium=
+        poe_priority_high=
+        poe_priority_critical=
+        poe_priority_low=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+        poe_perpetual_fast=1,3
+        poe_port_enable=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
+        poe_power_budget=220
+        poe_perpetual=2,4
+        """
+        output = collect_show_cmd(self.console,"diagnose hardware sysinfo bootenv")
+        dprint(output)
+        poe_env_dict = {}
+        for line in output:
+            if "poe" in line:
+                try:
+                    k,v = line.split("=")
+                    if "," in v:
+                        v = v.split(",")
+                        v = [int(i) for i in v]
+                        poe_env_dict[k] = v
+                    else:
+                        poe_env_dict[k] = [v]
+                except Exception as e: 
+                    pass
+        return poe_env_dict
+
+
+    def get_poe_inline(self):
+        sample = """
+        S108FFTV21000007 # get switch poe  inline
+
+        Unit Power Budget: 70.00W
+        Unit Guard Band: 10.00W
+        Unit Power Consumption: 56.00W
+        Unit Temperature: 46.00 Centigrade
+        Unit Poe Power Mode : Priority Based.
+
+
+        Interface   Status    State             Max-Power(W)   Power-consumption(W)   Priority   Class   Error
+        ------------------------------------------------------------------------------------------------------------
+        port1       Enabled   Fault:4           N/A            N/A                    N/A        N/A     Power Fault: Error Type 32 (Port is off: Powerbudget exceeded)
+        port2       Enabled   Delivering Power  33.00          19.00                  Critical   4
+        port3       Enabled   Fault:4           N/A            N/A                    N/A        N/A     Power Fault: Error Type 32 (Port is off: Powerbudget exceeded)
+        port4       Enabled   Delivering Power  33.00          18.80                  Critical   4
+        port5       Enabled   Delivering Power  33.00          18.80                  Critical   4
+        port6       Enabled   Fault:4           N/A            N/A                    N/A        N/A     Power Fault: Error Type 32 (Port is off: Powerbudget exceeded)
+        port7       Enabled   Fault:4           N/A            N/A                    N/A        N/A     Power Fault: Error Type 32 (Port is off: Powerbudget exceeded)
+        port8       Enabled   Fault:4           N/A            N/A                    N/A        N/A     Power Fault: Error Type 32 (Port is off: Powerbudget exceeded)
+        """
+        output = collect_show_cmd(self.console,"get switch poe inline")
+        dprint(output)
+        poe_inline_dict = {}
+        poe_inline_dict["ports"] = []
+        start = False
+        for line in output:
+            if "Unit Power Budget" in line:
+                k,v = line.split(":")
+                poe_inline_dict[k.strip()] = v.strip()
+            elif "Unit Poe Power Mode" in line:
+                k,v = line.split(":")
+                poe_inline_dict[k.strip()] = v.strip()
+            elif "Interface   Status    State" in line:
+                poe_items = line.split()
+                start = True
+            elif "port" in line and start:
+                port_items = line.split()
+                if "Delivering Power" in line:
+                    port_items.remove("Power")
+                poe_port_dict = {i:j for i,j in zip(poe_items,port_items)}
+                poe_inline_dict["ports"].append(poe_port_dict)
+        print(poe_inline_dict)
+        return poe_inline_dict
+
+    def reboot_bios(self):
+        #rebooot from BIOS mode
+        print("Trying to get BIOS prompt by hitting Enter Key....")
+        for i in range(5):
+            self.console.write(('' + '\n').encode('ascii'))
+            sleep(1)
+        
+        cmd = "R"
+        switch_interactive_exec_bios(self.console,cmd,"Really reboot FortiSwitch? (Y/N): ")
+
     def pdu_cycle(self):
         a = apc()
         Status = {}
@@ -8574,18 +8686,28 @@ class POE_TESTER():
         self.console_line = device_xml.console_line
         self.console = telnet_poe(self.console_ip, self.console_line)
 
-    def poe_reset(self):
-        self.enter_poe_command(cmd ='reset')
+    def poe_reset(self,*args,**kwargs):
+        if "current" in kwargs:
+            current = kwargs["current"]
+        else:
+            current = 20
+
+        if "poe_class" in kwargs:
+            poe_class = kwargs["poe_class"]
+        else:
+            poe_class = 0
+
+        self.enter_poe_command(cmd ='g1 reset')
         sleep(2)
-        self.enter_poe_command(cmd ='connect on')
+        self.enter_poe_command(cmd ='g1 connect on')
         sleep(2)
-        self.enter_poe_command(cmd ='detect ok ')
+        self.enter_poe_command(cmd ='g1 detect ok ')
         sleep(2)
-        self.enter_poe_command(cmd ='class 0 ')
+        self.enter_poe_command(cmd =f'g1 class {poe_class}')
         sleep(2)
-        self.enter_poe_command(cmd ='set 20')
+        self.enter_poe_command(cmd =f'g1 set {current}')
         sleep(2)
-        self.enter_poe_command(cmd ='auto on')
+        self.enter_poe_command(cmd ='g1 auto on')
         sleep(2)
 
     def get_poe_command(self,*args,**kwargs):
