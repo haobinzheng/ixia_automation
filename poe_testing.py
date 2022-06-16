@@ -304,7 +304,7 @@ if __name__ == "__main__":
 	def compare_boot_service_power(boot_power_dict,service_power_dict,ppoe_list_tester):
 		for i in ppoe_list_tester:
 			port=f"p{i}"
-			if abs(boot_power_dict[port] - service_power_dict[port]) < 2:
+			if abs(int(boot_power_dict[port]) - int(service_power_dict[port])) < 2:
 				continue
 			else:
 				print(f"Power is different. Boot:{port}|{boot_power_dict[port]}, In Service:{port}|{service_power_dict[port]}")
@@ -441,7 +441,7 @@ if __name__ == "__main__":
 				print(output_dict)
 				ppoe_list_tester = find_poe_status(output_dict)
 
-				p_poe_ports = p_poe_fast
+				p_poe_ports = p_poe_fast  ### target ports
 
 				if poe_status == "disable":
 					p_poe_ports = []
@@ -491,11 +491,10 @@ if __name__ == "__main__":
 				print("Failed: After Boot from BIOS, Switch perpetual ports list NOT Equal to All POE Tester list")
 				result = False
 			else:
-				print(f"{result}: finished #{j+1} round of basic BIOS testing")
+				print(f"Success={result}: finished #{j+1} round of basic BIOS testing")
 			print_double_line()
 			pass
 		return result
-
 
 
 	# ################################# compare_power_testing ################################
@@ -863,207 +862,309 @@ if __name__ == "__main__":
 				print_double_line()
 		return result
 
-	# ################################# compare_power_testing ################################
-	# def compare_power_testing(*args, **kwargs):
 
-	# 	if "boot" in kwargs:
-	# 		boot_mode = kwargs['boot']
-	# 	else: 
-	# 		boot_mode = "warm"
-	# 	if "poe_status" in kwargs:
-	# 		poe_status = kwargs['poe_status']
-	# 	else:
-	# 		poe_status = "enable"
 
-	# 	print_double_line()
-	# 	print(f"				Start compare_power_testing	in {boot_mode} boot")
-	# 	print_double_line()
+	################################# flipping_poe_boot_testing ################################
+	def flipping_poe_boot_testing(*args, **kwargs):
+		print_double_line()
+		print("				Start flipping_poe_boot_testing		")
+		print_double_line()
 
-	# 	if "iteration" in kwargs:
-	# 		run_numbers = iteration
-	# 	else:
-	# 		run_numbers = 1
+		if "boot" in kwargs:
+			boot_mode = kwargs['boot']
+		else: 
+			boot_mode = "warm"
 
-	# 	port_list = [1,2,3,4,5,6,7,8]
-	# 	for j in range(run_numbers):
-	# 		p_poe,p_poe_fast,normal = partition(port_list,3)
+		if "poe_status" in kwargs:
+			poe_status = kwargs['poe_status']
+		else:
+			poe_status = "enable"
 
-	# 		all_ppoe_ports = p_poe + p_poe_fast
-	# 		all_poe_ports = p_poe + p_poe_fast + normal
-	# 		print(f"Perpetual POE Ports = {p_poe}")
-	# 		print(f"Perpetual Fast POE Ports = {p_poe_fast}")
-	# 		print(f"Normal POE Ports = {normal}")
-	# 		##############################################
-	# 		# Configure DUT POE ports before test starts
-	# 		##############################################
-	# 		for p in p_poe:
-	# 			config = f"""
-	# 			config switch physical-port
-	#     			edit port{p}
-	#          		set poe-port-power perpetual
-	#          		set poe-status {poe_status}
-	#     			next
-	# 			end
-	# 			"""
-	# 			config_cmds_lines(sw.console,config,check_prompt=True)	
-	# 		for p in p_poe_fast:
-	# 			config = f"""
-	# 			config switch physical-port
-	#     			edit port{p}
-	#          		set poe-port-power perpetual-fast
-	#          		set poe-status {poe_status}
-	#     			next
-	# 			end
-	# 			"""
-	# 			config_cmds_lines(sw.console,config)
+		if "iteration" in kwargs:
+			run_numbers = iteration
+		else:
+			run_numbers = 1
 
-	# 		for p in normal:
-	# 			config = f"""
-	# 			config switch physical-port
-	#     			edit port{p}
-	#          		unset poe-port-power
-	#          		set poe-status {poe_status}
-	#     			next
-	# 			end
-	# 			"""
-	# 			config_cmds_lines(sw.console,config)
+		port_list = [1,2,3,4,5,6,7,8]
+		for j in range(run_numbers):
+			p_poe,p_poe_fast,normal = partition(port_list,3)
 
-	# 		config = f"""
-	# 		conf switch global
-	# 		unset poe-power-budget
-	# 		unset poe-power-mode 
-	# 		end
-	# 		"""
-	# 		config_cmds_lines(sw.console,config)
-	# 		sleep(20)
-	# 		sw.show_command("diagnose hardware sysinfo bootenv")
-	# 		sw.show_command("get switch poe inline")
+			all_ppoe_ports = p_poe + p_poe_fast
+			all_poe_ports = p_poe + p_poe_fast + normal
+			print(f"Perpetual POE Ports = {p_poe}")
+			print(f"Perpetual Fast POE Ports = {p_poe_fast}")
+			print(f"Normal POE Ports = {normal}")
 
-	# 		##############################################
-	# 		#  Setup POE tester before test starts
-	# 		##############################################
-	# 		tester.poe_reset()
-	# 		sleep(5)
-	# 		output_list = tester.get_poe_command(cmd="status")
-	# 		output_dict = tester.parse_status_output(output_list)
-	# 		print(output_dict)
+			if poe_status == "disable":
+				all_poe_ports = []
+			##############################################
+			# Configure DUT POE ports before test starts
+			##############################################
+			config = f"""
+			conf switch global
+			unset poe-power-budget
+			unset poe-power-mode 
+			end
+			"""
+			config_cmds_lines(sw.console,config)
+			sleep(20)
+			# start config
+			for p in p_poe:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		set poe-port-power perpetual
+	         		set poe-status {poe_status}
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config,check_prompt=True)	
+			for p in p_poe_fast:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		set poe-port-power perpetual-fast
+	         		set poe-status {poe_status}
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)
 
-	# 		result = True
+			for p in normal:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		unset poe-port-power
+	         		set poe-status {poe_status}
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)
+
+			sw.show_command("diagnose hardware sysinfo bootenv")
+			poe_env_dict = sw.get_poe_env()
+			print(poe_env_dict)
+
+			result = True
+			# if set(critical) != set(poe_env_dict["poe_priority_critical"]):
+			# 	print(f"Critical priority is different, configured vs bootenv = {set(critical)}, set(poe_env_dict['poe_priority_critical'])")
+			# 	result = False
+
+			# if set(high) != set(poe_env_dict["poe_priority_high"]):
+			# 	print("High priority is different, configured vs bootenv = {set(high)}, set(poe_env_dict['poe_priority_high')")
+			# 	result = False
+
+			# if set(low) != set(poe_env_dict["poe_priority_low"]):
+			# 	print("Low priority is different, configured vs bootenv = {set(low)}, set(poe_env_dict['poe_priority_low')")
+			# 	result = False
+
+			if set(p_poe_fast) != set(poe_env_dict["poe_perpetual_fast"]):
+				print(f"Perpetual Fast is different, configured vs bootenv = {set(p_fast)}, set(poe_env_dict['poe_perpetual_fast')")
+				result = False
+
+			if set(p_poe) != set(poe_env_dict["poe_perpetual"]):
+				print(f"Perpetual Fast is different, configured vs bootenv = {set(perpetual)}, set(poe_env_dict['poe_perpetual')")
+				result = False
+
+			print_double_line()
+			print(f"Success = {result}. #{j} Before flipping bootenv checking is done")
+			print_double_line()
+
+			#flip config
+			sleep(30)
+			for p in p_poe:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		unset poe-port-power  
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config,check_prompt=True)	
+			for p in p_poe_fast:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		unset poe-port-power  
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)
+
+			for p in normal:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		unset poe-port-power
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)
+
+				sleep(20)
+			# restore config
+			for p in p_poe:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		set poe-port-power perpetual
+	         		set poe-status {poe_status}
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config,check_prompt=True)	
+			for p in p_poe_fast:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		set poe-port-power perpetual-fast
+	         		set poe-status {poe_status}
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)
+
+			for p in normal:
+				config = f"""
+				config switch physical-port
+	    			edit port{p}
+	         		unset poe-port-power
+	         		set poe-status {poe_status}
+	    			next
+				end
+				"""
+				config_cmds_lines(sw.console,config)
+
+			sw.show_command("diagnose hardware sysinfo bootenv")
+			poe_env_dict = sw.get_poe_env()
+			print(poe_env_dict)
+
+			result = True
+			# if set(critical) != set(poe_env_dict["poe_priority_critical"]):
+			# 	print(f"Critical priority is different, configured vs bootenv = {set(critical)}, set(poe_env_dict['poe_priority_critical'])")
+			# 	result = False
+
+			# if set(high) != set(poe_env_dict["poe_priority_high"]):
+			# 	print("High priority is different, configured vs bootenv = {set(high)}, set(poe_env_dict['poe_priority_high')")
+			# 	result = False
+
+			# if set(low) != set(poe_env_dict["poe_priority_low"]):
+			# 	print("Low priority is different, configured vs bootenv = {set(low)}, set(poe_env_dict['poe_priority_low')")
+			# 	result = False
+
+			if set(p_poe_fast) != set(poe_env_dict["poe_perpetual_fast"]):
+				print(f"Perpetual Fast is different, configured vs bootenv = {set(p_fast)}, set(poe_env_dict['poe_perpetual_fast')")
+				result = False
+
+			if set(p_poe) != set(poe_env_dict["poe_perpetual"]):
+				print(f"Perpetual Fast is different, configured vs bootenv = {set(perpetual)}, set(poe_env_dict['poe_perpetual')")
+				result = False
+
+			print_double_line()
+			print(f"Success = {result}. #{j} After flipping bootenv checking is done,")
+			print_double_line()
+ 
+			##############################################
+			#  Setup POE tester before test starts
+			##############################################
+			tester.poe_reset()
+			sleep(5)
+			output_list = tester.get_poe_command(cmd="status")
+			output_dict = tester.parse_status_output(output_list)
+			print(output_dict)
+
+			result = True
+			regex = r'p([0-9]+)'
+			ppoe_list_tester = find_poe_status(output_dict)
+			all_poe_ports.sort()
+			ppoe_list_tester.sort()
+			print(all_poe_ports,ppoe_list_tester)
+
+			print_double_line()
+			if all_poe_ports != ppoe_list_tester:
+				print(f"Failed: Before {boot_mode} Boot, Switch All POE ports list is NOT Equal to All POE Tester list")
+				result = False
+				return result
+			else:
+				print(f"Before {boot_mode} Boot, Switch POE ports list is Equal to POE Tester list, Continue.....")
+			print_double_line()
+
+			##############################################
+			#  Warm or Cold Boot Switch & check POE Tester
+			##############################################
+			if boot_mode == "warm":
+				sw.switch_reboot()
+			if boot_mode == "cold":
+				sw.pdu_cycle()
 			
-	# 		ppoe_list_tester = find_poe_status(output_dict)
-	# 		all_poe_ports.sort()
-	# 		ppoe_list_tester.sort()
-	# 		print(all_poe_ports,ppoe_list_tester)
+			print_double_line()
+			while True:
+				tester.poe_reset()
+				sleep(10)
+				output_list = tester.get_poe_command(cmd="status")
+				output_dict = tester.parse_status_output(output_list)
+				print(output_dict)
+				ppoe_list_tester = find_poe_status(output_dict)
 
-	# 		print_double_line()
-	# 		if all_poe_ports != ppoe_list_tester:
-	# 			print(f"Failed: Before {boot_mode} Boot, Switch All POE ports list is NOT Equal to All POE Tester list")
-	# 			result = False
-	# 			return result
-	# 		else:
-	# 			print(f"Before {boot_mode} Boot, Switch POE ports list is Equal to POE Tester list, Continue.....")
-	# 		print_double_line()
+				if boot_mode == "warm":
+					p_poe_ports = all_ppoe_ports
+				elif boot_mode == "cold":
+					p_poe_ports = p_poe_fast
+				else:
+					print("!!!!!!! Boot Mode Is Invalid, Something Is Wrong!!!!!!!!!!")
+					return False
+				if poe_status == "disable":
+					p_poe_ports = []
+					all_ppoe_ports = []
 
-	# 		output_list = tester.get_poe_command(cmd="measure")
-	# 		service_power_dict = tester.parse_measure_output(output_list)
-	# 		print(f"power output in service:{service_power_dict}")
-	# 		##############################################
-	# 		#  Warm or Cold Boot Switch & check POE Tester
-	# 		##############################################
-	# 		if boot_mode == "warm":
-	# 			sw.switch_reboot()
-	# 		if boot_mode == "cold":
-	# 			sw.pdu_cycle()
-			
-	# 		print_double_line()
-	# 		good = 0
-	# 		bad = 0
-	# 		good_power = 0
-	# 		bad_power = 0
+				ppoe_list_tester.sort()
+				p_poe_ports.sort()
+				print(f"Boot Mode = {boot_mode}. POE Tester ports = {ppoe_list_tester}. Switch perpetual POE ports = {p_poe_ports}, Switch PoE ports = {all_poe_ports}" )
 
-	# 		while True:
-	# 			tester.poe_reset()
-	# 			sleep(10)
-	# 			output_list = tester.get_poe_command(cmd="status")
-	# 			output_dict = tester.parse_status_output(output_list)
-	# 			print(output_dict)
-	# 			ppoe_list_tester = find_poe_status(output_dict)
+				if ppoe_list_tester != p_poe_ports:
+					if ppoe_list_tester == all_poe_ports:
+						print(f"Sucess: Switch has {boot_mode} booted up, the POE Tester powered ports is Equal to All Switch POE port, Continue to final check....")
+						break
+					else:
+						print(f"Failed: During {boot_mode} boot, Switch perpetual ports list NOT Equal to POE Tester list, STOP!")
+						result = False
+						return result
+				else:
+					print(f"During {boot_mode} boot Switch perpetual ports list Equal to POE Tester list, Continue....")
+					if poe_status == "disable":
+						print(f"All Ports are POE disabled, No power drawn, continue...")
+						break
 
-	# 			sleep(2)
-	# 			output_list = tester.get_poe_command(cmd="measure")
-	# 			boot_power_dict = tester.parse_measure_output(output_list)
-	# 			print(f"power output in booting:{boot_power_dict}")
-				
-	# 			if boot_mode == "warm":
-	# 				p_poe_ports = all_ppoe_ports
-	# 			elif boot_mode == "cold":
-	# 				p_poe_ports = p_poe_fast
-	# 			else:
-	# 				print("!!!!!!! Boot Mode Is Invalid, Something Is Wrong!!!!!!!!!!")
-	# 				return False
-	# 			ppoe_list_tester.sort()
-	# 			p_poe_ports.sort()
-	# 			print(f"Boot Mode = {boot_mode}. POE Tester ports = {ppoe_list_tester}. Switch perpetual POE ports = {p_poe_ports}, Switch PoE ports = {all_poe_ports}" )
+			if result == False:
+				print_double_line()
+				print(f"Failed: During switch {boot_mode} boots, POE Perpetual ports are not working")
+				print(f"Switch Perpetual ports = {p_poe}")
+				print(f"Switch Perpetual Fast ports = {p_poe_fast}")
+				print(f"POE Tester ports received power = {ppoe_list_tester}")
+				print_double_line()
+				return result
+			else:
+				console_timer(120,msg=f"{boot_mode} boot testing passed, wait for 120s for a final check ")
 
-	# 			if ppoe_list_tester != p_poe_ports:
-	# 				if ppoe_list_tester == all_poe_ports:
-	# 					print(f"Sucess: Switch has {boot_mode} booted up, the POE Tester powered ports is Equal to All Switch POE port, Continue to final check....")
-	# 					break
-	# 				else:
-	# 					print(f"Failed: During {boot_mode} boot, Switch perpetual ports list NOT Equal to POE Tester list, STOP!")
-	# 					bad +=1 
-	# 			else:
-	# 				print(f"During {boot_mode} boot Switch perpetual ports list Equal to POE Tester list, Continue....")
-	# 				good += 1
-			
-	# 			if compare_boot_service_power(boot_power_dict,service_power_dict,ppoe_list_tester):
-	# 				print(f"During {boot_mode} boot Switch perpetual ports power output Equal to in service mode, Continue....")
-	# 				good_power +=1 
-	# 			else:
-	# 				print(f"Failed: During {boot_mode} boot Switch perpetual ports power output NOT Equal to in service mode")
-	# 				bad_power +=1 
+				output_list = tester.get_poe_command(cmd="status")
+				output_dict = tester.parse_status_output(output_list)
+				print(output_dict)
 
-	# 		if good >=1 and bad <=2:
-	# 			result1 = True 
-	# 		else:
-	# 			result1 = False
+				ppoe_list_tester = find_poe_status(output_dict)
+				all_poe_ports.sort()
+				ppoe_list_tester.sort()
+				print(all_poe_ports,ppoe_list_tester)
 
-	# 		if good_power >=1 and bad_power <=2:
-	# 			result2 = True 
-	# 		else:
-	# 			result2 = False
+				print_double_line()
+				if all_poe_ports != ppoe_list_tester:
+					print("Failed: After {boot_mode} Boot, Switch perpetual ports list NOT Equal to All POE Tester list")
+					result = False
+					return result
+				else:
+					print(f"Successul: finished #{j+1} round of {boot_mode} boot flipping testing")
+				print_double_line()
+		return result
 
-	# 		result = result1 & result2
-
-	# 		if result == False:
-	# 			print_double_line()
-	# 			print(f"Failed: During switch {boot_mode} boots, POE Perpetual ports are not working")
-	# 			print(f"Switch Perpetual ports = {p_poe}")
-	# 			print(f"Switch Perpetual Fast ports = {p_poe_fast}")
-	# 			print(f"POE Tester ports received power = {ppoe_list_tester}")
-	# 			print_double_line()
-	# 			return result
-	# 		else:
-	# 			console_timer(120,msg=f"{boot_mode} boot testing passed, wait for 120s for a final check ")
-
-	# 			output_list = tester.get_poe_command(cmd="status")
-	# 			output_dict = tester.parse_status_output(output_list)
-	# 			print(output_dict)
-
-	# 			ppoe_list_tester = find_poe_status(output_dict)
-	# 			all_poe_ports.sort()
-	# 			ppoe_list_tester.sort()
-	# 			print(all_poe_ports,ppoe_list_tester)
-
-	# 			print_double_line()
-	# 			if all_poe_ports != ppoe_list_tester:
-	# 				print("Failed: After Warm Boot, Switch perpetual ports list NOT Equal to All POE Tester list")
-	# 				result = False
-	# 				return result
-	# 			else:
-	# 				print(f"Successul: finished #{j+1} round of {boot_mode} boot testing")
-	# 			print_double_line()
-	# 	return result
 
 	################################# poe_cli_testing ################################
 	def poe_cli_testing(*args, **kwargs):
@@ -1194,19 +1295,19 @@ if __name__ == "__main__":
 				result = False
 
 			if set(high) != set(poe_env_dict["poe_priority_high"]):
-				print("High priority is different, configured vs bootenv = {set(high)}, set(poe_env_dict['poe_priority_high')")
+				print(f"High priority is different, configured vs bootenv = {set(high)}, set(poe_env_dict['poe_priority_high')")
 				result = False
 
 			if set(low) != set(poe_env_dict["poe_priority_low"]):
-				print("Low priority is different, configured vs bootenv = {set(low)}, set(poe_env_dict['poe_priority_low')")
+				print(f"Low priority is different, configured vs bootenv = {set(low)}, set(poe_env_dict['poe_priority_low')")
 				result = False
 
 			if set(p_fast) != set(poe_env_dict["poe_perpetual_fast"]):
-				print("Perpetual Fast is different, configured vs bootenv = {set(p_fast)}, set(poe_env_dict['poe_perpetual_fast')")
+				print(f"Perpetual Fast is different, configured vs bootenv = {set(p_fast)}, set(poe_env_dict['poe_perpetual_fast')")
 				result = False
 
 			if set(perpetual) != set(poe_env_dict["poe_perpetual"]):
-				print("Perpetual Fast is different, configured vs bootenv = {set(perpetual)}, set(poe_env_dict['poe_perpetual')")
+				print(f"Perpetual Fast is different, configured vs bootenv = {set(perpetual)}, set(poe_env_dict['poe_perpetual')")
 				result = False
 			print_double_line()
 			print(f"Success = {result}. #{j} before boot poe_cli_testing is done,")
@@ -1235,19 +1336,19 @@ if __name__ == "__main__":
 				result = False
 
 			if set(high) != set(poe_env_dict["poe_priority_high"]):
-				print("High priority is different, configured vs bootenv = {set(high)}, set(poe_env_dict['poe_priority_high')")
+				print(f"High priority is different, configured vs bootenv = {set(high)}, set(poe_env_dict['poe_priority_high')")
 				result = False
 
 			if set(low) != set(poe_env_dict["poe_priority_low"]):
-				print("Low priority is different, configured vs bootenv = {set(low)}, set(poe_env_dict['poe_priority_low')")
+				print(f"Low priority is different, configured vs bootenv = {set(low)}, set(poe_env_dict['poe_priority_low')")
 				result = False
 
 			if set(p_fast) != set(poe_env_dict["poe_perpetual_fast"]):
-				print("Perpetual Fast is different, configured vs bootenv = {set(p_fast)}, set(poe_env_dict['poe_perpetual_fast')")
+				print(f"Perpetual Fast is different, configured vs bootenv = {set(p_fast)}, set(poe_env_dict['poe_perpetual_fast')")
 				result = False
 
 			if set(perpetual) != set(poe_env_dict["poe_perpetual"]):
-				print("Perpetual Fast is different, configured vs bootenv = {set(perpetual)}, set(poe_env_dict['poe_perpetual')")
+				print(f"Perpetual Fast is different, configured vs bootenv = {set(perpetual)}, set(poe_env_dict['poe_perpetual')")
 				result = False
 			print_double_line()
 			print(f"Success = {result}. #{j} after boot poe_cli_testing is done,")
@@ -1520,6 +1621,8 @@ if __name__ == "__main__":
 			boot_mode = "warm"
 		if boot_mode == "cold":
 			p_mode = "perpetual-fast"
+		elif boot_mode == "bios":
+			p_mode = "perpetual-fast"
 		else:
 			p_mode = "perpetual"
 
@@ -1636,6 +1739,10 @@ if __name__ == "__main__":
 				sw.switch_reboot()
 			if boot_mode == "cold":
 				sw.pdu_cycle()
+			if boot_mode == "bios":
+				sw.pdu_cycle_bios()
+				sleep(10)
+
 			good = 0
 			bad = 0
 			print_double_line()
@@ -1677,18 +1784,18 @@ if __name__ == "__main__":
 			else:
 				result = False
 
-			if result == False:
+
+			if result == False and boot_mode != "bios":
 				print_double_line()
-				print(f"Failed: During switch {boot_mode} boots, POE Perpetual ports are not working")
+				print(f"Failed: During switch {boot_mode} boots, POE Perpetual ports are not working: low priority perpetual ports no power")
 				print(f"Switch critical Perpetual ports = {critical}")
 				print(f"Switch high Perpetual Fast ports = {high}")
 				print(f"Switch low Perpetual Fast ports = {low}")
 				print(f"POE Tester ports received power = {ppoe_list_tester}")
 				print_double_line()
 				return result
-			else:
-				console_timer(60,msg=f"{boot_mode} boot testing passed, wait for 120s for a final check ")
-
+			elif result == True and boot_mode != "bios":
+				console_timer(120,msg=f"{boot_mode} boot testing passed, wait for 120s for a final check ")
 				output_list = tester.get_poe_command(cmd="status")
 				output_dict = tester.parse_status_output(output_list)
 				print(output_dict)
@@ -1703,11 +1810,85 @@ if __name__ == "__main__":
 					print(f"Failed: After {boot_mode} Boot, Switch critical perpetual ports list NOT Equal to All POE Tester list")
 					result = False
 					return result
-				else:
+
+				print(f"{result}: finished #{j+1} round of testing after {boot_mode}, comparing other POE characteristics between boot")
+				poe_inline_after = sw.get_poe_inline()
+				delta = compare_poe_inline(poe_inline_before, poe_inline_after)
+				for k,v in delta.items():
+					if k == "Priority" or k =="Class" or k=="State":
+						compare_result = False
+					else:
+						compare_result = True
+				if compare_result:
 					print(f"Successul: finished #{j+1} round of {boot_mode} priority testing")
+					print(f"poe_inline_before: {poe_inline_before}")
+					print(f"poe_inline_after:{poe_inline_after}")
+					print(delta)
+				else:
+					print(f"Failed: get switch poe inline is different between {boot_mode} boot")
+					print(delta)
+					print(f"poe_inline_before: {poe_inline_before}")
+					print(f"poe_inline_after:{poe_inline_after}")
 				print_double_line()
+
+			elif result == True and boot_mode == "bios":
+				console_timer(20,msg=f"wait for 20s and reboot from BIOS...")
+				sw.reboot_bios()
+				console_timer(180,msg=f"wait for 180s for a final check.....")
+				output_list = tester.get_poe_command(cmd="status")
+				output_dict = tester.parse_status_output(output_list)
+				print(output_dict)
+
+				ppoe_list_tester = find_poe_status(output_dict)
+				all_poe_ports.sort()
+				ppoe_list_tester.sort()
+				print(all_poe_ports,ppoe_list_tester)
+
+				print_double_line()
+				if critical != ppoe_list_tester:
+					print("Failed: After Boot from BIOS, Switch perpetual ports list NOT critical POE Tester list")
+					result = False
+					return result
+				 
+				print(f"{result}: finished #{j+1} round of basic BIOS testing, comparing other POE characteristics between boot")				
+				poe_inline_after = sw.get_poe_inline()
+				delta = compare_poe_inline(poe_inline_before, poe_inline_after)
+				for k,v in delta.items():
+					if k == "Priority" or k =="Class" or k=="State":
+						compare_result = False
+					else:
+						compare_result = True
+				if compare_result:
+					print(f"Successul: finished #{j+1} round of {boot_mode} priority testing")
+					print(f"poe_inline_before: {poe_inline_before}")
+					print(f"poe_inline_after:{poe_inline_after}")
+					print(delta)
+				else:
+					print(f"Failed: get switch poe inline is different between {boot_mode} boot")
+					print(delta)
+					print(f"poe_inline_before: {poe_inline_before}")
+					print(f"poe_inline_after:{poe_inline_after}")
+				print_double_line()
+
+			elif result == False and boot_mode == "bios":
+				print_double_line()
+				print(f"Failed: During switch {boot_mode} boots, POE Perpetual ports are not working")
+				print(f"Switch critical Perpetual ports = {critical}")
+				print(f"Switch high Perpetual Fast ports = {high}")
+				print(f"Switch low Perpetual Fast ports = {low}")
+				print(f"POE Tester ports received power = {ppoe_list_tester}")
+				print_double_line()
+				console_timer(20,msg=f"wait for 20s and reboot from BIOS...")
+				sw.reboot_bios()
+				console_timer(180,msg=f"wait for 180s for switch to boot up.....")
+				return result
+
 		return result
 
+	basic_bios_poe_boot_testing()
+	exit()
+	flipping_poe_boot_testing()
+	exit()
 	poe_cli_testing(boot="cold")
 	sleep(180)
 	poe_cli_testing(boot="bios")
