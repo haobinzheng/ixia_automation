@@ -6636,6 +6636,14 @@ class FortiSwitch_XML(FortiSwitch):
         cmd = "R"
         switch_interactive_exec_bios(self.console,cmd,"Really reboot FortiSwitch? (Y/N): ")
 
+    def exect_boot_bios(self):
+        self.switch_reboot()
+        cmd = convert_cmd_ascii_n("b")
+        for i in range(100):
+            self.console.write(cmd)
+            sleep(0.2)
+         
+
     def pdu_cycle(self):
         a = apc()
         Status = {}
