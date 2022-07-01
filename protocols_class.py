@@ -8705,17 +8705,17 @@ class POE_TESTER():
         else:
             poe_class = 0
 
-        self.enter_poe_command(cmd ='g1 reset')
+        self.enter_poe_command(cmd ='reset')
         sleep(2)
-        self.enter_poe_command(cmd ='g1 connect on')
+        self.enter_poe_command(cmd ='connect on')
         sleep(2)
-        self.enter_poe_command(cmd ='g1 detect ok ')
+        self.enter_poe_command(cmd ='detect ok ')
         sleep(2)
-        self.enter_poe_command(cmd =f'g1 class {poe_class}')
+        self.enter_poe_command(cmd =f'class {poe_class}')
         sleep(2)
-        self.enter_poe_command(cmd =f'g1 set {current}')
+        self.enter_poe_command(cmd =f'set {current}')
         sleep(2)
-        self.enter_poe_command(cmd ='g1 auto on')
+        self.enter_poe_command(cmd ='auto on')
         sleep(2)
 
     def get_poe_command(self,*args,**kwargs):

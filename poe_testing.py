@@ -355,7 +355,8 @@ if __name__ == "__main__":
 		print_double_line()
 
 
-		port_list = [1,2,3,4,5,6,7,8]
+		port_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+		#port_list = [1,2,3,4,5,6,7,8]
 		for j in range(run_numbers):
 			p_poe,p_poe_fast,normal = partition(port_list,3)
 
