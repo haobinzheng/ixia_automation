@@ -26,7 +26,7 @@ from ixia_restpy_lib_v2 import *
 import random 
 def partition (list_in, n):
     random.shuffle(list_in)
-    return [list_in[i::n] for i in range(3)]
+    return [list_in[i::n] for i in range(n)]
 
 
 if __name__ == "__main__":
@@ -258,6 +258,7 @@ if __name__ == "__main__":
 	# 		switches.append(switch)
 
 	sw = switches[0]
+	port_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
 	# sw.exect_boot_bios()
 	# exit()
 	# sw.pdu_cycle_bios()
@@ -356,7 +357,7 @@ if __name__ == "__main__":
 
 
 		port_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
-		#port_list = [1,2,3,4,5,6,7,8]
+		# 
 		for j in range(run_numbers):
 			p_poe,p_poe_fast,normal = partition(port_list,3)
 
@@ -532,7 +533,7 @@ if __name__ == "__main__":
 	# 	else:
 	# 		run_numbers = 1
 
-	# 	port_list = [1,2,3,4,5,6,7,8]
+	# 	 
 	# 	for j in range(run_numbers):
 	# 		p_poe,p_poe_fast,normal = partition(port_list,3)
 
@@ -716,7 +717,6 @@ if __name__ == "__main__":
 		print_double_line()
 		print(f"				Start basic_poe_boot_testing {boot_mode}")
 		print_double_line()
-		port_list = [1,2,3,4,5,6,7,8]
 		for j in range(run_numbers):
 			p_poe,p_poe_fast,normal = partition(port_list,3)
 
@@ -920,7 +920,7 @@ if __name__ == "__main__":
 		print_double_line()
 		print(f"				Start flipping_poe_boot_testing	{boot_mode}	")
 		print_double_line()
-		port_list = [1,2,3,4,5,6,7,8]
+		 
 		for j in range(run_numbers):
 			p_poe,p_poe_fast,normal = partition(port_list,3)
 
@@ -1235,7 +1235,7 @@ if __name__ == "__main__":
 		else:
 			run_numbers = 1
 
-		port_list = [1,2,3,4,5,6,7,8]
+		 
 		all_poe_ports = port_list
 		for j in range(run_numbers):
 			critical,high,low = partition(port_list,3)
@@ -1427,7 +1427,7 @@ if __name__ == "__main__":
 		else:
 			run_numbers = 1
 
-		port_list = [1,2,3,4,5,6,7,8]
+		 
 		all_poe_ports = port_list
 		for j in range(run_numbers):
 			critical,high,low = partition(port_list,3)
@@ -1690,7 +1690,7 @@ if __name__ == "__main__":
 		else:
 			run_numbers = 1
 
-		port_list = [1,2,3,4,5,6,7,8]
+		 
 		all_poe_ports = port_list
 		for j in range(run_numbers):
 			critical,high,low = partition(port_list,3)
