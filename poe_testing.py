@@ -26,7 +26,7 @@ from ixia_restpy_lib_v2 import *
 import random 
 def partition (list_in, n):
     random.shuffle(list_in)
-    return [list_in[i::n] for i in range(n)]
+    return [list_in[i::n] for i in range(3)]
 
 
 if __name__ == "__main__":
