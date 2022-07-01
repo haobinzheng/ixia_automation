@@ -992,7 +992,7 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 		current_time = time.time()
 		if device.last_cmd_time == None:
 			config_mode = "fast"
-		elif (current_time - device.last_cmd_time) < 10:
+		elif (current_time - device.last_cmd_time) < 100:
 			config_mode = "fast"
 		else:
 			config_mode = "slow"
@@ -1002,8 +1002,8 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 
 	if config_mode == "fast":
 		wait_time = 0.1
-	# else:
-	# 	check_prompt = True
+	else:
+		check_prompt = True
 
 	if check_prompt:
 		handle_prompt_before_commands(dut)

@@ -134,9 +134,10 @@ if __name__ == "__main__":
 		Setup_only = False
 		print_title("Set up Only:No")
 	#file = 'tbinfo_poe_testing_124EP.xml'
-	#file = 'tbinfo_poe_testing_148EP.xml'
-	file = 'tbinfo_poe_testing_108FF.xml'
+	file = 'tbinfo_poe_testing_148EP.xml'
+	#file = 'tbinfo_poe_testing_108FF.xml'
 	#file = 'tbinfo_poe_testing_108FP.xml'
+	#file = 'tbinfo_poe_testing_108FP_2.xml'
 	tb = parse_tbinfo_untangle(file)
 	testtopo_file = 'topo_poe_testing.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
@@ -334,10 +335,6 @@ if __name__ == "__main__":
 
 	################################# basic_bios_poe_boot_testing ################################
 	def basic_bios_poe_boot_testing(*args, **kwargs):
-		print_double_line()
-		print("				Start basic_bios_poe_boot_testing		")
-		print_double_line()
-
 		if "boot" in kwargs:
 			boot_mode = kwargs['boot']
 		else: 
@@ -352,6 +349,11 @@ if __name__ == "__main__":
 			run_numbers = iteration
 		else:
 			run_numbers = 1
+
+		print_double_line()
+		print("				Start basic_bios_poe_boot_testing {boot_mode}		")
+		print_double_line()
+
 
 		port_list = [1,2,3,4,5,6,7,8]
 		for j in range(run_numbers):
@@ -842,18 +844,17 @@ if __name__ == "__main__":
 
 				if ppoe_list_tester != p_poe_ports:
 					if ppoe_list_tester == all_poe_ports:
-						print(f"Sucess: Switch has {boot_mode} booted up, the POE Tester powered ports is Equal to All Switch POE port, Continue to final check....")
+						print(f"Good in loop: Switch has {boot_mode} booted up, the POE Tester powered ports is Equal to All Switch POE port, Continue to final check....")
 						break
 					else:
-						print(f"Failed: During {boot_mode} boot, Switch perpetual ports list NOT Equal to POE Tester list, STOP!")
-						bad += 1
-						break
+						print(f"Bad in loop: During {boot_mode} boot, Switch perpetual ports list NOT Equal to POE Tester list!")
+						bad += 1 
 				else:
 					print(f"During {boot_mode} boot Switch perpetual ports list Equal to POE Tester list, Continue....")
 					good += 1
 					if poe_status == "disable":
 						print(f"All Ports are POE disabled, No power drawn, continue...")
-						break
+						 
 
 			if good >= 1 and bad <=2 :
 				result = True 
@@ -898,9 +899,7 @@ if __name__ == "__main__":
 
 	################################# flipping_poe_boot_testing ################################
 	def flipping_poe_boot_testing(*args, **kwargs):
-		print_double_line()
-		print("				Start flipping_poe_boot_testing		")
-		print_double_line()
+
 
 		if "boot" in kwargs:
 			boot_mode = kwargs['boot']
@@ -917,6 +916,9 @@ if __name__ == "__main__":
 		else:
 			run_numbers = 1
 
+		print_double_line()
+		print(f"				Start flipping_poe_boot_testing	{boot_mode}	")
+		print_double_line()
 		port_list = [1,2,3,4,5,6,7,8]
 		for j in range(run_numbers):
 			p_poe,p_poe_fast,normal = partition(port_list,3)
@@ -1105,7 +1107,6 @@ if __name__ == "__main__":
 			output_dict = tester.parse_status_output(output_list)
 			print(output_dict)
 
-			result = True
 			regex = r'p([0-9]+)'
 			ppoe_list_tester = find_poe_status(output_dict)
 			all_poe_ports.sort()
@@ -1130,6 +1131,8 @@ if __name__ == "__main__":
 				sw.pdu_cycle()
 			
 			print_double_line()
+			good_start = False
+			result = True
 			while True:
 				tester.poe_reset()
 				sleep(10)
@@ -1157,15 +1160,22 @@ if __name__ == "__main__":
 					if ppoe_list_tester == all_poe_ports:
 						print(f"Sucess: Switch has {boot_mode} booted up, the POE Tester powered ports is Equal to All Switch POE port, Continue to final check....")
 						break
-					else:
-						print(f"Failed: During {boot_mode} boot, Switch perpetual ports list NOT Equal to POE Tester list, STOP!")
-						result = False
-						return result
+					elif good_start:
+						print(f"Switch started to boot up: During {boot_mode} boot, none perpetual ports start to diliver power, stop!")
+						result = True
+						break
+					elif good_start == False: 
+						print(f"Failed: During {boot_mode} boot, perpetual ports is NOT Equal to configuration, stop!")
+						restul = False
+						break
+
 				else:
 					print(f"During {boot_mode} boot Switch perpetual ports list Equal to POE Tester list, Continue....")
 					if poe_status == "disable":
 						print(f"All Ports are POE disabled, No power drawn, continue...")
 						break
+					else:
+						good_start = True
 
 			if result == False:
 				print_double_line()
@@ -1549,7 +1559,7 @@ if __name__ == "__main__":
 					print(f"Iteration Succeeded: Switch has {boot_mode} booted up, the POE Tester powered ports is Equal to All Switch POE port, Continue looping....")
 					good +=1 
 				else:
-					print(f"Iteration Failed: During {boot_mode} boot, Switch perpetual ports list NOT Equal to POE Tester list, STOP!")
+					print(f"Iteration Failed: During {boot_mode} boot, Switch perpetual ports list NOT Equal to POE Tester list!")
 					bad += 1 
 			
 				if compare_boot_service_power(boot_power_dict,service_power_dict,ppoe_list_tester):
@@ -1855,11 +1865,15 @@ if __name__ == "__main__":
 				print(f"{result}: finished #{j+1} round of testing after {boot_mode}, comparing other POE characteristics between boot")
 				poe_inline_after = sw.get_poe_inline()
 				delta = compare_poe_inline(poe_inline_before, poe_inline_after)
-				for k,v in delta.items():
-					if k == "Priority" or k =="Class" or k=="State":
-						compare_result = False
-					else:
-						compare_result = True
+				if delta == {}:
+					compare_result = True
+				else:
+					for k,v in delta.items():
+						if k == "Priority" or k =="Class" or k=="State":
+							compare_result = False
+						else:
+							compare_result = True
+
 				if compare_result:
 					print(f"Successul: finished #{j+1} round of {boot_mode} priority testing")
 					print(f"poe_inline_before: {poe_inline_before}")
@@ -1926,42 +1940,44 @@ if __name__ == "__main__":
 
 		return result
 
-	
-	flipping_poe_boot_testing()
-	sleep(180)
-	poe_cli_testing(boot="cold")
-	sleep(180)
-	poe_cli_testing(boot="bios")
-	sleep(180)
-	poe_cli_testing()
-	sleep(180)
-	basic_bios_poe_boot_testing()
-	sleep(180)
-	basic_poe_boot_testing(boot="warm")
-	sleep(180)
+	while True:
+		flipping_poe_boot_testing()
+		sleep(180)
+		poe_cli_testing(boot="cold")
+		sleep(180)
+		poe_cli_testing(boot="bios")
+		sleep(180)
+		poe_cli_testing()
+		sleep(180)
 
-	basic_poe_boot_testing(boot="cold")	
-	sleep(180)
-	basic_poe_boot_testing(boot="warm",poe_status="disable")
-	sleep(180)
-	basic_poe_boot_testing(boot="bios")
-	sleep(180)
-	basic_poe_boot_testing(boot="warm_bios")
-	sleep(180)
+		basic_bios_poe_boot_testing()
+		sleep(180)
+		basic_poe_boot_testing(boot="warm")
+		sleep(180)
+		basic_poe_boot_testing(boot="cold")	
+		sleep(180)
+		basic_poe_boot_testing(boot="warm",poe_status="disable")
+		sleep(180)
 
-	none_ppoe_priority_power_testing(boot="warm")
-	sleep(180)
-	none_ppoe_priority_power_testing(boot="cold")
-	sleep(180)
+		basic_poe_boot_testing(boot="bios")
+		sleep(180)
+		basic_poe_boot_testing(boot="warm_bios")
+		sleep(180)
 
-	priority_power_testing(boot="bios")
-	sleep(180)
-	priority_power_testing(boot="warm_bios")
-	sleep(180)
-	priority_power_testing(boot="warm")
-	sleep(180)
-	priority_power_testing(boot="cold")
-	sleep(180)
+		none_ppoe_priority_power_testing(boot="warm")
+		sleep(180)
+		none_ppoe_priority_power_testing(boot="cold")
+		sleep(180)
+
+		priority_power_testing(boot="bios")
+		sleep(180)
+		priority_power_testing(boot="warm_bios")
+		sleep(180)
+		priority_power_testing(boot="warm")
+		sleep(180)
+		priority_power_testing(boot="cold")
+		sleep(180)
+
 	
 	# compare_power_testing(boot="warm")
 	# sleep(180)
