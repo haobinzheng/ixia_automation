@@ -134,7 +134,8 @@ if __name__ == "__main__":
 		Setup_only = False
 		print_title("Set up Only:No")
 	#file = 'tbinfo_poe_testing_124EP.xml'
-	file = 'tbinfo_poe_testing_148EP.xml'
+	#file = 'tbinfo_poe_testing_148EP.xml'
+	file = 'tbinfo_poe_testing_124F_FPOE_RT.xml'
 	#file = 'tbinfo_poe_testing_108FF.xml'
 	#file = 'tbinfo_poe_testing_108FP.xml'
 	#file = 'tbinfo_poe_testing_108FP_2.xml'
@@ -332,6 +333,186 @@ if __name__ == "__main__":
 		# 			print(f"Boot:{k}|{boot_power_dict[k]}, In Service:{k}|{service_power_dict[k]}")
 		# 			return False
 		#return True
+
+
+	################################# power_buget_testing ################################
+	def power_buget_testing(*args, **kwargs):
+		if "boot" in kwargs:
+			boot_mode = kwargs['boot']
+		else: 
+			boot_mode = "warm"
+
+		if "poe_status" in kwargs:
+			poe_status = kwargs['poe_status']
+		else:
+			poe_status = "enable"
+
+		if "iteration" in kwargs:
+			run_numbers = kwargs['iteration']
+		else:
+			run_numbers = 1
+
+		print_double_line()
+		print("				Start POE Power Budget Testing		")
+		print_double_line()
+
+		for j in range(run_numbers):
+			
+			##############################################
+			# Configure DUT POE ports before test starts
+			##############################################
+			# for p in p_poe:
+			# 	config = f"""
+			# 	config switch physical-port
+	  #   			edit port{p}
+	  #        		set poe-port-power perpetual
+	  #        		set poe-status {poe_status}
+	  #   			next
+			# 	end
+			# 	"""
+			# 	config_cmds_lines(sw.console,config,check_prompt=True)	
+			# for p in p_poe_fast:
+			# 	config = f"""
+			# 	config switch physical-port
+	  #   			edit port{p}
+	  #        		set poe-port-power perpetual-fast
+	  #        		set poe-status {poe_status}
+	  #   			next
+			# 	end
+			# 	"""
+			# 	config_cmds_lines(sw.console,config)
+
+			# for p in normal:
+			# 	config = f"""
+			# 	config switch physical-port
+	  #   			edit port{p}
+	  #        		unset poe-port-power
+	  #        		set poe-status {poe_status}
+	  #   			next
+			# 	end
+			# 	"""
+			# 	config_cmds_lines(sw.console,config)
+
+			config = f"""
+			conf switch global
+			set poe-power-budget 370
+			end
+			"""
+			config_cmds_lines(sw.console,config)
+			sleep(2)
+
+			for i in range(10):
+				sw.show_command("get switch poe inline")
+				sleep(5)
+
+			config = f"""
+				conf switch global
+				set poe-power-budget 20
+				end
+			"""
+			config_cmds_lines(sw.console,config)
+			sleep(2)
+
+			for i in range(10):
+				sw.show_command("get switch poe inline")
+				sleep(5)
+			
+			# ##############################################
+			# #  Setup POE tester before test starts
+			# ##############################################
+			# tester.poe_reset()
+			# sleep(5)
+			# output_list = tester.get_poe_command(cmd="status")
+			# output_dict = tester.parse_status_output(output_list)
+			# print(output_dict)
+
+			# sw.show_command("get switch poe inline")
+
+			# result = True
+			# regex = r'p([0-9]+)'
+			# ppoe_list_tester = find_poe_status(output_dict)
+			# all_poe_ports.sort()
+			# ppoe_list_tester.sort()
+			# print(all_poe_ports,ppoe_list_tester)
+
+
+			# print_double_line()
+			# if all_poe_ports != ppoe_list_tester:
+			# 	print(f"Failed: Before power cyble to BIOS, Switch All POE ports list is NOT Equal to All POE Tester list")
+			# 	result = False
+			# 	return result
+			# else:
+			# 	print(f"Before {boot_mode} Boot, Switch POE ports list is Equal to POE Tester list, Continue.....")
+			# print_double_line()
+
+			# ##############################################
+			# #  Bring switch to BIOS mode
+			# ##############################################
+			# sw.pdu_cycle_bios()
+			# sleep(10)
+			# for i in range(5):
+			# 	tester.poe_reset()
+			# 	sleep(10)
+			# 	output_list = tester.get_poe_command(cmd="status")
+			# 	output_dict = tester.parse_status_output(output_list)
+			# 	print(output_dict)
+			# 	ppoe_list_tester = find_poe_status(output_dict)
+
+			# 	p_poe_ports = p_poe_fast  ### target ports
+
+			# 	if poe_status == "disable":
+			# 		p_poe_ports = []
+					 
+			# 	ppoe_list_tester.sort()
+			# 	p_poe_ports.sort()
+			# 	print(f"In BIOS. POE Tester ports = {ppoe_list_tester}. Switch perpetual POE ports = {p_poe_ports}, Switch PoE ports = {all_poe_ports}" )
+
+			# 	if ppoe_list_tester == p_poe_ports:
+			# 		print(f"Sucess: In BIOS mode, the POE Tester powered ports is Equal to All Switch POE port, Continue looping")		 
+			# 	elif poe_status == "disable" and ppoe_list_tester == []:
+			# 		print(f"Success: In BIOS mode, All Ports are POE disabled, No power drawn, continue...")
+			# 	else:
+			# 		print(f"Failed: In BIOS Mode, Switch perpetual ports list NOT Equal to POE Tester list. ")
+			# 		result = False
+			# 		break
+
+			# if result == False:
+			# 	print_double_line()
+			# 	print(f"Failed: During switch {boot_mode} boots, POE Perpetual ports are not working")
+			# 	print(f"Switch Perpetual ports = {p_poe}")
+			# 	print(f"Switch Perpetual Fast ports = {p_poe_fast}")
+			# 	print(f"POE Tester ports received power = {ppoe_list_tester}")
+			# 	print_double_line()
+				 
+			# else:
+			# 	print_double_line()
+			# 	print(f"Successul: During switch boot to BIOS mode, POE Perpetual ports are working")
+			# 	print(f"Switch Perpetual ports = {p_poe}")
+			# 	print(f"Switch Perpetual Fast ports = {p_poe_fast}")
+			# 	print(f"POE Tester ports received power = {ppoe_list_tester}")
+
+			# console_timer(5,msg=f"wait for 5s and reboot from BIOS...")
+			# sw.reboot_bios()
+			# console_timer(180,msg=f"wait for 180s for a final check.....")
+			# output_list = tester.get_poe_command(cmd="status")
+			# output_dict = tester.parse_status_output(output_list)
+			# print(output_dict)
+
+			# ppoe_list_tester = find_poe_status(output_dict)
+			# all_poe_ports.sort()
+			# ppoe_list_tester.sort()
+			# print(all_poe_ports,ppoe_list_tester)
+
+			# print_double_line()
+			# if all_poe_ports != ppoe_list_tester:
+			# 	print("Failed: After Boot from BIOS, Switch perpetual ports list NOT Equal to All POE Tester list")
+			# 	result = False
+			# else:
+			# 	print(f"Success={result}: finished #{j+1} round of basic BIOS testing")
+			# print_double_line()
+			# pass
+		return True
+
 
 
 	################################# basic_bios_poe_boot_testing ################################
@@ -1942,42 +2123,43 @@ if __name__ == "__main__":
 		return result
 
 	while True:
-		flipping_poe_boot_testing()
-		sleep(180)
-		poe_cli_testing(boot="cold")
-		sleep(180)
-		poe_cli_testing(boot="bios")
-		sleep(180)
-		poe_cli_testing()
-		sleep(180)
+		power_buget_testing(iteration = 4)
+		# flipping_poe_boot_testing()
+		# sleep(180)
+		# poe_cli_testing(boot="cold")
+		# sleep(180)
+		# poe_cli_testing(boot="bios")
+		# sleep(180)
+		# poe_cli_testing()
+		# sleep(180)
 
-		basic_bios_poe_boot_testing()
-		sleep(180)
-		basic_poe_boot_testing(boot="warm")
-		sleep(180)
-		basic_poe_boot_testing(boot="cold")	
-		sleep(180)
-		basic_poe_boot_testing(boot="warm",poe_status="disable")
-		sleep(180)
+		# basic_bios_poe_boot_testing()
+		# sleep(180)
+		# basic_poe_boot_testing(boot="warm")
+		# sleep(180)
+		# basic_poe_boot_testing(boot="cold")	
+		# sleep(180)
+		# basic_poe_boot_testing(boot="warm",poe_status="disable")
+		# sleep(180)
 
-		basic_poe_boot_testing(boot="bios")
-		sleep(180)
-		basic_poe_boot_testing(boot="warm_bios")
-		sleep(180)
+		# basic_poe_boot_testing(boot="bios")
+		# sleep(180)
+		# basic_poe_boot_testing(boot="warm_bios")
+		# sleep(180)
 
-		none_ppoe_priority_power_testing(boot="warm")
-		sleep(180)
-		none_ppoe_priority_power_testing(boot="cold")
-		sleep(180)
+		# none_ppoe_priority_power_testing(boot="warm")
+		# sleep(180)
+		# none_ppoe_priority_power_testing(boot="cold")
+		# sleep(180)
 
-		priority_power_testing(boot="bios")
-		sleep(180)
-		priority_power_testing(boot="warm_bios")
-		sleep(180)
-		priority_power_testing(boot="warm")
-		sleep(180)
-		priority_power_testing(boot="cold")
-		sleep(180)
+		# priority_power_testing(boot="bios")
+		# sleep(180)
+		# priority_power_testing(boot="warm_bios")
+		# sleep(180)
+		# priority_power_testing(boot="warm")
+		# sleep(180)
+		# priority_power_testing(boot="cold")
+		# sleep(180)
 
 	
 	# compare_power_testing(boot="warm")
