@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testtopo>
+ <dev1 type="FSW" role="DUT"> </dev1>
+ <dev2 type="POE" role="Tester"> </dev2>
+ <dev3 type="FSW" role="DUT"> </dev3>
+ <connections>
+  <link1 link="dev1,dev2" type="poe_link"> </link1>
+  <link2 link="dev1,dev2" type="poe_link"> </link2>
+  <link3 link="dev1,dev2" type="poe_link"> </link3>
+ </connections>
+</testtopo>

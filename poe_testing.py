@@ -135,12 +135,13 @@ if __name__ == "__main__":
 		print_title("Set up Only:No")
 	#file = 'tbinfo_poe_testing_124EP.xml'
 	#file = 'tbinfo_poe_testing_148EP.xml'
-	file = 'tbinfo_poe_testing_148_FPOE_Burn.xml'
+	file = 'tbinfo_poe_testing_RT_Burn.xml'
 	#file = 'tbinfo_poe_testing_108FF.xml'
 	#file = 'tbinfo_poe_testing_108FP.xml'
 	#file = 'tbinfo_poe_testing_108FP_2.xml'
 	tb = parse_tbinfo_untangle(file)
-	testtopo_file = 'topo_poe_testing.xml'
+	#testtopo_file = 'topo_poe_testing.xml'
+	testtopo_file = 'topo_poe_burn_testing.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
@@ -334,8 +335,31 @@ if __name__ == "__main__":
 		# 			return False
 		#return True
 
+	################################# setup_burn_test ################################
+	def setup_burn_test(*args, **kwargs):
+		print_title ("Setup Burn Test")
+		swb= switches[0]
+		for port_index in range(1,49):
+			cmd = f"diag debug unit_test 53 5 0x08 0x00 {hex(port_index-1)} 0x01 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
+			config_cmds_lines(swb.console,cmd)
+			sleep(2)
+			cmd = f"diag debug unit_test 53 5 0x01 0x00 {hex(port_index-1)} 0x02 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
+			config_cmds_lines(swb.console,cmd)
+			sleep(2)
+		swb.show_command("get switch poe inline")
+
+		swb= switches[1]
+		for port_index in range(1,25):
+			cmd = f"diag debug unit_test 53 5 0x08 0x00 {hex(port_index-1)} 0x01 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
+			config_cmds_lines(swb.console,cmd)
+			sleep(2)
+			cmd = f"diag debug unit_test 53 5 0x01 0x00 {hex(port_index-1)} 0x02 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
+			config_cmds_lines(swb.console,cmd)
+			sleep(2)
+		swb.show_command("get switch poe inline")
+
 	################################# debug_turn_on_poe_testing ################################
-	def debug_turn_on_poe_testing(*args, **kwargs):
+	def basic_poe_func_testing(*args, **kwargs):
 		if "boot" in kwargs:
 			boot_mode = kwargs['boot']
 		else: 
@@ -359,127 +383,45 @@ if __name__ == "__main__":
 		turn_on_sample =  f"diag debug unit_test 53 5 0x01 0x00 0x0 0x02 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff"
 
 		poe_current_list = [100,200,300,400]
-		print_title ("Change POE ports to Semi-auto mode")
-		for j in range(run_numbers):
-			for port_index in port_list:
-				cmd = f"diag debug unit_test 53 5 0x08 0x00 {hex(port_index-1)} 0x01 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
-				config_cmds_lines(sw.console,cmd,check_prompt=True)
-				sleep(2)
-			sw.show_command("get switch poe inline")
+		#print_title ("Change POE ports to Semi-auto mode")
+		# for j in range(run_numbers):
+		# 	for port_index in port_list:
+		# 		cmd = f"diag debug unit_test 53 5 0x08 0x00 {hex(port_index-1)} 0x01 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
+		# 		config_cmds_lines(sw.console,cmd,check_prompt=True)
+		# 		sleep(2)
+		# 	sw.show_command("get switch poe inline")
 			
 			
 			# ##############################################
 			# #  Setup POE tester before test starts
 			# ##############################################
 			
-			for poe_class in range(5):
-				for poe_current in poe_current_list:
-					tester.poe_reset(poe_class=poe_class,current=poe_current)
-					sleep(60)
-					output_list = tester.get_poe_command(cmd="status")
-					output_dict = tester.parse_status_output(output_list)
-					print(output_dict)
+		for poe_class in range(5):
+			for poe_current in poe_current_list:
+				tester.poe_reset(poe_class=poe_class,current=poe_current)
+				sleep(60)
+				output_list = tester.get_poe_command(cmd="status")
+				output_dict = tester.parse_status_output(output_list)
+				print(output_dict)
 
-					sw.show_command("get switch poe inline")
+				sw.show_command("get switch poe inline")
 
-			print_title ("Change POE ports to force-power-on mode")
-			for port_index in port_list:
-				cmd = f"diag debug unit_test 53 5 0x01 0x00 {hex(port_index-1)} 0x02 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
-				config_cmds_lines(sw.console,cmd,check_prompt=True)
-				sleep(2)
+			# print_title ("Change POE ports to force-power-on mode")
+			# for port_index in port_list:
+			# 	cmd = f"diag debug unit_test 53 5 0x01 0x00 {hex(port_index-1)} 0x02 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
+			# 	config_cmds_lines(sw.console,cmd,check_prompt=True)
+			# 	sleep(2)
 
-			for poe_class in range(5):
-				for poe_current in poe_current_list:
-					tester.poe_reset(poe_class=poe_class,current=poe_current)
-					sleep(60)
-					output_list = tester.get_poe_command(cmd="status")
-					output_dict = tester.parse_status_output(output_list)
-					print(output_dict)
+			# for poe_class in range(5):
+			# 	for poe_current in poe_current_list:
+			# 		tester.poe_reset(poe_class=poe_class,current=poe_current)
+			# 		sleep(60)
+			# 		output_list = tester.get_poe_command(cmd="status")
+			# 		output_dict = tester.parse_status_output(output_list)
+			# 		print(output_dict)
 
-					sw.show_command("get switch poe inline")
-			# result = True
-			# regex = r'p([0-9]+)'
-			# ppoe_list_tester = find_poe_status(output_dict)
-			# all_poe_ports.sort()
-			# ppoe_list_tester.sort()
-			# print(all_poe_ports,ppoe_list_tester)
-
-
-			# print_double_line()
-			# if all_poe_ports != ppoe_list_tester:
-			# 	print(f"Failed: Before power cyble to BIOS, Switch All POE ports list is NOT Equal to All POE Tester list")
-			# 	result = False
-			# 	return result
-			# else:
-			# 	print(f"Before {boot_mode} Boot, Switch POE ports list is Equal to POE Tester list, Continue.....")
-			# print_double_line()
-
-			# ##############################################
-			# #  Bring switch to BIOS mode
-			# ##############################################
-			# sw.pdu_cycle_bios()
-			# sleep(10)
-			# for i in range(5):
-			# 	tester.poe_reset()
-			# 	sleep(10)
-			# 	output_list = tester.get_poe_command(cmd="status")
-			# 	output_dict = tester.parse_status_output(output_list)
-			# 	print(output_dict)
-			# 	ppoe_list_tester = find_poe_status(output_dict)
-
-			# 	p_poe_ports = p_poe_fast  ### target ports
-
-			# 	if poe_status == "disable":
-			# 		p_poe_ports = []
-					 
-			# 	ppoe_list_tester.sort()
-			# 	p_poe_ports.sort()
-			# 	print(f"In BIOS. POE Tester ports = {ppoe_list_tester}. Switch perpetual POE ports = {p_poe_ports}, Switch PoE ports = {all_poe_ports}" )
-
-			# 	if ppoe_list_tester == p_poe_ports:
-			# 		print(f"Sucess: In BIOS mode, the POE Tester powered ports is Equal to All Switch POE port, Continue looping")		 
-			# 	elif poe_status == "disable" and ppoe_list_tester == []:
-			# 		print(f"Success: In BIOS mode, All Ports are POE disabled, No power drawn, continue...")
-			# 	else:
-			# 		print(f"Failed: In BIOS Mode, Switch perpetual ports list NOT Equal to POE Tester list. ")
-			# 		result = False
-			# 		break
-
-			# if result == False:
-			# 	print_double_line()
-			# 	print(f"Failed: During switch {boot_mode} boots, POE Perpetual ports are not working")
-			# 	print(f"Switch Perpetual ports = {p_poe}")
-			# 	print(f"Switch Perpetual Fast ports = {p_poe_fast}")
-			# 	print(f"POE Tester ports received power = {ppoe_list_tester}")
-			# 	print_double_line()
-				 
-			# else:
-			# 	print_double_line()
-			# 	print(f"Successul: During switch boot to BIOS mode, POE Perpetual ports are working")
-			# 	print(f"Switch Perpetual ports = {p_poe}")
-			# 	print(f"Switch Perpetual Fast ports = {p_poe_fast}")
-			# 	print(f"POE Tester ports received power = {ppoe_list_tester}")
-
-			# console_timer(5,msg=f"wait for 5s and reboot from BIOS...")
-			# sw.reboot_bios()
-			# console_timer(180,msg=f"wait for 180s for a final check.....")
-			# output_list = tester.get_poe_command(cmd="status")
-			# output_dict = tester.parse_status_output(output_list)
-			# print(output_dict)
-
-			# ppoe_list_tester = find_poe_status(output_dict)
-			# all_poe_ports.sort()
-			# ppoe_list_tester.sort()
-			# print(all_poe_ports,ppoe_list_tester)
-
-			# print_double_line()
-			# if all_poe_ports != ppoe_list_tester:
-			# 	print("Failed: After Boot from BIOS, Switch perpetual ports list NOT Equal to All POE Tester list")
-			# 	result = False
-			# else:
-			# 	print(f"Success={result}: finished #{j+1} round of basic BIOS testing")
-			# print_double_line()
-			# pass
+			#		sw.show_command("get switch poe inline")
+ 
 		return True
 
 
@@ -2272,7 +2214,8 @@ if __name__ == "__main__":
 		return result
 
 	while True:
-		debug_turn_on_poe_testing(1)
+		setup_burn_test()
+		#basic_poe_func_testing(1)
 		#power_buget_testing(iteration = 4)
 		# flipping_poe_boot_testing()
 		# sleep(180)
