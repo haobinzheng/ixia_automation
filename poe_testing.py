@@ -338,15 +338,15 @@ if __name__ == "__main__":
 	################################# setup_burn_test ################################
 	def setup_burn_test(*args, **kwargs):
 		print_title ("Setup Burn Test")
-		swb= switches[0]
-		for port_index in range(1,49):
-			cmd = f"diag debug unit_test 53 5 0x08 0x00 {hex(port_index-1)} 0x01 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
-			config_cmds_lines(swb.console,cmd)
-			sleep(2)
-			cmd = f"diag debug unit_test 53 5 0x01 0x00 {hex(port_index-1)} 0x02 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
-			config_cmds_lines(swb.console,cmd)
-			sleep(2)
-		swb.show_command("get switch poe inline")
+		# swb= switches[0]
+		# for port_index in range(1,49):
+		# 	cmd = f"diag debug unit_test 53 5 0x08 0x00 {hex(port_index-1)} 0x01 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
+		# 	config_cmds_lines(swb.console,cmd)
+		# 	sleep(2)
+		# 	cmd = f"diag debug unit_test 53 5 0x01 0x00 {hex(port_index-1)} 0x02 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff" 
+		# 	config_cmds_lines(swb.console,cmd)
+		# 	sleep(2)
+		# swb.show_command("get switch poe inline")
 
 		swb= switches[1]
 		for port_index in range(1,25):
