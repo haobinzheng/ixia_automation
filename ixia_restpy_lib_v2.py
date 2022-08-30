@@ -1,4 +1,10 @@
 
+##############################################################################################################
+#     IXIA Restpy API for all protocols: BGP, OSPF,DHCP,PTP,IGMP, MLD
+#     This is growing lib with more protocols for ixia ixnetworks, please don't distribute without permission
+#     Author: Mike Zheng
+#     Last update :6/1/2019
+##############################################################################################################
 import sys, os, time, traceback
 from utils import *
 

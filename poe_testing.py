@@ -135,13 +135,13 @@ if __name__ == "__main__":
 		print_title("Set up Only:No")
 	#file = 'tbinfo_poe_testing_124EP.xml'
 	#file = 'tbinfo_poe_testing_148EP.xml'
-	file = 'tbinfo_poe_testing_RT_Burn.xml'
+	file = 'tbinfo_poe_testing_FR424F.xml'
 	#file = 'tbinfo_poe_testing_108FF.xml'
 	#file = 'tbinfo_poe_testing_108FP.xml'
 	#file = 'tbinfo_poe_testing_108FP_2.xml'
 	tb = parse_tbinfo_untangle(file)
-	#testtopo_file = 'topo_poe_testing.xml'
-	testtopo_file = 'topo_poe_burn_testing.xml'
+	testtopo_file = 'topo_poe_testing.xml'
+	#testtopo_file = 'topo_poe_burn_testing.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
@@ -260,7 +260,8 @@ if __name__ == "__main__":
 	# 		switches.append(switch)
 
 	sw = switches[0]
-	port_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+	#port_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+	port_list = [1,2,3,4,5,6,7,8,9,10,11,12]
 	# sw.exect_boot_bios()
 	# exit()
 	# sw.pdu_cycle_bios()
@@ -2214,7 +2215,7 @@ if __name__ == "__main__":
 		return result
 
 	while True:
-		setup_burn_test()
+		#setup_burn_test()
 		#basic_poe_func_testing(1)
 		#power_buget_testing(iteration = 4)
 		# flipping_poe_boot_testing()
@@ -2228,7 +2229,7 @@ if __name__ == "__main__":
 
 		# basic_bios_poe_boot_testing()
 		# sleep(180)
-		# basic_poe_boot_testing(boot="warm")
+		basic_poe_boot_testing(boot="warm")
 		# sleep(180)
 		# basic_poe_boot_testing(boot="cold")	
 		# sleep(180)
