@@ -299,8 +299,7 @@ if __name__ == "__main__":
 					ppoe_list_tester.append(int(matched.group(1)))
 		new_list = []
 		for p in ppoe_list_tester:
-			if p <= 8:
-				new_list.append(p)
+			new_list.append(p)
 		return new_list
 
 	def find_poe_measure(service_power_dict):
@@ -2230,6 +2229,7 @@ if __name__ == "__main__":
 		# basic_bios_poe_boot_testing()
 		# sleep(180)
 		basic_poe_boot_testing(boot="warm")
+		exit()
 		# sleep(180)
 		# basic_poe_boot_testing(boot="cold")	
 		# sleep(180)
