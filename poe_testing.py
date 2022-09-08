@@ -578,6 +578,7 @@ if __name__ == "__main__":
 		else:
 			run_numbers = 1
 
+		sleep_time = 120
 		print_double_line()
 		print("				Start POE Power Budget Testing		")
 		print_double_line()
