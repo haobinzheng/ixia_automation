@@ -238,9 +238,10 @@ if __name__ == "__main__":
 
 	if Reboot:
 		for sw in switches:
-			dut = sw.console
-			dut_name = sw.name
-			switch_exec_reboot(dut,device=dut_name)
+			sw.switch_reboot()
+			# dut = sw.console
+			# dut_name = sw.name
+			# switch_exec_reboot(dut,device=dut_name)
 
 		console_timer(400,msg="Wait for 400s after started rebooting all switches")
 		for sw in switches:
@@ -581,7 +582,15 @@ if __name__ == "__main__":
 		print("				Start POE Power Budget Testing		")
 		print_double_line()
 
-		for j in range(50,370):
+		tester.poe_reset(current = 400, poe_class=4)
+		sleep(sleep_time)
+		sw.show_command("get switch poe inline")
+		sleep(5)
+		poe_reset_ports(port_list)
+		sw.show_command("get switch poe inline")
+		sleep(5)
+
+		for j in range(50,370,20):
 			poe_reset_ports(port_list)
 			config = f"""
 			conf switch global
@@ -594,7 +603,7 @@ if __name__ == "__main__":
 			sw.show_command("get switch poe inline")
 				 
 
-		for i in range(50,370):
+		for i in range(50,370,20):
 			poe_reset_ports(port_list)
 			config = f"""
 				conf switch global
@@ -2377,7 +2386,7 @@ if __name__ == "__main__":
 		# basic_poe_boot_testing(boot="warm",poe_status="disable")
 		# sleep(180)
 
-		poe_config_change_testing()
+		#poe_config_change_testing()
 		power_buget_testing()
 		exit()
 
