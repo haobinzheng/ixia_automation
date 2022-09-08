@@ -244,13 +244,9 @@ if __name__ == "__main__":
 			# switch_exec_reboot(dut,device=dut_name)
 
 		console_timer(300,msg="Wait for 400s after started rebooting all switches")
-		# for sw in switches:
-		# 	dut = sw.console
-		# 	dut_name = sw.name
-		# 	sw.login_factory_reset()
-		# 	image = find_dut_image(dut)
-		# 	tprint(f"============================ {dut_name} software image = {image} ============")
-
+		for sw in switches:
+			sw.sw_relogin()
+	 
 	# if testcase == 0:
 	# 	exit()
 	# for c in tb.connections:
