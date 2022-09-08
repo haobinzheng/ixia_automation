@@ -7299,8 +7299,10 @@ class FortiSwitch_XML(FortiSwitch):
     def login_factory_reset(self,*args,**kwargs):
         tn = self.console
         hostname = self.hostname
-
-        password = kwargs['password']
+        if 'password' in kwargs:
+            password = kwargs['password']
+        else:
+            password = "Fortinet123!"
          
         tn.write(('' + '\n').encode('ascii'))
         tn.write(('' + '\n').encode('ascii'))
