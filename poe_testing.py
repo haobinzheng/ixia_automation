@@ -582,42 +582,42 @@ if __name__ == "__main__":
 		print_double_line()
 
 		for j in range(50,370):
+			poe_reset_ports(port_list)
 			config = f"""
 			conf switch global
 			set poe-power-budget {j}
 			end
 			"""
 			config_cmds_lines(sw.console,config)
-			sleep(2)
-
-			for i in range(10):
-				sw.show_command("get switch poe inline")
-				sleep(5)
+			sleep(120)
+			 
+			sw.show_command("get switch poe inline")
+				 
 
 		for i in range(50,370):
+			poe_reset_ports(port_list)
 			config = f"""
 				conf switch global
 				set poe-power-budget {i}
 				end
 			"""
 			config_cmds_lines(sw.console,config)
-			sleep(2)
+			sleep(120)
 
-			for i in range(10):
-				sw.show_command("get switch poe inline")
-				sleep(5)
+			sw.show_command("get switch poe inline")
+			sleep(5)
 
+			poe_reset_ports(port_list)
 			config = f"""
 				conf switch global
 				set poe-power-budget 370
 				end
 			"""
 			config_cmds_lines(sw.console,config)
-			sleep(2)
+			sleep(120)
 
-			for i in range(10):
-				sw.show_command("get switch poe inline")
-				sleep(5)
+			sw.show_command("get switch poe inline")
+			sleep(5)
 			
 		return True
 
