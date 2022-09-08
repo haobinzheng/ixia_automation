@@ -261,14 +261,23 @@ if __name__ == "__main__":
 	# 		switches.append(switch)
 
 	sw = switches[0]
-	#port_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
-	port_list = [1,2,3,4,5,6,7,8,9,10,11,12]
+	port_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+	#port_list = [1,2,3,4,5,6,7,8,9,10,11,12]
 	# sw.exect_boot_bios()
 	# exit()
 	# sw.pdu_cycle_bios()
 	# sleep(30)
 	# sw.reboot_bios()
 	# exit()
+
+	def poe_reset_ports(ports):
+		for p in ports:
+			config = f"""
+				execute poe-reset port{p}
+			"""
+			config_cmds_lines(sw.console,config)
+			sleep(2)
+		sleep(60)
 
 	def compare_poe_inline(poe_inline_before, poe_inline_after):
 		ports_dict_list_before = poe_inline_before["ports"]
@@ -448,75 +457,102 @@ if __name__ == "__main__":
 
 		sleep_time = 120
 		for j in range(run_numbers):
+			poe_reset_ports(port_list)
 			tester.poe_reset(current = 500, poe_class=4)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 400, poe_class=4)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 300, poe_class=4)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 200, poe_class=4)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 100, poe_class=4)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
 
 			tester.poe_reset(current = 200, poe_class=3)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 100, poe_class=3)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 50, poe_class=3)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
 
 			tester.poe_reset(current = 300, poe_class=2)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 200, poe_class=2)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 100, poe_class=2)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
-			
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 300, poe_class=1)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 200, poe_class=1)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 100, poe_class=1)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
-
+			poe_reset_ports(port_list)
 
 			tester.poe_reset(current = 200, poe_class=0)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
+
 			tester.poe_reset(current = 100, poe_class=0)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
+			poe_reset_ports(port_list)
 
 		return True
 
