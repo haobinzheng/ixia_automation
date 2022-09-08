@@ -278,6 +278,9 @@ if __name__ == "__main__":
 			config_cmds_lines(sw.console,config)
 			sleep(2)
 		sleep(60)
+		sw.show_command("get switch poe inline")
+		sleep(5)
+
 
 	def compare_poe_inline(poe_inline_before, poe_inline_after):
 		ports_dict_list_before = poe_inline_before["ports"]
