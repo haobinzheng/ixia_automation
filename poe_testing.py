@@ -2383,7 +2383,7 @@ if __name__ == "__main__":
 		# basic_poe_boot_testing(boot="warm",poe_status="disable")
 		# sleep(180)
 
-		#poe_config_change_testing()
+		poe_config_change_testing()
 		power_buget_testing()
 		exit()
 
