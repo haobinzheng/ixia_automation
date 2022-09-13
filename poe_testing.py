@@ -135,8 +135,8 @@ if __name__ == "__main__":
 		print_title("Set up Only:No")
 	#file = 'tbinfo_poe_testing_124EP.xml'
 	#file = 'tbinfo_poe_testing_148EP.xml'
-	#file = 'tbinfo_poe_testing_FR424F.xml'
-	file = 'tbinfo_poe_testing_124FF.xml'
+	file = 'tbinfo_poe_testing_FR424F.xml'
+	#file = 'tbinfo_poe_testing_124FF.xml'
 	#file = 'tbinfo_poe_testing_108FF.xml'
 	#file = 'tbinfo_poe_testing_108FP.xml'
 	#file = 'tbinfo_poe_testing_108FP_2.xml'
@@ -2376,24 +2376,23 @@ if __name__ == "__main__":
 
 		# basic_bios_poe_boot_testing()
 		# sleep(180)
-		# basic_poe_boot_testing(boot="warm")
-		# sleep(180)
-		# basic_poe_boot_testing(boot="cold")	
-		# sleep(180)
+		basic_poe_boot_testing(boot="warm")
+		sleep(180)
+		basic_poe_boot_testing(boot="cold")	
+		sleep(180)
 		# basic_poe_boot_testing(boot="warm",poe_status="disable")
 		# sleep(180)
 
-		poe_config_change_testing()
-		power_buget_testing()
-		exit()
+		#poe_config_change_testing()
+		#power_buget_testing()
 
 		# flipping_poe_mode_testing(run_numbers = 10)
 		# sleep(180)
 		# exit()
-		# basic_poe_boot_testing(boot="bios")
-		# sleep(180)
-		# basic_poe_boot_testing(boot="warm_bios")
-		# sleep(180)
+		basic_poe_boot_testing(boot="bios")
+		sleep(180)
+		basic_poe_boot_testing(boot="warm_bios")
+		sleep(180)
 
 		# none_ppoe_priority_power_testing(boot="warm")
 		# sleep(180)
