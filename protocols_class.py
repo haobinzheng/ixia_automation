@@ -6623,7 +6623,7 @@ class FortiSwitch_XML(FortiSwitch):
                     port_items.remove("Power")
                 poe_port_dict = {i:j for i,j in zip(poe_items,port_items)}
                 poe_inline_dict["ports"].append(poe_port_dict)
-        print(poe_inline_dict)
+        #print(poe_inline_dict)
         return poe_inline_dict
 
     def reboot_bios(self):
@@ -8701,6 +8701,20 @@ class POE_TESTER():
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
         self.console = telnet_poe(self.console_ip, self.console_line)
+
+    def poe_just_reset(self,*args,**kwargs):
+        if "current" in kwargs:
+            current = kwargs["current"]
+        else:
+            current = 20
+
+        if "poe_class" in kwargs:
+            poe_class = kwargs["poe_class"]
+        else:
+            poe_class = 0
+
+        self.enter_poe_command(cmd ='reset')
+        sleep(2)
 
     def poe_reset(self,*args,**kwargs):
         if "current" in kwargs:
