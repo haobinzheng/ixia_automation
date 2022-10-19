@@ -135,8 +135,9 @@ if __name__ == "__main__":
 		print_title("Set up Only:No")
 	#file = 'tbinfo_poe_testing_124EP.xml'
 	#file = 'tbinfo_poe_testing_148EP.xml'
-	file = 'tbinfo_poe_testing_FR424F.xml'
-	#file = 'tbinfo_poe_testing_124FF.xml'
+	#file = 'tbinfo_poe_testing_FR424F.xml'
+	#file = 'tbinfo_poe_testing_SR12DP.xml'
+	file = 'tbinfo_poe_testing_124FF.xml'
 	#file = 'tbinfo_poe_testing_108FF.xml'
 	#file = 'tbinfo_poe_testing_108FP.xml'
 	#file = 'tbinfo_poe_testing_108FP_2.xml'
@@ -259,7 +260,8 @@ if __name__ == "__main__":
 
 	sw = switches[0]
 	port_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
-	#port_list = [1,2,3,4,5,6,7,8,9,10,11,12]
+	print(f"Switch ports being test = {port_list}")
+	#port_list = [1,2,3,4,5,6,7,8]
 	# sw.exect_boot_bios()
 	# exit()
 	# sw.pdu_cycle_bios()
@@ -272,11 +274,10 @@ if __name__ == "__main__":
 			config = f"""
 				execute poe-reset port{p}
 			"""
-			config_cmds_lines(sw.console,config)
-			sleep(2)
+			config_cmds_lines_fast(sw.console,config)
+		Info("Sleep 60 seconds after resetting all POE ports.......")	
 		sleep(60)
 		sw.show_command("get switch poe inline")
-		sleep(5)
 
 
 	def compare_poe_inline(poe_inline_before, poe_inline_after):
@@ -452,17 +453,41 @@ if __name__ == "__main__":
 			run_numbers = 1
 
 		print_double_line()
-		print("				Start POE Power Budget Testing		")
+		print("				Start POE Tester Parameters Testing		")
 		print_double_line()
 
 		sleep_time = 120
+		poe_tester_ports = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+		poe_tester_group = [1,2,3]
 		for j in range(run_numbers):
 			poe_reset_ports(port_list)
-			tester.poe_reset(current = 500, poe_class=4)
+			tester.poe_reset(current = 400, poe_class=4)
+			Info("In poe_config_change_testing: draining power from all POE tester ports. Sleep 120s after start draining power")
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
 			poe_reset_ports(port_list)
+
+			for i in poe_tester_group:
+				tester.group_poe_reset(current = 500, poe_class=4,group_name=f"g{i}")
+				sleep(20)
+			Info("In poe_config_change_testing: draining power group by group of POE tester ports. Sleep 120s after start draining power")
+			sleep(sleep_time)
+			sw.show_command("get switch poe inline")
+			sleep(5)
+			poe_reset_ports(port_list)
+
+			for i in poe_tester_ports:
+				tester.port_poe_reset(current = 400, poe_class=4,port_name=f"p{i}")
+				sleep(1)
+			Info("In poe_config_change_testing: draining power by port of POE tester ports. Sleep 120s after start draining power")
+
+			sleep(sleep_time)
+			sw.show_command("get switch poe inline")
+			sleep(5)
+			poe_reset_ports(port_list)
+
+			exit(0)
 
 			tester.poe_reset(current = 400, poe_class=4)
 			sleep(sleep_time)
@@ -2361,10 +2386,13 @@ if __name__ == "__main__":
 
 		return result
 
-	while True:
+	counter = 1
+	while (counter>0):
+		counter -= 1
 		#setup_burn_test()
 		#basic_poe_func_testing(1)
 		#power_buget_testing(iteration = 4)
+		# sleep(180)
 		# flipping_poe_boot_testing()
 		# sleep(180)
 		# poe_cli_testing(boot="cold")
@@ -2376,23 +2404,23 @@ if __name__ == "__main__":
 
 		# basic_bios_poe_boot_testing()
 		# sleep(180)
-		basic_poe_boot_testing(boot="warm")
-		sleep(180)
-		basic_poe_boot_testing(boot="cold")	
-		sleep(180)
+		#basic_poe_boot_testing(boot="warm")
+		#sleep(180)
+		# basic_poe_boot_testing(boot="cold")	
+		# sleep(180)
 		# basic_poe_boot_testing(boot="warm",poe_status="disable")
 		# sleep(180)
 
-		#poe_config_change_testing()
+		poe_config_change_testing()
 		#power_buget_testing()
 
 		# flipping_poe_mode_testing(run_numbers = 10)
 		# sleep(180)
 		# exit()
-		basic_poe_boot_testing(boot="bios")
-		sleep(180)
-		basic_poe_boot_testing(boot="warm_bios")
-		sleep(180)
+		# basic_poe_boot_testing(boot="bios")
+		# sleep(180)
+		#basic_poe_boot_testing(boot="warm_bios")
+		#sleep(180)
 
 		# none_ppoe_priority_power_testing(boot="warm")
 		# sleep(180)

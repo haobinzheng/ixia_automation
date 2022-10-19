@@ -967,6 +967,32 @@ def split_f_string_lines(cmdblock):
 	b = [x.strip() for x in b if x.strip()]
 	return b
 
+def config_cmds_lines_fast(dut,cmdblock,*args,**kwargs):
+	if "wait" in kwargs:
+		wait_time = int(kwargs["wait"])
+	else:
+		wait_time = 0.2
+
+	if "feedback" in kwargs:
+		feedback = kwargs['feedback']
+	else:
+		feedback = False
+
+	if "check_prompt" in kwargs:
+		check_prompt = kwargs["check_prompt"]
+	else:
+		check_prompt = False
+
+	b= cmdblock.split("\n")
+	b = [x.strip() for x in b if x.strip()]
+	config_return_list = []
+	for cmd in b:
+		config_return = switch_configure_cmd(dut,cmd,output=feedback)
+		if config_return != None:
+			config_return_list.append(config_return)
+		sleep(wait_time)
+	return config_return_list
+
 def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 	
 	if "wait" in kwargs:
@@ -1118,7 +1144,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		tn.read_until(("# ").encode('ascii'),timeout=5)
 		return None 
 	else: 
-		sleep(1)
+		#sleep(0.2)
 		config_output = tn.read_very_eager()
 		out_list = config_output.split(b'\r\n')
 		encoding = 'utf-8'
@@ -1840,16 +1866,6 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 	time.sleep(2)
 	tn.write(('\x03\n').encode('ascii'))
 	time.sleep(2)
-	# tn.write(('x03\n').encode('ascii'))
-	# time.sleep(0.2)
-	# tn.write(('' + '\n').encode('ascii'))
-	# time.sleep(0.2)
-	# tn.write(('' + '\n').encode('ascii'))
-	# time.sleep(0.2)
-	# tn.write(('' + '\n').encode('ascii'))
-	# time.sleep(0.2)
-	# tn.write(('' + '\n').encode('ascii'))
-	# time.sleep(0.2)
 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
 	tn.write(('admin' + '\n').encode('ascii'))
@@ -1857,9 +1873,6 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 
 	tn.write(('' + '\n').encode('ascii'))
 	sleep(2)
-	# tn.write(('' + '\n').encode('ascii'))
-	# tn.write(('' + '\n').encode('ascii'))
-	# tn.write((pwd + '\n').encode('ascii'))
 
 	Info("See what prompt the console is at")
 	TIMEOUT = 3
@@ -1885,12 +1898,6 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
 		tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
-		# tn.write(('' + '\n').encode('ascii'))
 		sleep(1)
 		#################################### Don't change ################################
 		tn.read_until(("login: ").encode('ascii'),timeout=5)

@@ -8720,6 +8720,64 @@ class POE_TESTER():
         self.enter_poe_command(cmd ='auto on')
         sleep(2)
 
+    def group_poe_reset(self,*args,**kwargs):
+        if "current" in kwargs:
+            current = kwargs["current"]
+        else:
+            current = 20
+
+        if "poe_class" in kwargs:
+            poe_class = kwargs["poe_class"]
+        else:
+            poe_class = 0
+
+        if "group_name" in kwargs:
+            grp = kwargs["group_name"]
+        else:
+            grp = "g1"
+
+        self.enter_poe_command(cmd =f'{grp} reset')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{grp} connect on')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{grp} detect ok ')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{grp} class {poe_class}')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{grp} set {current}')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{grp} auto on')
+        sleep(2)
+
+    def port_poe_reset(self,*args,**kwargs):
+        if "current" in kwargs:
+            current = kwargs["current"]
+        else:
+            current = 20
+
+        if "poe_class" in kwargs:
+            poe_class = kwargs["poe_class"]
+        else:
+            poe_class = 0
+
+        if "port_name" in kwargs:
+            port = kwargs["port_name"]
+        else:
+            port = "p1"
+
+        self.enter_poe_command(cmd =f'{port} reset')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{port} connect on')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{port} detect ok ')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{port} class {poe_class}')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{port} set {current}')
+        sleep(2)
+        self.enter_poe_command(cmd =f'{port} auto on')
+        sleep(2)
+
     def get_poe_command(self,*args,**kwargs):
         tn = self.console
         cmd = kwargs["cmd"]

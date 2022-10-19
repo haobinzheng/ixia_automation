@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testbed name="hb-tb">
- <dev1 type="FSW" hostname="SR24FPTF22000018" model="SR24F">
-  <console ip="10.105.241.145" line="2081"> </console>
+ <dev1 type="FSW" hostname="SR12DPTD18000250" model="SR12DP">
+  <console ip="10.105.241.144" line="2040"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.241.81" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <mgmt ip="10.105.201.186" netmask="255.255.255.0" gateway="10.105.201.185" port="port24"> </mgmt>
   <pdu model="RARITAN_M" ip="10.105.152.232" port="19"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
   <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
   <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
-  <location location="324/11/30" > </location>
+  <location location="324/11/29" > </location>
  </dev1>
 <dev2 type="POE" hostname="RT-PoE3N" model="RT-PoE3N">
   <console ip="10.105.241.44" line="2072"> </console>
