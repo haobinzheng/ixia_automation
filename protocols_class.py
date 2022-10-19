@@ -6739,6 +6739,12 @@ class FortiSwitch_XML(FortiSwitch):
         # image = find_dut_image(dut)
         # tprint(f"============================ {dut_name} software image = {image} ============")
 
+    def switch_reboot_login(self):
+        switch_exec_reboot(self.console,device=self.hostname)
+        Info(f"Fortiswitch_XML/switch_reboot_login: After rebooting switch, sleep 300 seconds")
+        sleep(300)
+        self.sw_relogin()
+
     def ftg_sw_upgrade(self,*args,**kwargs):
          
         build = settings.build_548d
@@ -7132,7 +7138,7 @@ class FortiSwitch_XML(FortiSwitch):
         sleep(5)
 
     def sw_relogin(self):
-        Info(f"================= {self.hostname}: Re-Login console =================")
+        Info(f"================= {self.hostname}: Re-Login console after rebooting or power_cycle =================")
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password,relogin=True,console=self.console)
         self.dut = self.console # For compatibility with old Fortiswitch codes
 
@@ -8765,18 +8771,24 @@ class POE_TESTER():
         else:
             port = "p1"
 
-        self.enter_poe_command(cmd =f'{port} reset')
-        sleep(2)
+        if "reset" in kwargs:
+            config_reset = kwargs["reset"]
+        else:
+            config_reset = "yes"
+        sleep_time = 0.5
+        if config_reset == "yes" or config_reset == "Yes" or config_reset == "YES":
+            self.enter_poe_command(cmd =f'{port} reset')
+            sleep(sleep_time)
         self.enter_poe_command(cmd =f'{port} connect on')
-        sleep(2)
+        sleep(sleep_timesleep_timesleep_timesleep_timesleep_time)
         self.enter_poe_command(cmd =f'{port} detect ok ')
-        sleep(2)
+        sleep(sleep_timesleep_timesleep_timesleep_time)
         self.enter_poe_command(cmd =f'{port} class {poe_class}')
-        sleep(2)
+        sleep(sleep_timesleep_timesleep_time)
         self.enter_poe_command(cmd =f'{port} set {current}')
-        sleep(2)
+        sleep(sleep_timesleep_time)
         self.enter_poe_command(cmd =f'{port} auto on')
-        sleep(2)
+        sleep(sleep_time)
 
     def get_poe_command(self,*args,**kwargs):
         tn = self.console
