@@ -486,10 +486,9 @@ if __name__ == "__main__":
 		poe_tester_group = [1,2,3]
 		sw.show_command("get switch poe inline")
 		sleep(5)
-
 		for j in range(run_numbers):
 			poe_reset_ports_new(sw)
-			tester.poe_reset(current = 400, poe_class=4)
+			tester.poe_reset(current = random.randint(400,500), poe_class=4)
 			Info("In poe_config_change_testing: draining power from all POE tester ports. Sleep 120s after start draining power")
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
@@ -497,7 +496,7 @@ if __name__ == "__main__":
 			poe_reset_ports_new(sw)
 
 			for i in poe_tester_group:
-				tester.group_poe_reset(current = 500, poe_class=4,group_name=f"g{i}")
+				tester.group_poe_reset(current = random.randint(400,500), poe_class=4,group_name=f"g{i}")
 				sleep(20)
 			Info("In poe_config_change_testing: draining power group by group of POE tester ports. Sleep 120s after start draining power")
 			sleep(sleep_time)
@@ -506,7 +505,7 @@ if __name__ == "__main__":
 			poe_reset_ports_new(sw)
 
 			for i in poe_tester_ports:
-				tester.port_poe_reset(current = 400, poe_class=4,port_name=f"p{i}")
+				tester.port_poe_reset(current = random.randint(400,500), poe_class=4,port_name=f"p{i}")
 				sleep(1)
 			Info("In poe_config_change_testing: configure per port with with current 400/class 4. Sleep 120s after start draining power")
 			sleep(sleep_time)
@@ -515,7 +514,7 @@ if __name__ == "__main__":
 			poe_reset_ports(port_list)
 
 			for i in poe_tester_ports:
-				tester.port_poe_reset(current = 500, poe_class=4,port_name=f"p{i}")
+				tester.port_poe_reset(current = random.randint(400,500), poe_class=4,port_name=f"p{i}")
 				sleep(1)
 			Info("In poe_config_change_testing: configure per port with with current 500/class 4. Sleep 120s after start draining power")
 			sleep(sleep_time)
@@ -523,7 +522,7 @@ if __name__ == "__main__":
 			poe_reset_ports(port_list)
 
 			for i in poe_tester_ports:
-				tester.port_poe_reset(current = 350, poe_class=4,port_name=f"p{i}",reset="no")
+				tester.port_poe_reset(current = random.randint(400,500), poe_class=4,port_name=f"p{i}",reset="no")
 				sleep(1)
 			Info("In poe_config_change_testing: configure per port with with current 350/class 4/no reset. Sleep 120s after start draining power")
 			sleep(sleep_time)
@@ -532,7 +531,7 @@ if __name__ == "__main__":
 			poe_reset_ports(port_list)
 
 			for i in poe_tester_ports:
-				tester.port_poe_reset(current = 390, poe_class=4,port_name=f"p{i}",reset="no")
+				tester.port_poe_reset(current = random.randint(400,500), poe_class=4,port_name=f"p{i}",reset="no")
 				sleep(1)
 			Info("In poe_config_change_testing: configure per port with with current 390/class 4/no reset. Sleep 120s after start draining power")
 			sleep(sleep_time)
@@ -542,19 +541,19 @@ if __name__ == "__main__":
 
 			exit(0)
 
-			tester.poe_reset(current = 400, poe_class=4)
+			tester.poe_reset(current = random.randint(400,500), poe_class=4)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
 			poe_reset_ports(port_list)
 
-			tester.poe_reset(current = 300, poe_class=4)
+			tester.poe_reset(current = random.randint(300,400), poe_class=4)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
 			poe_reset_ports(port_list)
 
-			tester.poe_reset(current = 200, poe_class=4)
+			tester.poe_reset(current = random.randint(200,300), poe_class=4)
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)

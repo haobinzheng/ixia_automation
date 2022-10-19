@@ -8780,7 +8780,7 @@ class POE_TESTER():
             self.enter_poe_command(cmd =f'{port} reset')
             sleep(sleep_time)
         self.enter_poe_command(cmd =f'{port} connect on')
-        sleep(sleep_timesleep_timesleep_timesleep_timesleep_time)
+        sleep(sleep_time)
         self.enter_poe_command(cmd =f'{port} detect ok ')
         sleep(sleep_time)
         self.enter_poe_command(cmd =f'{port} class {poe_class}')
