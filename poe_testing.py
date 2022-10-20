@@ -2504,7 +2504,7 @@ if __name__ == "__main__":
 		# basic_poe_boot_testing(boot="warm",poe_status="disable")
 		# sleep(180)
 		#normal_poe_boot_testing(iteration = 10)
-		poe_within_budget_testing(iteration=10,upper=310,lower=280)
+		poe_within_budget_testing(iteration=100,upper=310,lower=280)
 		#poe_config_change_testing(iteration=5)
 		#power_buget_testing()
 
