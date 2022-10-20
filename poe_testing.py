@@ -589,8 +589,18 @@ if __name__ == "__main__":
 		else:
 			run_numbers = 1
 
+		if "upper" in kwargs:
+			upper = kwargs['upper']
+		else:
+			upper = 500
+
+		if "lower" in kwargs:
+			lower = kwargs["lower"]
+		else:
+			lower = 400
+
 		print_double_line()
-		print("				Start POE Tester Parameters Testing		")
+		print("				Start Within POE budget Testing		")
 		print_double_line()
 
 		sleep_time = 120
@@ -602,9 +612,9 @@ if __name__ == "__main__":
 		for j in range(run_numbers):
 			poe_reset_ports_new(sw,poe=tester)
 			for i in poe_tester_ports:
-				tester.port_poe_reset(current = random.randint(50,100), poe_class=4,port_name=f"p{i}")
+				tester.port_poe_reset(current = random.randint(lower,upper), poe_class=4,port_name=f"p{i}")
 				sleep(1)
-			Info("In poe_config_change_testing: configure per port with with current (400,500)/class 4. Sleep 120s after start draining power")
+			Info(f"In poe_config_change_testing: configure per port with with current ({lower},{upper}). Sleep 120s after start draining power")
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
@@ -2494,7 +2504,7 @@ if __name__ == "__main__":
 		# basic_poe_boot_testing(boot="warm",poe_status="disable")
 		# sleep(180)
 		#normal_poe_boot_testing(iteration = 10)
-		poe_within_budget_testing(iteration=100)
+		poe_within_budget_testing(iteration=10,upper=310,lower=280)
 		#poe_config_change_testing(iteration=5)
 		#power_buget_testing()
 
