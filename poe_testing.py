@@ -285,7 +285,7 @@ if __name__ == "__main__":
 				if poe_dict['Status'] == "Disabled" or poe_dict['Status'] == "disabled" or poe_dict['Status'] == "DISABLED" or "Disable" in poe_dict['Status']:
 					disabled_port_list.append(poe_dict["Interface"])
 			print(f"POE Disabled Ports: {disabled_port_list}")
-			if counter > 3 and len(disabled_port_list) > 1: 
+			if counter > 3 and len(disabled_port_list) > 0: 
 				if poe_tester != None:
 					poe_tester.poe_just_reset()
 				sw.switch_reboot_login()
@@ -498,15 +498,25 @@ if __name__ == "__main__":
 		poe_tester_group = [1,2,3]
 		sw.show_command("get switch poe inline")
 		sleep(5)
+		
 		for j in range(run_numbers):
+			poe_reset_ports_new(sw,poe=tester)
+			for i in poe_tester_ports:
+				tester.port_poe_reset(current = random.randint(50,100), poe_class=4,port_name=f"p{i}")
+				sleep(1)
+			Info("In poe_config_change_testing: configure per port with with current (400,500)/class 4. Sleep 120s after start draining power")
+			sleep(sleep_time)
+			sw.show_command("get switch poe inline")
+			sleep(5)
+
 			poe_reset_ports_new(sw,poe=tester)
 			tester.poe_reset(current = random.randint(400,500), poe_class=4)
 			Info("In poe_config_change_testing: draining power from all POE tester ports. Sleep 120s after start draining power")
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
-			poe_reset_ports_new(sw,poe=tester)
 
+			poe_reset_ports_new(sw,poe=tester)
 			for i in poe_tester_group:
 				tester.group_poe_reset(current = random.randint(400,500), poe_class=4,group_name=f"g{i}")
 				sleep(20)
@@ -514,8 +524,8 @@ if __name__ == "__main__":
 			sleep(sleep_time)
 			sw.show_command("get switch poe inline")
 			sleep(5)
-			poe_reset_ports_new(sw,poe=tester)
 
+			poe_reset_ports_new(sw,poe=tester)
 			for i in poe_tester_ports:
 				tester.port_poe_reset(current = random.randint(400,500), poe_class=4,port_name=f"p{i}")
 				sleep(1)
@@ -560,41 +570,45 @@ if __name__ == "__main__":
 			sleep(5)
 			poe_reset_ports_new(sw,poe=tester)
 
-			# exit(0)
-
-			# tester.poe_reset(current = random.randint(400,500), poe_class=4)
-			# sleep(sleep_time)
-			# sw.show_command("get switch poe inline")
-			# sleep(5)
-			# poe_reset_ports_new(sw,poe=tester)
-
-			# tester.poe_reset(current = random.randint(300,400), poe_class=4)
-			# sleep(sleep_time)
-			# sw.show_command("get switch poe inline")
-			# sleep(5)
-			# poe_reset_ports_new(sw,poe=tester)
-
-			# tester.poe_reset(current = random.randint(200,300), poe_class=4)
-			# sleep(sleep_time)
-			# sw.show_command("get switch poe inline")
-			# sleep(5)
-			# poe_reset_ports_new(sw,poe=tester)
-
-			# tester.poe_reset(current = random.randint(100,200), poe_class=4)
-			# sleep(sleep_time)
-			# sw.show_command("get switch poe inline")
-			# sleep(5)
-			# poe_reset_ports_new(sw,poe=tester)
-
-			# tester.poe_reset(current = random.randint(50,100), poe_class=3)
-			# sleep(sleep_time)
-			# sw.show_command("get switch poe inline")
-			# sleep(5)
-			# poe_reset_ports_new(sw,poe=tester)
-
 		return True
 
 
+	def poe_within_budget_testing(*args, **kwargs):
+		if "boot" in kwargs:
+			boot_mode = kwargs['boot']
+		else: 
+			boot_mode = "warm"
+
+		if "poe_status" in kwargs:
+			poe_status = kwargs['poe_status']
+		else:
+			poe_status = "enable"
+
+		if "iteration" in kwargs:
+			run_numbers = kwargs['iteration']
+		else:
+			run_numbers = 1
+
+		print_double_line()
+		print("				Start POE Tester Parameters Testing		")
+		print_double_line()
+
+		sleep_time = 120
+		poe_tester_ports = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]
+		poe_tester_group = [1,2,3]
+		sw.show_command("get switch poe inline")
+		sleep(5)
+		
+		for j in range(run_numbers):
+			poe_reset_ports_new(sw,poe=tester)
+			for i in poe_tester_ports:
+				tester.port_poe_reset(current = random.randint(50,100), poe_class=4,port_name=f"p{i}")
+				sleep(1)
+			Info("In poe_config_change_testing: configure per port with with current (400,500)/class 4. Sleep 120s after start draining power")
+			sleep(sleep_time)
+			sw.show_command("get switch poe inline")
+			sleep(5)
+		return True
 	################################# power_buget_testing ################################
 	def power_buget_testing(*args, **kwargs):
 		if "boot" in kwargs:
@@ -2480,7 +2494,8 @@ if __name__ == "__main__":
 		# basic_poe_boot_testing(boot="warm",poe_status="disable")
 		# sleep(180)
 		#normal_poe_boot_testing(iteration = 10)
-		poe_config_change_testing(iteration=5)
+		poe_within_budget_testing(iteration=100)
+		#poe_config_change_testing(iteration=5)
 		#power_buget_testing()
 
 		# flipping_poe_mode_testing(run_numbers = 10)
