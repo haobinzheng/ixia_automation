@@ -572,6 +572,76 @@ if __name__ == "__main__":
 
 		return True
 
+	def sifos_testing(*args, **kwargs):
+		if "boot" in kwargs:
+			boot_mode = kwargs['boot']
+		else: 
+			boot_mode = "warm"
+
+		if "poe_status" in kwargs:
+			poe_status = kwargs['poe_status']
+		else:
+			poe_status = "enable"
+
+		if "iteration" in kwargs:
+			run_numbers = kwargs['iteration']
+		else:
+			run_numbers = 1
+
+		if "upper" in kwargs:
+			upper = kwargs['upper']
+		else:
+			upper = 500
+
+		if "lower" in kwargs:
+			lower = kwargs["lower"]
+		else:
+			lower = 400
+
+		print_double_line()
+		print("				Start Sifos POE Testing		")
+		print_double_line()
+
+		sleep_time = 10
+		poe_tester_ports = [15,16,17,18,19,20,21,22,23,24]
+		sw.show_command("get switch poe inline")
+		sleep(5)
+
+		Info(f"In sifos_testing: Before test starts, searching for POE ports being disabled")
+		poe_reset_ports_new(sw,poe=tester)
+
+		# Info(f"In sifos_testing: power cycle switch, will need around 5 minutes")
+		# sw.pdu_cycle()
+
+		while True:
+			Info(f"In sifos_testing: change poe power budget in range 50-150W")
+			config = f"""
+			conf switch global
+			set poe-power-budget {random.randint(50,150)}
+			end
+			"""
+			config_cmds_lines(sw.console,config)
+			sleep(20)
+			Info(f"In sifos_testing: after changing poe power budget, search for disabled ports")
+			poe_reset_ports_new(sw,poe=tester)
+			sleep(5)
+			poe_reset_ports_new(sw,poe=tester)
+			sleep(5)
+			poe_reset_ports_new(sw,poe=tester)
+
+			Info(f"In sifos_testing: power cycle switch, will need around 5 minutes")
+			sw.pdu_cycle()
+			console_timer(300,msg=f"After power cycle, wait for 5 mintues")
+			sw.sw_relogin()
+			Info(f"In sifos_testing: after power cycle switch, search for disabled ports")
+			poe_reset_ports_new(sw,poe=tester)
+			poe_reset_ports_new(sw,poe=tester)
+			sleep(30)
+			poe_reset_ports_new(sw,poe=tester)
+			poe_reset_ports_new(sw,poe=tester)
+
+			#sw.show_command("get switch poe inline")
+		return True
 
 	def poe_within_budget_testing(*args, **kwargs):
 		if "boot" in kwargs:
@@ -619,6 +689,8 @@ if __name__ == "__main__":
 			sw.show_command("get switch poe inline")
 			sleep(5)
 		return True
+
+
 	################################# power_buget_testing ################################
 	def power_buget_testing(*args, **kwargs):
 		if "boot" in kwargs:
@@ -2504,7 +2576,8 @@ if __name__ == "__main__":
 		# basic_poe_boot_testing(boot="warm",poe_status="disable")
 		# sleep(180)
 		#normal_poe_boot_testing(iteration = 10)
-		poe_within_budget_testing(iteration=100,upper=310,lower=280)
+		sifos_testing()
+		#poe_within_budget_testing(iteration=100,upper=310,lower=280)
 		#poe_config_change_testing(iteration=5)
 		#power_buget_testing()
 

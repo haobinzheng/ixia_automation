@@ -4,7 +4,7 @@
   <console ip="10.105.240.144" line="2085"> </console>
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.201.94" netmask="255.255.255.252" gateway="10.105.201.93" port="port24"> </mgmt>
-  <pdu model="RARITAN_M" ip="10.105.152.232" port="19"> </pdu>
+  <pdu model="RARITAN_M" ip="10.105.241.98" port="14"> </pdu>
   <tftp ip="10.105.0.122" local_ip="10.105.0.122" gateway="10.105.0.1" netmask="255.255.252.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
