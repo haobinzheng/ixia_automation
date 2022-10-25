@@ -38,6 +38,23 @@ def check_route_exist(*args,**kwargs):
 
 	return False
 
+def collect_edit_items_general(dut,cmd,*args, **kwargs):
+    keyword = kwargs['keyword']
+    switch_exec_cmd(dut,cmd)
+    result = collect_edit_question_cmd(dut,"edit ?")
+    switch_exec_cmd(dut,"end")
+    result.pop(0)
+    result.pop(0)
+    new_result = []
+    for item in result:
+        if item == '':
+            continue
+        elif keyword in item:
+            continue
+        else:
+            new_result.append(item)
+    return new_result
+
 def collect_edit_items(dut,cmd):
  	switch_exec_cmd(dut,cmd)
  	result = collect_edit_question_cmd(dut,"edit ?")

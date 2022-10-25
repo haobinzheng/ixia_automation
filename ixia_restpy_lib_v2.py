@@ -112,6 +112,10 @@ class IXIA_TOPOLOGY:
         # ip = kwargs['ip']
         # gw = kwargs['gw']
         # mask = kwargs['mask']
+        if "gateway" in kwargs:
+            gateway_mode = kwargs['gateway']
+        else:
+            gateway_mode = "default"
         self.ipv6_session = ixia_rest_create_ipv6(
         platform = self.ixia.testPlatform, 
         session = self.ixia.Session,
@@ -120,7 +124,8 @@ class IXIA_TOPOLOGY:
         gw_start_ip = self.ipv6_gw,
         ethernet = self.ethernet,
         maskbits = self.ipv6_mask,
-        ip_name = self.ipv6_name
+        ip_name = self.ipv6_name,
+        gateway_mode = gateway_mode
     )
 
     def add_ipv4(self,*args,**kwargs):
@@ -1385,7 +1390,7 @@ def ixia_rest_create_ip(*args,**kwargs):
         ip_name = kwargs['ip_name']
         gateway_mode = kwargs['gateway_mode']
         ip_incremental = kwargs['ip_incremental']
-
+        
         ixNetwork.info('Configuring IPv4')
         ipv4 = ethernet.Ipv4.add(Name=ip_name)
         ipv4.Address.Increment(start_value=start_ip, step_value=ip_incremental)
@@ -1418,13 +1423,17 @@ def ixia_rest_create_ipv6(*args,**kwargs):
         ethernet = kwargs['ethernet']
         ip_prefix = kwargs['maskbits']
         ip_name = kwargs['ip_name']
+        gateway_mode = kwargs['gateway_mode']
 
         ixNetwork.info('Configuring IPv6')
         ipv6 = ethernet.Ipv6.add(Name=ip_name)
         ipv6.Address.Increment(start_value=start_ip, step_value='::1')
         # ipv4.address.RandomMask(fixed_value=16)
         print(dir(ipv6.Address))
-        ipv6.GatewayIp.Increment(start_value=gw_start_ip, step_value='::1')
+        if gateway_mode == "default" or gateway_mode == "Default" :
+            ipv6.GatewayIp.Increment(start_value=gw_start_ip, step_value='::1')
+        elif gateway_mode == "fixed" or gateway_mode == "Fixed":  
+            ipv6.GatewayIp.Single(gw_start_ip)
         ipv6.Prefix.Single(ip_prefix)
         address = ipv6.Address
         # testPlatform.info(address.prefix)

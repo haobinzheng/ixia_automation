@@ -987,7 +987,7 @@ def config_cmds_lines_fast(dut,cmdblock,*args,**kwargs):
 	b = [x.strip() for x in b if x.strip()]
 	config_return_list = []
 	for cmd in b:
-		config_return = switch_configure_cmd(dut,cmd,output=feedback)
+		config_return = switch_configure_cmd(dut,cmd,output=feedback,mode="fast")
 		if config_return != None:
 			config_return_list.append(config_return)
 		sleep(wait_time)

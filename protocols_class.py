@@ -1549,6 +1549,72 @@ class Router_access_list6:
         config_cmds_lines(self.switch.console,config)
 
 
+class switch_acl_ingress:
+    def __init__(self,*args,**kargs):
+        self.switch = args[0]
+        self.clauses = None
+
+    def config_acl6_basic(self,*args,**kwargs):
+        example = """
+        config switch acl ingress
+        edit 1
+                set group 3
+                set ingress-interface port2
+                config classifier
+                    set dst-ip6-prefix 2001:10:1:1::1/64
+                    set src-ip6-prefix 2001:10:1:1::2/64
+                end
+                config action
+                    set count enable
+                end
+            next
+        end
+        """
+        
+        src=kwargs["src"]
+        dst=kwargs["dst"]
+        intf=kwargs["intf"]
+        index=kwargs["index"]
+        group_id=kwargs["group_id"]
+        cmds = f"""
+        config switch acl ingress
+        edit {index}
+                set group {group_id}
+                set ingress-interface {intf}
+                config classifier
+                    set dst-ip6-prefix {dst}
+                    set src-ip6-prefix {src}
+                end
+                config action
+                    set count enable
+                end
+            next
+        end
+        """
+        self.switch.config_cmds_fast(cmds)
+
+
+    def acl_basic_config(self):
+        basic_config_access_list(self.switch.console)
+
+    def acl_ingress_find_clauses(self):
+        result = collect_edit_items_general(self.switch.console,"config switch acl ingress",keyword="acl")
+        print(result)
+        clauses = []
+        for item in result:
+            two_parts = re.split('\\s+',item)
+            clauses.append(two_parts[0])
+        print(clauses)
+        self.clauses = clauses
+        return clauses
+
+    def acl_ingress_clean_up(self):
+        self.acl_ingress_find_clauses()
+        switch_exec_cmd(self.switch.console,"config switch acl ingress")
+        for c in self.clauses:
+            switch_exec_cmd(self.switch.console, f"delete {c} " )
+        switch_exec_cmd(self.switch.console,"end")
+
 
 class Router_access_list:
     def __init__(self,*args,**kargs):
@@ -1561,7 +1627,7 @@ class Router_access_list:
     def acl_basic_config(self):
         basic_config_access_list(self.switch.console)
 
-    def acl_find_clauses(self):
+    def router_acl_find_clauses(self):
         result = collect_edit_items(self.switch.console,"config router access-list")
         print(result)
         clauses = []
@@ -1573,7 +1639,7 @@ class Router_access_list:
         return clauses
 
     def clean_up(self):
-        self.find_clauses()
+        self.router_acl_find_clauses()
         switch_exec_cmd(self.switch.console,"config router route-map")
         for c in self.clauses:
             switch_exec_cmd(self.switch.console, f"delete {c} " )
@@ -7450,6 +7516,9 @@ class FortiSwitch_XML(FortiSwitch):
     #config_lines are defined with """ """
     def config_cmds(self,config_lines):
         config_cmds_lines(self.console,config_lines)
+
+    def config_cmds_fast(self,config_lines):
+        config_cmds_lines_fast(self.console,config_lines)
 
 class Managed_Switch():
     def __init__(self,*args,**kwargs):
