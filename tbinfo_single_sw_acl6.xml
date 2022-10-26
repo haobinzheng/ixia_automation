@@ -14,7 +14,7 @@
  <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.44:11009">
  </trafgen1>
  <connections>
-  <link1 link="dev1:port2,trafgen1:7/2" type="ixia_link" mode="copper"> </link1>
+  <link1 link="dev1:port2,trafgen1:7/14" type="ixia_link" mode="copper"> </link1>
   <link2 link="dev1:port3,trafgen1:7/3" type="ixia_link" mode="copper"> </link2>
   </connections>
 </testbed>

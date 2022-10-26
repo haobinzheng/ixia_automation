@@ -1554,6 +1554,63 @@ class switch_acl_ingress:
         self.switch = args[0]
         self.clauses = None
 
+    def config_acl6_generic(self,index,globals,classifiers,actions):
+        example = """
+        config switch acl ingress
+        edit 1
+                set group 3
+                set ingress-interface port2
+                config classifier
+                    set dst-ip6-prefix 2001:10:1:1::1/64
+                    set src-ip6-prefix 2001:10:1:1::2/64
+                end
+                config action
+                    set count enable
+                end
+            next
+        end
+        """
+         
+        cmds = f"""
+        config switch acl ingress
+        """
+        cmds += f"""
+        edit {index}
+        """
+        if globals != {}:
+            for k,v in globals.items():
+                cmds += f"""
+                set {k} {v}
+                """
+        if  classifiers != {}:
+            cmds += f"""
+            config classifier
+            """
+
+            for k,v in classifiers.items():
+                cmds += f"""
+                set {k} {v}
+                """
+            cmds += f"""
+            end
+            """
+        if  actions != {}:
+            cmds += f"""
+            config action
+            """
+            for k,v in actions.items():
+                cmds += f"""
+                set {k} {v}
+                """
+            cmds += f"""
+            end
+            """
+        cmds += f"""
+            next
+        end
+        """
+        self.switch.config_cmds_fast(cmds)
+
     def config_acl6_basic(self,*args,**kwargs):
         example = """
         config switch acl ingress
