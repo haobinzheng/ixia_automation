@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testbed name="hb-tb">
+ <dev1 type="FSW" hostname="S424EPTF21001277" model="424EPOE">
+  <console ip="10.105.241.44" line="2087"> </console>
+  <login username="admin" password="Fortinet123!"> </login>
+  <mgmt ip="10.105.241.28" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.105.241.98" port="15"> </pdu>
+  <tftp ip="10.105.19.44" local_ip="10.105.241.28" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="QJ6NP-LTEJE-ST4H3-VF7JD-SPCAE-E88Q4-6,X594Y-JNBFT-P9B7K-LRV8E-2DB3Q-9HKTR-T"> </license>
+ </dev1>
+ <dev2 type="FSW" hostname="S424EITF19000006" model="FSW-424E-FIBER">
+  <console ip="10.105.241.144" line="2082"> </console>
+  <login username="admin" password="Fortinet123!"> </login>
+  <mgmt ip="10.105.241.123" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <pdu model="RARITAN" ip="10.105.241.200" port="2"> </pdu>
+  <tftp ip="10.105.19.44" local_ip="0.105.241.123" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
+  <trafic_rate frame_rate="percent:1" > </trafic_rate>
+  <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
+  <remote_route route="10.105.199.0" netmask="255.255.255.0" gateway="10.105.199.254"> </remote_route>
+  <license licenses="QJ6NP-LTEJE-ST4H3-VF7JD-SPCAE-E88Q4-6,X594Y-JNBFT-P9B7K-LRV8E-2DB3Q-9HKTR-T"> </license>
+ </dev2>
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.44:11009">
+ </trafgen1>
+ <connections>
+  <link1 link="dev1:port2,trafgen1:7/14" type="ixia_link" mode="copper"> </link1>
+  <link2 link="dev1:port3,trafgen1:7/3" type="ixia_link" mode="copper"> </link2>
+  <link3 link="dev1:port4,trafgen1:4/11" type="ixia_link" mode="copper"> </link3>
+  <link4 link="dev1:port5,trafgen1:4/12" type="ixia_link" mode="copper"> </link4>
+  </connections>
+</testbed>

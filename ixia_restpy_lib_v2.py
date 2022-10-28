@@ -1162,12 +1162,12 @@ class IXIA:
         rate = rate,
         )
     def start_traffic(self):
-
         ixia_rest_start_traffic(
         platform = self.testPlatform, 
         session = self.Session,
         ixnet = self.ixNetwork,
         )
+        sleep(10)
 
     def stop_traffic(self):
 

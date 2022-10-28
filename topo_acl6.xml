@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testtopo>
+ <dev1 type="FSW" role="DUT"> </dev1>
+ <dev2 type="FSW" role="DUT"> </dev2>
+ <trafgen1 type="IXIA" model="IXIA" role="trafgen"> </trafgen1>
+ <connections>
+  <link1 link="dev1,trafgen1" type="ixia_link"> </link1>
+  <link2 link="dev1,trafgen1" type="ixia_link"> </link2>
+  <link3 link="dev1,trafgen1" type="ixia_link"> </link3>
+  <link4 link="dev1,trafgen1" type="ixia_link"> </link4>
+ </connections>
+</testtopo>

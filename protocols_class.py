@@ -1548,11 +1548,86 @@ class Router_access_list6:
         """
         config_cmds_lines(self.switch.console,config)
 
+class Acl_usage_entry():
+    def __init__(self,*args,**kwargs):
+        self.group_id = None 
+        self.stage = None 
+        self.policer_total = None 
+        self.policer_free = None 
+        self.counter_total = None 
+        self.counter_free = None 
+        self.rule_total = None 
+        self.rule_free = None 
 
-class switch_acl_ingress:
-    def __init__(self,*args,**kargs):
+    def show_usage_entry(self):
+        print(f"group_id={self.group_id}")
+        print(f"stage={self.stage}")
+        print(f"policer_total={self.policer_total}")
+        print(f"policer_free={self.policer_free}")
+        print(f"counter_total={self.counter_total}")
+        print(f"counter_free={self.counter_free}")
+        print(f"rule_total={self.rule_total}")
+        print(f"rule_free={self.rule_free}")
+
+
+class Switch_ACL:
+    def __init__(self,*args,**kwargs):
         self.switch = args[0]
         self.clauses = None
+        self.acl_usage_list = []
+        self.update_acl_usage()
+
+    def update_acl_usage(self):
+        sample = """
+        S424EPTF21001277 # get switch acl usage
+
+        Device    RULES         COUNTERS       POLICERS       STAGE     GROUP
+                 (total/free)   (total/free)  (total/free)
+        ______________________________________________________________________
+
+
+
+        0        128   /89     256   /217    2048  /2048   ingress       1
+        0        128   /126    512   /510    2048  /2048   ingress       3
+        0        128   /127    512   /512    2048  /2048   ingress       4
+        0        128   /128    512   /512    2048  /2048   ingress       5
+        0        128   /128    256   /256    2048  /2048   ingress       6
+        0        256   /256    512   /512    384   /384    egress        1
+        0        256   /256    0     /0      0     /0      prelookup      1
+        """
+        cmd_output = collect_show_cmd(self.switch.console,"get switch acl usage")
+
+        #regex = r"\d+   /\d+     \d+   /\d+    \d+  /\d+"
+        regex = r"\d+\s+/\d+\s+\d+\s+/\d+\s+\d+\s+/\d+"
+        self.acl_usage_list = []
+        for line in cmd_output:
+            matched = re.search(regex,line)
+            if matched:
+                print(matched.group())
+                usage_entry = Acl_usage_entry()
+                items = line.split()
+                usage_entry.group_id = int(items[-1]) 
+                usage_entry.stage = items[-2] 
+                usage_entry.policer_free = int(items[-3].strip("/"))
+                usage_entry.policer_total = int(items[-4])
+                usage_entry.counter_free = int(items[-5].strip("/"))
+                usage_entry.counter_total = int(items[-6]) 
+                usage_entry.rule_free = int(items[-7].strip("/"))
+                usage_entry.rule_total = int(items[-8])
+                self.acl_usage_list.append(usage_entry)
+        #print(self.acl_usage_list)
+        return self.acl_usage_list
+
+    def print_acl_usage(self):
+        for entry in self.acl_usage_list:
+            entry.show_usage_entry()
+
+
+class switch_acl_ingress(Switch_ACL):
+    def __init__(self,*args,**kwargs):
+        # self.switch = args[0]
+        # self.clauses = None
+        super().__init__(*args,**kwargs)
 
     def config_acl6_generic(self,index,globals,classifiers,actions):
         example = """
@@ -7576,6 +7651,19 @@ class FortiSwitch_XML(FortiSwitch):
 
     def config_cmds_fast(self,config_lines):
         config_cmds_lines_fast(self.console,config_lines)
+
+    def config_cmds_json(self,json_cmds):
+        cmds ="""
+         {
+        "config switch acl ingress": {
+            f"edit {index}:{
+                "group": group_id
+                "ingress_interface":f"{port_name}"
+
+        }
+        }
+        """
+        pass
 
 class Managed_Switch():
     def __init__(self,*args,**kwargs):
