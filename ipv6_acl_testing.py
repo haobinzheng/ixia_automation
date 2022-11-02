@@ -26,7 +26,7 @@ from test_process import *
 
 
 if __name__ == "__main__":
-	sys.stdout = Logger(f"Log/ACL_counter_generic.log")
+	sys.stdout = Logger(f"Log/ACL6_testing.log")
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
 	parser.add_argument("-test", "--testcase", type=str, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
