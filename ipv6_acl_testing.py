@@ -929,10 +929,16 @@ if __name__ == "__main__":
 			"dst-ip6-prefix":str(ipaddress.IPv6Address(net6_list[1].split("/")[0])),
 			"src-ip6-prefix":str(ipaddress.IPv6Address(net6_list[0].split("/")[0]))
 			}
-			globals = {
-			"group":try_group,
-	         "ingress-interface": sw.ixia_ports[0]
-	        }
+			try: 
+				globals = {
+				"group":try_group,
+				 "ingress-interface": sw.ixia_ports[0]
+				}
+			except Exception as e:
+				globals = {
+				"group":try_group,
+				 "ingress-interface": "port2"
+				}
 			actions = {
 			"count":"enable"
 			}
@@ -954,10 +960,16 @@ if __name__ == "__main__":
 						"src-ip6-prefix":str(ipaddress.IPv6Address(net6_list[0].split("/")[0])+i)
 						}
 						
-						globals = {
-						"group":entry.group_id,
-			             "ingress-interface": sw.ixia_ports[0]
-			            }
+						try: 
+							globals = {
+							"group":try_group,
+					         "ingress-interface": sw.ixia_ports[0]
+					        }
+						except Exception as e:
+							globals = {
+							"group":try_group,
+							"ingress-interface": "port2"
+							}
 						
 						actions = {
 						"count":"enable"
