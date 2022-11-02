@@ -1384,11 +1384,11 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	acl6_basic_color_testing()
+	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
 	#change_vlan_cos_dscp_testing()
-	#scale_acl6_testing()
+	scale_acl6_testing()
 	#acl6_priority_testing()
 	#acl6_redirect_mirror_testing()
 	#basic_acl6_testing()
