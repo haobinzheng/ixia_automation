@@ -1974,12 +1974,12 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 			 
 
 	if platform == "fortinet":
-		switch_configure_cmd(tn,'config system global')
-		switch_configure_cmd(tn,'set admintimeout 480')
-		switch_configure_cmd(tn,'end')
-		switch_configure_cmd(tn,'config system console')
-		switch_configure_cmd(tn,'set output standard')
-		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config system global',mode="fast")
+		switch_configure_cmd(tn,'set admintimeout 480',mode="fast")
+		switch_configure_cmd(tn,'end',mode="fast")
+		switch_configure_cmd(tn,'config system console',mode="fast")
+		switch_configure_cmd(tn,'set output standard',mode="fast")
+		switch_configure_cmd(tn,'end',mode="fast")
 		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
 		try:
 			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")
@@ -2020,12 +2020,12 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 		# switch_configure_cmd_cisco(tn,'end')
 	else:
 		print("=========== This is a default device platform, assume it is a Fortinet Switch ============")
-		switch_configure_cmd(tn,'config system global')
-		switch_configure_cmd(tn,'set admintimeout 480')
-		switch_configure_cmd(tn,'end')
-		switch_configure_cmd(tn,'config system console')
-		switch_configure_cmd(tn,'set output standard')
-		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config system global',mode="fast")
+		switch_configure_cmd(tn,'set admintimeout 480',mode="fast")
+		switch_configure_cmd(tn,'end',mode="fast")
+		switch_configure_cmd(tn,'config system console',mode="fast")
+		switch_configure_cmd(tn,'set output standard',mode="fast")
+		switch_configure_cmd(tn,'end',mode="fast")
 		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
 		try:
 			print(f"=========== Software Image = {find_dut_build(tn)[0]} ==================")

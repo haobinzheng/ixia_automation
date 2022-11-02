@@ -86,6 +86,10 @@ def parse_tbinfo_untangle(file):
                     dprint("------this is license")
                     dprint(ee)
                     device.license = ee.get_attribute("licenses")
+                elif ee.__dict__['_name'] == "tftp":
+                    dprint("------this is tftp ip")
+                    dprint(ee)
+                    device.tftp_ip = ee.get_attribute("ip")
                 elif ee.__dict__['_name'] == "uplink":
                     dprint("------this is uplink")
                     dprint(ee)

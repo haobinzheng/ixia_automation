@@ -6484,6 +6484,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.hostname = device_xml.hostname
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
+        self.tftp_ip = device_xml.tftp_ip
         self.pdu_model = device_xml.pdu_model
         self.pdu_ip = device_xml.pdu_ip
         self.pdu_port = device_xml.pdu_port
@@ -7266,7 +7267,7 @@ class FortiSwitch_XML(FortiSwitch):
         image_name = f"{self.image_prefix}-{version}-build{build}-FORTINET.out"
 
         dprint(f"image name = {image_name}")
-        cmd = f"execute restore image tftp {image_name} 10.105.19.19"
+        cmd = f"execute restore image tftp {image_name} {self.tftp_ip}"
         tprint(f"upgrade command = {cmd}")
         switch_interactive_exec(dut,cmd,"Do you want to continue? (y/n)")
         #console_timer(60,msg="wait for 60s to download image from tftp server")
@@ -8867,6 +8868,7 @@ class Device_XML():
         self.console_ip = None
         self.console_line = None
         self.username = None
+        self.tftp_ip = None
         self.password = None
         self.mgmt_ip = None
         self.mgmt_netmask = None
@@ -8902,6 +8904,7 @@ class Device_XML():
         print(f"Mamangement IP = {self.mgmt_ip}")
         print(f"Management Mask = {self.mgmt_netmask}")
         print(f"Management Gateway = {self.mgmt_gateway}")
+        print(f"TFTP Server IP in XML File = {self.tftp_ip}")
         print(f"Login username= {self.username}")
         print(f"Login password= {self.password}")
         print(f"License = {self.license}")
