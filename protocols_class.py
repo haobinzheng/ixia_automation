@@ -6527,6 +6527,8 @@ class FortiSwitch_XML(FortiSwitch):
         self.router_bgp = Router_BGP(self)
         self.system_interfaces_list = None
         
+    def password_recovery(self,*args,**kwargs):
+        pass
 
     def sw_add_ebgp_peer(self,*args,**kwargs):
         ip = kwargs['ip']
@@ -6704,6 +6706,21 @@ class FortiSwitch_XML(FortiSwitch):
             send_ctrl_c_cmd(pdu)
             sleep(2)
             telnet_send_cmd(pdu,"4")
+
+    def config_split_port(port):
+        config_split_ports = f"""
+            config switch phy-mode
+            set {port}-phy-mode 4x10G
+            end
+            """
+            sw.config_cmds_fast(config_split_ports)
+            switch_enter_yes(sw.console)
+            console_timer(200,msg="switch is being rebooted after configuring split port, wait for 200s")
+            try:
+                self.switch_relogin()
+            except Exception as e:
+                debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
+                self.switch_relogin()
 
     def pdu_status(self):
         a = apc()
@@ -8884,6 +8901,9 @@ class Device_XML():
         self.pdu_model = None
         self.pdu_ip = None
         self.pdu_port = None
+        self.pdu_ip_2 = None
+        self.pdu_port_2 = None
+        self.dual_pdu = False
         self.fortilink_ports = []
         self.fortigate_ports = []
         self.ha_ports = []
