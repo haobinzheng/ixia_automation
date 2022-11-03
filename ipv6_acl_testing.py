@@ -1005,60 +1005,59 @@ if __name__ == "__main__":
 
 
 		acl = switch_acl_ingress(sw_dut)
-		acl.acl_ingress_clean_up()
-		#sw_dut.switch_reboot_login()
+		# acl.acl_ingress_clean_up()
+ 
+		# try_group = 3
+		# index = 1
+		# dst_ip6_prefix = net6_list[1].split("/")[0]
+		# src_ip6_prefix = net6_list[1].split("/")[0]
+		# while(try_group < 7):
+		# 	classifiers = {
+		# 	"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
+		# 	"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
+		# 	}
+		# 	globals = {
+		# 	"group":try_group,
+		# 	 "ingress-interface": sw_dut.ixia_ports[0]
+		# 	}
+		# 	actions = {
+		# 	"count":"enable"
+		# 	}
+		# 	acl.config_acl6_generic(index,globals,classifiers,actions)
+		# 	sleep(2)
+		# 	index +=1
+		# 	try_group +=1
+		# sleep(10)
+		# acl.update_acl_usage()
+		# acl.print_acl_usage()
 
-		try_group = 3
-		index = 1
-		dst_ip6_prefix = net6_list[1].split("/")[0]
-		src_ip6_prefix = net6_list[1].split("/")[0]
-		while(try_group < 7):
-			classifiers = {
-			"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
-			"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
-			}
-			globals = {
-			"group":try_group,
-			 "ingress-interface": sw_dut.ixia_ports[0]
-			}
-			actions = {
-			"count":"enable"
-			}
-			acl.config_acl6_generic(index,globals,classifiers,actions)
-			sleep(2)
-			index +=1
-			try_group +=1
-		sleep(10)
-		acl.update_acl_usage()
-		acl.print_acl_usage()
-
-		acl.acl_ingress_clean_up()
-		sleep(5)
+		# acl.acl_ingress_clean_up()
+		# sleep(5)
 		 
-		index = 1
-		total_acl = 1
-		for entry in acl.acl_usage_list:
-			group_id = entry.group_id
-			if group_id < 3:
-				continue
-			for i in range(entry.rule_total):
-				classifiers = {
-				"dst-ip6-prefix":dst_ip6_prefix,
-				"src-ip6-prefix":src_ip6_prefix
-				}
-				globals = {
-				"group":group_id,
-				 "ingress-interface": sw_dut.ixia_ports[0]
-				}
-				actions = {
-				"count":"enable"
-				}
-				acl.config_acl6_generic(index,globals,classifiers,actions)
-				dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
-				src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
-				index +=1
-				total_acl +=1			  
-
+		# index = 1
+		# total_acl = 1
+		# for entry in acl.acl_usage_list:
+		# 	group_id = entry.group_id
+		# 	if group_id < 3:
+		# 		continue
+		# 	for i in range(entry.rule_total):
+		# 		classifiers = {
+		# 		"dst-ip6-prefix":dst_ip6_prefix,
+		# 		"src-ip6-prefix":src_ip6_prefix
+		# 		}
+		# 		globals = {
+		# 		"group":group_id,
+		# 		 "ingress-interface": sw_dut.ixia_ports[0]
+		# 		}
+		# 		actions = {
+		# 		"count":"enable"
+		# 		}
+		# 		acl.config_acl6_generic(index,globals,classifiers,actions)
+		# 		dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
+		# 		src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
+		# 		index +=1
+		# 		total_acl +=1			  
+		total_acl = 512
 		ixia_sub_intf = total_acl
 		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")

@@ -39,9 +39,9 @@
  <connections>
   <link1 link="dev1:port2,trafgen1:7/14" type="ixia_link" mode="copper"> </link1>
   <link2 link="dev1:port3,trafgen1:7/3" type="ixia_link" mode="copper"> </link2>
-  <link3 link="dev2:port25,trafgen1:9/1" type="ixia_link" mode="copper"> </link3>
-  <link4 link="dev2:port26,trafgen1:9/2" type="ixia_link" mode="copper"> </link4>
-  <link5 link="dev3:port1.1,trafgen1:9/3" type="ixia_link" mode="copper"> </link5>
-  <link6 link="dev3:port1.2,trafgen1:9/4" type="ixia_link" mode="copper"> </link6>
+  <link3 link="dev2:port25,trafgen1:2/14" type="ixia_link" mode="copper"> </link3>
+  <link4 link="dev2:port26,trafgen1:2/15" type="ixia_link" mode="copper"> </link4>
+  <link5 link="dev3:port1.1,trafgen1:1/1" type="ixia_link" mode="copper"> </link5>
+  <link6 link="dev3:port1.2,trafgen1:2/4" type="ixia_link" mode="copper"> </link6>
   </connections>
 </testbed>
