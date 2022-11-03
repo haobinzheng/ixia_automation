@@ -27,7 +27,7 @@
   <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.240.142" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.105.240.199" port="17"> </pdu>
-  <pdu2 model="RARITAN" ip="10.105.240.200" port="3"> </pdu>
+  <pdu2 model="RARITAN" ip="10.105.240.200" port="3"> </pdu2>
   <tftp ip="10.105.19.44" local_ip="0.105.241.123" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>
@@ -39,8 +39,8 @@
  <connections>
   <link1 link="dev1:port2,trafgen1:7/14" type="ixia_link" mode="copper"> </link1>
   <link2 link="dev1:port3,trafgen1:7/3" type="ixia_link" mode="copper"> </link2>
-  <link3 link="dev2:port1,trafgen1:9/1" type="ixia_link" mode="copper"> </link3>
-  <link4 link="dev2:port2,trafgen1:9/2" type="ixia_link" mode="copper"> </link4>
+  <link3 link="dev2:port25,trafgen1:9/1" type="ixia_link" mode="copper"> </link3>
+  <link4 link="dev2:port26,trafgen1:9/2" type="ixia_link" mode="copper"> </link4>
   <link5 link="dev3:port1.1,trafgen1:9/3" type="ixia_link" mode="copper"> </link5>
   <link6 link="dev3:port1.2,trafgen1:9/4" type="ixia_link" mode="copper"> </link6>
   </connections>

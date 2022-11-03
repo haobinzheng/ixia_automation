@@ -6488,6 +6488,9 @@ class FortiSwitch_XML(FortiSwitch):
         self.pdu_model = device_xml.pdu_model
         self.pdu_ip = device_xml.pdu_ip
         self.pdu_port = device_xml.pdu_port
+        self.pdu_ip_2 = device_xml.pdu_ip_2
+        self.pdu_port_2 = device_xml.pdu_port_2
+        self.dual_pdu = device_xml.dual_pdu
         self.username = device_xml.username
         self.mgmt_ip = device_xml.mgmt_ip
         self.loop0_ip = None
@@ -6527,9 +6530,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.router_bgp = Router_BGP(self)
         self.system_interfaces_list = None
         
-    def password_recovery(self,*args,**kwargs):
-        pass
-
+    
     def sw_add_ebgp_peer(self,*args,**kwargs):
         ip = kwargs['ip']
         remote_as = kwargs['remote_as']
@@ -6712,15 +6713,15 @@ class FortiSwitch_XML(FortiSwitch):
             config switch phy-mode
             set {port}-phy-mode 4x10G
             end
-            """
-            sw.config_cmds_fast(config_split_ports)
-            switch_enter_yes(sw.console)
-            console_timer(200,msg="switch is being rebooted after configuring split port, wait for 200s")
-            try:
-                self.switch_relogin()
-            except Exception as e:
-                debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
-                self.switch_relogin()
+        """
+        sw.config_cmds_fast(config_split_ports)
+        switch_enter_yes(sw.console)
+        console_timer(200,msg="switch is being rebooted after configuring split port, wait for 200s")
+        try:
+            self.switch_relogin()
+        except Exception as e:
+            debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
+            self.switch_relogin()
 
     def pdu_status(self):
         a = apc()
@@ -6739,6 +6740,99 @@ class FortiSwitch_XML(FortiSwitch):
         Status = {}
         Status = a.set_on(self.pdu_ip, self.pdu_port)
         print(Status)
+
+    def recover_password(self,image_name):
+        sample = """
+        [G]:  Get firmware image from TFTP server.
+        [F]:  Format boot device.
+        [C]:  Copy boot device to another one.
+        [I]:  Configuration and Information.
+        [U]:  Upgrade BIOS image.
+        [R]:  Reboot FortiSwitch.
+        [Q]:  Quit menu and continue to boot.
+        [H]:  Display this list of options.
+
+        Enter G,F,C,I,U,R,Q,or H:
+
+        Enter G,F,C,I,U,R,Q,or H:
+
+        Enter G,F,C,I,U,R,Q,or H: f
+
+        Format partition Default/Backup/Data2:[D/B/S]? d
+
+        Formating Default partition ... 100%
+
+        Enter G,F,C,I,U,R,Q,or H: f
+
+        Format partition Default/Backup/Data2:[D/B/S]? b
+
+        Formating Backup partition ... 100%
+
+        Enter G,F,C,I,U,R,Q,or H: f
+
+        Format partition Default/Backup/Data2:[D/B/S]? s
+
+        Formating Data2 partition ... 100%
+
+        Enter G,F,C,I,U,R,Q,or H: f
+
+        Format partition Default/Backup/Data2:[D/B/S]?
+        Format partition Default/Backup/Data2:[D/B/S]? d
+
+        Formating Default partition ... 100%
+
+        Enter G,F,C,I,U,R,Q,or H: g
+
+        Enter TFTP server address [10.105.3.38]: 10.105.19.19
+        Enter local address [10.1.1.111]: 10.105.50.25
+        Enter local netmask [255.255.255.0]:
+        Enter default gateway [10.1.1.1]: 10.105.50.254
+        Enter firmware image file name [248ef.out]: FSW_248E_FPOE-v6-build0478-FORTINET.out
+        Save as Default/Backup/Run without saving:[D/B/R]? d
+
+        Loading [ 28826982, 28826982 ]   Success
+
+
+        """
+        a = apc()
+        Status = {}
+        
+        Status = a.set_reboot(self.pdu_ip, self.pdu_port)
+        print(Status)
+        if self.dual_pdu == True:
+            Status = a.set_reboot(self.pdu_ip_2, self.pdu_port_2)
+            print(Status)
+
+        for i in range(20):
+            self.console.write(convert_cmd_ascii_n("X"))
+            sleep(0.5)
+        
+        self.console.write(convert_cmd_ascii_n("f"))
+        sleep(2)
+        self.console.write(convert_cmd_ascii_n("d"))
+        sleep(5)
+        self.console.write(convert_cmd_ascii_n("f"))
+        sleep(2)
+        self.console.write(convert_cmd_ascii_n("b"))
+        sleep(5)
+        self.console.write(convert_cmd_ascii_n("f"))
+        sleep(2)
+        self.console.write(convert_cmd_ascii_n("s"))
+        sleep(5)
+        self.console.write(convert_cmd_ascii_n("g"))
+        sleep(2)
+        self.console.write(convert_cmd_ascii_n(f"{self.tftp_ip}"))
+        sleep(2)
+        self.console.write(convert_cmd_ascii_n(f"{self.mgmt_ip}"))
+        sleep(2)
+        self.console.write(convert_cmd_ascii_n(f"{self.mgmt_netmask}"))
+        sleep(2)
+        self.console.write(convert_cmd_ascii_n(f"{self.mgmt_gateway}"))
+        sleep(2)
+        self.console.write(convert_cmd_ascii_n(image_name))
+        sleep(2)
+
+
 
     def pdu_cycle_bios(self):
         a = apc()
@@ -7373,8 +7467,11 @@ class FortiSwitch_XML(FortiSwitch):
         path=system, objname=status, tablename=(null), size=0
         """
         print(f"========================== {self.hostname}: Get System Status =======================")
-        output = collect_show_cmd(self.console,"get system status")
-        #print(output)
+        if self.console != None:
+            output = collect_show_cmd(self.console,"get system status")
+        else:
+            Info(f"!!!!!!! the device {self.hostname} has no console connection, please check your console connection")
+            return
 
         for line in output:
             if "Version:" in line:

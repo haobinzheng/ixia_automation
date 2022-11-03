@@ -36,6 +36,8 @@ if __name__ == "__main__":
 	parser.add_argument("-s", "--setup_only", help="Setup testbed and IXIA only for manual testing", action="store_true")
 	parser.add_argument("-i", "--interactive", help="Enter interactive mode for test parameters", action="store_true")
 	parser.add_argument("-ug", "--sa_upgrade", type = str,help="FSW software upgrade in standlone mode. For debug image enter -1. Example: v6-193,v7-5,-1(debug image)")
+	parser.add_argument("-r", "--recovery", help="FSW recovery password.Example:python ipv6_acl_testing -r",action="store_true")
+	#parser.add_argument("-r", "--recovery",help="FSW recovery password.Example:python ipv6_acl_testing -r FSW_3032E-v7-build0426-FORTINET.out")
 
 
 	global DEBUG
@@ -43,6 +45,12 @@ if __name__ == "__main__":
 
 	
 	args = parser.parse_args()
+
+	if args.recovery:
+		password_recovery = True
+		print_title(f"Recover password and install image")
+	else:
+		password_recovery = False
 
 	if args.sa_upgrade:
 		upgrade_sa = True
@@ -165,6 +173,15 @@ if __name__ == "__main__":
 	############################################### Static Data Are Define Here ########################################################################
 	 
 	##################################### Pre-Test setup and configuration #############################
+	if password_recovery: 
+		i = len(switches)
+		keyin = input(f"Please enter the switch number you want to do password discovery[1-{i}]:")
+		recovery_switch = switches[int(keyin)-1]
+		keyin = input(f"Please enter the image name you want to install, example:FSW_3032E-v7-build0426-FORTINET.out:")
+		image_name = keyin
+		recovery_switch.recover_password(image_name)
+		exit()
+
 	if upgrade_sa:
 		for sw in switches:
 			v,b = sw_build.split('-')
@@ -912,7 +929,7 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 
-	def scale_acl6_testing():
+	def basic_scale_acl6_testing():
 		#Change the switch that you want to scale
 		sw = switches[1]
 		acl = switch_acl_ingress(sw)
@@ -980,6 +997,86 @@ if __name__ == "__main__":
 			try_group += 1
 		#Change back to switch 1.  Need to fix this later
 		sw = switches[0]
+
+	def real_scale_acl6_testing(*args,**kwargs):
+		
+		switch_num = int(kwargs["switch_num"]) - 1 
+		sw_dut = switches[switch_num]
+
+
+		acl = switch_acl_ingress(sw_dut)
+		acl.acl_ingress_clean_up()
+		#sw_dut.switch_reboot_login()
+
+		try_group = 3
+		index = 1
+		dst_ip6_prefix = net6_list[1].split("/")[0]
+		src_ip6_prefix = net6_list[1].split("/")[0]
+		while(try_group < 7):
+			classifiers = {
+			"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
+			"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
+			}
+			globals = {
+			"group":try_group,
+			 "ingress-interface": sw_dut.ixia_ports[0]
+			}
+			actions = {
+			"count":"enable"
+			}
+			acl.config_acl6_generic(index,globals,classifiers,actions)
+			sleep(2)
+			index +=1
+			try_group +=1
+		sleep(10)
+		acl.update_acl_usage()
+		acl.print_acl_usage()
+
+		acl.acl_ingress_clean_up()
+		sleep(5)
+		 
+		index = 1
+		total_acl = 1
+		for entry in acl.acl_usage_list:
+			group_id = entry.group_id
+			for i in range(entry.rule_total):
+				classifiers = {
+				"dst-ip6-prefix":dst_ip6_prefix,
+				"src-ip6-prefix":src_ip6_prefix
+				}
+				globals = {
+				"group":group_id,
+				 "ingress-interface": sw_dut.ixia_ports[0]
+				}
+				actions = {
+				"count":"enable"
+				}
+				acl.config_acl6_generic(index,globals,classifiers,actions)
+				dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
+				src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
+				index +=1
+				total_acl +=1			  
+
+		ixia_sub_intf = total_acl
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+
+		print(portList_v4_v6)
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+		for topo in myixia.topologies:
+			topo.add_ipv4(gateway="fixed")
+			topo.add_ipv6(gateway="fixed")
+
+		myixia.start_protocol(wait=20)
+		src_topo = myixia.topologies[switch_num * 2].topology
+		dst_topo = myixia.topologies[switch_num * 2+1].topology
+		myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
+		myixia.start_traffic()
+		keyin = input(f"Please capture packets at IXIA to verify packets with scaled prefixes,Press any key when done:")
+		myixia.collect_stats()
+		myixia.check_traffic()
+		myixia.stop_traffic()
 
 	def basic_acl6_drop_testing():
 		acl.acl_ingress_clean_up()
@@ -1100,6 +1197,8 @@ if __name__ == "__main__":
 	def acl6_basic_color_testing():
 		description = "Ingress 2 Color counter types : only igress policer"
 		print(description)
+		sw = switches[1]
+		acl = switch_acl_ingress(sw)
 		acl.acl_ingress_clean_up()
 
 		cmds = """
@@ -1396,11 +1495,12 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
+	real_scale_acl6_testing(switch_num=1)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
 	#change_vlan_cos_dscp_testing()
-	scale_acl6_testing()
+	#basic_scale_acl6_testing()
 	#acl6_priority_testing()
 	#acl6_redirect_mirror_testing()
 	#basic_acl6_testing()

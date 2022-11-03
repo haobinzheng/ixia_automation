@@ -1861,7 +1861,14 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 				exit()
 			sleep(2)
 			tn = telnetlib.Telnet(ip_address,console_port_int)
-	 
+		except TimeoutError: 
+			tprint("!!!!!!!!!!!Telnet to console server timeout, skip this switch console connection")
+			tn = None 
+			return tn
+		except Exception as e:
+			tprint("!!!!!!!!!!! Something is wrong with telnet connection, check your network connectitiy to console server")
+			tn = None 
+			return tn
 	tn.write(('\x03\n').encode('ascii'))
 	time.sleep(2)
 	tn.write(('\x03\n').encode('ascii'))
