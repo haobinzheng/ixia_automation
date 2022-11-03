@@ -1039,6 +1039,8 @@ if __name__ == "__main__":
 		total_acl = 1
 		for entry in acl.acl_usage_list:
 			group_id = entry.group_id
+			if group_id < 3:
+				continue
 			for i in range(entry.rule_total):
 				classifiers = {
 				"dst-ip6-prefix":dst_ip6_prefix,
