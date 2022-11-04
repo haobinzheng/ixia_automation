@@ -1052,7 +1052,6 @@ if __name__ == "__main__":
 			index +=1
 			try_group +=1
 		sleep(10)
-		exit()
 		acl.update_acl_usage()
 		acl.print_acl_usage()
 
@@ -1526,7 +1525,7 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	real_scale_acl6_testing(switch_num=3)
+	#real_scale_acl6_testing(switch_num=3)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
@@ -1534,7 +1533,7 @@ if __name__ == "__main__":
 	#basic_scale_acl6_testing()
 	#acl6_priority_testing()
 	#acl6_redirect_mirror_testing()
-	#basic_acl6_testing(switch_num_list = [1,2,3])
+	basic_acl6_testing(switch_num_list = [1,2,3])
 	#basic_acl6_drop_testing()
 	exit()
 	cmd = "execute acl clear-counter all"
