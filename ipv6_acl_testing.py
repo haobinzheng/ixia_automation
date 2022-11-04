@@ -1033,8 +1033,8 @@ if __name__ == "__main__":
  
 		try_group = 3
 		index = 1
-		dst_ip6_prefix = net6_list[1].split("/")[0]
-		src_ip6_prefix = net6_list[1].split("/")[0]
+		dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
+		src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
 		while(try_group < 7):
 			classifiers = {
 			"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
