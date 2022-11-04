@@ -359,60 +359,75 @@ if __name__ == "__main__":
 	acl = switch_acl_ingress(sw)
 
 	if config_interfaces == True:
-		config_sys_interfaces(sw)
+		for dut in switches:
+			config_sys_interfaces(dut)
 
 	if clean_acl == True:
 		acl.acl_ingress_clean_up()
 
-	def basic_acl6_testing():
-		acl.acl_ingress_clean_up()
-		ixia_sub_intf = 10
+	def basic_acl6_testing(*args,**kwargs):
+		switch_num_list = kwargs["switch_num_list"]
+		
+		ixia_sub_intf = 2
 		portList_v4_v6 = []
-	
 		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
 
 		print(portList_v4_v6)
-		for i in range(ixia_sub_intf):
-			classifiers = {}
-			globals = {}
-			actions = {}
+		for switch_num in switch_num_list:
+			switch_num = int(switch_num)-1
+			sw = switches[switch_num]
+			acl = switch_acl_ingress(switches[switch_num])
+			acl.acl_ingress_clean_up()
 
-			index=1+i
-			classifiers = {
-			"dst-ip6-prefix":str(ipaddress.IPv6Address(net6_list[1].split("/")[0])+i),
-			"src-ip6-prefix":str(ipaddress.IPv6Address(net6_list[0].split("/")[0])+i)
-			}
-			
-			globals = {
-			"group":5,
-             "ingress-interface": sw.ixia_ports[0]
-            }
-			
-			actions = {
-			"count":"enable"
-			}
-			
-			acl.config_acl6_generic(index,globals,classifiers,actions)
+			for i in range(ixia_sub_intf):
+				classifiers = {}
+				globals = {}
+				actions = {}
 
-			index=1001+i
-			classifiers = {
-			"dst-ip6-prefix":str(ipaddress.IPv6Address(net6_list[0].split("/")[0])+i),
-			"src-ip6-prefix":str(ipaddress.IPv6Address(net6_list[1].split("/")[0])+i)
-			}
-			
-			globals = {
-			"group":5,
-             "ingress-interface": sw.ixia_ports[1]
-            }
-			
-			actions = {
-			"count":"enable"
-			}
-			acl.config_acl6_generic(index,globals,classifiers,actions)
+				index=1+i
+				classifiers = {
+				"dst-ip6-prefix":str(ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i),
+				"src-ip6-prefix":str(ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i)
+				}
+				
+				globals = {
+				"group":5,
+	             "ingress-interface": sw.ixia_ports[0]
+	            }
+				
+				actions = {
+				"count":"enable"
+				}
+				
+				acl.config_acl6_generic(index,globals,classifiers,actions)
+
+				index=1001+i
+				classifiers = {
+				"dst-ip6-prefix":str(ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i),
+				"src-ip6-prefix":str(ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i)
+				}
+				
+				globals = {
+				"group":5,
+	             "ingress-interface": sw.ixia_ports[1]
+	            }
+				
+				actions = {
+				"count":"enable"
+				}
+				acl.config_acl6_generic(index,globals,classifiers,actions)
+
+			index += 1
+			#format of this method: config_explicit_drop(self,index,group,intf)
+			acl.config_explicit_drop(index,5,sw.ixia_ports[0])
+			index += 1
+			acl.config_explicit_drop(index,5,sw.ixia_ports[1])
+
  
-		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[:2])
+		#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 		for topo in myixia.topologies:
 			topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
 			topo.add_ipv6(gateway="fixed")
@@ -421,20 +436,29 @@ if __name__ == "__main__":
 
 		# for i in range(0,len(tb.ixia.port_active_list)-1):
 		# 	for j in range(i+1,len(tb.ixia.port_active_list)):
-		for i in range(0,1):
-			for j in range(i+1,2):
-				myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
-				myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
-				myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
-				myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+		for switch_num in switch_num_list:
+			switch_num -= 1
+			for i in range(switch_num*2,switch_num*2+1):
+				for j in range(i+1,switch_num*2+2):
+					# myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					# myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
 
-
-		initial_testing = True
-		if initial_testing:
 			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-			myixia.stop_traffic()	
+			sw = switches[switch_num]
+			sw.print_show_command(f"get switch acl counter all")
+			print_double_line()
+			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
+			print_double_line()
+			sleep(5)
+			myixia.remove_all_traffic_v6()
+			# myixia.remove_all_traffic_v4()
 
 	def acl6_redirect_mirror_testing():
 		acl.acl_ingress_clean_up()
@@ -1005,61 +1029,62 @@ if __name__ == "__main__":
 
 
 		acl = switch_acl_ingress(sw_dut)
-		# acl.acl_ingress_clean_up()
+		acl.acl_ingress_clean_up()
  
-		# try_group = 3
-		# index = 1
-		# dst_ip6_prefix = net6_list[1].split("/")[0]
-		# src_ip6_prefix = net6_list[1].split("/")[0]
-		# while(try_group < 7):
-		# 	classifiers = {
-		# 	"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
-		# 	"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
-		# 	}
-		# 	globals = {
-		# 	"group":try_group,
-		# 	 "ingress-interface": sw_dut.ixia_ports[0]
-		# 	}
-		# 	actions = {
-		# 	"count":"enable"
-		# 	}
-		# 	acl.config_acl6_generic(index,globals,classifiers,actions)
-		# 	sleep(2)
-		# 	index +=1
-		# 	try_group +=1
-		# sleep(10)
-		# acl.update_acl_usage()
-		# acl.print_acl_usage()
+		try_group = 3
+		index = 1
+		dst_ip6_prefix = net6_list[1].split("/")[0]
+		src_ip6_prefix = net6_list[1].split("/")[0]
+		while(try_group < 7):
+			classifiers = {
+			"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
+			"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
+			}
+			globals = {
+			"group":try_group,
+			 "ingress-interface": sw_dut.ixia_ports[0]
+			}
+			actions = {
+			"count":"enable"
+			}
+			acl.config_acl6_generic(index,globals,classifiers,actions)
+			sleep(2)
+			index +=1
+			try_group +=1
+		sleep(10)
+		exit()
+		acl.update_acl_usage()
+		acl.print_acl_usage()
 
-		# acl.acl_ingress_clean_up()
-		# sleep(5)
+		acl.acl_ingress_clean_up()
+		sleep(5)
 		 
-		# index = 1
-		# total_acl = 1
-		# for entry in acl.acl_usage_list:
-		# 	group_id = entry.group_id
-		# 	if group_id < 3:
-		# 		continue
-		# 	for i in range(entry.rule_total):
-		# 		classifiers = {
-		# 		"dst-ip6-prefix":dst_ip6_prefix,
-		# 		"src-ip6-prefix":src_ip6_prefix
-		# 		}
-		# 		globals = {
-		# 		"group":group_id,
-		# 		 "ingress-interface": sw_dut.ixia_ports[0]
-		# 		}
-		# 		actions = {
-		# 		"count":"enable"
-		# 		}
-		# 		acl.config_acl6_generic(index,globals,classifiers,actions)
-		# 		dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
-		# 		src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
-		# 		index +=1
-		# 		total_acl +=1			  
-		total_acl = 512
+		index = 1
+		total_acl = 1
+		for entry in acl.acl_usage_list:
+			group_id = entry.group_id
+			if group_id < 3:
+				continue
+			for i in range(entry.rule_total):
+				classifiers = {
+				"dst-ip6-prefix":dst_ip6_prefix,
+				"src-ip6-prefix":src_ip6_prefix
+				}
+				globals = {
+				"group":group_id,
+				 "ingress-interface": sw_dut.ixia_ports[0]
+				}
+				actions = {
+				"count":"enable"
+				}
+				acl.config_acl6_generic(index,globals,classifiers,actions)
+				dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
+				src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
+				index +=1
+				total_acl +=1			  
+		#total_acl = 512
 		ixia_sub_intf = total_acl
-		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list[switch_num*2:switch_num*2+2],mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
 
@@ -1074,11 +1099,16 @@ if __name__ == "__main__":
 		dst_topo = myixia.topologies[switch_num * 2+1].topology
 		myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
 		myixia.start_traffic()
-		keyin = input(f"Please capture packets at IXIA to verify packets with scaled prefixes,Press any key when done:")
+		keyin = input(f"Please verify IXIA traffic packets with scaled prefixes,Press any key when done:")
+		myixia.stop_traffic()
+		sleep(10)
 		myixia.collect_stats()
 		myixia.check_traffic()
-		myixia.stop_traffic()
-
+		sw.print_show_command(f"get switch acl counter all")
+		print_double_line()
+		keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
+		print_double_line()
+ 
 	def basic_acl6_drop_testing():
 		acl.acl_ingress_clean_up()
 		for i in range(ixia_sub_intf):
@@ -1496,7 +1526,7 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	real_scale_acl6_testing(switch_num=1)
+	real_scale_acl6_testing(switch_num=3)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
@@ -1504,7 +1534,7 @@ if __name__ == "__main__":
 	#basic_scale_acl6_testing()
 	#acl6_priority_testing()
 	#acl6_redirect_mirror_testing()
-	#basic_acl6_testing()
+	#basic_acl6_testing(switch_num_list = [1,2,3])
 	#basic_acl6_drop_testing()
 	exit()
 	cmd = "execute acl clear-counter all"

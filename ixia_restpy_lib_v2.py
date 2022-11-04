@@ -949,6 +949,8 @@ class IXIA:
     def __init__(self,*args,**kwargs):
         self.apiServerIp = args[0]
         self.ixChassisIpList = args[1]
+        self.traffic_items_v6 = []
+        self.traffic_items_v4 = []
         self.portList = args[2]
         if "different_vlan" in kwargs:
             different_vlan = kwargs['different_vlan']
@@ -1104,6 +1106,7 @@ class IXIA:
         tracking_group = tracking_name,
         rate = traffic_rate
         )
+        self.traffic_items_v4.append(traffic_item)
 
     def create_traffic_raw(self,*args,**kwargs):
         src_port = kwargs['src_port']
@@ -1151,7 +1154,7 @@ class IXIA:
             rate = kwargs['rate']
         else:
             rate = 3
-        ixia_rest_create_traffic_v6(
+        traffic_item = ixia_rest_create_traffic_v6(
         platform = self.testPlatform, 
         session = self.Session,
         ixnet = self.ixNetwork,
@@ -1161,6 +1164,18 @@ class IXIA:
         tracking_group = tracking_name,
         rate = rate,
         )
+        self.traffic_items_v6.append(traffic_item)
+
+    def remove_all_traffic_v4(self):
+        for i in self.traffic_items_v4:
+            i.remove()
+        self.traffic_items_v4 = []
+        
+    def remove_all_traffic_v6(self):
+        for i in self.traffic_items_v6:
+            i.remove()
+        self.traffic_items_v6 = []
+
     def start_traffic(self):
         ixia_rest_start_traffic(
         platform = self.testPlatform, 
@@ -2305,6 +2320,7 @@ def ixia_rest_create_traffic_v6(*args,**kwargs):
 
         # flowStatistics = StatViewAssistant(ixNetwork, 'Traffic Item Statistics')
         # ixNetwork.info('{}\n'.format(flowStatistics))
+        return trafficItem
 
     except Exception as errMsg:
         print('\n%s' % traceback.format_exc(None, errMsg))

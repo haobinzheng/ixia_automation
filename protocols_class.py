@@ -1628,6 +1628,23 @@ class switch_acl_ingress(Switch_ACL):
         # self.switch = args[0]
         # self.clauses = None
         super().__init__(*args,**kwargs)
+        #self.config_explicit_drop()
+
+    def config_explicit_drop(self,index,group,intf):
+        cmds = f"""
+        config switch acl ingress
+        edit {index}
+                set group {group}
+                set ingress-interface {intf}
+                config action
+                    set count enable
+                    set drop enable
+                end
+            next
+        end
+        """
+        self.switch.config_cmds_fast(cmds)
+
 
     def config_acl6_generic(self,index,globals,classifiers,actions):
         example = """
