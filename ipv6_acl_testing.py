@@ -1083,6 +1083,7 @@ if __name__ == "__main__":
 				total_acl +=1			  
 		#total_acl = 512
 		ixia_sub_intf = total_acl
+		portList_v4_v6 = []
 		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list[switch_num*2:switch_num*2+2],mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
