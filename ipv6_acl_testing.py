@@ -1060,7 +1060,10 @@ if __name__ == "__main__":
 		acl.print_acl_usage()
 		acl.acl_ingress_clean_up()
 		sleep(5)
-		 
+		
+		acl.update_acl_usage()
+		acl.print_acl_usage()
+
 		index = 1
 		total_acl = 1
 		for entry in acl.acl_usage_list:
@@ -1083,7 +1086,9 @@ if __name__ == "__main__":
 				dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
 				src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
 				index +=1
-				total_acl +=1			  
+				total_acl +=1	
+			acl.update_acl_usage()
+			acl.print_acl_usage()		  
 		#total_acl = 768
 		final_total_acl = total_acl
 		ixia_sub_intf = total_acl
