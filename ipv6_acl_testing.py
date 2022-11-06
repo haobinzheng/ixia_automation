@@ -1147,6 +1147,8 @@ if __name__ == "__main__":
 						total_acl +=1	
 
 				sleep(10)
+				myixia.clear_stats()
+				sleep(20)
 				Infor(f"======================= Check traffic after one round of adding ACL entries =================")
 				myixia.check_traffic()
 				sw.print_show_command(f"get switch acl counter all")
