@@ -1109,9 +1109,11 @@ if __name__ == "__main__":
 		myixia.collect_stats()
 		myixia.check_traffic()
 		sw.print_show_command(f"get switch acl counter all")
-		print_double_line()
-		keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
-		print_double_line()
+		
+		if longevity == False:
+			print_double_line()
+			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
+			print_double_line()
 
 		if longevity == True:
 			myixia.start_traffic()
