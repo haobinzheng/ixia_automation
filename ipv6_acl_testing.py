@@ -953,8 +953,9 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 
-	def basic_scale_acl6_testing():
+	def basic_scale_acl6_testing(*args, **kwargs):
 		#Change the switch that you want to scale
+		switch_num = kwargs["switch_num"]
 		sw = switches[1]
 		acl = switch_acl_ingress(sw)
 		acl.acl_ingress_clean_up()
@@ -1026,7 +1027,10 @@ if __name__ == "__main__":
 		
 		switch_num = int(kwargs["switch_num"]) - 1 
 		sw_dut = switches[switch_num]
-
+		if "longevity" in kwargs:
+			longevity = kwargs['longevity']
+		else:
+			longevity = False
 
 		acl = switch_acl_ingress(sw_dut)
 		acl.acl_ingress_clean_up()
@@ -1054,7 +1058,6 @@ if __name__ == "__main__":
 		sleep(10)
 		acl.update_acl_usage()
 		acl.print_acl_usage()
-
 		acl.acl_ingress_clean_up()
 		sleep(5)
 		 
@@ -1081,17 +1084,18 @@ if __name__ == "__main__":
 				src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
 				index +=1
 				total_acl +=1			  
-		#total_acl = 512
+		#total_acl = 768
+		final_total_acl = total_acl
 		ixia_sub_intf = total_acl
 		portList_v4_v6 = []
-		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list[switch_num*2:switch_num*2+2],mac_list,net4_list,gw4_list,net6_list,gw6_list):
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
 
 		print(portList_v4_v6)
 		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 		for topo in myixia.topologies:
-			topo.add_ipv4(gateway="fixed")
+			topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
 			topo.add_ipv6(gateway="fixed")
 
 		myixia.start_protocol(wait=20)
@@ -1108,6 +1112,42 @@ if __name__ == "__main__":
 		print_double_line()
 		keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
 		print_double_line()
+
+		if longevity == True:
+			myixia.start_traffic()
+			for i in range(30):
+				acl.acl_ingress_clean_up()
+				sleep(10)
+				dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
+				src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
+				index = 1
+				total_acl = 1
+				for entry in acl.acl_usage_list:
+					group_id = entry.group_id
+					if group_id < 3:
+						continue
+					for i in range(entry.rule_total):
+						classifiers = {
+						"dst-ip6-prefix":dst_ip6_prefix,
+						"src-ip6-prefix":src_ip6_prefix
+						}
+						globals = {
+						"group":group_id,
+						 "ingress-interface": sw_dut.ixia_ports[0]
+						}
+						actions = {
+						"count":"enable"
+						}
+						acl.config_acl6_generic(index,globals,classifiers,actions)
+						dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
+						src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
+						index +=1
+						total_acl +=1	
+
+				sleep(10)
+				Infor(f"======================= Check traffic after one round of adding ACL entries =================")
+				myixia.check_traffic()
+				sw.print_show_command(f"get switch acl counter all")
  
 	def basic_acl6_drop_testing():
 		acl.acl_ingress_clean_up()
@@ -1526,12 +1566,12 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	real_scale_acl6_testing(switch_num=3)
+	real_scale_acl6_testing(switch_num=2,longevity=True)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
 	#change_vlan_cos_dscp_testing()
-	#basic_scale_acl6_testing()
+	#basic_scale_acl6_testing(switch_num=2)
 	#acl6_priority_testing()
 	#acl6_redirect_mirror_testing()
 	#basic_acl6_testing(switch_num_list = [1,2,3])
