@@ -1070,7 +1070,8 @@ if __name__ == "__main__":
 			group_id = entry.group_id
 			if group_id < 3:
 				continue
-			for i in range(entry.rule_total):
+			group_total = 0
+ 			for i in range(entry.rule_total):
 				classifiers = {
 				"dst-ip6-prefix":dst_ip6_prefix,
 				"src-ip6-prefix":src_ip6_prefix
@@ -1086,7 +1087,18 @@ if __name__ == "__main__":
 				dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
 				src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
 				index +=1
-				total_acl +=1	
+				total_acl +=1
+				group_total +=1 
+				stop_adding_acl_group = False
+				if group_total > entry.rule_total/2 + 5:
+					acl_working = switch_acl_ingress(sw_dut)
+					for en in acl_working.acl_usage_list:
+						if en.group_id == group_id and en.rule_free == 0:
+							Info(f"!!!!! Before finish creating ACL entries in the slice, slice ran out of free rules")
+							stop_adding_acl_group = True 
+							break
+					if stop_adding_acl_group == True:
+						break
 			acl.update_acl_usage()
 			acl.print_acl_usage()		  
 		total_acl = 512
@@ -1108,7 +1120,7 @@ if __name__ == "__main__":
 		dst_topo = myixia.topologies[switch_num * 2+1].topology
 		myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
 		myixia.start_traffic()
-		keyin = input(f"Please verify IXIA traffic packets with scaled prefixes,Press any key when done:")
+		sleep(10)
 		myixia.stop_traffic()
 		sleep(10)
 		myixia.collect_stats()
