@@ -1071,7 +1071,7 @@ if __name__ == "__main__":
 			if group_id < 3:
 				continue
 			group_total = 0
- 			for i in range(entry.rule_total):
+			for i in range(entry.rule_total):
 				classifiers = {
 				"dst-ip6-prefix":dst_ip6_prefix,
 				"src-ip6-prefix":src_ip6_prefix
