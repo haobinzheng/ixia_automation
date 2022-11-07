@@ -971,7 +971,7 @@ class IXIA:
             self.topologies = self.create_ixia_topologies()
         else:
             self.topologies = self.create_ixia_topologies_different_vlan()
-        self.transmitmode()
+        #self.transmitmode()
          
     def transmitmode(self):
         preferences = self.Session.Ixnetwork.Globals.Preferences
