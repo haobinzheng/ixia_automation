@@ -1090,7 +1090,7 @@ if __name__ == "__main__":
 				total_acl +=1
 				group_total +=1 
 				stop_adding_acl_group = False
-				if group_total > entry.rule_total/2 + 5:
+				if group_total > entry.rule_total/2 + 5: # check at half way to ensure things are good. 
 					acl_working = switch_acl_ingress(sw_dut)
 					for en in acl_working.acl_usage_list:
 						if en.group_id == group_id and en.rule_free == 0:
@@ -1099,9 +1099,12 @@ if __name__ == "__main__":
 							break
 					if stop_adding_acl_group == True:
 						break
+					else:
+						group_total = 0 # Won't check again 
+
 			acl.update_acl_usage()
 			acl.print_acl_usage()		  
-		total_acl = 512
+		#total_acl = 512
 		final_total_acl = total_acl
 		ixia_sub_intf = total_acl
 		portList_v4_v6 = []
