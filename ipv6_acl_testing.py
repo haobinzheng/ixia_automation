@@ -1033,63 +1033,63 @@ if __name__ == "__main__":
 			longevity = False
 
 		acl = switch_acl_ingress(sw_dut)
-		acl.acl_ingress_clean_up()
+		# acl.acl_ingress_clean_up()
  
-		try_group = 3
-		index = 1
-		dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
-		src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
-		while(try_group < 7):
-			classifiers = {
-			"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
-			"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
-			}
-			globals = {
-			"group":try_group,
-			 "ingress-interface": sw_dut.ixia_ports[0]
-			}
-			actions = {
-			"count":"enable"
-			}
-			acl.config_acl6_generic(index,globals,classifiers,actions)
-			sleep(2)
-			index +=1
-			try_group +=1
-		sleep(10)
-		acl.update_acl_usage()
-		acl.print_acl_usage()
-		acl.acl_ingress_clean_up()
-		sleep(5)
+		# try_group = 3
+		# index = 1
+		# dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
+		# src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
+		# while(try_group < 7):
+		# 	classifiers = {
+		# 	"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
+		# 	"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
+		# 	}
+		# 	globals = {
+		# 	"group":try_group,
+		# 	 "ingress-interface": sw_dut.ixia_ports[0]
+		# 	}
+		# 	actions = {
+		# 	"count":"enable"
+		# 	}
+		# 	acl.config_acl6_generic(index,globals,classifiers,actions)
+		# 	sleep(2)
+		# 	index +=1
+		# 	try_group +=1
+		# sleep(10)
+		# acl.update_acl_usage()
+		# acl.print_acl_usage()
+		# acl.acl_ingress_clean_up()
+		# sleep(5)
 		
-		acl.update_acl_usage()
-		acl.print_acl_usage()
+		# acl.update_acl_usage()
+		# acl.print_acl_usage()
 
-		index = 1
-		total_acl = 1
-		for entry in acl.acl_usage_list:
-			group_id = entry.group_id
-			if group_id < 3:
-				continue
-			for i in range(entry.rule_total):
-				classifiers = {
-				"dst-ip6-prefix":dst_ip6_prefix,
-				"src-ip6-prefix":src_ip6_prefix
-				}
-				globals = {
-				"group":group_id,
-				 "ingress-interface": sw_dut.ixia_ports[0]
-				}
-				actions = {
-				"count":"enable"
-				}
-				acl.config_acl6_generic(index,globals,classifiers,actions)
-				dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
-				src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
-				index +=1
-				total_acl +=1	
-			acl.update_acl_usage()
-			acl.print_acl_usage()		  
-		#total_acl = 768
+		# index = 1
+		# total_acl = 0
+		# for entry in acl.acl_usage_list:
+		# 	group_id = entry.group_id
+		# 	if group_id < 3:
+		# 		continue
+		# 	for i in range(entry.rule_total):
+		# 		classifiers = {
+		# 		"dst-ip6-prefix":dst_ip6_prefix,
+		# 		"src-ip6-prefix":src_ip6_prefix
+		# 		}
+		# 		globals = {
+		# 		"group":group_id,
+		# 		 "ingress-interface": sw_dut.ixia_ports[0]
+		# 		}
+		# 		actions = {
+		# 		"count":"enable"
+		# 		}
+		# 		acl.config_acl6_generic(index,globals,classifiers,actions)
+		# 		dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
+		# 		src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
+		# 		index +=1
+		# 		total_acl +=1	
+		# 	acl.update_acl_usage()
+		# 	acl.print_acl_usage()		  
+		total_acl = 512
 		final_total_acl = total_acl
 		ixia_sub_intf = total_acl
 		portList_v4_v6 = []
@@ -1583,7 +1583,7 @@ if __name__ == "__main__":
 	#basic_scale_acl6_testing(switch_num=2)
 	#acl6_priority_testing()
 	#acl6_redirect_mirror_testing()
-	#basic_acl6_testing(switch_num_list = [1,2,3])
+	basic_acl6_testing(switch_num_list = [1,2,3])
 	#basic_acl6_drop_testing()
 	exit()
 	cmd = "execute acl clear-counter all"
