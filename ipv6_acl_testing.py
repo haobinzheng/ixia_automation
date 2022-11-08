@@ -1140,6 +1140,7 @@ if __name__ == "__main__":
 			for i in range(30):
 				acl.acl_ingress_clean_up()
 				sleep(10)
+				acl.update_acl_usage()
 				dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
 				src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
 				index = 1
@@ -1169,9 +1170,12 @@ if __name__ == "__main__":
 				sleep(10)
 				myixia.clear_stats()
 				sleep(20)
-				Infor(f"======================= Check traffic after one round of adding ACL entries =================")
+				Info(f"======================= Check traffic after one round of adding ACL entries =================")
+				myixia.stop_traffic()
 				myixia.check_traffic()
 				sw.print_show_command(f"get switch acl counter all")
+				sleep(10)
+				myixia.start_traffic()
  
 	def basic_acl6_drop_testing():
 		acl.acl_ingress_clean_up()
