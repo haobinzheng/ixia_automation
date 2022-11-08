@@ -9,6 +9,7 @@ from threading import Thread
 from time import sleep
 import ipaddress
 import multiprocessing
+import random
 
 # Append paths to python APIs (Linux and Windows)
 
@@ -364,6 +365,58 @@ if __name__ == "__main__":
 
 	if clean_acl == True:
 		acl.acl_ingress_clean_up()
+
+	def classifier_combo_testing(*args,**kwargs):
+		switch_num = kwargs["switch_num"] - 1 
+		sw = switches[switch_num]
+		acl = switch_acl_ingress(sw)
+		acl.acl_ingress_clean_up()
+
+		
+		sample = f"""
+		S424EPTF21001277 (1002) # config classifier
+
+		S424EPTF21001277 (classifier) # set
+		cos               802.1Q CoS value to be matched (0 - 7).
+		dscp              DSCP value to be matched (0 - 63).
+		dst-ip-prefix     Destination-ip address to be matched.
+		dst-ip6-prefix    Destination-ip6 address to be matched.
+		dst-mac           Destination mac address to be matched.
+		ether-type        Ether type to be matched (0 - 65535).
+		service           Service name.
+		src-ip-prefix     Source-ip address to be matched.
+		src-ip6-prefix    Source-ip6 address to be matched.
+		src-mac           Source mac address to be matched.
+		vlan-id           Vlan id to be matched (1 - 4094).
+		"""
+		classifiers = {}
+		globals = {}
+		actions = {}
+		index = 1
+		classifiers = {
+		"dst-ip6-prefix":str(ipaddress.IPv6Address("2001::1")),
+		"src-ip6-prefix":str(ipaddress.IPv6Address("2001::100")),
+		"cos":6,
+		"dscp":63,
+		"dst-mac":"00:11:11:11:11:11",
+		"scr-mac":"00:22:22:22:22:22",
+		"ether-type":"800",
+		"service":"SSH",
+		"vlan-id":1000
+		}
+
+		globals = {
+		"group":5,
+		 "ingress-interface": sw.ixia_ports[0]
+		}
+		acl.config_acl6_generic(index,globals,classifiers,actions)
+		sleep(3)
+		output = collect_config_items_general(sw,"config switch acl ingress","config classifier")
+		result = convert_config_dict(output)
+
+		if classifiers == results:
+			Info("Configuration of Classifier was successful")
+		key, value = random.choice(list(classifiers.items()))
 
 	def basic_acl6_testing(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
@@ -1594,7 +1647,8 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	real_scale_acl6_testing(switch_num=2,longevity=True)
+	classifier_combo_testing(switch_num=1)
+	#real_scale_acl6_testing(switch_num=2,longevity=True)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()

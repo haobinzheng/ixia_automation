@@ -55,6 +55,32 @@ def collect_edit_items_general(dut,cmd,*args, **kwargs):
             new_result.append(item)
     return new_result
 
+def collect_config_items_general(dut,*args, **kwargs):
+    keyword = kwargs['keyword']
+    for item in args:
+        switch_exec_cmd(dut,item)
+    result = collect_edit_question_cmd(dut,"show")
+    switch_exec_cmd(dut,"end")
+    result.pop(0)
+    result.pop(0)
+    new_result = []
+    for item in result:
+        if item == '':
+            continue
+        elif keyword in item:
+            continue
+        else:
+            new_result.append(item)
+    return new_result
+
+def convert_config_dict(output):
+    result = {}
+    for line in output:
+        set,key,value = split(line)
+        reslut[key] = value
+
+    return result
+
 def collect_edit_items(dut,cmd):
  	switch_exec_cmd(dut,cmd)
  	result = collect_edit_question_cmd(dut,"edit ?")
