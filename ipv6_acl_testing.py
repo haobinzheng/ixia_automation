@@ -414,7 +414,9 @@ if __name__ == "__main__":
 		output = collect_config_items_general(sw.console,"config switch acl ingress","config classifier")
 		result = convert_config_dict(output)
 
-		if classifiers == results:
+		print(classifiers)
+		print(result)
+		if classifiers == result:
 			Info("Configuration of Classifier was successful")
 		key, value = random.choice(list(classifiers.items()))
 
