@@ -411,7 +411,7 @@ if __name__ == "__main__":
 		}
 		acl.config_acl6_generic(index,globals,classifiers,actions)
 		sleep(3)
-		output = collect_config_items_general(sw,"config switch acl ingress","config classifier")
+		output = collect_config_items_general(sw.console,"config switch acl ingress","config classifier")
 		result = convert_config_dict(output)
 
 		if classifiers == results:
