@@ -66,9 +66,7 @@ def collect_config_items_general(dut,*args, **kwargs):
     new_result = []
     for item in result:
         if item == '':
-            continue
-        elif keyword in item:
-            continue
+            continue    
         else:
             new_result.append(item)
     return new_result
