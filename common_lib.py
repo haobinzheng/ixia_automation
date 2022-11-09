@@ -75,8 +75,9 @@ def convert_config_dict(output):
     result = {}
     for line in output:
         try:
-            set,key,value = split(line)
-            reslut[key] = value
+            if "set" in line:
+                set,key,value = line.split(" ")
+                result[key] = str(value).strip('"')
         except Exception as e:
             pass
     return result

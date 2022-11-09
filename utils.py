@@ -530,6 +530,15 @@ def clean_show_output(out_str_list,cmd):
 	debug(good_out_list)
 	return good_out_list
 
+def clean_show_output_recursive_general(out_str_list,cmd_list):
+	for cmd in cmd_list:
+		for o in out_str_list:
+			if str(cmd) in str(o):
+				return out_str_list
+			else:
+				out_str_list.pop(0)
+				return clean_show_output_recursive(out_str_list,cmd)
+
 def clean_show_output_recursive(out_str_list,cmd):
 	for o in out_str_list:
 		if str(cmd) in str(o):
@@ -537,6 +546,20 @@ def clean_show_output_recursive(out_str_list,cmd):
 		else:
 			out_str_list.pop(0)
 			return clean_show_output_recursive(out_str_list,cmd)
+
+def read_console(tn):
+	sleep(5)
+	output = tn.read_very_eager()
+	print(output)
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).strip(' \r')
+		out_str_list.append(o_str)
+		 
+	print(out_str_list)
+	return out_str_list
 
 def print_show_cmd(tn,cmd,*args,**kwargs):
 	if 't' in kwargs:
@@ -568,6 +591,37 @@ def print_show_cmd(tn,cmd,*args,**kwargs):
 		tprint(f"{str(out_str)}\n")
 		if mylogger != None:
 			mylogger.write(f"{str(out_str)}\n")
+
+def collect_show_cmd_general(tn,*args,**kwargs):
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 5
+	#relogin_if_needed(tn)
+	origal_cmd_list = args
+	handle_prompt_before_commands(tn)
+	for cmd in args:
+		original_cmd = cmd
+		cmd_bytes = convert_cmd_ascii_n(cmd)
+		tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+		tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+		tn.write(cmd_bytes)
+		tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+		tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
+		sleep(timeout)
+	output = tn.read_very_eager()
+	#print(output)
+	#output = tn.read_until(("# ").encode('ascii'))
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).strip(' \r')
+		out_str_list.append(o_str)
+	good_out_list = clean_show_output_recursive_general(out_str_list,origal_cmd_list)
+	debug(good_out_list)
+	print_output_list(good_out_list)
+	return good_out_list
 
 def collect_show_cmd(tn,cmd,**kwargs):
 	if 't' in kwargs:
@@ -1139,7 +1193,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
-	time.sleep(0.2)
+	time.sleep(1)
 	if output == False:
 		tn.read_until(("# ").encode('ascii'),timeout=5)
 		return None 

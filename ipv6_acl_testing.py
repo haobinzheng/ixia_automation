@@ -394,15 +394,15 @@ if __name__ == "__main__":
 		actions = {}
 		index = 1
 		classifiers = {
-		"dst-ip6-prefix":str(ipaddress.IPv6Address("2001::1")),
-		"src-ip6-prefix":str(ipaddress.IPv6Address("2001::100")),
-		"cos":6,
-		"dscp":63,
+		"dst-ip6-prefix": "2001::1/128",
+		"src-ip6-prefix": "2001::100/128",
+		"cos":"6",
+		"dscp":"63",
 		"dst-mac":"00:11:11:11:11:11",
-		"scr-mac":"00:22:22:22:22:22",
-		"ether-type":"800",
+		"src-mac":"00:22:22:22:22:22",
+		"ether-type":"0x0320",
 		"service":"SSH",
-		"vlan-id":1000
+		"vlan-id":"1000"
 		}
 
 		globals = {
@@ -411,14 +411,59 @@ if __name__ == "__main__":
 		}
 		acl.config_acl6_generic(index,globals,classifiers,actions)
 		sleep(3)
-		output = collect_config_items_general(sw.console,"config switch acl ingress","config classifier")
+		output = collect_show_cmd_general(sw.console,"config switch acl ingress",f"edit {index}","config classifier","show")
+		print(output)
 		result = convert_config_dict(output)
 
-		print(classifiers)
-		print(result)
+		print(f"Classifier template = {classifiers}")
+		print(f"Actual config result = {result}")
 		if classifiers == result:
 			Info("Configuration of Classifier was successful")
-		key, value = random.choice(list(classifiers.items()))
+		else:
+			Info("Configuration of Classifier failed")
+		
+		globals = {}
+		actions = {}
+		while True:
+			key, value = random.choice(list(classifiers.items()))
+			# if "vlan-id" in key:
+			# 	continue
+			# else:
+			value =  classifiers.pop(key)
+			Info(f"!!!!!!!!!!!!!!!! Popping key={key},value={value} !!!!!!!!!!!!!!!!!")
+			cmd = f"""
+			config switch acl ingress
+			edit {index}
+			config classifer
+			unset {key}
+			end
+			end
+			"""
+			sw.config_cmds_fast(cmd)
+			sleep(2)
+			read_console(sw.console)
+			sleep(2)
+			output = collect_show_cmd_general(sw.console,"config switch acl ingress",f"edit {index}","config classifier","show")
+			result = convert_config_dict(output)
+			print(f"Classifier template = {classifiers}")
+			print(f"Actual config result = {result}")
+			if classifiers == result:
+				Info(f"========= Popping key={key},value={value} was successful")
+			else:
+				Info(f"========== Popping key={key},value={value} failed")
+			classifiers[key] = value
+			acl.config_acl6_generic(index,globals,classifiers,actions)
+			sleep(2)
+			read_console(sw.console)
+			output = collect_show_cmd_general(sw.console,"config switch acl ingress",f"edit {index}","config classifier","show")
+			result = convert_config_dict(output)
+			print(f"Classifier template = {classifiers}")
+			print(f"Actual config result = {result}")
+			if classifiers == result:
+				Info(f"======== Putting back key={key},value={value} was successful")
+			else:
+				Info(f"========= Putting key={key},value={value} failed")
+
 
 	def basic_acl6_testing(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
@@ -1649,8 +1694,8 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	classifier_combo_testing(switch_num=1)
-	#real_scale_acl6_testing(switch_num=2,longevity=True)
+	#classifier_combo_testing(switch_num=1)
+	real_scale_acl6_testing(switch_num=2,longevity=False)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
