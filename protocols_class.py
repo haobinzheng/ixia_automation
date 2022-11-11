@@ -1622,6 +1622,88 @@ class Switch_ACL:
         for entry in self.acl_usage_list:
             entry.show_usage_entry()
 
+class DotOnex():
+    def __init__(self,*args,**kwargs):
+        self.switch = args[0]
+        self.user = kwargs['user']
+        self.user_group = kwargs["user_group"]
+        self.secrete = kwargs["secrete"]
+        self.server = kwargs["server"]
+        self.port_list = []
+ 
+        if "port_list" in kwargs:
+            self.port_list = kwargs["port_list"]
+
+        initial_config = f"""
+        config user radius
+            edit {self.user}
+                set secret {self.secrete}
+                set server  {self.server}
+            next
+        end
+        config user group
+            edit {self.user_group}
+                set member {self.user}
+            next
+        end
+
+        config switch global
+            config port-security
+                set link-down-auth no-action
+                set max-reauth-attempt 3
+            end
+        end
+        """
+        self.switch.config_cmds_fast(initial_config)
+        if "port_list" in kwargs:
+            self.port_list = kwargs["port_list"]
+            self.dot1x_interface_config(self.port_list)
+
+    def dot1x_interface_config(self,*args,**kwargs):
+        port_list = kwargs["port_list"]
+        for port in port_list:
+            cmds = f"""
+            config switch interface
+                edit {port}
+                    config port-security
+                        set port-security-mode 802.1X-mac-based
+                    end
+                    set security-groups {self.user_group}
+                 end
+            """
+            self.switch.config_cmds_fast(cmds)
+        self.port_list += port_list
+
+    def dot1x_remove_config(self):
+        remove_config = f"""
+        config user radius
+            delete {self.user}
+        end
+        config user group
+            delete {self.user_group}
+        end
+        config switch global
+            config port-security
+                unset link-down-auth  
+                unset max-reauth-attempt 
+            end
+        end
+        """
+        self.switch.config_cmds_fast(remove_config)
+
+        for port in self.port_list:
+            cmds = f"""
+            config switch interface
+                edit {port}
+                    config port-security
+                        unset port-security-mode  
+                    end
+                    unset security-groups
+                 end
+            """
+            self.switch.config_cmds_fast(cmds)
+        self.port_list = []
+
 
 class switch_acl_ingress(Switch_ACL):
     def __init__(self,*args,**kwargs):
@@ -1639,6 +1721,21 @@ class switch_acl_ingress(Switch_ACL):
                 config action
                     set count enable
                     set drop enable
+                end
+            next
+        end
+        """
+        self.switch.config_cmds_fast(cmds)
+
+    def config_explicit_allow(self,index,group,intf):
+        cmds = f"""
+        config switch acl ingress
+        edit {index}
+                set group {group}
+                set ingress-interface {intf}
+                config action
+                    set count enable
+                    set drop disable
                 end
             next
         end
@@ -1756,6 +1853,7 @@ class switch_acl_ingress(Switch_ACL):
         print(clauses)
         self.clauses = clauses
         return clauses
+
 
     def acl_ingress_clean_up(self):
         self.acl_ingress_find_clauses()
@@ -4835,6 +4933,8 @@ class System_interface:
         self.allowaccess = None
         self.type = None
         self.vlan = None
+        self.isvlan = False 
+        self.vlan_id = None
         self.ipv6 = None
         self.ipv6_mask = None
         self.ipv6_2nd = None
@@ -5397,6 +5497,7 @@ class FortiSwitch:
         ipv6_regex = r'\s*set ip6-address (([a-f0-9:]+:+)+[a-f0-9]+)/([0-9]+)'
         regex_type = r'set type ([a-zA-Z]+)'
         regex_ipv6_extra = r'edit (([a-f0-9:]+:+)+[a-f0-9]+)'
+        regex_vlan = r'set vlanid ([0-9]+)'
 
         new_interface = False
         for line in cmd_output:
@@ -5432,6 +5533,10 @@ class FortiSwitch:
                 debug (f"problemetic line:: {line}")
                 sys_int_list.append(sys_interface)
                 new_interface = False
+            m = re.match(regex_vlan,line)
+            if m:
+                sys_interface.vlan_id = m.group(1)
+                sys_interface.isvlan = True
 
         debug(sys_int_list)
         return sys_int_list
@@ -6542,12 +6647,21 @@ class FortiSwitch_XML(FortiSwitch):
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
+        self.system_interfaces = self.find_sys_interfaces()
         self.router_ospf = Router_OSPF(self)
         self.router_isis = Router_ISIS(self)
         self.router_bgp = Router_BGP(self)
         self.system_interfaces_list = None
         
-    
+    def delete_vlan_interfaces(self):
+        for interface in self.system_interfaces:
+            if interface.isvlan or "vlan" in interface.name:
+                cmds = f"""
+                config system interface
+                delete {interface.name}
+                """
+                self.config_cmds_fast(cmds)
+
     def sw_add_ebgp_peer(self,*args,**kwargs):
         ip = kwargs['ip']
         remote_as = kwargs['remote_as']

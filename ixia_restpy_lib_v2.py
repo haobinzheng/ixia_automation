@@ -38,6 +38,8 @@ class IXIA_TOPOLOGY:
         self.ptp_name = self.name + "_ptp"
         self.ether_name = kwargs['ether_name']
         self.ipv4_name = kwargs['ipv4_name']
+        self.dot1x_client_name = kwargs['dot1x_client_name']
+        self.dot1x_server_name = kwargs['dot1x_server_name']
         self.ipv6_name = kwargs['ipv6_name']
         self.dhcp_client_name = kwargs['dhcp_client_name']
         self.dhcp_server_name = kwargs['dhcp_server_name']
@@ -149,6 +151,56 @@ class IXIA_TOPOLOGY:
         ethernet = self.ethernet,
         maskbits = self.ipv4_mask,
         ip_name = self.ipv4_name,
+        gateway_mode = gateway_mode,
+        ip_incremental = ip_incremental,
+    )
+
+    def add_dot1x_client(self,*args,**kwargs):
+        # ip = kwargs['ip']
+        # gw = kwargs['gw']
+        # mask = kwargs['mask']
+        if "gateway" in kwargs:
+            gateway_mode = kwargs['gateway']
+        else:
+            gateway_mode = "default"
+        if "ip_incremental" in kwargs:
+            ip_incremental = kwargs["ip_incremental"]
+        else:
+            ip_incremental = "0.0.1.0"
+        self.dot1x_client_session = ixia_rest_create_dot1x_client(
+        platform = self.ixia.testPlatform, 
+        session = self.ixia.Session,
+        ixnet = self.ixia.ixNetwork,
+        start_ip = self.ipv4,
+        gw_start_ip = self.ipv4_gw,
+        ethernet = self.ethernet,
+        maskbits = self.ipv4_mask,
+        dot1x_client_name = self.dot1x_client_name,
+        gateway_mode = gateway_mode,
+        ip_incremental = ip_incremental,
+    )
+
+    def add_dot1x_pppserver(self,*args,**kwargs):
+        # ip = kwargs['ip']
+        # gw = kwargs['gw']
+        # mask = kwargs['mask']
+        if "gateway" in kwargs:
+            gateway_mode = kwargs['gateway']
+        else:
+            gateway_mode = "default"
+        if "ip_incremental" in kwargs:
+            ip_incremental = kwargs["ip_incremental"]
+        else:
+            ip_incremental = "0.0.1.0"
+        self.dot1x_pppserver_session = ixia_rest_create_dot1x_pppserver(
+        platform = self.ixia.testPlatform, 
+        session = self.ixia.Session,
+        ixnet = self.ixia.ixNetwork,
+        start_ip = self.ipv4,
+        gw_start_ip = self.ipv4_gw,
+        ethernet = self.ethernet,
+        maskbits = self.ipv4_mask,
+        dot1x_server_name = self.dot1x_server_name,
         gateway_mode = gateway_mode,
         ip_incremental = ip_incremental,
     )
@@ -996,6 +1048,8 @@ class IXIA:
                 dg_name=f"DG{i+1}",
                 ether_name=f"Ethernet_{i+1}",
                 ipv4_name=f"IPv4_{i+1}",
+                dot1x_client_name=f"Dot1x_client{i+1}",
+                dot1x_server_name=f"Dot1x_server{i+1}",
                 ipv6_name=f"IPv6_{i+1}",
                 dhcp_client_name=f"DHCP_Client_{i+1}",
                 dhcp_server_name=f"DHCP_Server_{i+1}",
@@ -1423,6 +1477,69 @@ def ixia_rest_create_ip(*args,**kwargs):
         address = ipv4.Address
         # testPlatform.info(address.prefix)
         return ipv4
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+def ixia_rest_create_dot1x_client(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        start_ip = kwargs['start_ip']
+        gw_start_ip = kwargs['gw_start_ip']
+        ethernet = kwargs['ethernet']
+        ip_prefix = kwargs['maskbits']
+        dot1x_client_name = kwargs['dot1x_client_name']
+        gateway_mode = kwargs['gateway_mode']
+        ip_incremental = kwargs['ip_incremental']
+        
+        ixNetwork.info('Configuring DOT1x Client')
+        dot1x_client_handle = ethernet.DotOneX.add(Name=dot1x_client_name)
+        dot1x_client_handle.UserName.Single("lab")
+        dot1x_client_handle.UserPwd.Single("fortinet123")
+
+        # ipv4.Address.Increment(start_value=start_ip, step_value=ip_incremental)
+        # # ipv4.address.RandomMask(fixed_value=16)
+        # print(dir(ipv4.Address))
+        # if gateway_mode == "default":
+        #     ixNetwork.info('Configuring IPv4 with gateway being incremented')
+        #     ipv4.GatewayIp.Increment(start_value=gw_start_ip, step_value=ip_incremental)
+        # elif gateway_mode == "fixed":
+        #     ixNetwork.info('Configuring IPv4 with gateway being fixed')
+        #     ipv4.GatewayIp.Single(gw_start_ip)
+        # ipv4.Prefix.Single(ip_prefix)
+        # address = ipv4.Address
+        # testPlatform.info(address.prefix)
+        return dot1x_client_handle
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+        return False
+
+def ixia_rest_create_dot1x_pppserver(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        start_ip = kwargs['start_ip']
+        gw_start_ip = kwargs['gw_start_ip']
+        ethernet = kwargs['ethernet']
+        ip_prefix = kwargs['maskbits']
+        dot1x_server_name = kwargs['dot1x_server_name']
+        gateway_mode = kwargs['gateway_mode']
+        ip_incremental = kwargs['ip_incremental']
+        
+        ixNetwork.info('Configuring DOT1x Client')
+        dot1x = ethernet.DotOneX.add(Name=dot1x_server_name)
+        dot1x.Pppoxserver.add(Name = "PPP Server")
+
+        return dot1x
     except Exception as errMsg:
         print('\n%s' % traceback.format_exc(None, errMsg))
         if debugMode == False and 'session' in locals():
@@ -2804,7 +2921,7 @@ def ixia_rest_change_route_properties(*args, **kwargs):
  
 if __name__ == "__main__":
     #apiServerIp = '10.105.252.120'
-    apiServerIp = '10.105.19.31'
+    apiServerIp = '10.105.19.44'
     ixChassisIpList = ['10.105.241.234']
 
     # apiServerIp = '10.105.0.119'
@@ -2818,15 +2935,17 @@ if __name__ == "__main__":
     # [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
     # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
     
-    ipv6_portList = [[ixChassisIpList[0], 4,3,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
-    [ixChassisIpList[0], 4, 4,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
+    ipv6_portList = [[ixChassisIpList[0], 7,14,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
+    [ixChassisIpList[0], 7, 3,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
 ]   
-    myixia = IXIA_Classic(apiServerIp,ixChassisIpList,ipv6_portList)
-    myixia.create_mstp()
-    exit()
+    # myixia = IXIA_Classic(apiServerIp,ixChassisIpList,ipv6_portList)
+    # myixia.create_mstp()
+    # exit()
     myixia = IXIA(apiServerIp,ixChassisIpList,ipv6_portList)
+    myixia.topologies[0].add_dot1x_client()
+    myixia.topologies[1].add_dot1x_pppserver()
 
-
+    exit()
     myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
     myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")
 
