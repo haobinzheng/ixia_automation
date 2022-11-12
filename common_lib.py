@@ -19,11 +19,61 @@ from threading import Thread
 import subprocess
 #import spur
 import multiprocessing
+import yaml
+from jinja2 import Environment, PackageLoader
+from jinja2 import Template
 
 #from ixia_ngfp_lib import *
 from utils import *
 from settings import *
- 
+
+def yaml_example():
+    jinja_string = """
+    hostname {{ name }}
+
+    interface Loopback1
+    ip address 10.1.1.{{ id }} 255.255.255.255
+
+    {% for vlan, name in vlans.items() %}
+    vlan {{ vlan }}
+     name {{ name }}
+    {% endfor -%}
+
+    router bgp {{ id }}
+    {% for neighbor in bgp %}
+     neighbor {{ neighbor.neighbor }} remote-as {{ neighbor.remote_as }}
+    {% endfor %}
+    """
+    i = 1
+    cisco=f"""
+        name: R1
+        id: {i+10}
+        vlans:
+            11: User
+            22: Voice
+            33: Video
+        bgp:
+         - neighbor: 10.1.1.1
+           remote_as: 1
+         - neighbor: 10.1.2.2
+           remote_as: 2
+         - neighbor: 10.1.3.3
+           remote_as: 3
+       """
+    #print(cisco)
+    config = yaml.safe_load(cisco)
+    print(config)
+
+    template = Template(jinja_string)
+    print(template)
+    print(template.render(config))
+    result = template.render(config)
+    print(type(result))
+    print(dir(result))
+    print(result)
+    result_list = result.split("\n")
+    result_list = [i for i in result_list if i]
+    print(result_list)
 
 def check_route_exist(*args,**kwargs):
 	cmd = kwargs['cmd']
@@ -4885,3 +4935,6 @@ def sa_upgrade_548d(dut,dut_dir,**kwargs):
 				return True
 
 	return False
+
+if __name__ == "__main__":
+    yaml_example()

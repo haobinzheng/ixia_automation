@@ -9,6 +9,9 @@ from time import sleep
 import multiprocessing
 from random import seed                                                 
 from random import randint 
+import yaml
+from jinja2 import Environment, PackageLoader
+from jinja2 import Template
 
 from utils import *
 from apc import *
@@ -1667,6 +1670,7 @@ class DotOnex():
                 edit {port}
                     config port-security
                         set port-security-mode 802.1X-mac-based
+                        set dacl enable
                     end
                     set security-groups {self.user_group}
                  end
@@ -1704,6 +1708,80 @@ class DotOnex():
             self.switch.config_cmds_fast(cmds)
         self.port_list = []
 
+class switch_acl_dotonex(Switch_ACL):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+
+
+    def config_acl_dotonex_simple(self,*args,**kwargs):
+        sample = f"""
+        config switch acl 802-1X
+
+            edit 1
+            set description "Test Filter-Id"
+            set filter-id “Testing”
+            config access-list-entry
+            edit 1
+            set description "Test ACL entry”
+            config action
+            set count enable
+            set drop enable
+            end
+            config classifier
+            set dst-ip-prefix 192.168.0.0 255.255.255.0
+            set ether-type 0x0800
+            set service "filter-id-service1"
+            set src-ip-prefix 192.168.0.0 255.255.255.0
+            set src-mac 00:00:00:00:00:00
+            end
+            next
+            end
+            next
+            end
+        """
+        filter_name = kwargs["filter_name"]
+        entry_index = kwargs["entry_index"]
+        mac_address = kwargs["mac_address"]
+        acl_index = kwargs["acl_index"]
+        cmds = f"""
+            config switch acl service custom
+                edit {filter_name}
+                set protocol IP
+                next
+            end
+            config switch acl 802-1X
+            edit {acl_index}
+                config access-list-entry
+                    edit {entry_index}
+                        config action
+                            set count enable
+                        end
+                        config classifier
+                            set ether-type 0x0800
+                            set src-mac {mac_address}
+                        end
+                    next
+                end
+                set filter-id {filter_name}
+            next
+        end
+        """
+        self.switch.config_cmds_fast(cmds)
+
+    def remove_acl_dotonex_simple(self,*args,**kwargs):
+        
+        filter_name = kwargs["filter_name"]
+        acl_index = kwargs["acl_index"]
+        cmds = f"""
+        config switch acl 802-1X
+            delete {acl_index}
+            next
+        end
+        config switch acl service custom
+                delete {filter_name}
+        end
+        """
+        self.switch.config_cmds_fast(cmds)
 
 class switch_acl_ingress(Switch_ACL):
     def __init__(self,*args,**kwargs):
@@ -1742,6 +1820,51 @@ class switch_acl_ingress(Switch_ACL):
         """
         self.switch.config_cmds_fast(cmds)
 
+
+    def config_acl6_jinja(self,acl_yaml):
+        sample = """
+        hostname {{ name }}
+
+        interface Loopback1
+        ip address 10.1.1.{{ id }} 255.255.255.255
+
+        {% for vlan, name in vlans.items() %}
+        vlan {{ vlan }}
+         name {{ name }}
+        {% endfor -%}
+
+        router bgp {{ id }}
+        {% for neighbor in bgp %}
+         neighbor {{ neighbor.neighbor }} remote-as {{ neighbor.remote_as }}
+        {% endfor %}
+        """
+
+        jinja_string = """
+        config switch acl ingress   
+        edit {{ index }}
+                {% for key, value in globals_config.items() %}
+                set {{ key }} {{ vlaue }}
+                {% endfor -%}
+                config classifier
+                    {% for key, value in classifiers.items() %}
+                    set {{key}} {{vlaue}}
+                    {% endfor -%}
+                end
+                config action
+                {% for key, value in actions.items() %}
+                    set {{key}} {{vlaue}}
+                {% endfor -%}
+                 end
+            next 
+        end
+        """
+        config = yaml.safe_load(acl_yaml)
+        template = Template(jinja_string)
+        result = template.render(config)
+        # result_list = result.split("\n")
+        # result_list = [i for i in result_list if i]
+        # print(result_list)
+        self.switch.config_cmds_fast(result)
 
     def config_acl6_generic(self,index,globals,classifiers,actions):
         example = """
@@ -6659,6 +6782,7 @@ class FortiSwitch_XML(FortiSwitch):
                 cmds = f"""
                 config system interface
                 delete {interface.name}
+                end
                 """
                 self.config_cmds_fast(cmds)
 
