@@ -127,7 +127,7 @@ if __name__ == "__main__":
 	else:
 		Setup_only = False
 		print_title("Set up Only:No")
-	file = 'tbinfo_multi_sw_acl6_2sw.xml'
+	file = 'tbinfo_multi_sw_acl6.xml'
 	tb = parse_tbinfo_untangle(file)
 	testtopo_file = 'topo_acl6_2sw.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
@@ -160,7 +160,7 @@ if __name__ == "__main__":
 	net6_list = ["2001:10:1:1::1000/64","2001:10:1:1::2000/64","2001:10:1:1::3000/64","2001:10:1:1::4000/64","2001:10:1:1::5000/64","2001:10:1:1::6000/64","2001:10:1:1::7000/64","2001:10:1:1::8000/64"]
 	gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
 
-	config_interfaces = False
+	config_interfaces = True
 	#config_interfaces = True
 	clean_acl = False
 	#clean_acl = True
@@ -484,7 +484,7 @@ if __name__ == "__main__":
 			sw = switches[switch_num]
 
 			#define valuables specific to the switch under testing 
-			ixia_sub_intf = 30
+			ixia_sub_intf = 20
 			portList_v4_v6 = []
 			for p,m,n4,g4,n6,g6 in zip(
 				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
@@ -584,8 +584,8 @@ if __name__ == "__main__":
 			 
 			for i in range(0,1):
 				for j in range(1,2):
-					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
-					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					# myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					# myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
 					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
 					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
 
@@ -2172,7 +2172,7 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	dot1x_acl6_testing_yaml(switch_num_list = [1,2])
+	dot1x_acl6_testing_yaml(switch_num_list = [3])
 	#dot1x_acl6_testing(switch_num_list = [2,3])
 	#classifier_combo_testing(switch_num=1)
 	#real_scale_acl6_testing(switch_num=2,longevity=False)
