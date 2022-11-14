@@ -1659,9 +1659,9 @@ class DotOnex():
         end
         """
         self.switch.config_cmds_fast(initial_config)
-        if "port_list" in kwargs:
-            self.port_list = kwargs["port_list"]
-            self.dot1x_interface_config(self.port_list)
+        # if "port_list" in kwargs:
+        #     self.port_list = kwargs["port_list"]
+        #     self.dot1x_interface_config(self.port_list)
 
     def dot1x_interface_config(self,*args,**kwargs):
         port_list = kwargs["port_list"]
