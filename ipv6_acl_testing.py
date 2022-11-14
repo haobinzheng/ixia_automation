@@ -544,7 +544,7 @@ if __name__ == "__main__":
                  src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
                  src-mac: {increment_macaddr(mac_base_1,i)}
                 globals_config:
-                  group: 3
+                  group: 4
                   ingress-interface: {sw.ixia_ports[0]}
                 actions:
                   count: "enable"
@@ -558,7 +558,7 @@ if __name__ == "__main__":
                  src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
                  src-mac: {increment_macaddr(mac_base_2,i)}
                 globals_config:
-                  group: 3
+                  group: 4
                   ingress-interface: {sw.ixia_ports[1]}
                 actions:
                   count: "enable"
