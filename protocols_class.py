@@ -1711,6 +1711,7 @@ class DotOnex():
 class switch_acl_dotonex(Switch_ACL):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
+        self.clauses = None
 
     def config_acl_dotonex_jinja(self,yaml_string):
         jinja_string = """
@@ -1764,6 +1765,26 @@ class switch_acl_dotonex(Switch_ACL):
         template = Template(jinja_string)
         result = template.render(config)
         self.switch.config_cmds_fast(result)
+
+    def acl_dot1x_find_clauses(self):
+        result = collect_edit_items_general(self.switch.console,"conf switch acl 802-1X",keyword="802-1X")
+        print(result)
+        clauses = []
+        for item in result:
+            two_parts = re.split('\\s+',item)
+            clauses.append(two_parts[0])
+        print(clauses)
+        self.clauses = clauses
+        return clauses
+
+
+    def acl_dot1x_clean_up(self):
+        self.acl_dot1x_find_clauses()
+        switch_exec_cmd(self.switch.console,"conf switch acl 802-1X")
+        for c in self.clauses:
+            switch_exec_cmd(self.switch.console, f"delete {c} " )
+        switch_exec_cmd(self.switch.console,"end")
+
 
     def config_acl_dotonex_simple(self,*args,**kwargs):
         sample = f"""

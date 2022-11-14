@@ -376,9 +376,6 @@ if __name__ == "__main__":
 
 	if clean_acl == True:
 		acl.acl_ingress_clean_up()
-    
-    def testing_author_change():
-    	pass
 
 	def classifier_combo_testing(*args,**kwargs):
 		switch_num = kwargs["switch_num"] - 1 
@@ -483,7 +480,9 @@ if __name__ == "__main__":
 		
 		for switch_num in switch_num_list:
 			switch_num = int(switch_num)-1
+			sw = switches[switch_num]
 
+			#define valuables specific to the switch under testing 
 			ixia_sub_intf = 30
 			portList_v4_v6 = []
 			for p,m,n4,g4,n6,g6 in zip(
@@ -497,18 +496,17 @@ if __name__ == "__main__":
 				portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
 			
 			print(portList_v4_v6)
-			sw = switches[switch_num]
-
-
-			acl_dot1x = switch_acl_dotonex(sw)
 			mac_base_1=mac_list[switch_num*2]
 			mac_base_2=mac_list[switch_num*2+1]
 			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
 			dot1x.dot1x_interface_config(port_list=[sw.ixia_ports[0],sw.ixia_ports[1]])
 
-			#clean up all ACL ingress entries
-			acl = switch_acl_ingress(switches[switch_num])
-			acl.acl_ingress_clean_up()
+			#clean up all ACL (ingress and 802.1x) related configuration
+			acl_dot1x = switch_acl_dotonex(sw)
+			acl_ingress = switch_acl_ingress(switches[switch_num])
+			acl_ingress.acl_ingress_clean_up()
+			acl_dot1x.acl_dot1x_clean_up()
+			dot1x.dot1x_remove_config()
 
 			for i in range(ixia_sub_intf):
 				dot1x_yaml = f"""
@@ -545,7 +543,7 @@ if __name__ == "__main__":
                 actions:
                   count: "enable"
                 """
-				acl.config_acl6_jinja(acl_yaml)
+				acl_ingress.config_acl6_jinja(acl_yaml)
 
 				acl_yaml = f"""
                 index: {1000+i}
@@ -559,7 +557,7 @@ if __name__ == "__main__":
                 actions:
                   count: "enable"
                 """
-				acl.config_acl6_jinja(acl_yaml)	 
+				acl_ingress.config_acl6_jinja(acl_yaml)	 
 			#index += 1
 			#format of this method: config_explicit_drop(self,index,group,intf)
 			# acl.config_explicit_drop(index,5,sw.ixia_ports[0])
@@ -612,8 +610,8 @@ if __name__ == "__main__":
             filter_name: dot1x_filter_{switch_num+1}
             acl_length: {ixia_sub_intf}
             """
-			acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
-			dot1x.dot1x_remove_config()
+			# acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
+			# dot1x.dot1x_remove_config()
 
 	def dot1x_acl6_testing(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
