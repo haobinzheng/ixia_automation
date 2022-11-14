@@ -481,7 +481,7 @@ if __name__ == "__main__":
 		for switch_num in switch_num_list:
 			switch_num = int(switch_num)-1
 
-			ixia_sub_intf = 2
+			ixia_sub_intf = 30
 			portList_v4_v6 = []
 			for p,m,n4,g4,n6,g6 in zip(
 				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
@@ -498,7 +498,8 @@ if __name__ == "__main__":
 
 
 			acl_dot1x = switch_acl_dotonex(sw)
-			
+			mac_base_1=mac_list[switch_num*2]
+			mac_base_2=mac_list[switch_num*2+1]
 			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
 			dot1x.dot1x_interface_config(port_list=[sw.ixia_ports[0],sw.ixia_ports[1]])
 
@@ -513,13 +514,13 @@ if __name__ == "__main__":
                 entries: 
                   - index: 1
                     classifiers:
-                      mac_address: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                      src-mac: {increment_macaddr(mac_base_1,i)}
                     actions:
                       count: "enable"
                       drop: "enable"
                   - index: 2
                     classifiers:
-                      mac_address: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                      src-mac: {increment_macaddr(mac_base_2,i)}
                     actions:
                       count: "enable"
                       drop: "enable"
@@ -534,6 +535,7 @@ if __name__ == "__main__":
                 classifiers:
                  dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
                  src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_1,i)}
                 globals_config:
                   group: 3
                   ingress-interface: {sw.ixia_ports[0]}
@@ -547,6 +549,7 @@ if __name__ == "__main__":
                 classifiers:
                  dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
                  src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_2,i)}
                 globals_config:
                   group: 3
                   ingress-interface: {sw.ixia_ports[1]}
@@ -592,6 +595,8 @@ if __name__ == "__main__":
 			sw.print_show_command(f"show switch acl ingress")
 			sw.print_show_command(f"show switch acl 802-1X")
 			sw.print_show_command(f"show switch acl service custom dot1x_filter_{switch_num+1}")
+			sw.print_show_command(f"diagnose switch 802-1x status {sw.ixia_ports[0]} ")
+			sw.print_show_command(f"diagnose switch 802-1x status {sw.ixia_ports[1]} ") 
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]} ")
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]} ") 
 			print_double_line()
@@ -600,7 +605,11 @@ if __name__ == "__main__":
 			sleep(5)
 
 			# acl_dot1x.remove_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",acl_index=1)
-			acl_dot1x.remove_acl_dotonex_jinja(dot1x_yaml)
+			dot1x_remove_yaml = f"""
+            filter_name: dot1x_filter_{switch_num+1}
+            acl_length: {ixia_sub_intf}
+            """
+			acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
 			dot1x.dot1x_remove_config()
 
 	def dot1x_acl6_testing(*args,**kwargs):

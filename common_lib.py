@@ -22,10 +22,20 @@ import multiprocessing
 import yaml
 from jinja2 import Environment, PackageLoader
 from jinja2 import Template
+import netaddr
 
 #from ixia_ngfp_lib import *
 from utils import *
 from settings import *
+
+def increment_macaddr(macaddr,i):
+    base = netaddr.EUI(macaddr)
+    value = base.value
+    value += i
+    base._set_value(value)
+    base = str(base)
+    return(base.replace("-",":"))
+
 
 def yaml_example():
     jinja_string = """

@@ -1750,8 +1750,10 @@ class switch_acl_dotonex(Switch_ACL):
 
     def remove_acl_dotonex_jinja(self,yaml_string):
         jinja_string = """
-        config switch acl 802-1X   
+        config switch acl 802-1X  
+        {% for acl_index in range(1,acl_length + 1) %}
         delete {{ acl_index }}
+        {% endfor -%}
         end
         config switch acl service custom
             delete {{filter_name}}
