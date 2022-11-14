@@ -1712,11 +1712,65 @@ class switch_acl_dotonex(Switch_ACL):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
 
+    def config_acl_dotonex_jinja(self,yaml_string):
+        jinja_string = """
+         config switch acl service custom
+            edit {{filter_name}}
+            set protocol IP
+            next
+        end
+        config switch acl 802-1X   
+        edit {{ acl_index }}
+                {% for key, value in globals_config.items() %}
+                set {{ key }} {{ value }}
+                {% endfor -%}
+                config access-list-entry
+                  {% for entry in entries %}
+                  edit {{ entry.index }}
+                  config classifier
+                    {% for key, value in entry.classifiers.items() %}
+                    set {{ key }} {{ value }}
+                    {% endfor -%}
+                  end
+                  config action
+                  {% for key, value in entry.actions.items() %}
+                    set {{ key }} {{ value }}
+                  {% endfor -%}
+                  end
+                 next 
+                 {% endfor -%}
+              end
+            next
+        end
+        """
+        config = yaml.safe_load(yaml_string)
+        template = Template(jinja_string)
+        result = template.render(config)
+        self.switch.config_cmds_fast(result)
+
+    def remove_acl_dotonex_jinja(self,yaml_string):
+        jinja_string = """
+        config switch acl 802-1X   
+        delete {{ acl_index }}
+        end
+        config switch acl service custom
+            delete {{filter_name}}
+            next
+        end
+        """
+        config = yaml.safe_load(yaml_string)
+        template = Template(jinja_string)
+        result = template.render(config)
+        self.switch.config_cmds_fast(result)
 
     def config_acl_dotonex_simple(self,*args,**kwargs):
         sample = f"""
+        config switch acl service custom
+            edit {filter_name}
+            set protocol IP
+            next
+        end
         config switch acl 802-1X
-
             edit 1
             set description "Test Filter-Id"
             set filter-id “Testing”
@@ -1843,16 +1897,16 @@ class switch_acl_ingress(Switch_ACL):
         config switch acl ingress   
         edit {{ index }}
                 {% for key, value in globals_config.items() %}
-                set {{ key }} {{ vlaue }}
+                set {{ key }} {{ value }}
                 {% endfor -%}
                 config classifier
                     {% for key, value in classifiers.items() %}
-                    set {{key}} {{vlaue}}
+                    set {{ key }} {{ value }}
                     {% endfor -%}
                 end
                 config action
                 {% for key, value in actions.items() %}
-                    set {{key}} {{vlaue}}
+                    set {{ key }} {{ value }}
                 {% endfor -%}
                  end
             next 
@@ -1861,9 +1915,6 @@ class switch_acl_ingress(Switch_ACL):
         config = yaml.safe_load(acl_yaml)
         template = Template(jinja_string)
         result = template.render(config)
-        # result_list = result.split("\n")
-        # result_list = [i for i in result_list if i]
-        # print(result_list)
         self.switch.config_cmds_fast(result)
 
     def config_acl6_generic(self,index,globals,classifiers,actions):

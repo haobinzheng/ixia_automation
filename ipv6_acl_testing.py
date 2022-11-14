@@ -498,8 +498,7 @@ if __name__ == "__main__":
 
 
 			acl_dot1x = switch_acl_dotonex(sw)
-			acl_dot1x.config_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",entry_index = 1,acl_index=1,mac_address=mac_list[switch_num*2])
-			acl_dot1x.config_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",entry_index = 2,acl_index=1,mac_address=mac_list[switch_num*2+1])
+			
 			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
 			dot1x.dot1x_interface_config(port_list=[sw.ixia_ports[0],sw.ixia_ports[1]])
 
@@ -508,35 +507,53 @@ if __name__ == "__main__":
 			acl.acl_ingress_clean_up()
 
 			for i in range(ixia_sub_intf):
-				classifiers = {}
-				globals = {}
-				actions = {}
-
+				dot1x_yaml = f"""
+                filter_name: dot1x_filter_{switch_num+1}
+                acl_index: {1+i}
+                entries: 
+                  - index: 1
+                    classifiers:
+                      mac_address: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                    actions:
+                      count: "enable"
+                      drop: "enable"
+                  - index: 2
+                    classifiers:
+                      mac_address: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                    actions:
+                      count: "enable"
+                      drop: "enable"
+                globals_config:
+                  filter-id: dot1x_filter_{switch_num+1}
+                  description: acl_8021x_{i+1}
+                """
+				acl_dot1x.config_acl_dotonex_jinja(dot1x_yaml)
+				 
 				acl_yaml = f"""
-index: {1+i}
-classifiers:
- dst-ip6-prefix: ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i
- src-ip6-prefix: ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i
-globals_config:
-  group: 3
-  ingress-interface: sw.ixia_ports[0]
-actions:
-  count: "enable"
-"""
+                index: {1+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                globals_config:
+                  group: 3
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                """
 				acl.config_acl6_jinja(acl_yaml)
 
 				acl_yaml = f"""
-index: {1000+i}
-classifiers:
- dst-ip6-prefix: ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i
- src-ip6-prefix: ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i
-globals_config:
-  group: 3
-  ingress-interface: sw.ixia_ports[0]
-actions:
-  count: "enable"
-"""
-			acl.config_acl6_jinja(acl_yaml)	 
+                index: {1000+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                globals_config:
+                  group: 3
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                """
+				acl.config_acl6_jinja(acl_yaml)	 
 			#index += 1
 			#format of this method: config_explicit_drop(self,index,group,intf)
 			# acl.config_explicit_drop(index,5,sw.ixia_ports[0])
@@ -582,7 +599,8 @@ actions:
 			print_double_line()
 			sleep(5)
 
-			acl_dot1x.remove_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",acl_index=1)
+			# acl_dot1x.remove_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",acl_index=1)
+			acl_dot1x.remove_acl_dotonex_jinja(dot1x_yaml)
 			dot1x.dot1x_remove_config()
 
 	def dot1x_acl6_testing(*args,**kwargs):
@@ -696,7 +714,7 @@ actions:
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]} ")
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]} ") 
 			print_double_line()
-			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
+			keyin = input(f"Please verify all the command output,Press any key to remove configurations:")
 			print_double_line()
 			sleep(5)
 
