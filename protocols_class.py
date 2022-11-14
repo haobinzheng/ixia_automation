@@ -1637,6 +1637,7 @@ class DotOnex():
         if "port_list" in kwargs:
             self.port_list = kwargs["port_list"]
 
+    def dot1x_global_config(self):
         initial_config = f"""
         config user radius
             edit {self.user}

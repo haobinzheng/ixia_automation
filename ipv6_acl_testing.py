@@ -479,6 +479,7 @@ if __name__ == "__main__":
 		switch_num_list = kwargs["switch_num_list"]
 		
 		for switch_num in switch_num_list:
+			#Designate the DUT being tested 
 			switch_num = int(switch_num)-1
 			sw = switches[switch_num]
 
@@ -498,16 +499,20 @@ if __name__ == "__main__":
 			print(portList_v4_v6)
 			mac_base_1=mac_list[switch_num*2]
 			mac_base_2=mac_list[switch_num*2+1]
-			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
-			dot1x.dot1x_interface_config(port_list=[sw.ixia_ports[0],sw.ixia_ports[1]])
-
+			
 			#clean up all ACL (ingress and 802.1x) related configuration
 			acl_dot1x = switch_acl_dotonex(sw)
 			acl_ingress = switch_acl_ingress(switches[switch_num])
+			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
 			acl_ingress.acl_ingress_clean_up()
 			acl_dot1x.acl_dot1x_clean_up()
 			dot1x.dot1x_remove_config()
 
+			#start configuring 802.1x global and interface configuration
+			dot1x.dot1x_global_config()
+			dot1x.dot1x_interface_config(port_list=[sw.ixia_ports[0],sw.ixia_ports[1]])
+
+			#start configuring ACL 802.1x related configuration
 			for i in range(ixia_sub_intf):
 				dot1x_yaml = f"""
                 filter_name: dot1x_filter_{switch_num+1}
@@ -530,7 +535,8 @@ if __name__ == "__main__":
                   description: acl_8021x_{i+1}
                 """
 				acl_dot1x.config_acl_dotonex_jinja(dot1x_yaml)
-				 
+
+				#start configuring ACL ingress configuration
 				acl_yaml = f"""
                 index: {1+i}
                 classifiers:
@@ -558,13 +564,12 @@ if __name__ == "__main__":
                   count: "enable"
                 """
 				acl_ingress.config_acl6_jinja(acl_yaml)	 
-			#index += 1
+		 
 			#format of this method: config_explicit_drop(self,index,group,intf)
-			# acl.config_explicit_drop(index,5,sw.ixia_ports[0])
-			# index += 1
-			# acl.config_explicit_drop(index,5,sw.ixia_ports[1])
+			acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
 
- 		
+ 			#Start configurating IXIA 
 			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
 			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 			for topo in myixia.topologies:
