@@ -1750,7 +1750,7 @@ class switch_acl_dotonex(Switch_ACL):
         result = template.render(config)
         self.switch.config_cmds_fast(result)
 
-    def remove_acl_dotonex_jinja(self,yaml_string):
+    def remove_acl_dot1x_jinja(self,yaml_string):
         jinja_string = """
         config switch acl 802-1X  
         {% for acl_index in range(1,acl_length + 1) %}
@@ -1779,13 +1779,20 @@ class switch_acl_dotonex(Switch_ACL):
         return clauses
 
 
-    def acl_dot1x_clean_up(self):
+    def acl_dot1x_clean_up(self,filter_name):
         self.acl_dot1x_find_clauses()
         switch_exec_cmd(self.switch.console,"conf switch acl 802-1X")
         for c in self.clauses:
             switch_exec_cmd(self.switch.console, f"delete {c} " )
         switch_exec_cmd(self.switch.console,"end")
 
+        cmds = f"""
+        config switch acl service custom
+            delete {filter_name}
+            next
+        end
+        """
+        self.switch.config_cmds_fast(cmds)
 
     def config_acl_dotonex_simple(self,*args,**kwargs):
         sample = f"""

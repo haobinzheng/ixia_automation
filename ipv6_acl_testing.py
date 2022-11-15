@@ -506,7 +506,7 @@ if __name__ == "__main__":
 			acl_ingress = switch_acl_ingress(switches[switch_num])
 			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
 			acl_ingress.acl_ingress_clean_up()
-			acl_dot1x.acl_dot1x_clean_up()
+			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}")
 			dot1x.dot1x_remove_config()
 
 			#start configuring 802.1x global and interface configuration
@@ -567,8 +567,8 @@ if __name__ == "__main__":
 				acl_ingress.config_acl6_jinja(acl_yaml)	 
 		 
 			#format of this method: config_explicit_drop(self,index,group,intf)
-			acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
-			acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
+			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			# acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
 
  			#Start configurating IXIA 
 			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
@@ -616,8 +616,9 @@ if __name__ == "__main__":
             filter_name: dot1x_filter_{switch_num+1}
             acl_length: {ixia_sub_intf}
             """
-			# acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
-			# dot1x.dot1x_remove_config()
+			#acl_dot1x.remove_acl_dot1x_jinja(dot1x_remove_yaml) #
+			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}") #this is more general way to remove all acl 802.1x config. Need to test
+			dot1x.dot1x_remove_config()
 	
 	def classifier_l2_testing_yaml(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
@@ -650,7 +651,7 @@ if __name__ == "__main__":
 			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
 			acl_ingress.acl_ingress_clean_up()
 			dot1x.dot1x_remove_config()
-			acl_dot1x.acl_dot1x_clean_up()
+			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}")
 
 			#start configuring ACL related configuration
 			for i in range(ixia_sub_intf):
