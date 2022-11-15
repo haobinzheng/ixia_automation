@@ -621,12 +621,11 @@ if __name__ == "__main__":
             filter_name: dot1x_filter_{switch_num+1}
             acl_length: {ixia_sub_intf}
             """
-<<<<<<< HEAD
+
 			#acl_dot1x.remove_acl_dot1x_jinja(dot1x_remove_yaml) #
 			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}") #this is more general way to remove all acl 802.1x config. Need to test
-=======
-			acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
->>>>>>> master
+ 
+			#acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
 			dot1x.dot1x_remove_config()
 	
 	def classifier_l2_testing_yaml(*args,**kwargs):
@@ -730,11 +729,6 @@ if __name__ == "__main__":
 					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
 
 			myixia.start_traffic()
-			sleep(5)
-			myixia.stop_traffic()
-			sleep(10)
-			myixia.collect_stats()
-			myixia.check_traffic()
 			sw.print_show_command(f"get switch acl usage")
 			sw.print_show_command(f"get switch acl counter all")
 			sw.print_show_command(f"show switch acl ingress")
@@ -773,16 +767,10 @@ if __name__ == "__main__":
                 """
 				acl_ingress.config_acl6_jinja(acl_yaml)	
 
-			myixia.start_traffic()
-			sleep(5)
-			myixia.stop_traffic()
-			sleep(10)
-			myixia.collect_stats()
-			myixia.check_traffic()
 			sw.print_show_command(f"get switch acl counter all")
 			sw.print_show_command(f"show switch acl ingress")
 			print_double_line()
-			keyin = input(f"Please check both IPv4 and IPv6 packets are dropped,Press any key when done:")
+			keyin = input(f"Please check IPv4 Passed and IPv6 Dropped,Press any key when done:")
 			print_double_line()
 			sleep(5)
 
