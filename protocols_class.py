@@ -1941,6 +1941,7 @@ class switch_acl_ingress(Switch_ACL):
         result = template.render(config)
         self.switch.config_cmds_fast(result)
 
+
     def config_acl6_generic(self,index,globals,classifiers,actions):
         example = """
         config switch acl ingress

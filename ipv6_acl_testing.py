@@ -567,8 +567,8 @@ if __name__ == "__main__":
 				acl_ingress.config_acl6_jinja(acl_yaml)	 
 		 
 			#format of this method: config_explicit_drop(self,index,group,intf)
-			acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
-			acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
+			acl_ingress.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			acl_ingress.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
 
  			#Start configurating IXIA 
 			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
@@ -616,8 +616,8 @@ if __name__ == "__main__":
             filter_name: dot1x_filter_{switch_num+1}
             acl_length: {ixia_sub_intf}
             """
-			# acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
-			# dot1x.dot1x_remove_config()
+			acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
+			dot1x.dot1x_remove_config()
 	
 	def classifier_l2_testing_yaml(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
@@ -654,37 +654,38 @@ if __name__ == "__main__":
 
 			#start configuring ACL related configuration
 			for i in range(ixia_sub_intf):
-
 				#start configuring ACL ingress configuration
 				acl_yaml = f"""
                 index: {1+i}
                 classifiers:
-                 ether-type: "0x8100"
+                 ether-type: "0x800"
                  src-mac: {increment_macaddr(mac_base_1,i)}
                 globals_config:
                   group: 3
                   ingress-interface: {sw.ixia_ports[0]}
                 actions:
                   count: "enable"
+                  drop: "enable"
                 """
 				acl_ingress.config_acl6_jinja(acl_yaml)
 
 				acl_yaml = f"""
                 index: {1000+i}
                 classifiers:
-                 ether-type: "0x8100"
+                 ether-type: "0x800"
                  src-mac: {increment_macaddr(mac_base_2,i)}
                 globals_config:
                   group: 3
                   ingress-interface: {sw.ixia_ports[1]}
                 actions:
                   count: "enable"
+                  drop: "enable"
                 """
 				acl_ingress.config_acl6_jinja(acl_yaml)	 
 		 
-			#format of this method: config_explicit_drop(self,index,group,intf)
-			acl_ingress.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
-			acl_ingress.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
+			#This two config has to removed. format of this method: config_explicit_drop(self,index,group,intf)
+			# acl_ingress.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			# acl_ingress.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
 
  			#Start configurating IXIA 
 
@@ -728,7 +729,50 @@ if __name__ == "__main__":
 			sw.print_show_command(f"get switch acl counter all")
 			sw.print_show_command(f"show switch acl ingress")
 			print_double_line()
-			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
+			keyin = input(f"Please check IPv4 packets are dropped, IPv6 traffic is forwarding,Press any key when done:")
+			print_double_line()
+			sleep(5)
+
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                 ether-type: "0x86dd"
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 3
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                  drop: "enable"
+                """
+				acl_ingress.config_acl6_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                 ether-type: "0x86dd"
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 3
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  drop: "enable"
+                """
+				acl_ingress.config_acl6_jinja(acl_yaml)	
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"show switch acl ingress")
+			print_double_line()
+			keyin = input(f"Please check both IPv4 and IPv6 packets are dropped,Press any key when done:")
 			print_double_line()
 			sleep(5)
 
