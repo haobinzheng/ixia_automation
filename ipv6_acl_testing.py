@@ -153,7 +153,7 @@ if __name__ == "__main__":
  	
  	############################################### Static Data Are Define Here ########################################################################
 	#  ixia_sub_intf can be overriden at each test case
-	
+	TEST_VLAN = 10
 	mac_list = ["00:11:01:01:01:01","00:12:01:01:01:01","00:13:01:01:01:01","00:14:01:01:01:01","00:15:01:01:01:01","00:16:01:01:01:01","00:17:01:01:01:01","00:18:01:01:01:01"]
 	net4_list = ["10.1.1.10/16","10.1.2.10/16","10.1.3.10/16","10.1.4.10/16","10.1.5.10/16","10.1.6.10/16","10.1.7.10/16","10.1.8.10/16","10.1.9.10/16","10.1.10.10/16"]
 	gw4_list = ["10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1"]
@@ -617,6 +617,131 @@ if __name__ == "__main__":
             """
 			# acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
 			# dot1x.dot1x_remove_config()
+	
+	def classifier_l2_testing_yaml(*args,**kwargs):
+		switch_num_list = kwargs["switch_num_list"]
+		
+		for switch_num in switch_num_list:
+			#Designate the DUT being tested 
+			switch_num = int(switch_num)-1
+			sw = switches[switch_num]
+
+			#define valuables specific to the switch under testing 
+			ixia_sub_intf = 1
+			portList_v4_v6 = []
+			for p,m,n4,g4,n6,g6 in zip(
+				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
+				mac_list[switch_num*2:switch_num*2+2], \
+				net4_list[switch_num*2:switch_num*2+2], \
+				gw4_list[switch_num*2:switch_num*2+2], \
+				net6_list[switch_num*2:switch_num*2+2], \
+				gw6_list[switch_num*2:switch_num*2+2]):
+				module,port = p.split("/")
+				portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+			
+			print(portList_v4_v6)
+			mac_base_1=mac_list[switch_num*2]
+			mac_base_2=mac_list[switch_num*2+1]
+			
+			#clean up all ACL (ingress and 802.1x) related configuration
+			acl_dot1x = switch_acl_dotonex(sw)
+			acl_ingress = switch_acl_ingress(switches[switch_num])
+			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
+			acl_ingress.acl_ingress_clean_up()
+			dot1x.dot1x_remove_config()
+			acl_dot1x.acl_dot1x_clean_up()
+
+			#start configuring ACL related configuration
+			for i in range(ixia_sub_intf):
+
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                 ether-type: "0x8100"
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 3
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                """
+				acl_ingress.config_acl6_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                 ether-type: "0x8100"
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 3
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                """
+				acl_ingress.config_acl6_jinja(acl_yaml)	 
+		 
+			#format of this method: config_explicit_drop(self,index,group,intf)
+			acl_ingress.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			acl_ingress.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
+
+ 			#Start configurating IXIA 
+
+			for port in sw.ixia_ports:
+				cmds = f"""
+				config switch interface
+					edit {port}
+					unset native-vlan
+					set allowed-vlans {TEST_VLAN}
+					end
+				"""
+				sw.config_cmds_fast(cmds)
+			sleep(2)
+				
+			start_vlan = 10
+			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2],vlan=start_vlan)
+			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6,vlan=start_vlan)
+			for topo in myixia.topologies:
+				topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+				topo.add_ipv6(gateway="fixed")
+				
+			myixia.start_protocol(wait=20)
+
+			# for i in range(0,len(tb.ixia.port_active_list)-1):
+			# 	for j in range(i+1,len(tb.ixia.port_active_list)):
+			 
+			for i in range(0,1):
+				for j in range(1,2):
+					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl usage")
+			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"show switch acl ingress")
+			print_double_line()
+			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
+			print_double_line()
+			sleep(5)
+
+			for port in sw.ixia_ports:
+				cmds = f"""
+				config switch interface
+					edit {port}
+					set native-vlan {TEST_VLAN}
+					set allowed-vlans {TEST_VLAN}
+					end
+				"""
+				sw.config_cmds_fast(cmds)
+			sleep(2)
+			 
 
 	def dot1x_acl6_testing(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
@@ -1300,6 +1425,8 @@ if __name__ == "__main__":
 			"""
 			sw.config_cmds_fast(cmds)
 			sleep(2)
+
+			
 
 	def qos_policy_testing():
 		portList_v4_v6 = []
@@ -2172,13 +2299,14 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	dot1x_acl6_testing_yaml(switch_num_list = [3])
+	#dot1x_acl6_testing_yaml(switch_num_list = [3])
 	#dot1x_acl6_testing(switch_num_list = [2,3])
 	#classifier_combo_testing(switch_num=1)
 	#real_scale_acl6_testing(switch_num=2,longevity=False)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
+	classifier_l2_testing_yaml(switch_num_list = [3])
 	#change_vlan_cos_dscp_testing()
 	#basic_scale_acl6_testing(switch_num=2)
 	#acl6_priority_testing()
