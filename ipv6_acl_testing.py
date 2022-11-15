@@ -367,8 +367,7 @@ if __name__ == "__main__":
 			sw.config_cmds_fast(cmds)
 			sleep(2)
 
-	acl = switch_acl_ingress(sw)
-
+ 
 	if config_interfaces == True:
 		for dut in switches:
 			dut.delete_vlan_interfaces()
