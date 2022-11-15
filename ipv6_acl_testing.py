@@ -155,7 +155,7 @@ if __name__ == "__main__":
 	#  ixia_sub_intf can be overriden at each test case
 	TEST_VLAN = 10
 	TEST_VLAN_NAM = "vlan10"
-	
+
 	mac_list = ["00:11:01:01:01:01","00:12:01:01:01:01","00:13:01:01:01:01","00:14:01:01:01:01","00:15:01:01:01:01","00:16:01:01:01:01","00:17:01:01:01:01","00:18:01:01:01:01"]
 	net4_list = ["10.1.1.10/16","10.1.2.10/16","10.1.3.10/16","10.1.4.10/16","10.1.5.10/16","10.1.6.10/16","10.1.7.10/16","10.1.8.10/16","10.1.9.10/16","10.1.10.10/16"]
 	gw4_list = ["10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1"]
@@ -2307,7 +2307,7 @@ if __name__ == "__main__":
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
-	classifier_l2_testing_yaml(switch_num_list = [3])
+	classifier_l2_testing_yaml(switch_num_list = [1])
 	#change_vlan_cos_dscp_testing()
 	#basic_scale_acl6_testing(switch_num=2)
 	#acl6_priority_testing()
