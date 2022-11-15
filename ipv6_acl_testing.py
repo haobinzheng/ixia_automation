@@ -129,7 +129,7 @@ if __name__ == "__main__":
 		print_title("Set up Only:No")
 	file = 'tbinfo_multi_sw_acl6.xml'
 	tb = parse_tbinfo_untangle(file)
-	testtopo_file = 'topo_acl6_2sw.xml'
+	testtopo_file = 'topo_acl6.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
