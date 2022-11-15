@@ -485,7 +485,7 @@ if __name__ == "__main__":
 			sw = switches[switch_num]
 
 			#define valuables specific to the switch under testing 
-			ixia_sub_intf = 20
+			ixia_sub_intf = 30
 			portList_v4_v6 = []
 			for p,m,n4,g4,n6,g6 in zip(
 				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
@@ -508,7 +508,7 @@ if __name__ == "__main__":
 			acl_ingress.acl_ingress_clean_up()
 			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}")
 			dot1x.dot1x_remove_config()
-
+			exit()
 			#start configuring 802.1x global and interface configuration
 			dot1x.dot1x_global_config()
 			dot1x.dot1x_interface_config(port_list=[sw.ixia_ports[0],sw.ixia_ports[1]])
@@ -567,13 +567,9 @@ if __name__ == "__main__":
 				acl_ingress.config_acl6_jinja(acl_yaml)	 
 		 
 			#format of this method: config_explicit_drop(self,index,group,intf)
-<<<<<<< HEAD
 			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
 			# acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
-=======
-			acl_ingress.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
-			acl_ingress.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
->>>>>>> master
+			
 
  			#Start configurating IXIA 
 			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
@@ -590,8 +586,8 @@ if __name__ == "__main__":
 			 
 			for i in range(0,1):
 				for j in range(1,2):
-					# myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
-					# myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
 					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
 					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
 
@@ -601,7 +597,6 @@ if __name__ == "__main__":
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-			sw = switches[switch_num]
 			sw.print_show_command(f"get switch acl usage")
 			sw.print_show_command(f"get switch acl counter all")
 			sw.print_show_command(f"show switch acl ingress")
@@ -624,8 +619,6 @@ if __name__ == "__main__":
 
 			#acl_dot1x.remove_acl_dot1x_jinja(dot1x_remove_yaml) #
 			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}") #this is more general way to remove all acl 802.1x config. Need to test
- 
-			#acl_dot1x.remove_acl_dotonex_jinja(dot1x_remove_yaml)
 			dot1x.dot1x_remove_config()
 	
 	def classifier_l2_testing_yaml(*args,**kwargs):
@@ -2342,14 +2335,14 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	#dot1x_acl6_testing_yaml(switch_num_list = [3])
+	dot1x_acl6_testing_yaml(switch_num_list = [1])
 	#dot1x_acl6_testing(switch_num_list = [2,3])
 	#classifier_combo_testing(switch_num=1)
 	#real_scale_acl6_testing(switch_num=2,longevity=False)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
-	classifier_l2_testing_yaml(switch_num_list = [1])
+	#classifier_l2_testing_yaml(switch_num_list = [1])
 	#change_vlan_cos_dscp_testing()
 	#basic_scale_acl6_testing(switch_num=2)
 	#acl6_priority_testing()

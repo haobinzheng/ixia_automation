@@ -1665,6 +1665,7 @@ class DotOnex():
 
     def dot1x_interface_config(self,*args,**kwargs):
         port_list = kwargs["port_list"]
+        self.port_list = port_list
         for port in port_list:
             cmds = f"""
             config switch interface
@@ -1677,25 +1678,8 @@ class DotOnex():
                  end
             """
             self.switch.config_cmds_fast(cmds)
-        self.port_list += port_list
-
+ 
     def dot1x_remove_config(self):
-        remove_config = f"""
-        config user radius
-            delete {self.user}
-        end
-        config user group
-            delete {self.user_group}
-        end
-        config switch global
-            config port-security
-                unset link-down-auth  
-                unset max-reauth-attempt 
-            end
-        end
-        """
-        self.switch.config_cmds_fast(remove_config)
-
         for port in self.port_list:
             cmds = f"""
             config switch interface
@@ -1708,6 +1692,22 @@ class DotOnex():
             """
             self.switch.config_cmds_fast(cmds)
         self.port_list = []
+
+        remove_config = f"""
+        config user group
+            delete {self.user_group}
+        end
+        config switch global
+            config port-security
+                unset link-down-auth  
+                unset max-reauth-attempt 
+            end
+        end
+         config user radius
+            delete {self.user}
+        end
+        """
+        self.switch.config_cmds_fast(remove_config)
 
 class switch_acl_dotonex(Switch_ACL):
     def __init__(self,*args,**kwargs):
@@ -1774,7 +1774,7 @@ class switch_acl_dotonex(Switch_ACL):
         for item in result:
             two_parts = re.split('\\s+',item)
             clauses.append(two_parts[0])
-        print(clauses)
+        print(f"acl_dot1x_find_clauses: the list of acl 8021x entries = {clauses}")
         self.clauses = clauses
         return clauses
 
