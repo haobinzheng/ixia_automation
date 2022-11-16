@@ -154,7 +154,7 @@ if __name__ == "__main__":
  	############################################### Static Data Are Define Here ########################################################################
 	#  ixia_sub_intf can be overriden at each test case
 	TEST_VLAN = 10
-	TEST_VLAN_NAM = "vlan10"
+	TEST_VLAN_NAME = "vlan10"
 
 	mac_list = ["00:11:01:01:01:01","00:12:01:01:01:01","00:13:01:01:01:01","00:14:01:01:01:01","00:15:01:01:01:01","00:16:01:01:01:01","00:17:01:01:01:01","00:18:01:01:01:01"]
 	net4_list = ["10.1.1.10/16","10.1.2.10/16","10.1.3.10/16","10.1.4.10/16","10.1.5.10/16","10.1.6.10/16","10.1.7.10/16","10.1.8.10/16","10.1.9.10/16","10.1.10.10/16"]
@@ -162,8 +162,8 @@ if __name__ == "__main__":
 	net6_list = ["2001:10:1:1::1000/64","2001:10:1:1::2000/64","2001:10:1:1::3000/64","2001:10:1:1::4000/64","2001:10:1:1::5000/64","2001:10:1:1::6000/64","2001:10:1:1::7000/64","2001:10:1:1::8000/64"]
 	gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
 
-	config_interfaces = False
-	#config_interfaces = True
+	#config_interfaces = False
+	config_interfaces = True
 	clean_acl = False
 	#clean_acl = True
 	config_acl_ingress = False
@@ -508,7 +508,7 @@ if __name__ == "__main__":
 			acl_ingress.acl_ingress_clean_up()
 			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}")
 			dot1x.dot1x_remove_config()
-			exit()
+
 			#start configuring 802.1x global and interface configuration
 			dot1x.dot1x_global_config()
 			dot1x.dot1x_interface_config(port_list=[sw.ixia_ports[0],sw.ixia_ports[1]])
@@ -2335,7 +2335,7 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	dot1x_acl6_testing_yaml(switch_num_list = [1])
+	dot1x_acl6_testing_yaml(switch_num_list = [3])
 	#dot1x_acl6_testing(switch_num_list = [2,3])
 	#classifier_combo_testing(switch_num=1)
 	#real_scale_acl6_testing(switch_num=2,longevity=False)
