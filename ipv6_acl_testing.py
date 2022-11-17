@@ -635,20 +635,21 @@ if __name__ == "__main__":
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]} ")
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]} ") 
 			print_double_line()
-			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
+			k = input(f"Please verify all the command output,Do you want to remove 802.1x configurations(Y/N):")
 			print_double_line()
 			sleep(5)
+			if k =="yes" or k=="y" or k=="Y" or k=="Yes":
+				Info("Removing All 802.1x related configuration.......")
+				# acl_dot1x.remove_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",acl_index=1)
+				dot1x_remove_yaml = f"""
+	            filter_name: dot1x_filter_{switch_num+1}
+	            acl_length: {ixia_sub_intf}
+	            """
 
-			# acl_dot1x.remove_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",acl_index=1)
-			dot1x_remove_yaml = f"""
-            filter_name: dot1x_filter_{switch_num+1}
-            acl_length: {ixia_sub_intf}
-            """
-
-			#acl_dot1x.remove_acl_dot1x_jinja(dot1x_remove_yaml) #
-			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}") #this is more general way to remove all acl 802.1x config. Need to test
-			dot1x.dot1x_remove_config()
-	
+				#acl_dot1x.remove_acl_dot1x_jinja(dot1x_remove_yaml) #
+				acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}") #this is more general way to remove all acl 802.1x config. Need to test
+				dot1x.dot1x_remove_config()
+		
 	def classifier_l2_testing_yaml(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
 		
