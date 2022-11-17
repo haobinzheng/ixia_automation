@@ -918,12 +918,13 @@ if __name__ == "__main__":
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]} ")
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]} ") 
 			print_double_line()
-			keyin = input(f"Please verify all the command output,Press any key to remove configurations:")
+			k = input(f"Please verify all the command output,Do you want to remove 802.1x configurations(Y/N):")
 			print_double_line()
 			sleep(5)
-
-			acl_dot1x.remove_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",acl_index=1)
-			dot1x.dot1x_remove_config()
+			if k =="yes" or k=="y" or k=="Y" or k=="Yes":
+				Info("Removing All 802.1x related configuration.......")
+				acl_dot1x.remove_acl_dotonex_simple(filter_name=f"dot1x_filter_{switch_num+1}",acl_index=1)
+				dot1x.dot1x_remove_config()
 
 	def basic_acl6_testing(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
