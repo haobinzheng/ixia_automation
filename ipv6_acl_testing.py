@@ -564,7 +564,35 @@ if __name__ == "__main__":
                 actions:
                   count: "enable"
                 """
-				acl_ingress.config_acl6_jinja(acl_yaml)	 
+				acl_ingress.config_acl6_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                """
+
+				acl_ingress.config_acl6_jinja(acl_yaml)	
+				acl_yaml = f"""
+                index: {1500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                """
+				acl_ingress.config_acl6_jinja(acl_yaml)		 
 		 
 			#format of this method: config_explicit_drop(self,index,group,intf)
 			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
