@@ -162,8 +162,8 @@ if __name__ == "__main__":
 	net6_list = ["2001:10:1:1::1000/64","2001:10:1:1::2000/64","2001:10:1:1::3000/64","2001:10:1:1::4000/64","2001:10:1:1::5000/64","2001:10:1:1::6000/64","2001:10:1:1::7000/64","2001:10:1:1::8000/64"]
 	gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
 
-	#config_interfaces = False
-	config_interfaces = True
+	config_interfaces = False
+	#config_interfaces = True
 	clean_acl = False
 	#clean_acl = True
 	config_acl_ingress = False
@@ -485,7 +485,7 @@ if __name__ == "__main__":
 			sw = switches[switch_num]
 
 			#define valuables specific to the switch under testing 
-			ixia_sub_intf = 30
+			ixia_sub_intf = 20
 			portList_v4_v6 = []
 			for p,m,n4,g4,n6,g6 in zip(
 				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
