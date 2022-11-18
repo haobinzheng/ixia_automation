@@ -3,7 +3,7 @@
  <dev1 type="FSW" hostname="S424EPTF21001277" model="424EPOE">
   <console ip="10.105.241.44" line="2087"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.241.28" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <mgmt ip="10.105.241.28" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.105.241.98" port="15"> </pdu>
   <tftp ip="10.105.19.44" local_ip="10.105.241.28" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
@@ -14,7 +14,7 @@
  <dev2 type="FSW" hostname="S424EITF19000006" model="FSW-424E-FIBER">
   <console ip="10.105.241.144" line="2082"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.241.123" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <mgmt ip="10.105.241.123" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN" ip="10.105.241.200" port="2"> </pdu>
   <tftp ip="10.105.19.44" local_ip="10.105.241.123" gateway="10.105.241.254" netmask="255.255.254.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
@@ -25,7 +25,7 @@
 <dev3 type="FSW" hostname="FS3E32T419000006" model="FSW-3032E">
   <console ip="10.105.241.144" line="2017"> </console>
   <login username="admin" password="Fortinet123!"> </login>
-  <mgmt ip="10.105.241.19" netmask="255.255.255.0" gateway="10.105.241.254" port="port24"> </mgmt>
+  <mgmt ip="10.105.241.19" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN" ip=" 10.105.241.98" port="13"> </pdu>
   <tftp ip="10.105.19.44" local_ip="0.105.241.123" gateway="110.105.241.254" netmask="255.255.254.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>

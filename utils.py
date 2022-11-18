@@ -561,6 +561,35 @@ def read_console(tn):
 	print(out_str_list)
 	return out_str_list
 
+def print_show_cmd_list_generic(tn,cmd_f_string,*args,**kwargs):
+	if 't' in kwargs:
+		timeout = kwargs['t']
+	else:
+		timeout = 5
+	#relogin_if_needed(tn)
+	if "logger" in kwargs:
+		mylogger = kwargs["logger"]
+	else:
+		mylogger = None
+	handle_prompt_before_commands(tn)
+	original_cmds = cmd_f_string
+	cmd_list = split_fstring_lines_generic(cmd_f_string)	
+	for cmd in cmd_list:
+		cmd_bytes = convert_cmd_ascii_n(cmd)
+		tn.write(cmd_bytes)
+	sleep(timeout)
+	output = tn.read_very_eager()
+	out_list = output.split(b'\r\n')
+	encoding = 'utf-8'
+	out_str_list = []
+	for o in out_list:
+		o_str = o.decode(encoding).strip(' \r')
+		out_str_list.append(o_str)
+	for out_str in out_str_list:
+		tprint(f"{str(out_str)}\n")
+		if mylogger != None:
+			mylogger.write(f"{str(out_str)}\n")
+
 def print_show_cmd(tn,cmd,*args,**kwargs):
 	if 't' in kwargs:
 		timeout = kwargs['t']
@@ -1021,6 +1050,16 @@ def split_f_string_lines(cmdblock):
 	b = [x.strip() for x in b if x.strip()]
 	return b
 
+def split_fstring_lines_generic(cmdblock):
+	cmds= cmdblock.split("\n")
+	print(cmds)
+	while cmds and cmds[-1] is '':
+	    cmds.pop()
+	while cmds and cmds[0] is '':
+	    cmds.pop(0)
+	return cmds
+
+
 def config_cmds_lines_fast(dut,cmdblock,*args,**kwargs):
 	if "wait" in kwargs:
 		wait_time = int(kwargs["wait"])
@@ -1081,7 +1120,8 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 		config_mode = "slow"
 
 	if config_mode == "fast":
-		wait_time = 0.1
+		wait_time = 0.2
+		check_prompt = False
 	else:
 		check_prompt = True
 

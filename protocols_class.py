@@ -1729,6 +1729,7 @@ class switch_acl_dotonex(Switch_ACL):
                 config access-list-entry
                   {% for entry in entries %}
                   edit {{ entry.index }}
+                  set group {{entry.group_id}}
                   config classifier
                     {% for key, value in entry.classifiers.items() %}
                     set {{ key }} {{ value }}
@@ -1906,7 +1907,7 @@ class switch_acl_ingress(Switch_ACL):
         self.switch.config_cmds_fast(cmds)
 
 
-    def config_acl6_jinja(self,acl_yaml):
+    def config_acl_ingress_jinja(self,acl_yaml):
         sample = """
         hostname {{ name }}
 
@@ -6854,11 +6855,37 @@ class FortiSwitch_XML(FortiSwitch):
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
         self.system_interfaces = self.find_sys_interfaces()
+        self.split_ports = []
+        self.split_port_exist = False
+        self.find_split_ports()
         self.router_ospf = Router_OSPF(self)
         self.router_isis = Router_ISIS(self)
         self.router_bgp = Router_BGP(self)
         self.system_interfaces_list = None
         
+    def find_split_ports(self):
+        self.split_ports = []
+        for port in self.ixia_ports: 
+            if "." in port:
+                dprint(f"find split port: {port}")
+                port_name = port.split(".")[0]
+                self.split_ports.append(port_name)
+                self.split_port_exist = True
+        Info(f"At switch {self.hostname}, split ports are {self.split_ports}")
+        Info(f"At switch {self.hostname}, split ports exist = {self.split_port_exist}")
+
+    def fnsysctl_bcm_output(self):
+        bcm_cmds = f"""
+        fnsysctl shell
+        bcm.user.proxy
+
+        fp show
+
+        exit
+        exit
+        """
+        print_show_cmd_list_generic(self.console,bcm_cmds)
+
     def delete_vlan_interfaces(self):
         for interface in self.system_interfaces:
             if interface.isvlan or "vlan" in interface.name:
@@ -7046,14 +7073,41 @@ class FortiSwitch_XML(FortiSwitch):
             sleep(2)
             telnet_send_cmd(pdu,"4")
 
-    def config_split_port(port):
-        config_split_ports = f"""
-            config switch phy-mode
-            set {port}-phy-mode 4x10G
-            end
+    def config_split_port(self):
+        jinja_sample = """
+        config switch acl 802-1X  
+        {% for acl_index in range(1,acl_length + 1) %}
+        delete {{ acl_index }}
+        {% endfor -%}
+        end
+        config switch acl service custom
+            delete {{filter_name}}
+            next
+        end
         """
-        sw.config_cmds_fast(config_split_ports)
-        switch_enter_yes(sw.console)
+        yaml_string = f"""
+        split_port_list: {self.split_ports}
+        """
+
+        jinja_string = """
+        config switch phy-mode
+        {% for port in split_port_list %}
+        set {{port}}-phy-mode 4x10G
+        {% endfor -%}
+        end
+        """
+        Info(f"config_split_port: Configuring split ports {self.split_ports} ")
+        config = yaml.safe_load(yaml_string)
+        template = Template(jinja_string)
+        result = template.render(config)
+        self.config_cmds_fast(result)
+        # cmds = f"""
+        #     config switch phy-mode
+        #     set {port}-phy-mode 4x10G
+        #     end
+        # """
+        # sw.config_cmds_fast(cmds)
+        switch_enter_yes(self.console)
         console_timer(200,msg="switch is being rebooted after configuring split port, wait for 200s")
         try:
             self.switch_relogin()
@@ -7746,6 +7800,12 @@ class FortiSwitch_XML(FortiSwitch):
                 result = True
         return result
 
+    def factory_and_restore_config(self):
+        self.switch_factory_reset()
+        console_timer(300,msg="class fortiswitch_xml | factory_reset_restore_config: factory reset wating 300 sec....")
+        self.sw_relogin()
+        self.config_network_standalone()
+
     def config_network_standalone(self):
         config = f"""
         conf system interface 
@@ -7753,7 +7813,7 @@ class FortiSwitch_XML(FortiSwitch):
             set mode static
             end
         """
-        config_cmds_lines(self.console,config)
+        config_cmds_lines_fast(self.console,config)
         sleep(2)
         config = f"""
         conf system interface 
@@ -7761,17 +7821,17 @@ class FortiSwitch_XML(FortiSwitch):
             set mode static
             end
         """
-        config_cmds_lines(self.console,config)
+        config_cmds_lines_fast(self.console,config)
 
         sleep(5)
         config = f"""
         conf system interface 
             edit mgmt
             set ip {self.mgmt_ip} {self.mgmt_netmask}
-            set allowaccess ping telnet https http
+            set allowaccess ping telnet https http ssh
         end
         """
-        config_cmds_lines(self.console,config)
+        config_cmds_lines_fast(self.console,config)
         sleep(5)
 
         config = f"""
@@ -7782,8 +7842,10 @@ class FortiSwitch_XML(FortiSwitch):
             next
         end
         """
-        config_cmds_lines(self.console,config)
+        config_cmds_lines_fast(self.console,config)
         sleep(5)
+        if self.split_port_exist:
+            self.config_split_port()
 
     def sw_relogin(self):
         Info(f"================= {self.hostname}: Re-Login console after rebooting or power_cycle =================")

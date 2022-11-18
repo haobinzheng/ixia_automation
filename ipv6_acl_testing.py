@@ -478,14 +478,21 @@ if __name__ == "__main__":
 
 	def dot1x_acl6_testing_yaml(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
-		
+		if "factory" in kwargs:
+			factory = kwargs["factory"]
+		else:
+			factory = False
 		for switch_num in switch_num_list:
 			#Designate the DUT being tested 
 			switch_num = int(switch_num)-1
 			sw = switches[switch_num]
 
+			if factory == True:
+				sw.factory_and_restore_config()
+				config_sys_interfaces(sw,vlan=TEST_VLAN_NAME)
+
 			#define valuables specific to the switch under testing 
-			ixia_sub_intf = 20
+			ixia_sub_intf = 2
 			portList_v4_v6 = []
 			for p,m,n4,g4,n6,g6 in zip(
 				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
@@ -520,12 +527,14 @@ if __name__ == "__main__":
                 acl_index: {1+i}
                 entries: 
                   - index: 1
+                    group_id: 3
                     classifiers:
                       src-mac: {increment_macaddr(mac_base_1,i)}
                     actions:
                       count: "enable"
                       drop: "enable"
                   - index: 2
+                    group_id: 3
                     classifiers:
                       src-mac: {increment_macaddr(mac_base_2,i)}
                     actions:
@@ -550,7 +559,7 @@ if __name__ == "__main__":
                 actions:
                   count: "enable"
                 """
-				acl_ingress.config_acl6_jinja(acl_yaml)
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
 
 				acl_yaml = f"""
                 index: {1000+i}
@@ -564,13 +573,13 @@ if __name__ == "__main__":
                 actions:
                   count: "enable"
                 """
-				acl_ingress.config_acl6_jinja(acl_yaml)	
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 
 				acl_yaml = f"""
                 index: {500+i}
                 classifiers:
-                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}
-                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
                  src-mac: {increment_macaddr(mac_base_1,i)}
                 globals_config:
                   group: 1
@@ -579,12 +588,12 @@ if __name__ == "__main__":
                   count: "enable"
                 """
 
-				acl_ingress.config_acl6_jinja(acl_yaml)	
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 				acl_yaml = f"""
                 index: {1500+i}
                 classifiers:
-                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}
-                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
                  src-mac: {increment_macaddr(mac_base_2,i)}
                 globals_config:
                   group: 1
@@ -592,7 +601,7 @@ if __name__ == "__main__":
                 actions:
                   count: "enable"
                 """
-				acl_ingress.config_acl6_jinja(acl_yaml)		 
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)		 
 		 
 			#format of this method: config_explicit_drop(self,index,group,intf)
 			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
@@ -634,6 +643,7 @@ if __name__ == "__main__":
 			sw.print_show_command(f"diagnose switch 802-1x status {sw.ixia_ports[1]} ") 
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]} ")
 			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]} ") 
+			sw.fnsysctl_bcm_output()
 			print_double_line()
 			k = input(f"Please verify all the command output,Do you want to remove 802.1x configurations(Y/N):")
 			print_double_line()
@@ -698,7 +708,7 @@ if __name__ == "__main__":
                   count: "enable"
                   drop: "enable"
                 """
-				acl_ingress.config_acl6_jinja(acl_yaml)
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
 
 				acl_yaml = f"""
                 index: {1000+i}
@@ -712,7 +722,7 @@ if __name__ == "__main__":
                   count: "enable"
                   drop: "enable"
                 """
-				acl_ingress.config_acl6_jinja(acl_yaml)	 
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	 
 		 
 			#This two config has to removed. format of this method: config_explicit_drop(self,index,group,intf)
 			# acl_ingress.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
@@ -773,7 +783,7 @@ if __name__ == "__main__":
                   count: "enable"
                   drop: "enable"
                 """
-				acl_ingress.config_acl6_jinja(acl_yaml)
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
 
 				acl_yaml = f"""
                 index: {1000+i}
@@ -787,7 +797,7 @@ if __name__ == "__main__":
                   count: "enable"
                   drop: "enable"
                 """
-				acl_ingress.config_acl6_jinja(acl_yaml)	
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 
 			sw.print_show_command(f"get switch acl counter all")
 			sw.print_show_command(f"show switch acl ingress")
@@ -2365,7 +2375,7 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	dot1x_acl6_testing_yaml(switch_num_list = [3])
+	dot1x_acl6_testing_yaml(switch_num_list = [3],factory=True)
 	#dot1x_acl6_testing(switch_num_list = [2,3])
 	#classifier_combo_testing(switch_num=1)
 	#real_scale_acl6_testing(switch_num=2,longevity=False)
