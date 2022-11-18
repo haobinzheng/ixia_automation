@@ -6876,7 +6876,7 @@ class FortiSwitch_XML(FortiSwitch):
 
     def fnsysctl_bcm_output(self):
         bcm_cmds = f"""
-        fnsysctl shell
+        fnsysctl sh
         bcm.user.proxy
 
         fp show
