@@ -657,8 +657,13 @@ def collect_show_cmd(tn,cmd,**kwargs):
 		timeout = kwargs['t']
 	else:
 		timeout = 5
+	if 'mode' in kwargs:
+		mode = kwargs['mode']
+	else:
+		mode = "slow"
 	#relogin_if_needed(tn)
-	handle_prompt_before_commands(tn)
+	if mode == "slow":
+		handle_prompt_before_commands(tn)
 	original_cmd = cmd
 	cmd_bytes = convert_cmd_ascii_n(cmd)
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
@@ -2088,17 +2093,17 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 		except Exception as e:
 			pass
 	elif platform == "fortigate":
-		switch_configure_cmd(tn,'config global')
-		switch_configure_cmd(tn,'config system console')
-		switch_configure_cmd(tn,'set output standard')
-		switch_configure_cmd(tn,'end')
-		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config global',mode ="fast")
+		switch_configure_cmd(tn,'config system console',mode ="fast")
+		switch_configure_cmd(tn,'set output standard',mode ="fast")
+		switch_configure_cmd(tn,'end',mode ="fast")
+		switch_configure_cmd(tn,'end',mode ="fast")
 
-		switch_configure_cmd(tn,'config global')
-		switch_configure_cmd(tn,'config system global')
-		switch_configure_cmd(tn,'set admin-console-timeout 300')
-		switch_configure_cmd(tn,'end')
-		switch_configure_cmd(tn,'end')
+		switch_configure_cmd(tn,'config global',mode ="fast")
+		switch_configure_cmd(tn,'config system global',mode ="fast")
+		switch_configure_cmd(tn,'set admin-console-timeout 300',mode ="fast")
+		switch_configure_cmd(tn,'end',mode ="fast")
+		switch_configure_cmd(tn,'end',mode ="fast")
 
 		tprint("get_switch_telnet_connection_new: Login sucessful!\n")
 		try:

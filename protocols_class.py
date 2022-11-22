@@ -5696,7 +5696,7 @@ class FortiSwitch:
         # self.ipv6 = None
         if self.is_fortinet() == False:
             return 
-        cmd_output = collect_show_cmd(self.console,"show system interface")
+        cmd_output = collect_show_cmd(self.console,"show system interface",mode="fast")
         debug(cmd_output)
         sys_int_list = []
         regex_name = r'\s*edit "([a-z0-9]+)"'
@@ -7868,7 +7868,7 @@ class FortiSwitch_XML(FortiSwitch):
         """
         print(f"========================== {self.hostname}: Get System Status =======================")
         if self.console != None:
-            output = collect_show_cmd(self.console,"get system status")
+            output = collect_show_cmd(self.console,"get system status",mode="fast")
         else:
             Info(f"!!!!!!! the device {self.hostname} has no console connection, please check your console connection")
             return

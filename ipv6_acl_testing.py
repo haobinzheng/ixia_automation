@@ -678,6 +678,375 @@ if __name__ == "__main__":
 				sw.config_cmds_fast(cmds)
 
 
+	def multiple_rules_acl6_testing(*args,**kwargs):
+
+		switch_num_list = kwargs["switch_num_list"]
+		if "factory" in kwargs:
+			factory = kwargs["factory"]
+		else:
+			factory = False
+		for switch_num in switch_num_list:
+			#Designate the DUT being tested 
+			switch_num = int(switch_num)-1
+			sw = switches[switch_num]
+
+			if factory == True:
+				sw.factory_and_restore_config()
+				config_sys_interfaces(sw,vlan=TEST_VLAN_NAME)
+
+			#define valuables specific to the switch under testing 
+			ixia_sub_intf = 1
+			portList_v4_v6 = []
+			for p,m,n4,g4,n6,g6 in zip(
+				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
+				mac_list[switch_num*2:switch_num*2+2], \
+				net4_list[switch_num*2:switch_num*2+2], \
+				gw4_list[switch_num*2:switch_num*2+2], \
+				net6_list[switch_num*2:switch_num*2+2], \
+				gw6_list[switch_num*2:switch_num*2+2]):
+				module,port = p.split("/")
+				portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+			
+			print(portList_v4_v6)
+			mac_base_1=mac_list[switch_num*2]
+			mac_base_2=mac_list[switch_num*2+1]
+			
+			#clean up all ACL (ingress and 802.1x) related configuration
+			acl_ingress = switch_acl_ingress(switches[switch_num])
+			acl_ingress.acl_ingress_clean_up()
+
+			#start configuring ACL 802.1x related configuration
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                globals_config:
+                 group: 4
+                 ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                  drop: "enable"
+                  count-type: "green red"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {200+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                 group: 4
+                 ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                 count: "enable"
+                 count-type: "green red"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                globals_config:
+                  group: 4
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  count-type: "green red"
+                  drop: "enable"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {1200+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 4
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  count-type: "green red"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                  drop: "enable"
+                  count-type: "green red"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {700+i}
+                classifiers:
+                  dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                  src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                  count-type: "green red"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)		
+
+				acl_yaml = f"""
+                index: {1500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  count-type: "green red"
+                  drop: "enable"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {1700+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  count-type: "green red"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)		 
+		 
+			#format of this method: config_explicit_drop(self,index,group,intf)
+			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			# acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
+			
+
+ 			#Start configurating IXIA 
+			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
+			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+			for topo in myixia.topologies:
+				#topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+				topo.add_ipv6(gateway="fixed")
+				
+			myixia.start_protocol(wait=20)
+
+			for i in range(0,1):
+				for j in range(1,2):
+					# myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					# myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+			try:
+				myixia.start_traffic()
+				sleep(5)
+				myixia.stop_traffic()
+				sleep(10)
+				myixia.collect_stats()
+				myixia.check_traffic()
+			except Exception:
+				Info("Can not start traffic after multiple matched polices Drop/Forward")
+
+			sw.print_show_command(f"get switch acl usage")
+			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"show switch acl ingress")
+			#sw.fnsysctl_bcm_output()
+
+			print_double_line()
+			k = input(f"Please verify drop/count,Do you want to test count/drop config(Y/N):")
+			print_double_line()
+			sleep(5)
+			if k =="No" or k=="n" or k=="N" or k=="No":
+				exit()
+			Info("Reconfig ingress ACL for count/drop rules matching the same packet .......")
+			Info("First clean up ACL ingress.....")
+			acl_ingress.acl_ingress_clean_up()
+			sleep(5)
+			acl_yaml = f"""
+            index: {1+i}
+            classifiers:
+             dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+             src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+            globals_config:
+             group: 4
+             ingress-interface: {sw.ixia_ports[0]}
+            actions:
+              count: "enable"
+              count-type: "green red"
+            """
+			acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+			acl_yaml = f"""
+            index: {200+i}
+            classifiers:
+             dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+             src-mac: {increment_macaddr(mac_base_1,i)}
+            globals_config:
+             group: 4
+             ingress-interface: {sw.ixia_ports[0]}
+            actions:
+             count: "enable"
+             count-type: "green red"
+             drop: "enable"
+            """
+			acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+			acl_yaml = f"""
+            index: {1000+i}
+            classifiers:
+             dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+             src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+            globals_config:
+              group: 4
+              ingress-interface: {sw.ixia_ports[1]}
+            actions:
+              count: "enable"
+              count-type: "green red"
+              
+            """
+			acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+			acl_yaml = f"""
+            index: {1200+i}
+            classifiers:
+             dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+             src-mac: {increment_macaddr(mac_base_2,i)}
+            globals_config:
+              group: 4
+              ingress-interface: {sw.ixia_ports[1]}
+            actions:
+              count: "enable"
+              count-type: "green red"
+              drop: "enable"
+            """
+			acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+			acl_yaml = f"""
+            index: {500+i}
+            classifiers:
+             dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+             src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+            globals_config:
+              group: 1
+              ingress-interface: {sw.ixia_ports[0]}
+            actions:
+              count: "enable"
+              count-type: "green red"
+            """
+			acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+			acl_yaml = f"""
+            index: {700+i}
+            classifiers:
+              dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+              src-mac: {increment_macaddr(mac_base_1,i)}
+            globals_config:
+              group: 1
+              ingress-interface: {sw.ixia_ports[0]}
+            actions:
+              count: "enable"
+              drop: "enable"
+              count-type: "green red"
+            """
+			acl_ingress.config_acl_ingress_jinja(acl_yaml)		
+
+			acl_yaml = f"""
+            index: {1500+i}
+            classifiers:
+             dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+             src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+            globals_config:
+              group: 1
+              ingress-interface: {sw.ixia_ports[1]}
+            actions:
+              count: "enable"
+              count-type: "green red"
+            """
+			acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+			acl_yaml = f"""
+            index: {1700+i}
+            classifiers:
+             dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+             src-mac: {increment_macaddr(mac_base_2,i)}
+            globals_config:
+              group: 1
+              ingress-interface: {sw.ixia_ports[1]}
+            actions:
+              count: "enable"
+              count-type: "green red"
+              drop: "enable"
+            """
+			acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+			for topo in myixia.topologies:
+				#topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+				topo.add_ipv6(gateway="fixed")
+				
+			myixia.start_protocol(wait=20)
+
+			for i in range(0,1):
+				for j in range(1,2):
+					# myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					# myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+
+			try:
+				myixia.start_traffic()
+				sleep(5)
+				myixia.stop_traffic()
+				sleep(10)
+				myixia.collect_stats()
+				myixia.check_traffic() 
+			except Exception:
+				Info("Can not start traffic after multiple matched polices Forward/Drop")
+
+			k = input(f"Please verify drop/count,Do you want to delete all the drop clause and test again(Y/N):")
+			if k =="No" or k=="n" or k=="N" or k=="No":
+				return
+			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+			for topo in myixia.topologies:
+				#topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+				topo.add_ipv6(gateway="fixed")
+				
+			myixia.start_protocol(wait=20)
+
+			for i in range(0,1):
+				for j in range(1,2):
+					# myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					# myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+
+			try:
+				myixia.start_traffic()
+				sleep(5)
+				myixia.stop_traffic()
+				sleep(10)
+				myixia.collect_stats()
+				myixia.check_traffic() 
+			except Exception:
+				Info("Can not start traffic after deleting all drop polices")
+
 	def dot1x_acl6_testing_yaml(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
 		if "factory" in kwargs:
@@ -2722,7 +3091,8 @@ if __name__ == "__main__":
 	#acl6_priority_testing()
 	#acl6_redirect_mirror_testing()
 	#basic_acl6_testing(switch_num_list = [1,2,3])
-	rvi_acl6_testing(switch_num_list = [3])
+	multiple_rules_acl6_testing(switch_num_list = [1])
+	#rvi_acl6_testing(switch_num_list = [3])
 	#traffic_acl6_testing(switch_num_list = [1])
 	#basic_acl6_drop_testing()
 	exit()
