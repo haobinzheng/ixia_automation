@@ -679,6 +679,12 @@ if __name__ == "__main__":
 
 
 	def multiple_rules_acl6_testing(*args,**kwargs):
+		# switches = []
+		# for d in tb.devices:
+		# 	switch = FortiSwitch_XML(d,topo_db=tb)
+		# 	switches.append(switch)
+		# for c in tb.connections:
+		# 	c.update_devices_obj(switches)
 
 		switch_num_list = kwargs["switch_num_list"]
 		if "factory" in kwargs:
@@ -693,7 +699,13 @@ if __name__ == "__main__":
 			if factory == True:
 				sw.factory_and_restore_config()
 				config_sys_interfaces(sw,vlan=TEST_VLAN_NAME)
-
+			else:
+				acl_dot1x = switch_acl_dotonex(sw)
+				acl_ingress = switch_acl_ingress(switches[switch_num])
+				dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab",port_list=[sw.ixia_ports[0],sw.ixia_ports[1]])
+				acl_ingress.acl_ingress_clean_up()
+				acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}")
+				dot1x.dot1x_remove_config()
 			#define valuables specific to the switch under testing 
 			ixia_sub_intf = 1
 			portList_v4_v6 = []
@@ -711,11 +723,8 @@ if __name__ == "__main__":
 			mac_base_1=mac_list[switch_num*2]
 			mac_base_2=mac_list[switch_num*2+1]
 			
-			#clean up all ACL (ingress and 802.1x) related configuration
-			acl_ingress = switch_acl_ingress(switches[switch_num])
-			acl_ingress.acl_ingress_clean_up()
 
-			#start configuring ACL 802.1x related configuration
+			#start configuring ACL ingress related configuration
 			for i in range(ixia_sub_intf):
 				#start configuring ACL ingress configuration
 				acl_yaml = f"""
@@ -864,9 +873,9 @@ if __name__ == "__main__":
 			except Exception:
 				Info("Can not start traffic after multiple matched polices Drop/Forward")
 
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
 			#sw.fnsysctl_bcm_output()
 
 			print_double_line()
@@ -918,8 +927,7 @@ if __name__ == "__main__":
               ingress-interface: {sw.ixia_ports[1]}
             actions:
               count: "enable"
-              count-type: "green red"
-              
+              count-type: "green red"   
             """
 			acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 
@@ -1018,11 +1026,22 @@ if __name__ == "__main__":
 				myixia.collect_stats()
 				myixia.check_traffic() 
 			except Exception:
-				Info("Can not start traffic after multiple matched polices Forward/Drop")
+				Info("!!!!!!!! Can not start traffic after multiple matched polices Forward/Drop!!!!!!!!!")
 
 			k = input(f"Please verify drop/count,Do you want to delete all the drop clause and test again(Y/N):")
 			if k =="No" or k=="n" or k=="N" or k=="No":
 				return
+			for i in range(ixia_sub_intf):
+				cmds = f"""
+				config switch acl ingress
+				delete {200+i}
+				delete {1200+i}
+				delete {700+i}
+				delete {1700+i}
+				end
+				"""
+				sw.config_cmds_fast(cmds)
+
 			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 			for topo in myixia.topologies:
 				#topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
@@ -1045,7 +1064,7 @@ if __name__ == "__main__":
 				myixia.collect_stats()
 				myixia.check_traffic() 
 			except Exception:
-				Info("Can not start traffic after deleting all drop polices")
+				Info("!!!!!! Can not start traffic after deleting all drop polices!!!!!!!!!")
 
 	def dot1x_acl6_testing_yaml(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
@@ -3092,6 +3111,7 @@ if __name__ == "__main__":
 	#acl6_redirect_mirror_testing()
 	#basic_acl6_testing(switch_num_list = [1,2,3])
 	multiple_rules_acl6_testing(switch_num_list = [1])
+	#basic_acl6_testing(switch_num_list = [1])
 	#rvi_acl6_testing(switch_num_list = [3])
 	#traffic_acl6_testing(switch_num_list = [1])
 	#basic_acl6_drop_testing()

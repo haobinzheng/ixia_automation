@@ -8155,10 +8155,14 @@ class FortiSwitch_XML(FortiSwitch):
         return False
         
     def print_show_command(self,cmd,*args,**kwargs):
-        if "logger" in kwargs:
-            print_show_cmd(self.console,cmd,logger=kwargs["logger"])
+        if "mode" in kwargs:
+            cmd_mode = kwargs["mode"]
         else:
-            print_show_cmd(self.console,cmd)
+            cmd_mode = "slow"
+        if "logger" in kwargs:
+            print_show_cmd(self.console,cmd,logger=kwargs["logger"],mode=cmd_mode)
+        else:
+            print_show_cmd(self.console,cmd,mode=cmd_mode)
 
     #config_lines are defined with """ """
     def config_cmds(self,config_lines):

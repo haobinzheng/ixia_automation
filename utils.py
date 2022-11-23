@@ -600,7 +600,13 @@ def print_show_cmd(tn,cmd,*args,**kwargs):
 		mylogger = kwargs["logger"]
 	else:
 		mylogger = None
-	handle_prompt_before_commands(tn)
+	if "mode" in kwargs:
+		mode = kwargs["mode"]
+	else:
+		mode = "slow"
+	Info(f"print_show_cmd: mode = {mode}")
+	if mode == "slow":
+		handle_prompt_before_commands(tn)
 	original_cmd = cmd
 	cmd_bytes = convert_cmd_ascii_n(cmd)
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
@@ -661,6 +667,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 		mode = kwargs['mode']
 	else:
 		mode = "slow"
+	Info(f"At collect_show_cmd: mode = {mode}")
 	#relogin_if_needed(tn)
 	if mode == "slow":
 		handle_prompt_before_commands(tn)
@@ -3401,7 +3408,7 @@ def find_dut_model(dut):
 	return None
 
 def find_dut_image(dut):
-	result = collect_show_cmd(dut,"get system status",t=5)
+	result = collect_show_cmd(dut,"get system status",t=5,mode='fast')
 	dprint(result)
 	for line in result:
 		if "Version" in line:
@@ -3418,7 +3425,7 @@ def find_dut_build(dut,*args,**kwargs):
 		platform = "fortinet"
 
 	if platform == "fortinet":
-		result = collect_show_cmd(dut,"get system status",t=5)
+		result = collect_show_cmd(dut,"get system status",t=5,mode='fast')
 		dprint(result)
 		for line in result:
 			if "Version" in line:
