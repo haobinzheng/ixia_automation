@@ -1132,7 +1132,7 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 		config_mode = "slow"
 
 	if config_mode == "fast":
-		wait_time = 0.2
+		wait_time = 0.5
 		check_prompt = False
 	else:
 		check_prompt = True
@@ -1245,7 +1245,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
-	time.sleep(0.5)
+	time.sleep(0.6)
 	if output == False:
 		tn.read_until(("# ").encode('ascii'),timeout=5)
 		return None 
