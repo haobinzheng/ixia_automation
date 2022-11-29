@@ -746,7 +746,6 @@ if __name__ == "__main__":
                 index: {200+i}
                 classifiers:
                  dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
-                 src-mac: {increment_macaddr(mac_base_1,i)}
                 globals_config:
                  group: 4
                  ingress-interface: {sw.ixia_ports[0]}
@@ -775,7 +774,6 @@ if __name__ == "__main__":
                 index: {1200+i}
                 classifiers:
                  dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
-                 src-mac: {increment_macaddr(mac_base_2,i)}
                 globals_config:
                   group: 4
                   ingress-interface: {sw.ixia_ports[1]}
@@ -804,7 +802,6 @@ if __name__ == "__main__":
                 index: {700+i}
                 classifiers:
                   dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
-                  src-mac: {increment_macaddr(mac_base_1,i)}
                 globals_config:
                   group: 1
                   ingress-interface: {sw.ixia_ports[0]}
@@ -833,7 +830,6 @@ if __name__ == "__main__":
                 index: {1700+i}
                 classifiers:
                  dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
-                 src-mac: {increment_macaddr(mac_base_2,i)}
                 globals_config:
                   group: 1
                   ingress-interface: {sw.ixia_ports[1]}
@@ -906,7 +902,6 @@ if __name__ == "__main__":
             index: {200+i}
             classifiers:
              dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
-             src-mac: {increment_macaddr(mac_base_1,i)}
             globals_config:
              group: 4
              ingress-interface: {sw.ixia_ports[0]}
@@ -935,7 +930,6 @@ if __name__ == "__main__":
             index: {1200+i}
             classifiers:
              dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
-             src-mac: {increment_macaddr(mac_base_2,i)}
             globals_config:
               group: 4
               ingress-interface: {sw.ixia_ports[1]}
@@ -964,7 +958,6 @@ if __name__ == "__main__":
             index: {700+i}
             classifiers:
               dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
-              src-mac: {increment_macaddr(mac_base_1,i)}
             globals_config:
               group: 1
               ingress-interface: {sw.ixia_ports[0]}
@@ -993,7 +986,6 @@ if __name__ == "__main__":
             index: {1700+i}
             classifiers:
              dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
-             src-mac: {increment_macaddr(mac_base_2,i)}
             globals_config:
               group: 1
               ingress-interface: {sw.ixia_ports[1]}
@@ -2790,7 +2782,7 @@ if __name__ == "__main__":
 			acl.config_acl6_generic(index,globals,classifiers,actions)
 		sleep(10)
 		myixia.start_traffic()
-		keyin = input(f"Please capture packets at IXIA to verify verify NO IPv6 packets. Press any key when done:")
+		keyin = input(f"Please capture packets at IXIA to verify NO IPv6 packets. Press any key when done:")
 		myixia.collect_stats()
 		myixia.check_traffic()
 		myixia.stop_traffic()
@@ -3100,7 +3092,7 @@ if __name__ == "__main__":
 	#dot1x_acl6_testing_yaml(switch_num_list = [1,2],factory=True)
 	#dot1x_acl6_testing(switch_num_list = [2,3])
 	#classifier_combo_testing(switch_num=1)
-	#real_scale_acl6_testing(switch_num=2,longevity=False)
+	real_scale_acl6_testing(switch_num=1,longevity=False)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
@@ -3110,7 +3102,7 @@ if __name__ == "__main__":
 	#acl6_priority_testing()
 	#acl6_redirect_mirror_testing()
 	#basic_acl6_testing(switch_num_list = [1,2,3])
-	multiple_rules_acl6_testing(switch_num_list = [1])
+	#multiple_rules_acl6_testing(switch_num_list = [1])
 	#basic_acl6_testing(switch_num_list = [1])
 	#rvi_acl6_testing(switch_num_list = [3])
 	#traffic_acl6_testing(switch_num_list = [1])
