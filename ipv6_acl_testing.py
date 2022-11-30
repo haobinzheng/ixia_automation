@@ -1296,12 +1296,12 @@ if __name__ == "__main__":
 
 			config system schedule onetime
 		    edit "schedule_one_time_midnight"
-		        set end 23:00 {d1}
-		        set start 23:59 {d1}
+		        set end 23:59 {d1}
+		        set start 23:00 {d1}
 		    next
 		    edit "schedule_one_time_day_time"
-		        set end 9:00 {d1}
-		        set start 22:00 {d1}
+		        set end 22:00 {d1}
+		        set start 9:00 {d1}
 		    next
 			end
 			"""

@@ -1928,18 +1928,24 @@ class switch_acl_ingress(Switch_ACL):
         jinja_string = """
         config switch acl ingress   
         edit {{ index }}
+            {% if globals_config is defined %}
                 {% for key, value in globals_config.items() %}
                 set {{ key }} {{ value }}
                 {% endfor -%}
+            {% endif %}
+            {% if classifiers is defined %}
                 config classifier
                     {% for key, value in classifiers.items() %}
                     set {{ key }} {{ value }}
                     {% endfor -%}
+            {% endif %}
                 end
+            {% if action is defined %}
                 config action
                 {% for key, value in actions.items() %}
                     set {{ key }} {{ value }}
                 {% endfor -%}
+            {% endif %}
                  end
             next 
         end
