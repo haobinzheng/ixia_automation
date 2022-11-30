@@ -25,6 +25,7 @@ from device_config import *
 from protocols_class import *
 from ixia_restpy_lib_v2 import *
 from test_process import *
+from datetime import date
 
 
 
@@ -1242,6 +1243,328 @@ if __name__ == "__main__":
 				acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}") #this is more general way to remove all acl 802.1x config. Need to test
 				dot1x.dot1x_remove_config()
 		
+
+	def acl6_schedule_status_yaml(*args,**kwargs):
+		switch_num_list = kwargs["switch_num_list"]
+		if "factory" in kwargs:
+			factory = kwargs["factory"]
+		else:
+			factory = False
+		for switch_num in switch_num_list:
+			#Designate the DUT being tested 
+			switch_num = int(switch_num)-1
+			sw = switches[switch_num]
+
+			if factory == True:
+				sw.factory_and_restore_config()
+				config_sys_interfaces(sw,vlan=TEST_VLAN_NAME)
+
+			#define valuables specific to the switch under testing 
+			ixia_sub_intf = 2
+			portList_v4_v6 = []
+			for p,m,n4,g4,n6,g6 in zip(
+				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
+				mac_list[switch_num*2:switch_num*2+2], \
+				net4_list[switch_num*2:switch_num*2+2], \
+				gw4_list[switch_num*2:switch_num*2+2], \
+				net6_list[switch_num*2:switch_num*2+2], \
+				gw6_list[switch_num*2:switch_num*2+2]):
+				module,port = p.split("/")
+				portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+			
+			print(portList_v4_v6)
+			mac_base_1=mac_list[switch_num*2]
+			mac_base_2=mac_list[switch_num*2+1]
+			
+			#clean up all ACL (ingress and 802.1x) related configuration
+			acl_dot1x = switch_acl_dotonex(sw)
+			acl_ingress = switch_acl_ingress(switches[switch_num])
+			acl_ingress.acl_ingress_clean_up()
+			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}")
+ 
+			today = date.today()            
+			d1 = today.strftime("%Y/%m/%d")
+			 
+			#configure scheduler 
+			cmds = f"""
+			config system schedule recurring
+			edit schedule2
+			set day monday tuesday wednesday thursday friday saturday sunday
+			set start 17:00
+			set end 23:00
+			end
+
+			config system schedule onetime
+		    edit "schedule_one_time_midnight"
+		        set end 23:00 {d1}
+		        set start 23:59 {d1}
+		    next
+		    edit "schedule_one_time_day_time"
+		        set end 9:00 {d1}
+		        set start 22:00 {d1}
+		    next
+			end
+			"""
+			sw.config_cmds_fast(cmds)
+
+			#start configuring ACL related configuration
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 4
+                  ingress-interface: {sw.ixia_ports[0]}
+                  schedule: schedule2
+                actions:
+                  count: "enable"
+                  drop: "enable"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 4
+                  ingress-interface: {sw.ixia_ports[1]}
+                  schedule: schedule2
+                actions:
+                  count: "enable"
+                  drop: "enable"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[0]}
+                  schedule: schedule2
+                actions:
+                  count: "enable"
+                  drop: "enable"
+                """
+
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+				acl_yaml = f"""
+                index: {1500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[1]}
+                  schedule: schedule2
+                actions:
+                  count: "enable"
+                  drop: "enable"
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)		 
+		 
+			#format of this method: config_explicit_drop(self,index,group,intf)
+			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			# acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
+			
+
+ 			#Start configurating IXIA 
+			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
+			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+			for topo in myixia.topologies:
+				topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+				topo.add_ipv6(gateway="fixed")
+				
+			myixia.start_protocol(wait=20)
+
+			# for i in range(0,len(tb.ixia.port_active_list)-1):
+			# 	for j in range(i+1,len(tb.ixia.port_active_list)):
+			 
+			for i in range(0,1):
+				for j in range(1,2):
+					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl usage")
+			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"show switch acl ingress")
+			print_double_line()
+			k = input(f"Please verify all the command output, press any key to move to testing one time schdule not take effective:")
+			print_double_line()
+			sleep(5)
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_midnight
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_midnight
+                actions:
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_midnight
+                actions:
+                """
+
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+				acl_yaml = f"""
+                index: {1500+i}
+                 classifiers:
+                 globals_config:
+                  schedule: schedule_one_time_midnight
+                actions:
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl usage")
+			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"show switch acl ingress")
+			print_double_line()
+			k = input(f"Please verify traffic should be forwarded, press any key to move to testing one time schdule is taking effective:")
+			print_double_line()
+			sleep(5)
+
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_midnight
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_midnight
+                actions:
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_midnight
+                actions:
+                """
+
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+				acl_yaml = f"""
+                index: {1500+i}
+                 classifiers:
+                 globals_config:
+                  schedule: schedule_one_time_midnight
+                actions:
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl usage")
+			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"show switch acl ingress")
+			print_double_line()
+			k = input(f"Please verify traffic should be forwarded, press any key to move to testing one time schdule is taking effective:")
+			print_double_line()
+			sleep(5)
+
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_day_time
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_day_time
+                actions:
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                classifiers:
+                globals_config:
+                  schedule: schedule_one_time_day_time
+                actions:
+                """
+
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+				acl_yaml = f"""
+                index: {1500+i}
+                 classifiers:
+                 globals_config:
+                  schedule: schedule_one_time_day_time
+                actions:
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl usage")
+			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"show switch acl ingress")
+			print_double_line()
+			k = input(f"Please verify traffic should be DROPPED, press any key to finish testing:")
+			print_double_line()
+			sleep(5)
+
+
 	def classifier_l2_testing_yaml(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
 		
@@ -3089,10 +3412,11 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
+	acl6_schedule_status_yaml(switch_num_list = [1])
 	#dot1x_acl6_testing_yaml(switch_num_list = [1,2],factory=True)
 	#dot1x_acl6_testing(switch_num_list = [2,3])
 	#classifier_combo_testing(switch_num=1)
-	real_scale_acl6_testing(switch_num=1,longevity=False)
+	#real_scale_acl6_testing(switch_num=1,longevity=False)
 	#acl6_basic_color_testing()
 	#acl_policer_testing()
 	#qos_policy_testing()
