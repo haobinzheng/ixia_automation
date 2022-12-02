@@ -1976,14 +1976,12 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 			tn = None 
 			return tn
 	tn.write(('\x03\n').encode('ascii'))
-	time.sleep(1)
+	time.sleep(3)
 	tn.write(('\x03\n').encode('ascii'))
-	time.sleep(1)
+	time.sleep(3)
 	tn.write(('\x03\n').encode('ascii'))
-	time.sleep(1)
-	tn.write(('\x03\n').encode('ascii'))
-	time.sleep(1)
-
+	time.sleep(3)
+ 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
 	tn.write(('admin' + '\n').encode('ascii'))
 	tn.read_until(("Password: ").encode('ascii'),timeout=5)
@@ -2684,9 +2682,9 @@ def switch_find_login_prompt_new(tn,*args,**kwargs):
 	# time.sleep(1)
 
 	tn.write(('\x03').encode('ascii'))
-	time.sleep(1)
+	time.sleep(2)
 	tn.write(('\x03').encode('ascii'))
-	time.sleep(1)
+	time.sleep(2)
 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
 
