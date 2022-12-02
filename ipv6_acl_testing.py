@@ -2637,6 +2637,8 @@ if __name__ == "__main__":
 		myixia.collect_stats()
 		myixia.check_traffic()
 		myixia.stop_traffic()
+
+
  
 	def acl_policer_testing():
 		portList_v4_v6 = []
@@ -3025,7 +3027,8 @@ if __name__ == "__main__":
 				if group_id < 3:
 					continue
 				group_total = 0
-				for i in range(entry.rule_total):
+				test_num = entry.rule_total - 1
+				for i in range(entry.rule_total - test_num):
 					classifiers = {
 					"dst-ip6-prefix":dst_ip6_prefix,
 					"src-ip6-prefix":src_ip6_prefix
@@ -3035,7 +3038,8 @@ if __name__ == "__main__":
 					 "ingress-interface": sw_dut.ixia_ports[0]
 					}
 					actions = {
-					"count":"enable"
+					"count":"enable",
+					"drop":"enable"
 					}
 					acl.config_acl6_generic(index,globals,classifiers,actions)
 					dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
@@ -3060,13 +3064,21 @@ if __name__ == "__main__":
 				acl.print_acl_usage()
 			acl.update_acl_usage()
 			acl.print_acl_usage()
-			ixia_sub_intf_list.append(acl.rule_total)	  
+			total_acl_rules = 0 
+			for entry in acl.acl_usage_list:
+				group_id = entry.group_id
+				if group_id < 3:
+					continue
+				total_acl_rules += (entry.rule_total - entry.rule_free)
+			ixia_sub_intf_list.append(total_acl_rules)	  
 			#total_acl = 512
 		 
 		portList_v4_v6 = []
-		for p,m,n4,g4,n6,g6,ixia_sub_intf in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list,ixia_sub_intf_list):
+		i = 0
+		for p,m,n4,g4,n6,g6,ixia_sub_intf in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
-			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf_list[int(i/2)]])
+			i += 1
 
 		print(portList_v4_v6)
 		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
@@ -3078,23 +3090,44 @@ if __name__ == "__main__":
 
 		for switch_num in switch_num_list:
 			switch_num -= 1
-			for i in range(switch_num*2,switch_num*2+1):
-				for j in range(i+1,switch_num*2+2):
-					# myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
-					# myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
-					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
-					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
-
+			src_topo = myixia.topologies[switch_num * 2].topology
+			dst_topo = myixia.topologies[switch_num * 2+1].topology
+			myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
+		myixia.start_traffic()
 		# src_topo = myixia.topologies[switch_num * 2].topology
 		# dst_topo = myixia.topologies[switch_num * 2+1].topology
 		# myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
 		myixia.start_traffic()
-		sleep(10)
-		myixia.stop_traffic()
-		sleep(10)
-		myixia.collect_stats()
-		myixia.check_traffic()
-		sw.print_show_command(f"get switch acl counter all",mode="fast")
+		
+		for switch_num in switch_num_list:
+			switch_num -= 1 
+			sw = switches[switch_num]
+			sw.clear_crash_log()
+
+		while True:
+			for switch_num in switch_num_list:
+				switch_num -= 1 
+				sw = switches[switch_num]
+				
+				myixia.stop_traffic()
+				sleep(10)
+				myixia.collect_stats()
+				myixia.check_traffic()
+				sw.print_show_command(f"get switch acl counter all",mode="fast")
+				sw.exec_command("execute acl clear-counter all")
+				sw.find_crash()
+				sw.get_crash_debug()
+				found = sw.get_crash_log()
+				if found:
+					Info(f"!!!!!!!!!!!!At switch:{sw.hostname}, crash was found!!!!!!!!!!!!!!!!!!!")
+				sleep(3)
+				sw.switch_reboot_login()
+
+
+			myixia.start_traffic()	
+			console_timer(400,msg="Wait for 400s after checking each switch again")
+
+
 		
 		if longevity == False:
 			print_double_line()
@@ -3561,7 +3594,7 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	longevity_scale_acl6_testing(switch_num_list = [1])
+	longevity_scale_acl6_testing(switch_num_list = [1,2,3])
 	#acl6_schedule_status_yaml(switch_num_list = [1])
 	#dot1x_acl6_testing_yaml(switch_num_list = [1,2],factory=True)
 	#dot1x_acl6_testing(switch_num_list = [2,3])

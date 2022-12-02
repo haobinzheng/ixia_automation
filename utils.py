@@ -1245,7 +1245,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
-	time.sleep(0.6)
+	time.sleep(0.5)
 	if output == False:
 		tn.read_until(("# ").encode('ascii'),timeout=5)
 		return None 
