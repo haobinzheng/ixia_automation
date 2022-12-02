@@ -3895,8 +3895,8 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	cpu_queue_acl6_testing(switch_num_list = [3])
-	#longevity_scale_acl6_testing(switch_num_list = [1,2,3])
+	#cpu_queue_acl6_testing(switch_num_list = [3])
+	longevity_scale_acl6_testing(switch_num_list = [1,2,3])
 	#acl6_schedule_status_yaml(switch_num_list = [1])
 	#dot1x_acl6_testing_yaml(switch_num_list = [1,2],factory=True)
 	#dot1x_acl6_testing(switch_num_list = [2,3])
