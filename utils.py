@@ -1987,7 +1987,14 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 	tn.read_until(("Password: ").encode('ascii'),timeout=5)
 
 	tn.write(('' + '\n').encode('ascii'))
-	sleep(2)
+	sleep(1)
+	tn.write(('' + '\n').encode('ascii'))
+ 	sleep(1)
+	tn.write(('' + '\n').encode('ascii'))
+ 	sleep(1)
+ 	tn.write(('' + '\n').encode('ascii'))
+ 	sleep(1)
+
 
 	Info("See what prompt the console is at")
 	TIMEOUT = 3
