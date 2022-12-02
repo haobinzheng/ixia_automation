@@ -1245,7 +1245,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 
 	cmd = convert_cmd_ascii_n(cmd)
 	tn.write(cmd)
-	time.sleep(0.5)
+	time.sleep(0.6)
 	if output == False:
 		tn.read_until(("# ").encode('ascii'),timeout=5)
 		return None 
@@ -2009,8 +2009,6 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 		tn.write((pwd + '\n').encode('ascii'))
 		return tn
 	 
-		debug("can not get any prompt, need to use robust login procedure...")
-		return (None,None)
 	prompt = switch_find_login_prompt_new(tn,password=pwd)
 	p = prompt[0]
 	debug(prompt)
