@@ -1976,9 +1976,13 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 			tn = None 
 			return tn
 	tn.write(('\x03\n').encode('ascii'))
-	time.sleep(2)
+	time.sleep(1)
 	tn.write(('\x03\n').encode('ascii'))
-	time.sleep(2)
+	time.sleep(1)
+	tn.write(('\x03\n').encode('ascii'))
+	time.sleep(1)
+	tn.write(('\x03\n').encode('ascii'))
+	time.sleep(1)
 
 	tn.read_until(("login: ").encode('ascii'),timeout=5)
 	tn.write(('admin' + '\n').encode('ascii'))

@@ -345,6 +345,8 @@ if __name__ == "__main__":
 		vlan_id=re.match(r'vlan([0-9]+)',vlan).group(1)
 		cmds = f"""
 		config system interface
+		delete rvi-1
+		delete rvi-2
 		edit {vlan}
 			set ip {gw4_list[0]} 255.255.0.0
 		    config ipv6
