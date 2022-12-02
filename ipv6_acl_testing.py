@@ -3029,7 +3029,8 @@ if __name__ == "__main__":
 				if group_id < 3:
 					continue
 				group_total = 0
-				test_num = entry.rule_total - 1
+				#test_num = entry.rule_total - 1
+				test_num = 0
 				for i in range(entry.rule_total - test_num):
 					classifiers = {
 					"dst-ip6-prefix":dst_ip6_prefix,
@@ -3041,8 +3042,7 @@ if __name__ == "__main__":
 					}
 					actions = {
 					"count":"enable",
-					"drop":"enable"
-					}
+ 					}
 					acl.config_acl6_generic(index,globals,classifiers,actions)
 					dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
 					src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
@@ -3061,9 +3061,11 @@ if __name__ == "__main__":
 							break
 						else:
 							group_total = 0 # Won't check again 
-
+				Info("After configuring one group of ACL, update the acl usage...")
 				acl.update_acl_usage()
-				acl.print_acl_usage()
+				acl.print_acl_usage()	
+
+			Info("After configuring All ACL configuration, update the acl usage...")
 			acl.update_acl_usage()
 			acl.print_acl_usage()
 			total_acl_rules = 0 
@@ -3077,7 +3079,8 @@ if __name__ == "__main__":
 		 
 		portList_v4_v6 = []
 		i = 0
-		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+		#for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list[:4],mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf_list[int(i/2)]])
 			i += 1
