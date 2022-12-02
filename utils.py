@@ -1989,11 +1989,11 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 	tn.write(('' + '\n').encode('ascii'))
 	sleep(1)
 	tn.write(('' + '\n').encode('ascii'))
- 	sleep(1)
+	sleep(1)
 	tn.write(('' + '\n').encode('ascii'))
- 	sleep(1)
- 	tn.write(('' + '\n').encode('ascii'))
- 	sleep(1)
+	sleep(1)
+	tn.write(('' + '\n').encode('ascii'))
+	sleep(1)
 
 
 	Info("See what prompt the console is at")
