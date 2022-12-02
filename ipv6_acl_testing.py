@@ -3029,7 +3029,7 @@ if __name__ == "__main__":
 				if group_id < 3:
 					continue
 				group_total = 0
-				test_num = entry.rule_total - 5
+				test_num = entry.rule_total - 1
 				#test_num = 0
 				for i in range(entry.rule_total - test_num):
 					classifiers = {
@@ -3050,11 +3050,11 @@ if __name__ == "__main__":
 					total_acl +=1
 					group_total +=1 
 					stop_adding_acl_group = False
-					if group_total > entry.rule_total/2 + 5: # check at half way to ensure things are good. 
+					if group_total > 128: # check every 128 entries to ensure things are good. 
 						acl_working = switch_acl_ingress(sw_dut)
 						for en in acl_working.acl_usage_list:
 							if en.group_id == group_id and en.rule_free == 0:
-								Info(f"!!!!! Before finish creating ACL entries in the slice, slice ran out of free rules")
+								Info(f"!!!!! At the half way of creating ACL entries in the slice, slice ran out of free rules")
 								stop_adding_acl_group = True 
 								break
 						if stop_adding_acl_group == True:
@@ -3104,8 +3104,7 @@ if __name__ == "__main__":
 		# src_topo = myixia.topologies[switch_num * 2].topology
 		# dst_topo = myixia.topologies[switch_num * 2+1].topology
 		# myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
-		myixia.start_traffic()
-		
+ 		
 		for switch_num in switch_num_list:
 			switch_num -= 1 
 			sw = switches[switch_num]
