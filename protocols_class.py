@@ -1940,7 +1940,7 @@ class switch_acl_ingress(Switch_ACL):
                     {% endfor -%}
             {% endif %}
                 end
-            {% if action is defined %}
+            {% if actions is defined %}
                 config action
                 {% for key, value in actions.items() %}
                     set {{ key }} {{ value }}
@@ -7877,8 +7877,10 @@ class FortiSwitch_XML(FortiSwitch):
             output = collect_show_cmd(self.console,"get system status",mode="fast")
         else:
             Info(f"!!!!!!! the device {self.hostname} has no console connection, please check your console connection")
-            return
-
+            return None
+        if output == None:
+            Info("switch_system_status: get system status has NO ouput")
+            return None
         for line in output:
             if "Version:" in line:
                 k,v = line.split(":")
@@ -7903,6 +7905,7 @@ class FortiSwitch_XML(FortiSwitch):
                 device.version = self.version
                 print(f"----------------------------- Updated topo_db device infor  ------------------------")
                 device.print_info()
+        return "Success"
 
     def sw_network_discovery(self,*args,**kwargs):
         self.discover_fortiswitch_lldp()

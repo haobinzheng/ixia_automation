@@ -639,9 +639,9 @@ if __name__ == "__main__":
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
 			#sw.fnsysctl_bcm_output()
 
 			Info("Shut down RVI interfaces.... then check ingress ACL works")
@@ -1217,15 +1217,15 @@ if __name__ == "__main__":
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
-			sw.print_show_command(f"show switch acl 802-1X")
-			sw.print_show_command(f"show switch acl service custom dot1x_filter_{switch_num+1}")
-			sw.print_show_command(f"diagnose switch 802-1x status {sw.ixia_ports[0]} ")
-			sw.print_show_command(f"diagnose switch 802-1x status {sw.ixia_ports[1]} ") 
-			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]} ")
-			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]} ") 
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
+			sw.print_show_command(f"show switch acl 802-1X",mode="fast")
+			sw.print_show_command(f"show switch acl service custom dot1x_filter_{switch_num+1}",mode="fast")
+			sw.print_show_command(f"diagnose switch 802-1x status {sw.ixia_ports[0]}",mode="fast")
+			sw.print_show_command(f"diagnose switch 802-1x status {sw.ixia_ports[1]}",mode="fast") 
+			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]}",mode="fast")
+			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]}",mode="fast") 
 			sw.fnsysctl_bcm_output()
 			print_double_line()
 			k = input(f"Please verify all the command output,Do you want to remove 802.1x configurations(Y/N):")
@@ -1404,18 +1404,17 @@ if __name__ == "__main__":
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
 			print_double_line()
-			k = input(f"Please verify all the command output, press any key to move to testing one time schdule not take effective:")
+			k = input(f"Please verify recurring mid night schedule,press any key to move to testing one time mid night schdule:")
 			print_double_line()
 			sleep(5)
 			for i in range(ixia_sub_intf):
 				#start configuring ACL ingress configuration
 				acl_yaml = f"""
                 index: {1+i}
-                classifiers:
                 globals_config:
                   schedule: schedule_one_time_midnight
                 """
@@ -1423,28 +1422,66 @@ if __name__ == "__main__":
 
 				acl_yaml = f"""
                 index: {1000+i}
-                classifiers:
                 globals_config:
                   schedule: schedule_one_time_midnight
-                actions:
+                 """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                globals_config:
+                  schedule: schedule_one_time_midnight
+                 """
+
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+				acl_yaml = f"""
+                index: {1500+i}
+                globals_config:
+                   schedule: schedule_one_time_midnight
+                 """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
+			print_double_line()
+			k = input(f"Please verify traffic should be forwarded in day time, press any key to move to testing one time day time taking effective:")
+			print_double_line()
+			sleep(5)
+
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                globals_config:
+                  schedule: schedule_one_time_day_time
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                globals_config:
+                  schedule: schedule_one_time_day_time
                 """
 				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 
 				acl_yaml = f"""
                 index: {500+i}
-                classifiers:
                 globals_config:
-                  schedule: schedule_one_time_midnight
-                actions:
+                  schedule: schedule_one_time_day_time
                 """
 
 				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 				acl_yaml = f"""
                 index: {1500+i}
-                 classifiers:
-                 globals_config:
-                  schedule: schedule_one_time_midnight
-                actions:
+                globals_config:
+                  schedule: schedule_one_time_day_time
                 """
 				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 
@@ -1454,11 +1491,11 @@ if __name__ == "__main__":
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
 			print_double_line()
-			k = input(f"Please verify traffic should be forwarded, press any key to move to testing one time schdule is taking effective:")
+			k = input(f"Please verify traffic should be DROPPED, next step is disable all ingress ACL, press any key to continue:")
 			print_double_line()
 			sleep(5)
 
@@ -1466,36 +1503,29 @@ if __name__ == "__main__":
 				#start configuring ACL ingress configuration
 				acl_yaml = f"""
                 index: {1+i}
-                classifiers:
                 globals_config:
-                  schedule: schedule_one_time_midnight
+                  status: inactive
                 """
 				acl_ingress.config_acl_ingress_jinja(acl_yaml)
 
 				acl_yaml = f"""
                 index: {1000+i}
-                classifiers:
                 globals_config:
-                  schedule: schedule_one_time_midnight
-                actions:
+                  status: inactive
                 """
 				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 
 				acl_yaml = f"""
                 index: {500+i}
-                classifiers:
                 globals_config:
-                  schedule: schedule_one_time_midnight
-                actions:
+                  status: inactive
                 """
 
 				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 				acl_yaml = f"""
                 index: {1500+i}
-                 classifiers:
-                 globals_config:
-                  schedule: schedule_one_time_midnight
-                actions:
+                globals_config:
+                  status: inactive
                 """
 				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 
@@ -1505,62 +1535,11 @@ if __name__ == "__main__":
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
 			print_double_line()
-			k = input(f"Please verify traffic should be forwarded, press any key to move to testing one time schdule is taking effective:")
-			print_double_line()
-			sleep(5)
-
-			for i in range(ixia_sub_intf):
-				#start configuring ACL ingress configuration
-				acl_yaml = f"""
-                index: {1+i}
-                classifiers:
-                globals_config:
-                  schedule: schedule_one_time_day_time
-                """
-				acl_ingress.config_acl_ingress_jinja(acl_yaml)
-
-				acl_yaml = f"""
-                index: {1000+i}
-                classifiers:
-                globals_config:
-                  schedule: schedule_one_time_day_time
-                actions:
-                """
-				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
-
-				acl_yaml = f"""
-                index: {500+i}
-                classifiers:
-                globals_config:
-                  schedule: schedule_one_time_day_time
-                actions:
-                """
-
-				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
-				acl_yaml = f"""
-                index: {1500+i}
-                 classifiers:
-                 globals_config:
-                  schedule: schedule_one_time_day_time
-                actions:
-                """
-				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
-
-			myixia.start_traffic()
-			sleep(5)
-			myixia.stop_traffic()
-			sleep(10)
-			myixia.collect_stats()
-			myixia.check_traffic()
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
-			print_double_line()
-			k = input(f"Please verify traffic should be DROPPED, press any key to finish testing:")
+			k = input(f"Please verify traffic should be forwarded after set all ingress ACL inactive,press any key to finish testing:")
 			print_double_line()
 			sleep(5)
 
@@ -1666,9 +1645,9 @@ if __name__ == "__main__":
 					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
 
 			myixia.start_traffic()
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
 			print_double_line()
 			keyin = input(f"Please check IPv4 packets are dropped, IPv6 traffic is forwarding,Press any key when done:")
 			print_double_line()
@@ -1704,8 +1683,8 @@ if __name__ == "__main__":
                 """
 				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
 
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
 			print_double_line()
 			keyin = input(f"Please check IPv4 Passed and IPv6 Dropped,Press any key when done:")
 			print_double_line()
@@ -1826,13 +1805,13 @@ if __name__ == "__main__":
 			myixia.collect_stats()
 			myixia.check_traffic()
 			sw = switches[switch_num]
-			sw.print_show_command(f"get switch acl usage")
-			sw.print_show_command(f"get switch acl counter all")
-			sw.print_show_command(f"show switch acl ingress")
-			sw.print_show_command(f"show switch acl 802-1X")
-			sw.print_show_command(f"show switch acl service custom dot1x_filter_{switch_num+1}")
-			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]} ")
-			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]} ") 
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
+			sw.print_show_command(f"show switch acl 802-1X",mode="fast")
+			sw.print_show_command(f"show switch acl service custom dot1x_filter_{switch_num+1}",mode="fast")
+			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[0]}",mode="fast")
+			sw.print_show_command(f"diagnose switch 802-1x status-dacl {sw.ixia_ports[1]}",mode="fast") 
 			print_double_line()
 			k = input(f"Please verify all the command output,Do you want to remove 802.1x configurations(Y/N):")
 			print_double_line()
@@ -1929,7 +1908,7 @@ if __name__ == "__main__":
 			myixia.collect_stats()
 			myixia.check_traffic()
 			sw = switches[switch_num]
-			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
 			print_double_line()
 			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
 			print_double_line()
@@ -2060,7 +2039,7 @@ if __name__ == "__main__":
 			myixia.collect_stats()
 			myixia.check_traffic()
 			sw = switches[switch_num]
-			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
 			print_double_line()
 			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
 			print_double_line()
@@ -2166,7 +2145,7 @@ if __name__ == "__main__":
 			myixia.collect_stats()
 			myixia.check_traffic()
 			
-			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
 			print_double_line()
 			keyin = input(f"Please verify without Explict denly, ixia traffic ALL PASSED,Press any key when done:")
 			print_double_line()
@@ -2230,7 +2209,7 @@ if __name__ == "__main__":
 			myixia.collect_stats()
 			myixia.check_traffic()
 			
-			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
 			print_double_line()
 			keyin = input(f"Please verify without explicit deny, ALL packet PASSED,Press any key when done:")
 			print_double_line()
@@ -2253,7 +2232,7 @@ if __name__ == "__main__":
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
 
 			index = 2000
 			#format of this method: config_explicit_drop(self,index,group,intf)
@@ -2265,7 +2244,7 @@ if __name__ == "__main__":
 			sleep(5)
 			myixia.start_traffic()
 			sleep(5)
-			sw.print_show_command(f"get switch acl counter all")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
 			print_double_line()
 			keyin = input(f"Please verify after ACL deny is reversed, All PASSED,Press any key when done:")
 			print_double_line()
@@ -2607,8 +2586,8 @@ if __name__ == "__main__":
  
 		myixia.start_traffic()
 		keyin = input(f"Please verify no traffic loss before test starts. Press any key when done:")
-		sw.print_show_command(f"diagnose switch physical-ports qos-stats list {sw.ixia_ports[0]}")
-		sw.print_show_command(f"diagnose switch physical-ports qos-stats list {sw.ixia_ports[1]}")
+		sw.print_show_command(f"diagnose switch physical-ports qos-stats list {sw.ixia_ports[0]}",mode="fast")
+		sw.print_show_command(f"diagnose switch physical-ports qos-stats list {sw.ixia_ports[1]}",mode="fast")
 		keyin = input(f"Please verify qos-stats, make sure no packet dropped. Press any key when done:")
 		myixia.collect_stats()
 		myixia.check_traffic()
@@ -2652,8 +2631,8 @@ if __name__ == "__main__":
 		sleep(5)
 		myixia.start_traffic()
 		keyin = input(f"Please verify IXIA having traffic loss,Press any key when done:")
-		sw.print_show_command(f"diagnose switch physical-ports qos-stats list {sw.ixia_ports[0]}")
-		sw.print_show_command(f"diagnose switch physical-ports qos-stats list {sw.ixia_ports[1]}")
+		sw.print_show_command(f"diagnose switch physical-ports qos-stats list {sw.ixia_ports[0]}",mode="fast")
+		sw.print_show_command(f"diagnose switch physical-ports qos-stats list {sw.ixia_ports[1]}",mode="fast")
 		keyin = input(f"Please verify qos-stats, make sure packet dropped at queue-5. Press any key when done:")
 		myixia.collect_stats()
 		myixia.check_traffic()
@@ -2763,8 +2742,8 @@ if __name__ == "__main__":
  
 		myixia.start_traffic()
 		keyin = input(f"Please verify IXIA traffic loss before test starts. Press any key when done:")
-		sw.print_show_command(f"get switch acl counter all")
-		sw.print_show_command(f"get switch acl counter all")
+		sw.print_show_command(f"get switch acl counter all",mode="fast")
+		sw.print_show_command(f"get switch acl counter all",mode="fast")
 		keyin = input(f"Please verify acl ingress counter, you should see some packet dropped. Press any key when done:")
 		myixia.collect_stats()
 		myixia.check_traffic()
@@ -2835,7 +2814,7 @@ if __name__ == "__main__":
 						"count":"enable"
 						}
 						acl.config_acl6_generic(index,globals,classifiers,actions)
-				sw.print_show_command("get switch acl usage")	
+				sw.print_show_command("get switch acl usage",mode="fast")	
 			acl.update_acl_usage()
 			try_group += 1
 		#Change back to switch 1.  Need to fix this later
@@ -2946,7 +2925,7 @@ if __name__ == "__main__":
 		sleep(10)
 		myixia.collect_stats()
 		myixia.check_traffic()
-		sw.print_show_command(f"get switch acl counter all")
+		sw.print_show_command(f"get switch acl counter all",mode="fast")
 		
 		if longevity == False:
 			print_double_line()
@@ -2991,10 +2970,180 @@ if __name__ == "__main__":
 				Info(f"======================= Check traffic after one round of adding ACL entries =================")
 				myixia.stop_traffic()
 				myixia.check_traffic()
-				sw.print_show_command(f"get switch acl counter all")
+				sw.print_show_command(f"get switch acl counter all",mode="fast")
 				sleep(10)
 				myixia.start_traffic()
  
+
+	def longevity_scale_acl6_testing(*args,**kwargs):
+		switch_num_list = kwargs["switch_num_list"]
+		ixia_sub_intf_list = []
+		for switch_num in switch_num_list:
+			switch_num -= 1 
+			sw_dut = switches[switch_num]
+			if "longevity" in kwargs:
+				longevity = kwargs['longevity']
+			else:
+				longevity = False
+
+			acl = switch_acl_ingress(sw_dut)
+			acl.acl_ingress_clean_up()
+	 
+			try_group = 3
+			index = 1
+			dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
+			src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
+			while(try_group < 7):
+				classifiers = {
+				"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
+				"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
+				}
+				globals = {
+				"group":try_group,
+				 "ingress-interface": sw_dut.ixia_ports[0]
+				}
+				actions = {
+				"count":"enable"
+				}
+				acl.config_acl6_generic(index,globals,classifiers,actions)
+				sleep(2)
+				index +=1
+				try_group +=1
+			sleep(10)
+			acl.update_acl_usage()
+			acl.print_acl_usage()
+			acl.acl_ingress_clean_up()
+			sleep(5)
+			
+			acl.update_acl_usage()
+			acl.print_acl_usage()
+
+			index = 1
+			total_acl = 0
+			for entry in acl.acl_usage_list:
+				group_id = entry.group_id
+				if group_id < 3:
+					continue
+				group_total = 0
+				for i in range(entry.rule_total):
+					classifiers = {
+					"dst-ip6-prefix":dst_ip6_prefix,
+					"src-ip6-prefix":src_ip6_prefix
+					}
+					globals = {
+					"group":group_id,
+					 "ingress-interface": sw_dut.ixia_ports[0]
+					}
+					actions = {
+					"count":"enable"
+					}
+					acl.config_acl6_generic(index,globals,classifiers,actions)
+					dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
+					src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
+					index +=1
+					total_acl +=1
+					group_total +=1 
+					stop_adding_acl_group = False
+					if group_total > entry.rule_total/2 + 5: # check at half way to ensure things are good. 
+						acl_working = switch_acl_ingress(sw_dut)
+						for en in acl_working.acl_usage_list:
+							if en.group_id == group_id and en.rule_free == 0:
+								Info(f"!!!!! Before finish creating ACL entries in the slice, slice ran out of free rules")
+								stop_adding_acl_group = True 
+								break
+						if stop_adding_acl_group == True:
+							break
+						else:
+							group_total = 0 # Won't check again 
+
+				acl.update_acl_usage()
+				acl.print_acl_usage()
+			acl.update_acl_usage()
+			acl.print_acl_usage()
+			ixia_sub_intf_list.append(acl.rule_total)	  
+			#total_acl = 512
+		 
+		portList_v4_v6 = []
+		for p,m,n4,g4,n6,g6,ixia_sub_intf in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list,ixia_sub_intf_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+
+		print(portList_v4_v6)
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+		for topo in myixia.topologies:
+			#topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+			topo.add_ipv6(gateway="fixed")
+
+		myixia.start_protocol(wait=20)
+
+		for switch_num in switch_num_list:
+			switch_num -= 1
+			for i in range(switch_num*2,switch_num*2+1):
+				for j in range(i+1,switch_num*2+2):
+					# myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					# myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+
+		# src_topo = myixia.topologies[switch_num * 2].topology
+		# dst_topo = myixia.topologies[switch_num * 2+1].topology
+		# myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
+		myixia.start_traffic()
+		sleep(10)
+		myixia.stop_traffic()
+		sleep(10)
+		myixia.collect_stats()
+		myixia.check_traffic()
+		sw.print_show_command(f"get switch acl counter all",mode="fast")
+		
+		if longevity == False:
+			print_double_line()
+			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
+			print_double_line()
+
+		if longevity == True:
+			myixia.start_traffic()
+			for i in range(30):
+				acl.acl_ingress_clean_up()
+				sleep(10)
+				acl.update_acl_usage()
+				dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
+				src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
+				index = 1
+				total_acl = 1
+				for entry in acl.acl_usage_list:
+					group_id = entry.group_id
+					if group_id < 3:
+						continue
+					for i in range(entry.rule_total):
+						classifiers = {
+						"dst-ip6-prefix":dst_ip6_prefix,
+						"src-ip6-prefix":src_ip6_prefix
+						}
+						globals = {
+						"group":group_id,
+						 "ingress-interface": sw_dut.ixia_ports[0]
+						}
+						actions = {
+						"count":"enable"
+						}
+						acl.config_acl6_generic(index,globals,classifiers,actions)
+						dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
+						src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
+						index +=1
+						total_acl +=1	
+
+				sleep(10)
+				myixia.clear_stats()
+				sleep(20)
+				Info(f"======================= Check traffic after one round of adding ACL entries =================")
+				myixia.stop_traffic()
+				myixia.check_traffic()
+				sw.print_show_command(f"get switch acl counter all",mode="fast")
+				sleep(10)
+				myixia.start_traffic()
+
+
 	def basic_acl6_drop_testing():
 		acl.acl_ingress_clean_up()
 		for i in range(ixia_sub_intf):
@@ -3366,7 +3515,7 @@ if __name__ == "__main__":
 		}
 		acl.config_acl6_generic(index,globals,classifiers,actions)
 		sleep(5)
-		sw.print_show_command("show switch acl ingress")
+		sw.print_show_command("show switch acl ingress",mode="fast")
 		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 		for topo in myixia.topologies:
 			topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
@@ -3390,7 +3539,7 @@ if __name__ == "__main__":
 		"""
 		sw.config_cmds(cmds)
 		sleep(5)
-		sw.print_show_command("show switch acl ingress")
+		sw.print_show_command("show switch acl ingress",mode="fast")
 		myixia.start_traffic()
 		keyin = input(f"Please verify IPv4 traffic is forwarding, But All IPv6 packet dropped. Press any key when done:")
 		myixia.collect_stats()
@@ -3404,7 +3553,7 @@ if __name__ == "__main__":
 		"""
 		sw.config_cmds(cmds)
 		sleep(5)
-		sw.print_show_command("show switch acl ingress")
+		sw.print_show_command("show switch acl ingress",mode="fast")
 		myixia.start_traffic()
 		keyin = input(f"Please verify both IPv4 and IPv6 are forwarding. Press any key when done:")
 		myixia.collect_stats()
@@ -3412,7 +3561,8 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	acl6_schedule_status_yaml(switch_num_list = [1])
+	longevity_scale_acl6_testing(switch_num_list = [1])
+	#acl6_schedule_status_yaml(switch_num_list = [1])
 	#dot1x_acl6_testing_yaml(switch_num_list = [1,2],factory=True)
 	#dot1x_acl6_testing(switch_num_list = [2,3])
 	#classifier_combo_testing(switch_num=1)
