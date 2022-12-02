@@ -5543,6 +5543,10 @@ class FortiSwitch:
     def clear_crash_log(self):
         config = "diagnose debug crash clear"
         config_cmds_lines(self.console,config)
+        config = f"""
+        diagnose debug crashlog clear
+        """
+        config_cmds_lines(self.console,config)
 
     def find_crash(self):
         cmd = "diag debug crashlog read" 
@@ -7374,12 +7378,6 @@ class FortiSwitch_XML(FortiSwitch):
             end
             """
         config_cmds_lines(self.console,config,device=self)
-
-    def clear_crash_log(self):
-        config = f"""
-        diagnose debug crashlog clear
-        """
-        config_cmds_lines(self.console,config)
 
     def get_crash_log(self):
         found = False

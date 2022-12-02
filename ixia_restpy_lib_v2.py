@@ -180,30 +180,30 @@ class IXIA_TOPOLOGY:
         ip_incremental = ip_incremental,
     )
 
-    def add_dot1x_pppserver(self,*args,**kwargs):
-        # ip = kwargs['ip']
-        # gw = kwargs['gw']
-        # mask = kwargs['mask']
-        if "gateway" in kwargs:
-            gateway_mode = kwargs['gateway']
-        else:
-            gateway_mode = "default"
-        if "ip_incremental" in kwargs:
-            ip_incremental = kwargs["ip_incremental"]
-        else:
-            ip_incremental = "0.0.1.0"
-        self.dot1x_pppserver_session = ixia_rest_create_dot1x_pppserver(
-        platform = self.ixia.testPlatform, 
-        session = self.ixia.Session,
-        ixnet = self.ixia.ixNetwork,
-        start_ip = self.ipv4,
-        gw_start_ip = self.ipv4_gw,
-        ethernet = self.ethernet,
-        maskbits = self.ipv4_mask,
-        dot1x_server_name = self.dot1x_server_name,
-        gateway_mode = gateway_mode,
-        ip_incremental = ip_incremental,
-    )
+    # def add_dot1x_pppserver(self,*args,**kwargs):
+    #     # ip = kwargs['ip']
+    #     # gw = kwargs['gw']
+    #     # mask = kwargs['mask']
+    #     if "gateway" in kwargs:
+    #         gateway_mode = kwargs['gateway']
+    #     else:
+    #         gateway_mode = "default"
+    #     if "ip_incremental" in kwargs:
+    #         ip_incremental = kwargs["ip_incremental"]
+    #     else:
+    #         ip_incremental = "0.0.1.0"
+    #     self.dot1x_pppserver_session = ixia_rest_create_dot1x_pppserver(
+    #     platform = self.ixia.testPlatform, 
+    #     session = self.ixia.Session,
+    #     ixnet = self.ixia.ixNetwork,
+    #     start_ip = self.ipv4,
+    #     gw_start_ip = self.ipv4_gw,
+    #     ethernet = self.ethernet,
+    #     maskbits = self.ipv4_mask,
+    #     dot1x_server_name = self.dot1x_server_name,
+    #     gateway_mode = gateway_mode,
+    #     ip_incremental = ip_incremental,
+    # )
 
     def add_ptp(self,*args,**kwargs):
         self.ptp = ixia_rest_create_ptp(
@@ -1143,6 +1143,21 @@ class IXIA:
         tracking_name = tracking_name,
         )
 
+    def create_traffic_destination_v6(self,*args,**kwargs):
+        src_topo = kwargs['src_topo']
+        traffic_name = kwargs['traffic_name']
+        tracking_name = kwargs['tracking_name']
+        destination = kwargs['dst']
+        traffic_item = ixia_rest_create_ip_traffic_destination_v6(
+        platform = self.testPlatform, 
+        session = self.Session,
+        ixnet = self.ixNetwork,
+        src = src_topo,
+        dst = destination,
+        name= traffic_name,
+        tracking_name = tracking_name,
+        )
+
     def create_traffic(self,*args,**kwargs):
         src_topo = kwargs['src_topo']
         dst_topo = kwargs['dst_topo']
@@ -1867,7 +1882,40 @@ def ixia_rest_create_ip_traffic_destination_v4(*args,**kwargs):
         configElement.TransmissionControl.update(Type='continuous')
         configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
         configElement.FrameSize.FixedSize = 1000
+        trafficItem.Generate()
+    except Exception as errMsg:
+        print('\n%s' % traceback.format_exc(None, errMsg))
+        if debugMode == False and 'session' in locals():
+            session.remove()
+
+def ixia_rest_create_ip_traffic_destination_v6(*args,**kwargs):
+    debugMode = False
+    try:
+        session = kwargs['session']
+        testPlatform = kwargs['platform']
+        ixNetwork = kwargs['ixnet']
+        src_topo = kwargs['src']
+        destination = kwargs["dst"]
+        traffic_name = kwargs['name']
+        tracking_name = kwargs['tracking_name']
+         
+        ixNetwork.info('Create IPv6 unicast Traffic Item')
+        trafficItem = ixNetwork.Traffic.TrafficItem.add(Name=traffic_name, BiDirectional=False, TrafficType="ipv6",TransmitMode='sequential')
+
+        ixNetwork.info('Adding IPv6 endpoint flow group')
+
+        trafficItem.EndpointSet.add(Sources=src_topo, Destinations=destination)
+        # trafficItem.Tracking.find()[0].TrackBy = [tracking_group]
         
+        # # Note: A Traffic Item could have multiple EndpointSets (Flow groups).
+        # #       Therefore, ConfigElement is a list.
+        ixNetwork.info('Configuring config elements')
+        configElement = trafficItem.ConfigElement.find()[0]
+        configElement.FrameRate.update(Type='percentLineRate', Rate=3)
+        #configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+        configElement.TransmissionControl.update(Type='continuous')
+        configElement.FrameRateDistribution.PortDistribution = 'splitRateEvenly'
+        configElement.FrameSize.FixedSize = 1000
         trafficItem.Generate()
 
     except Exception as errMsg:
@@ -2943,8 +2991,7 @@ if __name__ == "__main__":
     # exit()
     myixia = IXIA(apiServerIp,ixChassisIpList,ipv6_portList)
     myixia.topologies[0].add_dot1x_client()
-    myixia.topologies[1].add_dot1x_pppserver()
-
+ 
     exit()
     myixia.create_traffic(src_topo=myixia.topologies[0].topology, dst_topo=myixia.topologies[1].topology,traffic_name="t1_to_t2",tracking_name="Tracking_1")
     myixia.create_traffic(src_topo=myixia.topologies[1].topology, dst_topo=myixia.topologies[0].topology,traffic_name="t2_to_t1",tracking_name="Tracking_2")

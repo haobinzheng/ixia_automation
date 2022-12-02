@@ -1244,7 +1244,295 @@ if __name__ == "__main__":
 				#acl_dot1x.remove_acl_dot1x_jinja(dot1x_remove_yaml) #
 				acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}") #this is more general way to remove all acl 802.1x config. Need to test
 				dot1x.dot1x_remove_config()
-		
+
+	def cpu_queue_acl6_testing(*args,**kwargs):
+		switch_num_list = kwargs["switch_num_list"]
+		if "factory" in kwargs:
+			factory = kwargs["factory"]
+		else:
+			factory = False
+		for switch_num in switch_num_list:
+			#Designate the DUT being tested 
+			switch_num = int(switch_num)-1
+			sw = switches[switch_num]
+			sw.switch_reboot_login()
+
+			if factory == True:
+				sw.factory_and_restore_config()
+				config_sys_interfaces(sw,vlan=TEST_VLAN_NAME)
+
+			#define valuables specific to the switch under testing 
+			ixia_sub_intf = 1
+			portList_v4_v6 = []
+			for p,m,n4,g4,n6,g6 in zip(
+				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
+				mac_list[switch_num*2:switch_num*2+2], \
+				net4_list[switch_num*2:switch_num*2+2], \
+				gw4_list[switch_num*2:switch_num*2+2], \
+				net6_list[switch_num*2:switch_num*2+2], \
+				gw6_list[switch_num*2:switch_num*2+2]):
+				module,port = p.split("/")
+				portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+			
+			print(portList_v4_v6)
+			mac_base_1=mac_list[switch_num*2]
+			mac_base_2=mac_list[switch_num*2+1]
+			
+			#clean up all ACL (ingress and 802.1x) related configuration
+			acl_dot1x = switch_acl_dotonex(sw)
+			acl_ingress = switch_acl_ingress(switches[switch_num])
+			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
+			acl_ingress.acl_ingress_clean_up()
+			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}")
+			dot1x.dot1x_remove_config()
+
+			#start configuring ACL 802.1x related configuration
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 4
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                  cpu-cos-queue: 18
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 4
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  cpu-cos-queue: 18
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                  cpu-cos-queue: 18
+                """
+
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+				acl_yaml = f"""
+                index: {1500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  cpu-cos-queue: 18
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)		 
+		 
+			#format of this method: config_explicit_drop(self,index,group,intf)
+			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			# acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
+			
+
+ 			#Start configurating IXIA 
+			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
+			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+			for topo in myixia.topologies:
+				topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+				topo.add_ipv6(gateway="fixed")
+				
+			myixia.start_protocol(wait=20)
+
+			# for i in range(0,len(tb.ixia.port_active_list)-1):
+			# 	for j in range(i+1,len(tb.ixia.port_active_list)):
+			 
+			for i in range(0,1):
+				for j in range(1,2):
+					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+					myixia.create_traffic_destination_v4(src_topo=myixia.topologies[i].topology, dst="255.255.255.255",traffic_name=f"t{i}_broadcast",tracking_name=f"Tracking_{i+1}_v4_bcast",rate=1)
+					myixia.create_traffic_destination_v6(src_topo=myixia.topologies[i].topology, dst=f"{gw6_list[0]}",traffic_name=f"t{i}_unicast",tracking_name=f"Tracking_{i+1}_v4_unicast",rate=1)
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
+			sw.print_show_command(f"diagnose switch  physical-ports qos-rates non-zero",mode="fast")
+			 
+			print_double_line()
+			k = input(f"Please verify all the command output,press any key to finish:")
+			print_double_line()
+		 
+
+	def pbr_acl6_testing(*args,**kwargs):
+		switch_num_list = kwargs["switch_num_list"]
+		if "factory" in kwargs:
+			factory = kwargs["factory"]
+		else:
+			factory = False
+		for switch_num in switch_num_list:
+			#Designate the DUT being tested 
+			switch_num = int(switch_num)-1
+			sw = switches[switch_num]
+
+			if factory == True:
+				sw.factory_and_restore_config()
+				config_sys_interfaces(sw,vlan=TEST_VLAN_NAME)
+
+			#define valuables specific to the switch under testing 
+			ixia_sub_intf = 1
+			portList_v4_v6 = []
+			for p,m,n4,g4,n6,g6 in zip(
+				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
+				mac_list[switch_num*2:switch_num*2+2], \
+				net4_list[switch_num*2:switch_num*2+2], \
+				gw4_list[switch_num*2:switch_num*2+2], \
+				net6_list[switch_num*2:switch_num*2+2], \
+				gw6_list[switch_num*2:switch_num*2+2]):
+				module,port = p.split("/")
+				portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+			
+			print(portList_v4_v6)
+			mac_base_1=mac_list[switch_num*2]
+			mac_base_2=mac_list[switch_num*2+1]
+			
+			#clean up all ACL (ingress and 802.1x) related configuration
+			acl_dot1x = switch_acl_dotonex(sw)
+			acl_ingress = switch_acl_ingress(switches[switch_num])
+			dot1x = DotOnex(sw,user_group="group_10",secrete="fortinet123",server="10.105.252.122",user="lab")
+			acl_ingress.acl_ingress_clean_up()
+			acl_dot1x.acl_dot1x_clean_up(f"dot1x_filter_{switch_num+1}")
+			dot1x.dot1x_remove_config()
+
+			#start configuring ACL 802.1x related configuration
+			for i in range(ixia_sub_intf):
+				#start configuring ACL ingress configuration
+				acl_yaml = f"""
+                index: {1+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 4
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                  cpu-cos-queue: 18
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)
+
+				acl_yaml = f"""
+                index: {1000+i}
+                classifiers:
+                 dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
+                 src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 4
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  cpu-cos-queue: 18
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+
+				acl_yaml = f"""
+                index: {500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-mac: {increment_macaddr(mac_base_1,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[0]}
+                actions:
+                  count: "enable"
+                  cpu-cos-queue: 18
+                """
+
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)	
+				acl_yaml = f"""
+                index: {1500+i}
+                classifiers:
+                 dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
+                 src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
+                 src-mac: {increment_macaddr(mac_base_2,i)}
+                globals_config:
+                  group: 1
+                  ingress-interface: {sw.ixia_ports[1]}
+                actions:
+                  count: "enable"
+                  cpu-cos-queue: 18
+                """
+				acl_ingress.config_acl_ingress_jinja(acl_yaml)		 
+		 
+			#format of this method: config_explicit_drop(self,index,group,intf)
+			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
+			# acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
+			
+
+ 			#Start configurating IXIA 
+			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
+			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+			for topo in myixia.topologies:
+				topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+				topo.add_ipv6(gateway="fixed")
+				
+			myixia.start_protocol(wait=20)
+
+			# for i in range(0,len(tb.ixia.port_active_list)-1):
+			# 	for j in range(i+1,len(tb.ixia.port_active_list)):
+			 
+			for i in range(0,1):
+				for j in range(1,2):
+					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
+					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
+					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
+
+			myixia.start_traffic()
+			sleep(5)
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			sw.print_show_command(f"get switch acl usage",mode="fast")
+			sw.print_show_command(f"get switch acl counter all",mode="fast")
+			sw.print_show_command(f"show switch acl ingress",mode="fast")
+			sw.print_show_command(f"diagnose switch  physical-ports qos-rates non-zero",mode="fast")
+			 
+			print_double_line()
+			k = input(f"Please verify all the command output,press any key to finish:")
+			print_double_line()
+
 
 	def acl6_schedule_status_yaml(*args,**kwargs):
 		switch_num_list = kwargs["switch_num_list"]
@@ -3025,6 +3313,9 @@ if __name__ == "__main__":
 			index = 1
 			total_acl = 0
 			for entry in acl.acl_usage_list:
+				Info("Before configuring one group of ACL, update the acl usage...")
+				acl.update_acl_usage()
+				acl.print_acl_usage()
 				group_id = entry.group_id
 				if group_id < 3:
 					continue
@@ -3061,9 +3352,6 @@ if __name__ == "__main__":
 							break
 						else:
 							group_total = 0 # Won't check again 
-				Info("After configuring one group of ACL, update the acl usage...")
-				acl.update_acl_usage()
-				acl.print_acl_usage()	
 
 			Info("After configuring All ACL configuration, update the acl usage...")
 			acl.update_acl_usage()
@@ -3076,16 +3364,18 @@ if __name__ == "__main__":
 				total_acl_rules += (entry.rule_total - entry.rule_free)
 			ixia_sub_intf_list.append(total_acl_rules)	  
 			#total_acl = 512
+
+		Info(f"ixia_sub_intf+list = {ixia_sub_intf_list}")
 		 
 		portList_v4_v6 = []
 		i = 0
-		#for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
-		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list[:4],mac_list,net4_list,gw4_list,net6_list,gw6_list):
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+		#for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list[:4],mac_list,net4_list,gw4_list,net6_list,gw6_list):
 			module,port = p.split("/")
 			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf_list[int(i/2)]])
 			i += 1
 
-		print(portList_v4_v6)
+		print(f"Important!!!!!! Final IXIA ports mapping: {portList_v4_v6}")
 		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 		for topo in myixia.topologies:
 			#topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
@@ -3127,11 +3417,16 @@ if __name__ == "__main__":
 				if found:
 					Info(f"!!!!!!!!!!!!At switch:{sw.hostname}, crash was found!!!!!!!!!!!!!!!!!!!")
 				sleep(3)
-				sw.switch_reboot_login()
 
+			for switch_num in switch_num_list:
+				switch_num -= 1 
+				sw = switches[switch_num]
+				sw.switch_reboot()
+
+			console_timer(400,msg="Wait for 400s after rebooting all switches")
 
 			myixia.start_traffic()	
-			console_timer(400,msg="Wait for 400s after checking each switch again")
+			#console_timer(400,msg="Wait for 400s after checking each switch again")
 
 
 		
@@ -3600,7 +3895,8 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	longevity_scale_acl6_testing(switch_num_list = [1,2])
+	cpu_queue_acl6_testing(switch_num_list = [3])
+	#longevity_scale_acl6_testing(switch_num_list = [1,2,3])
 	#acl6_schedule_status_yaml(switch_num_list = [1])
 	#dot1x_acl6_testing_yaml(switch_num_list = [1,2],factory=True)
 	#dot1x_acl6_testing(switch_num_list = [2,3])
