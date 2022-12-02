@@ -3401,15 +3401,15 @@ if __name__ == "__main__":
 			sw.clear_crash_log()
 
 		while True:
+			myixia.stop_traffic()
+			sleep(10)
+			myixia.collect_stats()
+			myixia.check_traffic()
+			
 			for switch_num in switch_num_list:
 				switch_num -= 1 
 				sw = switches[switch_num]
-				
-				myixia.stop_traffic()
-				sleep(10)
-				myixia.collect_stats()
-				myixia.check_traffic()
-				sw.print_show_command(f"get switch acl counter all",mode="fast")
+				sw.print_show_command(f"get switch acl counter all")
 				sw.exec_command("execute acl clear-counter all")
 				sw.find_crash()
 				sw.get_crash_debug()
@@ -3423,10 +3423,10 @@ if __name__ == "__main__":
 				sw = switches[switch_num]
 				sw.switch_reboot()
 
-			console_timer(400,msg="Wait for 400s after rebooting all switches")
+			console_timer(300,msg="Wait for 400s after rebooting all switches")
 
 			myixia.start_traffic()	
-			#console_timer(400,msg="Wait for 400s after checking each switch again")
+			console_timer(40,msg="Wait for 400s after checking each switch again")
 
 
 		
