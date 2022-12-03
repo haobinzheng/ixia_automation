@@ -2048,10 +2048,15 @@ def telnet_switch(ip_address, console_port,*args,**kwargs):
 	if p == 'login':
 		Info("Login after time out or reboot") #This needs to rewrite to take care factory reset situation
 		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.5)
 		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.5)
 		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.5)
 		tn.write(('' + '\n').encode('ascii'))
-		sleep(1)
+		sleep(0.5)
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.5)
 		tn.read_until(("login: ").encode('ascii'),timeout=10)
 		tn.write(('admin' + '\n').encode('ascii'))           # this would not work for factory reset scenario
 		tn.read_until(("Password: ").encode('ascii'),timeout=10)

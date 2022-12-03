@@ -3423,6 +3423,11 @@ if __name__ == "__main__":
 				sw = switches[switch_num]
 				sw.switch_reboot()
 
+			for switch_num in switch_num_list:
+				switch_num -= 1 
+				sw = switches[switch_num]
+				sw.sw_relogin()
+
 			console_timer(300,msg="Wait for 400s after rebooting all switches")
 
 			myixia.start_traffic()	

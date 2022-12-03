@@ -999,6 +999,7 @@ class IXIA_Classic:
 
 class IXIA:
     def __init__(self,*args,**kwargs):
+        #portList: chassis_ip, module,port,mac,bgp_network,bgp_as,ip_address/mask, gateway
         self.apiServerIp = args[0]
         self.ixChassisIpList = args[1]
         self.traffic_items_v6 = []
@@ -1374,20 +1375,19 @@ def ixia_rest_connect_chassis(apiServerIp,ixChassisIpList,portList):
     #portList = [[ixChassisIpList[0], 1,8], [ixChassisIpList[0], 1, 7]]
     while True:
         try:
-            print(f"server ip = {apiServerIp}")
+            print(f"Ixia server ip = {apiServerIp}")
             testPlatform = TestPlatform(ip_address=apiServerIp,log_file_name='restpy.log')
             # testPlatform = TestPlatform(ip_address=apiServerIp,rest_port=62428,log_file_name='restpy.log')
 
              #Turn on/off trace
             # Console output verbosity: 'none'|request|'request response'
-            #testPlatform.Trace = 'none'
-            testPlatform.Trace = 'request_response'
+            testPlatform.Trace = 'none'
+            #testPlatform.Trace = 'request_response'
 
             testPlatform.Authenticate(username, password)
             session = testPlatform.Sessions.add()
             ixNetwork = session.Ixnetwork
            
-            
             testPlatform.info(ixNetwork)
             
             ixNetwork.NewConfig()
@@ -2972,24 +2972,27 @@ if __name__ == "__main__":
     apiServerIp = '10.105.19.44'
     ixChassisIpList = ['10.105.241.234']
 
+
     # apiServerIp = '10.105.0.119'
     # ixChassisIpList = ['10.105.0.102']
     
     #chassis_ip, module,port,mac,bgp_network,bgp_as,ip_address/mask, gateway
-    # portList = [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
-    # [ixChassisIpList[0], 1, 2,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
-    # [ixChassisIpList[0], 1, 3,"00:13:01:01:01:01","10.30.1.1",103,"10.1.1.103/24","10.1.1.1"],
-    # [ixChassisIpList[0], 1, 4,"00:14:01:01:01:01","10.40.1.1",104,"10.1.1.104/24","10.1.1.1"], 
-    # [ixChassisIpList[0], 1, 5,"00:15:01:01:01:01","10.50.1.1",105,"10.1.1.105/24","10.1.1.1"],
-    # [ixChassisIpList[0], 1, 6,"00:16:01:01:01:01","10.60.1.1",106,"10.1.1.106/24","10.1.1.1"]]
+    ipv4_portList = 
+    [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
+    [ixChassisIpList[0], 2, 4,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
+    ]
     
-    ipv6_portList = [[ixChassisIpList[0], 7,14,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
-    [ixChassisIpList[0], 7, 3,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
-]   
+    # ipv6_portList = [[ixChassisIpList[0], 7,14,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
+    # [ixChassisIpList[0], 7, 3,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
+    #]   
     # myixia = IXIA_Classic(apiServerIp,ixChassisIpList,ipv6_portList)
     # myixia.create_mstp()
     # exit()
-    myixia = IXIA(apiServerIp,ixChassisIpList,ipv6_portList)
+    
+
+    myixia = IXIA(apiServerIp,ixChassisIpList,ipv4_portList)
+
+    exit()
     myixia.topologies[0].add_dot1x_client()
  
     exit()
