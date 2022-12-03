@@ -3387,7 +3387,7 @@ if __name__ == "__main__":
 			switch_num -= 1
 			src_topo = myixia.topologies[switch_num * 2].topology
 			dst_topo = myixia.topologies[switch_num * 2+1].topology
-			myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic_{switch_num}",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
+			myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic_{switch_num}",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=10)
 			sleep(5)
 		sleep(5)
 		myixia.start_traffic()

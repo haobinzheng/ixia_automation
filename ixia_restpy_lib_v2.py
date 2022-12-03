@@ -1039,6 +1039,7 @@ class IXIA:
             vport.TxMode = 'sequential'
 
     def create_ixia_topologies(self):
+        #portList: chassis_ip, module,port,mac,bgp_network,bgp_as,ip_address/mask, gateway
         i = 0
         bgp_as = None
         topo_list = []
@@ -2977,21 +2978,19 @@ if __name__ == "__main__":
     # ixChassisIpList = ['10.105.0.102']
     
     #chassis_ip, module,port,mac,bgp_network,bgp_as,ip_address/mask, gateway
-    ipv4_portList = \
-    [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
-    [ixChassisIpList[0], 2, 4,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
-    ]
     
-    # ipv6_portList = [[ixChassisIpList[0], 7,14,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
+    portList = [[ixChassisIpList[0], 7, 14, '00:11:01:01:01:01', '10.1.1.10/16', '10.1.1.1', '2001:10:1:1::1000/64', '2001:10:1:1::1', 1], 
+    [ixChassisIpList[0], 7, 3, '00:12:01:01:01:01', '10.1.2.10/16', '10.1.1.1', '2001:10:1:1::2000/64', '2001:10:1:1::1', 1],
+    ]
+     # ipv6_portList = [[ixChassisIpList[0], 7,14,"00:11:01:01:01:01","2001:0010:0001:0001::",101,"2001:0010:0010:0001::100/64","2001:0010:0010.0001::254",1], 
     # [ixChassisIpList[0], 7, 3,"00:12:01:01:01:01","2001:0010.0020.0001.0001::",102,"2001:0010:0001:0001::254/64","2001:0010:0010:0001::254",1],
     #]   
     # myixia = IXIA_Classic(apiServerIp,ixChassisIpList,ipv6_portList)
     # myixia.create_mstp()
     # exit()
     
-
-    myixia = IXIA(apiServerIp,ixChassisIpList,ipv4_portList)
-
+    # myixia = IXIA(apiServerIp,ixChassisIpList,portList)
+    # myixia.create_traffic_raw()
     exit()
     myixia.topologies[0].add_dot1x_client()
  
