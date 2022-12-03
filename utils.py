@@ -2716,8 +2716,8 @@ def switch_find_login_prompt_new(tn,*args,**kwargs):
 		debug (f"The switch could be factory reset and need change password")
 		return ("change",None)
 	if 'Login incorrect' in prompt:
-		debug (f"The switch could be a Cisco in login mode, need to enter username and password")
-		return ("cisco",None)
+		debug (f"It is a login prompt,need to login")
+		return ("login",None)
 	if output[0] == -1: 
 		debug("It is a NOT login prompt, Need further action to login, going through more logics......")
 	if output[0] == 0:
