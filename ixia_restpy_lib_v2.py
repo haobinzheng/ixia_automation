@@ -2977,7 +2977,7 @@ if __name__ == "__main__":
     # ixChassisIpList = ['10.105.0.102']
     
     #chassis_ip, module,port,mac,bgp_network,bgp_as,ip_address/mask, gateway
-    ipv4_portList = 
+    ipv4_portList = \
     [[ixChassisIpList[0], 1,1,"00:11:01:01:01:01","10.10.1.1",101,"10.1.1.101/24","10.1.1.1"], 
     [ixChassisIpList[0], 2, 4,"00:12:01:01:01:01","10.20.1.1",102,"10.1.1.102/24","10.1.1.1"],
     ]
