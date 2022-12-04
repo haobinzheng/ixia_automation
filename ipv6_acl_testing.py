@@ -3487,7 +3487,7 @@ if __name__ == "__main__":
 					continue
 				group_total = 0
 				test_num = entry.rule_total - 5
-				#test_num = 0
+				test_num = 0
 				for i in range(entry.rule_total - test_num):
 					classifiers = {
 					"dst-ip6-prefix":dst_ip6_prefix,
@@ -3618,7 +3618,7 @@ if __name__ == "__main__":
 						continue
 					group_total = 0
 					test_num = entry.rule_total - 5
-					#test_num = 0
+					test_num = 0
 					for i in range(entry.rule_total - test_num):
 						classifiers = {
 						"dst-ip6-prefix":dst_ip6_prefix,
