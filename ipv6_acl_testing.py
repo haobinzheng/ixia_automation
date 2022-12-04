@@ -3553,7 +3553,7 @@ if __name__ == "__main__":
 			switch_num -= 1
 			src_topo = myixia.topologies[switch_num * 2].topology
 			dst_topo = myixia.topologies[switch_num * 2+1].topology
-			myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic_{switch_num}",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=10)
+			myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic_{switch_num}",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=30)
 			sleep(5)
 		sleep(5)
 		myixia.start_traffic()
@@ -4090,8 +4090,9 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
+	longevity_scale_deconfig_acl6_testing(switch_num_list = [1,2,3])
 	#cpu_queue_acl6_testing(switch_num_list = [3])
-	longevity_scale_acl6_testing(switch_num_list = [1,2,3])
+	#longevity_scale_acl6_testing(switch_num_list = [1,2,3])
 	#acl6_schedule_status_yaml(switch_num_list = [1])
 	#dot1x_acl6_testing_yaml(switch_num_list = [1,2],factory=True)
 	#dot1x_acl6_testing(switch_num_list = [2,3])
