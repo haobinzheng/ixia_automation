@@ -3433,28 +3433,193 @@ if __name__ == "__main__":
 			myixia.start_traffic()	
 			console_timer(40,msg="Wait for 400s after checking each switch again")
 
+	def longevity_scale_deconfig_acl6_testing(*args,**kwargs):
+		switch_num_list = kwargs["switch_num_list"]
+		ixia_sub_intf_list = []
+		for switch_num in switch_num_list:
+			switch_num -= 1 
+			sw_dut = switches[switch_num]
+			if "longevity" in kwargs:
+				longevity = kwargs['longevity']
+			else:
+				longevity = False
 
-		
-		if longevity == False:
-			print_double_line()
-			keyin = input(f"Please verify the ixia traffic counter and switch ingress acl counter,Press any key when done:")
-			print_double_line()
+			acl = switch_acl_ingress(sw_dut)
+			acl.acl_ingress_clean_up()
+	 
+			try_group = 3
+			index = 1
+			dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
+			src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
+			while(try_group < 7):
+				classifiers = {
+				"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
+				"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
+				}
+				globals = {
+				"group":try_group,
+				 "ingress-interface": sw_dut.ixia_ports[0]
+				}
+				actions = {
+				"count":"enable"
+				}
+				acl.config_acl6_generic(index,globals,classifiers,actions)
+				sleep(2)
+				index +=1
+				try_group +=1
+			sleep(10)
+			acl.update_acl_usage()
+			acl.print_acl_usage()
+			acl.acl_ingress_clean_up()
+			sleep(5)
+			
+			acl.update_acl_usage()
+			acl.print_acl_usage()
 
-		if longevity == True:
-			myixia.start_traffic()
-			for i in range(30):
-				acl.acl_ingress_clean_up()
-				sleep(10)
+			index = 1
+			total_acl = 0
+			for entry in acl.acl_usage_list:
+				Info("Before configuring one group of ACL, update the acl usage...")
 				acl.update_acl_usage()
+				acl.print_acl_usage()
+				group_id = entry.group_id
+				if group_id < 3:
+					continue
+				group_total = 0
+				test_num = entry.rule_total - 5
+				#test_num = 0
+				for i in range(entry.rule_total - test_num):
+					classifiers = {
+					"dst-ip6-prefix":dst_ip6_prefix,
+					"src-ip6-prefix":src_ip6_prefix
+					}
+					globals = {
+					"group":group_id,
+					 "ingress-interface": sw_dut.ixia_ports[0]
+					}
+					actions = {
+					"count":"enable",
+ 					}
+					acl.config_acl6_generic(index,globals,classifiers,actions)
+					dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
+					src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
+					index +=1
+					total_acl +=1
+					group_total +=1 
+					stop_adding_acl_group = False
+					if group_total > 128: # check every 128 entries to ensure things are good. 
+						acl_working = switch_acl_ingress(sw_dut)
+						for en in acl_working.acl_usage_list:
+							if en.group_id == group_id and en.rule_free == 0:
+								Info(f"!!!!! At the half way of creating ACL entries in the slice, slice ran out of free rules")
+								stop_adding_acl_group = True 
+								break
+						if stop_adding_acl_group == True:
+							break
+						else:
+							group_total = 0 # Won't check again 
+
+			Info("After configuring All ACL configuration, update the acl usage...")
+			acl.update_acl_usage()
+			acl.print_acl_usage()
+			total_acl_rules = 0 
+			for entry in acl.acl_usage_list:
+				group_id = entry.group_id
+				if group_id < 3:
+					continue
+				total_acl_rules += (entry.rule_total - entry.rule_free)
+			ixia_sub_intf_list.append(total_acl_rules)	  
+			#total_acl = 512
+
+		Info(f"ixia_sub_intf+list = {ixia_sub_intf_list}")
+		 
+		portList_v4_v6 = []
+		i = 0
+		for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
+		#for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list[:4],mac_list,net4_list,gw4_list,net6_list,gw6_list):
+			module,port = p.split("/")
+			portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf_list[int(i/2)]])
+			i += 1
+
+		print(f"Important!!!!!! Final IXIA ports mapping: {portList_v4_v6}")
+		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
+		for topo in myixia.topologies:
+			#topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
+			topo.add_ipv6(gateway="fixed")
+
+		myixia.start_protocol(wait=20)
+
+		for switch_num in switch_num_list:
+			switch_num -= 1
+			src_topo = myixia.topologies[switch_num * 2].topology
+			dst_topo = myixia.topologies[switch_num * 2+1].topology
+			myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic_{switch_num}",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=10)
+			sleep(5)
+		sleep(5)
+		myixia.start_traffic()
+		# src_topo = myixia.topologies[switch_num * 2].topology
+		# dst_topo = myixia.topologies[switch_num * 2+1].topology
+		# myixia.create_traffic_v6(src_topo=src_topo, dst_topo=dst_topo,traffic_name=f"acl6_scale_traffic",tracking_name=f"Tracking_port{switch_num * 2}_port{switch_num * 2+1}_6",rate=20)
+ 		
+		for switch_num in switch_num_list:
+			switch_num -= 1 
+			sw = switches[switch_num]
+			sw.clear_crash_log()
+
+		while True:
+			for switch_num in switch_num_list:
+				switch_num -= 1 
+				sw_dut = switches[switch_num]
+				if "longevity" in kwargs:
+					longevity = kwargs['longevity']
+				else:
+					longevity = False
+
+				acl = switch_acl_ingress(sw_dut)
+				acl.acl_ingress_clean_up()
+		 
+				try_group = 3
+				index = 1
 				dst_ip6_prefix = net6_list[switch_num*2+1].split("/")[0]
 				src_ip6_prefix = net6_list[switch_num*2].split("/")[0]
+				while(try_group < 7):
+					classifiers = {
+					"dst-ip6-prefix":str(ipaddress.IPv6Address(dst_ip6_prefix)),
+					"src-ip6-prefix":str(ipaddress.IPv6Address(src_ip6_prefix))
+					}
+					globals = {
+					"group":try_group,
+					 "ingress-interface": sw_dut.ixia_ports[0]
+					}
+					actions = {
+					"count":"enable"
+					}
+					acl.config_acl6_generic(index,globals,classifiers,actions)
+					sleep(2)
+					index +=1
+					try_group +=1
+				sleep(10)
+				acl.update_acl_usage()
+				acl.print_acl_usage()
+				acl.acl_ingress_clean_up()
+				sleep(5)
+				
+				acl.update_acl_usage()
+				acl.print_acl_usage()
+
 				index = 1
-				total_acl = 1
+				total_acl = 0
 				for entry in acl.acl_usage_list:
+					Info("Before configuring one group of ACL, update the acl usage...")
+					acl.update_acl_usage()
+					acl.print_acl_usage()
 					group_id = entry.group_id
 					if group_id < 3:
 						continue
-					for i in range(entry.rule_total):
+					group_total = 0
+					test_num = entry.rule_total - 5
+					#test_num = 0
+					for i in range(entry.rule_total - test_num):
 						classifiers = {
 						"dst-ip6-prefix":dst_ip6_prefix,
 						"src-ip6-prefix":src_ip6_prefix
@@ -3464,24 +3629,49 @@ if __name__ == "__main__":
 						 "ingress-interface": sw_dut.ixia_ports[0]
 						}
 						actions = {
-						"count":"enable"
-						}
+						"count":"enable",
+	 					}
 						acl.config_acl6_generic(index,globals,classifiers,actions)
 						dst_ip6_prefix = str(ipaddress.IPv6Address(dst_ip6_prefix)+1)
 						src_ip6_prefix = str(ipaddress.IPv6Address(src_ip6_prefix)+1)	
 						index +=1
-						total_acl +=1	
+						total_acl +=1
+						group_total +=1 
+						stop_adding_acl_group = False
+						if group_total > 128: # check every 128 entries to ensure things are good. 
+							acl_working = switch_acl_ingress(sw_dut)
+							for en in acl_working.acl_usage_list:
+								if en.group_id == group_id and en.rule_free == 0:
+									Info(f"!!!!! At the half way of creating ACL entries in the slice, slice ran out of free rules")
+									stop_adding_acl_group = True 
+									break
+							if stop_adding_acl_group == True:
+								break
+							else:
+								group_total = 0 # Won't check again 
 
-				sleep(10)
-				myixia.clear_stats()
-				sleep(20)
-				Info(f"======================= Check traffic after one round of adding ACL entries =================")
-				myixia.stop_traffic()
-				myixia.check_traffic()
-				sw.print_show_command(f"get switch acl counter all",mode="fast")
-				sleep(10)
-				myixia.start_traffic()
+				Info("After configuring All ACL configuration, update the acl usage...")
+				acl.update_acl_usage()
+				acl.print_acl_usage()
+				total_acl_rules = 0 
+				for entry in acl.acl_usage_list:
+					group_id = entry.group_id
+					if group_id < 3:
+						continue
+					total_acl_rules += (entry.rule_total - entry.rule_free)
+				ixia_sub_intf_list.append(total_acl_rules)	  
 
+				for switch_num in switch_num_list:
+					switch_num -= 1 
+					sw = switches[switch_num]
+					sw.print_show_command(f"get switch acl counter all")
+					sw.exec_command("execute acl clear-counter all")
+					sw.find_crash()
+					sw.get_crash_debug()
+					found = sw.get_crash_log()
+					if found:
+						Info(f"!!!!!!!!!!!!At switch:{sw.hostname}, crash was found!!!!!!!!!!!!!!!!!!!")
+					sleep(3)
 
 	def basic_acl6_drop_testing():
 		acl.acl_ingress_clean_up()
