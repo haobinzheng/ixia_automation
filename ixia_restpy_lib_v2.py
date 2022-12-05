@@ -1010,17 +1010,18 @@ class IXIA_Raw_Traffic:
         self.ixNetwork.Traffic.Start()
         console_timer(10,msg="Let traffic forward for 10s after start ixia traffic")
 
-    def stop_raw_traffic(*args,**kwargs):
+    def stop_raw_traffic(self):
         self.ixNetwork.Traffic.Stop()
 
     def createPacketHeader(self,trafficItemObj, packetHeaderToAdd=None, appendToStack=None): 
+        ixNetwork = self.ixNetwork
         configElement = trafficItemObj.ConfigElement.find()[0]
 
         # Do the followings to add packet headers on the new traffic item
 
         # Uncomment this to show a list of all the available protocol templates to create (packet headers)
-        for protocolHeader in ixNetwork.Traffic.ProtocolTemplate.find():
-            ixNetwork.info('Protocol header: --{}--'.format(protocolHeader.StackTypeId))
+        # for protocolHeader in ixNetwork.Traffic.ProtocolTemplate.find():
+        #     ixNetwork.info('Protocol header: --{}--'.format(protocolHeader.StackTypeId))
 
         # 1> Get the <new packet header> protocol template from the ProtocolTemplate list.
         packetHeaderProtocolTemplate = ixNetwork.Traffic.ProtocolTemplate.find(StackTypeId=packetHeaderToAdd)
@@ -1044,7 +1045,8 @@ class IXIA_Raw_Traffic:
 
         return packetHeaderFieldObj
 
-    def generate_ipv6_udp_raw_traffic(self,*args,**kwargs):
+    def generate_ipv6_raw_traffic(self,*args,**kwargs):
+        debugMode = False
         try:
             ixNetwork = self.ixNetwork
             vport = self.vport
@@ -1052,7 +1054,6 @@ class IXIA_Raw_Traffic:
 
             src_port = kwargs['src_port']
             dst_port = kwargs['dst_port']
-            dmac = kwargs['dmac']
             src_mac = kwargs['src_mac']
             src_mac_count = kwargs['src_mac_count']
             dst_mac = kwargs['dst_mac']
@@ -1061,6 +1062,7 @@ class IXIA_Raw_Traffic:
             dst_ipv6_list = kwargs['dst_ipv6_list']
             src_ipv6 = kwargs['src_ipv6']
             src_ipv6_count = kwargs['src_ipv6_count']
+            l4_protocol = kwargs['l4_protocol']
 
             ixNetwork.info('Create a raw traffic item')
             rawTrafficItemObj = ixNetwork.Traffic.TrafficItem.add(Name='Raw packet', BiDirectional=False, TrafficType='raw',TransmitMode='sequential')
@@ -1091,7 +1093,7 @@ class IXIA_Raw_Traffic:
             ethernetSrcField.ValueType = 'increment'
             ethernetSrcField.StartValue = src_mac
             ethernetSrcField.StepValue = "00:00:00:00:00:01"
-            ethernetSrcField.CountValue = dst_mac_count
+            ethernetSrcField.CountValue = src_mac_count
 
             # VLAN
             vlanFieldObj = self.createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^vlan$', appendToStack='ethernet$')
@@ -1106,7 +1108,6 @@ class IXIA_Raw_Traffic:
             ipv6FieldObj = self.createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^ipv6$', appendToStack='^vlan$')
             ipv6SrcField = ipv6FieldObj.find(DisplayName='Source Address')
             ipv6SrcField.ValueType = 'increment'
-            #ipv6SrcField.ValueType = 'Single'
             ipv6SrcField.StartValue = src_ipv6
             ipv6SrcField.StepValue = '::1'
             ipv6SrcField.CountValue = src_ipv6_count
@@ -1117,38 +1118,39 @@ class IXIA_Raw_Traffic:
             ipv6DstField.ValueType = 'valueList'
             ipv6DstField.ValueList = dst_ipv6_list   
            
-            # Example to show appending UDP after the IPv4 header
-            udpFieldObj = self.createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^udp$', appendToStack='^ipv6$')
-            udpSrcField = udpFieldObj.find(DisplayName='UDP-Source-Port')
-            udpSrcField.Auto = False
-            udpSrcField.SingleValue = 1000
+            if l4_protocol == "udp":
+                # Example to show appending UDP after the IPv6 header
+                udpFieldObj = self.createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^udp$', appendToStack='^ipv6$')
+                udpSrcField = udpFieldObj.find(DisplayName='UDP-Source-Port')
+                udpSrcField.Auto = False
+                udpSrcField.SingleValue = 1000
 
-            udpDstField = udpFieldObj.find(DisplayName='UDP-Dest-Port')
-            udpDstField.Auto = False
-            udpDstField.SingleValue = 1001
+                udpDstField = udpFieldObj.find(DisplayName='UDP-Dest-Port')
+                udpDstField.Auto = False
+                udpDstField.SingleValue = 1001
+                rawTrafficItemObj.Tracking.find().TrackBy = ['udpUdpSrcPrt0', 'udpUdpDstPrt0']
+            elif l4_protocol == "tcp":
+                # Example to show appending TCP after the IPv6 header
+                tcpFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='tcp', appendToStack='^ipv6$')
+                tcpSrcField = tcpFieldObj.find(DisplayName='TCP-Source-Port')
+                tcpSrcField.Auto = False
+                tcpSrcField.ValueType = 'valueList'
+                tcpSrcField.ValueList = ['1002', '1005', '1007']
 
-            # Example to show appending TCP after the IPv4 header
-            # tcpFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='tcp', appendToStack='ipv4')
-            # tcpSrcField = tcpFieldObj.find(DisplayName='TCP-Source-Port')
-            # tcpSrcField.Auto = False
-            # tcpSrcField.ValueType = 'valueList'
-            # tcpSrcField.ValueList = ['1002', '1005', '1007']
-
-            # tcpDstField = tcpFieldObj.find(DisplayName='TCP-Dest-Port')
-            # tcpDstField.Auto = False
-            # tcpDstField.SingleValue = 80
+                tcpDstField = tcpFieldObj.find(DisplayName='TCP-Dest-Port')
+                tcpDstField.Auto = False
+                tcpDstField.SingleValue = 80
+                rawTrafficItemObj.Tracking.find().TrackBy = ['tcpTcpSrcPrt0', 'tcpTcpDstPrt0']
 
             # Example to show appending ICMP after the IPv4 header
             #icmpFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='icmpv9', appendToStack='ipv4')
-
 
             # Optional: Enable tracking to track your packet headers:
             #    
             #    Other trackings: udpUdpSrcPrt0, udpUdpDstPrt0,tcpTcpSrcPrt0, tcpTcpDstPrt0, vlanVlanId0, vlanVlanUserPriority0
             #    On an IxNetwork GUI (Windows or Web UI), add traffic item trackings.
             #    Then go on the API browser to view the tracking fields.
-            rawTrafficItemObj.Tracking.find().TrackBy = ['udpUdpSrcPrt0', 'udpUdpDstPrt0']
-            #rawTrafficItemObj.Tracking.find().TrackBy = ['tcpTcpSrcPrt0', 'tcpTcpDstPrt0']
+            
             rawTrafficItemObj.Generate()
             if debugMode == False:
                 # For Linux and WindowsConnectionMgr only
@@ -1167,6 +1169,8 @@ class IXIA_Raw_Traffic:
         # For Linux API server only
         username = 'admin'
         password = 'admin'
+
+        forceTakePortOwnership = True
 
         # For linux and windowsConnectionMgr only. Set to True to leave the session alive for debugging.
         debugMode = False

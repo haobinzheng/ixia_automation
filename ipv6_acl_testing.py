@@ -1255,7 +1255,7 @@ if __name__ == "__main__":
 			#Designate the DUT being tested 
 			switch_num = int(switch_num)-1
 			sw = switches[switch_num]
-			sw.switch_reboot_login()
+			#sw.switch_reboot_login()
 
 			if factory == True:
 				sw.factory_and_restore_config()
@@ -1263,12 +1263,12 @@ if __name__ == "__main__":
 
 			#define valuables specific to the switch under testing 
 			ixia_sub_intf = 1
-			portList_v4_v6 = []
+			portList = []
 			for p in tb.ixia.port_active_list[switch_num*2:switch_num*2+2]:
 				module,port = p.split("/")
 				portList.append([ixChassisIpList[0], int(module),int(port)])
 			
-			print(portList_v4_v6)
+			print(portList)
 			mac_base_1=mac_list[switch_num*2]
 			mac_base_2=mac_list[switch_num*2+1]
 			
@@ -1281,14 +1281,20 @@ if __name__ == "__main__":
 			dot1x.dot1x_remove_config()
 
 			#start configuring ACL 802.1x related configuration
+			dst_ipv6_list_1 = []
+			dst_ipv6_list_2 = []
+			src_ipv6_base_1 = str(ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0]))
+			src_ipv6_base_2 = str(ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0]))
+			print(f"src_ip6 = {src_ipv6_base_1},{src_ipv6_base_2} ")
 			for i in range(ixia_sub_intf):
 				#start configuring ACL ingress configuration
+				dst_ipv6_list_1.append(str(ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i))
+				dst_ipv6_list_2.append(str(ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i))
 				acl_yaml = f"""
                 index: {1+i}
                 classifiers:
                  dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
                  src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
-                 src-mac: {increment_macaddr(mac_base_1,i)}
                 globals_config:
                   group: 4
                   ingress-interface: {sw.ixia_ports[0]}
@@ -1303,7 +1309,6 @@ if __name__ == "__main__":
                 classifiers:
                  dst-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2].split("/")[0])+i}
                  src-ip6-prefix: {ipaddress.IPv6Address(net6_list[switch_num*2+1].split("/")[0])+i}
-                 src-mac: {increment_macaddr(mac_base_2,i)}
                 globals_config:
                   group: 4
                   ingress-interface: {sw.ixia_ports[1]}
@@ -1318,7 +1323,6 @@ if __name__ == "__main__":
                 classifiers:
                  dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
                  src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
-                 src-mac: {increment_macaddr(mac_base_1,i)}
                 globals_config:
                   group: 1
                   ingress-interface: {sw.ixia_ports[0]}
@@ -1333,7 +1337,6 @@ if __name__ == "__main__":
                 classifiers:
                  dst-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2].split("/")[0])+i}/32
                  src-ip-prefix: {ipaddress.IPv4Address(net4_list[switch_num*2+1].split("/")[0])+i}/32
-                 src-mac: {increment_macaddr(mac_base_2,i)}
                 globals_config:
                   group: 1
                   ingress-interface: {sw.ixia_ports[1]}
@@ -1347,35 +1350,51 @@ if __name__ == "__main__":
 			# acl.config_explicit_drop(ixia_sub_intf+2,3,sw.ixia_ports[0])
 			# acl.config_explicit_drop(ixia_sub_intf+1002,3,sw.ixia_ports[1])
 			
+			print(f"dst_ipv6_list = {dst_ipv6_list_1},{dst_ipv6_list_2} ")
+			#Start configurating IXIA 
+			myixia = IXIA_Raw_Traffic(apiServerIp,ixChassisIpList,portList)
+		 
+			myixia.generate_ipv6_raw_traffic(
+			src_port="Port_1",
+			dst_port="Port_2",
+			dst_mac = "FF:FF:FF:FF:FF:FF",
+			dst_mac_count = 1,
+			src_mac="00:0c:29:68:05:14",
+			src_mac_count = ixia_sub_intf,
+			vlan_id = 10,
+			dst_ipv6_list = dst_ipv6_list_1,
+			src_ipv6 = src_ipv6_base_1,
+			src_ipv6_count = ixia_sub_intf,
+			l4_protocol = "udp"
+			)
 
- 			#Start configurating IXIA 
- 			myixia = IXIA_Raw_Traffic(apiServerIp,ixChassisIpList,portList)
-			 
-            myixia.generate_ipv6_udp_raw_traffic(
-            src_port="Port_1",
-            dst_port="Port_2",
-            dmac = "FF:FF:FF:FF:FF:FF",
-            dst_mac_count = 1,
-            src_mac="00:0c:29:68:05:14",
-            src_mac_count = 1,
-            vlan_id = 1,
-			dst_ipv6_list = ['2002::1'],
-			src_ipv6 = '2001::1',
-			src_ipv6_count = 1
-            )
-
+			myixia.generate_ipv6_raw_traffic(
+			src_port="Port_2",
+			dst_port="Port_1",
+			dst_mac = "FF:FF:FF:FF:FF:FF",
+			dst_mac_count = 1,
+			src_mac="00:0c:29:68:05:14",
+			src_mac_count = ixia_sub_intf,
+			vlan_id = 10,
+			dst_ipv6_list = dst_ipv6_list_2,
+			src_ipv6 = src_ipv6_base_2,
+			src_ipv6_count = ixia_sub_intf,
+			l4_protocol = "tcp"
+			)
 			myixia.start_raw_traffic()
 			sleep(5)
-			myixia.stop_raw_traffic()
-			sleep(10)
- 			sw.print_show_command(f"get switch acl usage",mode="fast")
+			
+			sw.print_show_command(f"get switch acl usage",mode="fast")
 			sw.print_show_command(f"get switch acl counter all",mode="fast")
 			sw.print_show_command(f"show switch acl ingress",mode="fast")
-			sw.print_show_command(f"diagnose switch  physical-ports qos-rates non-zero",mode="fast")
-			 
+			sw.print_show_command(f"diagnose switch physical-ports qos-stats non-zero",mode="fast")
+			sw.print_show_command(f"diagnose switch physical-ports qos-stats non-zero",mode="fast")
+
 			print_double_line()
 			k = input(f"Please verify all the command output,press any key to finish:")
 			print_double_line()
+			myixia.stop_raw_traffic()
+			sleep(10)
 		 
 
 	def pbr_acl6_testing(*args,**kwargs):
@@ -4077,8 +4096,8 @@ if __name__ == "__main__":
 		myixia.stop_traffic()
 
 	################### Execution starts here ###################
-	longevity_scale_deconfig_acl6_testing(switch_num_list = [1,2,3])
-	#cpu_queue_acl6_testing(switch_num_list = [3])
+	#longevity_scale_deconfig_acl6_testing(switch_num_list = [1,2,3])
+	cpu_queue_acl6_testing(switch_num_list = [3])
 	#longevity_scale_acl6_testing(switch_num_list = [1,2,3])
 	#acl6_schedule_status_yaml(switch_num_list = [1])
 	#dot1x_acl6_testing_yaml(switch_num_list = [1,2],factory=True)
