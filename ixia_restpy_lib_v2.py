@@ -7,6 +7,8 @@
 ##############################################################################################################
 import sys, os, time, traceback
 from utils import *
+from pprint import pprint
+
 
 # Import the RestPy module
 from ixnetwork_restpy.testplatform.testplatform import TestPlatform
@@ -996,6 +998,194 @@ class IXIA_Classic:
             # # verify the neighbor range has been added on the server
             # assert(len(neighbor_range.find()) == 1)
 
+class IXIA_Raw_Traffic:
+    def __init__(self,*args,**kwargs):
+        self.apiServerIp = args[0]
+        self.ixChassisIpList = args[1]  
+        self.portList = args[2]
+        self.session,self.ixNetwork,self.vport = self.connect_chassis()
+
+    def start_raw_traffic(self):
+        self.ixNetwork.Traffic.Apply()
+        self.ixNetwork.Traffic.Start()
+        console_timer(10,msg="Let traffic forward for 10s after start ixia traffic")
+
+    def stop_raw_traffic(*args,**kwargs):
+        self.ixNetwork.Traffic.Stop()
+
+    def createPacketHeader(self,trafficItemObj, packetHeaderToAdd=None, appendToStack=None): 
+        configElement = trafficItemObj.ConfigElement.find()[0]
+
+        # Do the followings to add packet headers on the new traffic item
+
+        # Uncomment this to show a list of all the available protocol templates to create (packet headers)
+        for protocolHeader in ixNetwork.Traffic.ProtocolTemplate.find():
+            ixNetwork.info('Protocol header: --{}--'.format(protocolHeader.StackTypeId))
+
+        # 1> Get the <new packet header> protocol template from the ProtocolTemplate list.
+        packetHeaderProtocolTemplate = ixNetwork.Traffic.ProtocolTemplate.find(StackTypeId=packetHeaderToAdd)
+        ixNetwork.info('protocolTemplate: {}'.format(packetHeaderProtocolTemplate))
+
+        # 2> Append the <new packet header> object after the specified packet header stack.
+        appendToStackObj = configElement.Stack.find(StackTypeId=appendToStack)
+        ixNetwork.info('appendToStackObj: {}'.format(appendToStackObj))
+        appendToStackObj.Append(Arg2=packetHeaderProtocolTemplate)
+
+        # 3> Get the new packet header stack to use it for appending an IPv4 stack after it.
+        # Look for the packet header object and stack ID.
+        packetHeaderStackObj = configElement.Stack.find(StackTypeId=packetHeaderToAdd)
+        
+        # 4> In order to modify the fields, get the field object
+        packetHeaderFieldObj = packetHeaderStackObj.Field.find()
+        ixNetwork.info('packetHeaderFieldObj: {}'.format(packetHeaderFieldObj))
+        
+        # 5> Save the above configuration to the base config file.
+        #ixNetwork.SaveConfig(Files('baseConfig.ixncfg', local_file=True))
+
+        return packetHeaderFieldObj
+
+    def generate_ipv6_udp_raw_traffic(self,*args,**kwargs):
+        try:
+            ixNetwork = self.ixNetwork
+            vport = self.vport
+            session = self.session
+
+            src_port = kwargs['src_port']
+            dst_port = kwargs['dst_port']
+            dmac = kwargs['dmac']
+            src_mac = kwargs['src_mac']
+            src_mac_count = kwargs['src_mac_count']
+            dst_mac = kwargs['dst_mac']
+            dst_mac_count = kwargs['dst_mac_count']
+            vlan_id = kwargs['vlan_id']
+            dst_ipv6_list = kwargs['dst_ipv6_list']
+            src_ipv6 = kwargs['src_ipv6']
+            src_ipv6_count = kwargs['src_ipv6_count']
+
+            ixNetwork.info('Create a raw traffic item')
+            rawTrafficItemObj = ixNetwork.Traffic.TrafficItem.add(Name='Raw packet', BiDirectional=False, TrafficType='raw',TransmitMode='sequential')
+
+            ixNetwork.info('Add source and destination endpoints')
+            rawTrafficItemObj.EndpointSet.add(Sources=vport[src_port].Protocols.find(), Destinations=vport[dst_port].Protocols.find())
+            #rawTrafficItemObj.EndpointSet.add(Sources=vport['Port_1'].Protocols.find())
+
+            configElement = rawTrafficItemObj.ConfigElement.find()[0]
+            configElement.FrameRate.update(Type='percentLineRate', Rate=10)
+            configElement.TransmissionControl.update(Type='fixedFrameCount', FrameCount=10000)
+            configElement.FrameSize.FixedSize = 1000
+          
+            # The Ethernet packet header doesn't need to be created.
+            # It is there by default. Just do a find for the Ethernet stack object.
+            ethernetStackObj = ixNetwork.Traffic.TrafficItem.find(Name='Raw packet').ConfigElement.find()[0].Stack.find(StackTypeId='ethernet$')
+
+            # NOTE: If you are using virtual ports (IxVM), you must use the Destination MAC address of 
+            #       the IxVM port from your virtual host (ESX-i host or KVM)
+            ixNetwork.info('Configuring Ethernet packet header')
+            ethernetDstField = ethernetStackObj.Field.find(DisplayName='Destination MAC Address')
+            ethernetDstField.ValueType = 'increment'
+            ethernetDstField.StartValue = dst_mac
+            ethernetDstField.StepValue = "00:00:00:00:00:01"
+            ethernetDstField.CountValue = dst_mac_count
+
+            ethernetSrcField = ethernetStackObj.Field.find(DisplayName='Source MAC Address')
+            ethernetSrcField.ValueType = 'increment'
+            ethernetSrcField.StartValue = src_mac
+            ethernetSrcField.StepValue = "00:00:00:00:00:01"
+            ethernetSrcField.CountValue = dst_mac_count
+
+            # VLAN
+            vlanFieldObj = self.createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^vlan$', appendToStack='ethernet$')
+            vlanIdField = vlanFieldObj.find(DisplayName='VLAN-ID')
+            vlanIdField.SingleValue = vlan_id
+                
+            vlanPriorityField = vlanFieldObj.find(DisplayName='VLAN Priority')
+            vlanPriorityField.Auto = False
+            vlanPriorityField.SingleValue = 3
+
+            # IPv6
+            ipv6FieldObj = self.createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^ipv6$', appendToStack='^vlan$')
+            ipv6SrcField = ipv6FieldObj.find(DisplayName='Source Address')
+            ipv6SrcField.ValueType = 'increment'
+            #ipv6SrcField.ValueType = 'Single'
+            ipv6SrcField.StartValue = src_ipv6
+            ipv6SrcField.StepValue = '::1'
+            ipv6SrcField.CountValue = src_ipv6_count
+            
+            
+            # Example on how to create a custom list of ip addresses
+            ipv6DstField = ipv6FieldObj.find(DisplayName='Destination Address')
+            ipv6DstField.ValueType = 'valueList'
+            ipv6DstField.ValueList = dst_ipv6_list   
+           
+            # Example to show appending UDP after the IPv4 header
+            udpFieldObj = self.createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='^udp$', appendToStack='^ipv6$')
+            udpSrcField = udpFieldObj.find(DisplayName='UDP-Source-Port')
+            udpSrcField.Auto = False
+            udpSrcField.SingleValue = 1000
+
+            udpDstField = udpFieldObj.find(DisplayName='UDP-Dest-Port')
+            udpDstField.Auto = False
+            udpDstField.SingleValue = 1001
+
+            # Example to show appending TCP after the IPv4 header
+            # tcpFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='tcp', appendToStack='ipv4')
+            # tcpSrcField = tcpFieldObj.find(DisplayName='TCP-Source-Port')
+            # tcpSrcField.Auto = False
+            # tcpSrcField.ValueType = 'valueList'
+            # tcpSrcField.ValueList = ['1002', '1005', '1007']
+
+            # tcpDstField = tcpFieldObj.find(DisplayName='TCP-Dest-Port')
+            # tcpDstField.Auto = False
+            # tcpDstField.SingleValue = 80
+
+            # Example to show appending ICMP after the IPv4 header
+            #icmpFieldObj = createPacketHeader(rawTrafficItemObj, packetHeaderToAdd='icmpv9', appendToStack='ipv4')
+
+
+            # Optional: Enable tracking to track your packet headers:
+            #    
+            #    Other trackings: udpUdpSrcPrt0, udpUdpDstPrt0,tcpTcpSrcPrt0, tcpTcpDstPrt0, vlanVlanId0, vlanVlanUserPriority0
+            #    On an IxNetwork GUI (Windows or Web UI), add traffic item trackings.
+            #    Then go on the API browser to view the tracking fields.
+            rawTrafficItemObj.Tracking.find().TrackBy = ['udpUdpSrcPrt0', 'udpUdpDstPrt0']
+            #rawTrafficItemObj.Tracking.find().TrackBy = ['tcpTcpSrcPrt0', 'tcpTcpDstPrt0']
+            rawTrafficItemObj.Generate()
+            if debugMode == False:
+                # For Linux and WindowsConnectionMgr only
+                if session.TestPlatform.Platform != 'windows':
+                    session.Session.remove()
+
+        except Exception as errMsg:
+            ixNetwork.debug('\n%s' % traceback.format_exc())
+            if debugMode == False and 'session' in locals():
+                if session.TestPlatform.Platform != 'windows':
+                    session.Session.remove()
+
+
+ 
+    def connect_chassis(self):
+        # For Linux API server only
+        username = 'admin'
+        password = 'admin'
+
+        # For linux and windowsConnectionMgr only. Set to True to leave the session alive for debugging.
+        debugMode = False
+        # LogLevel: none, info, warning, request, request_response, all
+        session = SessionAssistant(IpAddress=self.apiServerIp, RestPort=None, UserName='admin', Password='admin', 
+                               SessionName=None, SessionId=None, ApiKey=None,
+                               ClearConfig=True, LogLevel='all', LogFilename='restpy.log')
+
+        ixNetwork = session.Ixnetwork
+
+        # Assign ports
+        portMap = session.PortMapAssistant()
+        vport = dict()
+        for index,port in enumerate(self.portList):
+            portName = 'Port_{}'.format(index+1) 
+            vport[portName] = portMap.Map(IpAddress=port[0], CardId=port[1], PortId=port[2], Name=portName)
+
+        portMap.Connect(forceTakePortOwnership)
+        return session,ixNetwork,vport
 
 class IXIA:
     def __init__(self,*args,**kwargs):

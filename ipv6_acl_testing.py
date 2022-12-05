@@ -1264,15 +1264,9 @@ if __name__ == "__main__":
 			#define valuables specific to the switch under testing 
 			ixia_sub_intf = 1
 			portList_v4_v6 = []
-			for p,m,n4,g4,n6,g6 in zip(
-				tb.ixia.port_active_list[switch_num*2:switch_num*2+2],\
-				mac_list[switch_num*2:switch_num*2+2], \
-				net4_list[switch_num*2:switch_num*2+2], \
-				gw4_list[switch_num*2:switch_num*2+2], \
-				net6_list[switch_num*2:switch_num*2+2], \
-				gw6_list[switch_num*2:switch_num*2+2]):
+			for p in tb.ixia.port_active_list[switch_num*2:switch_num*2+2]:
 				module,port = p.split("/")
-				portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
+				portList.append([ixChassisIpList[0], int(module),int(port)])
 			
 			print(portList_v4_v6)
 			mac_base_1=mac_list[switch_num*2]
@@ -1355,33 +1349,26 @@ if __name__ == "__main__":
 			
 
  			#Start configurating IXIA 
-			#myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6[switch_num*2:switch_num*2+2])
-			myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
-			for topo in myixia.topologies:
-				topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
-				topo.add_ipv6(gateway="fixed")
-				
-			myixia.start_protocol(wait=20)
-
-			# for i in range(0,len(tb.ixia.port_active_list)-1):
-			# 	for j in range(i+1,len(tb.ixia.port_active_list)):
+ 			myixia = IXIA_Raw_Traffic(apiServerIp,ixChassisIpList,portList)
 			 
-			for i in range(0,1):
-				for j in range(1,2):
-					myixia.create_traffic(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v4",tracking_name=f"Tracking_{i+1}_{j+1}_v4",rate=5)
-					myixia.create_traffic(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v4",tracking_name=f"Tracking_{j+1}_{i+1}_v4",rate=5)
-					myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
-					myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
-					myixia.create_traffic_destination_v4(src_topo=myixia.topologies[i].topology, dst="255.255.255.255",traffic_name=f"t{i}_broadcast",tracking_name=f"Tracking_{i+1}_v4_bcast",rate=1)
-					myixia.create_traffic_destination_v6(src_topo=myixia.topologies[i].topology, dst=f"{gw6_list[0]}",traffic_name=f"t{i}_unicast",tracking_name=f"Tracking_{i+1}_v4_unicast",rate=1)
+            myixia.generate_ipv6_udp_raw_traffic(
+            src_port="Port_1",
+            dst_port="Port_2",
+            dmac = "FF:FF:FF:FF:FF:FF",
+            dst_mac_count = 1,
+            src_mac="00:0c:29:68:05:14",
+            src_mac_count = 1,
+            vlan_id = 1,
+			dst_ipv6_list = ['2002::1'],
+			src_ipv6 = '2001::1',
+			src_ipv6_count = 1
+            )
 
-			myixia.start_traffic()
+			myixia.start_raw_traffic()
 			sleep(5)
-			myixia.stop_traffic()
+			myixia.stop_raw_traffic()
 			sleep(10)
-			myixia.collect_stats()
-			myixia.check_traffic()
-			sw.print_show_command(f"get switch acl usage",mode="fast")
+ 			sw.print_show_command(f"get switch acl usage",mode="fast")
 			sw.print_show_command(f"get switch acl counter all",mode="fast")
 			sw.print_show_command(f"show switch acl ingress",mode="fast")
 			sw.print_show_command(f"diagnose switch  physical-ports qos-rates non-zero",mode="fast")
