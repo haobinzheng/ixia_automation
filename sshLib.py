@@ -274,3 +274,8 @@ class mySSHCommand(threading.Thread):
         else:
             self.stdout = out
         self.ssh.close()
+
+
+if __name__ == "__main__":
+    ssh_handle = mySSHClient("10.105.241.28",password='Fortinet123!')
+    

@@ -6815,6 +6815,10 @@ class FortiSwitch_XML(FortiSwitch):
             self.password = kwargs['password']
         else:
             self.password = device_xml.password
+        if "ssh" in kwargs:
+            ssh = kwargs['ssh']
+        else:
+            ssh = False
         self.last_cmd_time = None
         self.ixia_ports = device_xml.ixia_ports
         self.version = None
@@ -6861,7 +6865,10 @@ class FortiSwitch_XML(FortiSwitch):
         self.lldp_neighbors_list = []
         self.managed = False
         self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches()
-        self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
+        if ssh == False:
+            self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
+        elif ssh:
+            self.console = telnet_switch(self.mgmt_ip,22,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
         self.system_interfaces = self.find_sys_interfaces()

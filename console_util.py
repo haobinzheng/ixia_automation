@@ -135,7 +135,7 @@ def ssh(ip,username,password,cmd):
 
 
 if __name__ == "__main__":
-    result = ssh("10.105.50.59","admin","admin","get system status") 
+    result = ssh("10.105.241.28","admin","Fortinet123!","get system status") 
     print (result)
     usage = 'python clear-console.py -u url -p port -l login_pwd -e exec_pwd -t prompt'
     parser = OptionParser(usage)
