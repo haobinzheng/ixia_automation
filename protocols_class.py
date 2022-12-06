@@ -20,6 +20,7 @@ from test_process import *
 from common_lib import *
 from common_codes import *
 from cli_functions import *
+from ssh_lib import *
 
 class Router_BFD:   
     def __init__(self,*args,**kwargs):
@@ -6807,7 +6808,7 @@ class FortiSwitch:
         # print(lw_dict)
         return lw_dict
 
-class FortiSwitch_XML(FortiSwitch):
+class FortiSwitch_XML_SSH(FortiSwitch):
     def __init__(self,*args,**kwargs):
         device_xml = args[0]
         self.tb=kwargs['topo_db']
@@ -6815,10 +6816,10 @@ class FortiSwitch_XML(FortiSwitch):
             self.password = kwargs['password']
         else:
             self.password = device_xml.password
-        if "ssh" in kwargs:
-            ssh = kwargs['ssh']
+        if "ssh_login" in kwargs:
+            ssh_login = kwargs['ssh_login']
         else:
-            ssh = False
+            ssh_login = False
         self.last_cmd_time = None
         self.ixia_ports = device_xml.ixia_ports
         self.version = None
@@ -6864,11 +6865,217 @@ class FortiSwitch_XML(FortiSwitch):
         self.fortigate_links = []
         self.lldp_neighbors_list = []
         self.managed = False
-        self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches()
-        if ssh == False:
-            self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
-        elif ssh:
-            self.console = telnet_switch(self.mgmt_ip,22,password=self.password)
+        self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches() 
+        if ssh_login == True:
+            self.ssh_connect()
+    
+    def ssh_connect(self):
+        result = ssh(self.mgmt_ip,self.password)
+        if result[0] == "Success":
+            Info(f"SSH to {self.hostname} is successfull")
+            self.ssh_handle = result[1]
+            self.console = self.ssh_handle #for legacy code. 
+        else:
+            ErrorNotify(f"Not able to ssh to {self.mgmt_ip} with error: {result[1]['data']}")
+            self.ssh_handle = None
+        self.dut = self.ssh_handle # For compatibility with old Fortiswitch codes
+        self.system_status_ssh()
+        return result
+
+    def system_status_ssh(self,*args,**kwargs):
+        sample = """
+        S548DN4K17000133 # get system status
+        Version: FortiSwitch-548D v6.4.4,build0454,201106 (GA)
+        Serial-Number: S548DN4K17000133
+        BIOS version: 04000013
+        System Part-Number: P18057-06
+        Burn in MAC: 70:4c:a5:79:22:5a
+        Hostname: S548DN4K17000133
+        Distribution: International
+        Branch point: 454
+        System time: Tue Oct  2 06:03:37 2001
+        path=system, objname=status, tablename=(null), size=0
+        """
+        print(f"========================== {self.hostname}: Get System Status =======================")
+        if self.ssh_handle != None:
+            output = ssh_cmd(self.ssh_handle,"get system status")
+            output = process_ssh_output(output)
+        else:
+            ErrorNotify(f"!!!!!!! the device {self.hostname} has no ssh connection, please check your ssh connection")
+            return None
+        if output[0] == "Failed":
+            ErrorNotify("switch_system_status: get system status has NO ouput")
+            return None
+        for line in output:
+            if "Version:" in line:
+                k,v = line.split(":")
+                self.version = v.split()[0].strip()
+                self.image_prefix = re.sub("FortiSwitch","FSW",self.version)
+                self.image_prefix = self.image_prefix.replace("-","_")
+                print(f"Platform version = {self.version}")
+                print(f"Image_prefix = {self.image_prefix}") 
+                continue
+            if "Hostname" in line:
+                self.discovered_hostname = line.split(":")[1].strip()
+                print(f"Discovered hostname = {self.discovered_hostname}")
+                continue
+            if "Serial-Number" in line:
+                self.serial_number = line.split(":")[1].strip()
+                print(f"Serial Number = {self.serial_number}")
+
+        for device in self.tb.devices:
+            #print(device.hostname)
+            if self.serial_number == device.hostname:
+                device.serial_number = self.serial_number
+                device.discovered_hostname = self.discovered_hostname
+                device.version = self.version
+                print(f"----------------------------- Updated topo_db device infor  ------------------------")
+                device.print_info()
+        return "Success"
+
+    def ssh_config_cmds_lines(self,cmdblock,*args,**kwargs):
+        b= cmdblock.split("\n")
+        b = [x.strip() for x in b if x.strip()]
+        config_return_list = []
+        for cmd in b:
+            print(f"{cmd}")
+            config_return = ssh_cmd(self.ssh_handle,cmd)
+            sleep(0.5)
+            if config_return[0] == "Failed":
+                ErrorNotify(f"Error during executing command in {self.hostname}: {cmd}")
+                return (config_return)
+        return "Success"
+
+
+    def fsw_upgrade_ssh(self,*args,**kwargs):
+        samples = """
+        image_name = FSW_248E_POE-v7-build0022-FORTINET.out
+        """
+
+        if "build" in kwargs:
+            build = int(kwargs['build'])
+            build = f"{build:04}"
+        else:
+            ErrorNotify("Software build number is missing. Exmaple: build=xxx.  Exiting program")
+            exit(-1)
+        if "version" in kwargs:
+            version = kwargs['version']
+        else:
+            version = "v6"
+        dut = self.ssh_handle
+        dut_name = self.name
+
+        config = f"""
+        config system admin
+            edit "admin"
+            set accprofile "super_admin"
+            set password ENC AK1uHvbOfsDLnA6ya8BxpLwXCNcKNZ9+7K7YC1pLpb4Qvs=
+        next
+        end
+        """
+        self.ssh_config_cmds_lines(config)
+
+        image_name = f"{self.image_prefix}-v{version}-build{build}-FORTINET.out"
+
+        tprint(f"image name = {image_name}")
+        cmd = f"execute restore image tftp {image_name} {self.tftp_ip}"
+        tprint(f"upgrade command = {cmd}")
+        output = ssh_interactive_exec(dut,cmd,enter_y='y'+'y'+'y')
+        print(output)
+        result = False
+
+        if output[0] == "Failed":
+            ErrorNotify(f"Error at {self.hostname} entering {cmd}")
+            return 'Failed'
+        output = process_ssh_output(output)
+        for line in output: 
+            if "Command fail" in line:
+                Info(f"upgrade with image {image_name} failed for {dut_name}: {line}")
+                result = False
+
+            elif "Check image OK" in line:
+                Info(f"At {dut_name} image {image_name} is downloaded and checked OK,upgrade should be fine: {line}")
+                result = True
+
+            elif "Writing the disk" in line:
+                Info(f"At {dut_name} image {image_name} is being written into disk, upgrade is Good!: {line}")
+                result = True
+
+            elif "Do you want to continue" in line:
+                dprint(f"Being prompted to answer yes/no 2nd time.  Prompt = {prompt}")
+                switch_enter_yes(dut)
+                result = True
+            else:
+                result = True
+        return result
+
+class FortiSwitch_XML(FortiSwitch):
+    def __init__(self,*args,**kwargs):
+        device_xml = args[0]
+        self.tb=kwargs['topo_db']
+        if "password" in kwargs:
+            self.password = kwargs['password']
+        else:
+            self.password = device_xml.password
+        if "ssh_login" in kwargs:
+            ssh_login = kwargs['ssh_login']
+        else:
+            ssh_login = False
+        self.last_cmd_time = None
+        self.ixia_ports = device_xml.ixia_ports
+        self.version = None
+        self.image_prefix = None
+        self.name = device_xml.name
+        self.hostname = device_xml.hostname
+        self.console_ip = device_xml.console_ip
+        self.console_line = device_xml.console_line
+        self.tftp_ip = device_xml.tftp_ip
+        self.pdu_model = device_xml.pdu_model
+        self.pdu_ip = device_xml.pdu_ip
+        self.pdu_port = device_xml.pdu_port
+        self.pdu_ip_2 = device_xml.pdu_ip_2
+        self.pdu_port_2 = device_xml.pdu_port_2
+        self.dual_pdu = device_xml.dual_pdu
+        self.username = device_xml.username
+        self.mgmt_ip = device_xml.mgmt_ip
+        self.loop0_ip = None
+        self.ebgp_as = None
+        self.mgmt_netmask = device_xml.mgmt_netmask
+        self.mgmt_gateway = device_xml.mgmt_gateway
+        self.license = device_xml.license
+        self.role = device_xml.role
+        try:
+            self.cluter = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(3)) 
+            self.tier = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(1)) 
+            self.pod = int(re.match(r'tier([0-9]+)-([0-9]+)-([0-9]+)',device_xml.role).group(2)) 
+        except Exception as e:
+            self.cluter = None
+            self.tier = None
+            self.pod = None
+        self.type = device_xml.type
+        self.active = device_xml.active
+        self.uplink_ports = device_xml.uplink_ports
+        self.fortigate_ports_db = device_xml.fortigate_ports
+        self.platform = "fortinet"
+        self.trunk_list = []
+        self.icl_links = []
+        self.up_links = []
+        self.down_links = []
+        self.up_links_pod = {}
+        self.down_links_pod = {}
+        self.fortigate_links = []
+        self.lldp_neighbors_list = []
+        self.managed = False
+        self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches() 
+        self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
+        if ssh_login == True:
+            result = ssh(self.mgmt_ip,self.password)
+            if result[0] == "Success":
+                Info(f"SSH to {self.hostname} is successfull")
+                self.ssh_handle = result[1]
+            else:
+                ErrorNotify(f"Not able to ssh to {self.mgmt_ip} with error: {result[1]['data']}")
+                self.ssh_handle = None
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
         self.system_interfaces = self.find_sys_interfaces()
