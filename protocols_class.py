@@ -6913,6 +6913,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         print(f"========================== {self.hostname}: Get System Status =======================")
         while self.image_prefix == None:
             sleep(5)
+            self.ssh_connect()
             if self.ssh_handle != None:
                 output = ssh_cmd(self.ssh_handle,"get system status",timeout=20)
                 while output[0] == "Failed":
