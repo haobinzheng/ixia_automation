@@ -6910,6 +6910,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         System time: Tue Oct  2 06:03:37 2001
         path=system, objname=status, tablename=(null), size=0
         """
+        self.image_prefix == None
         print(f"========================== {self.hostname}: Get System Status =======================")
         while self.image_prefix == None:
             sleep(5)
@@ -6953,6 +6954,11 @@ class FortiSwitch_XML_SSH(FortiSwitch):
                     print(f"----------------------------- Updated topo_db device infor  ------------------------")
                     device.print_info()
         return "Success"
+
+        def ssh_reconnect(self):
+            self.ssh_connect()
+            sleep(5)
+            self.system_status_ssh()
 
     def ssh_config_cmds_lines(self,cmdblock,*args,**kwargs):
         b= cmdblock.split("\n")

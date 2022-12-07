@@ -306,22 +306,14 @@ if __name__ == "__main__":
 			else:
 				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 is successful ############")
 			console_timer(80,msg=f"Wait for 80s for upgrading the {sw.hostname}")
-			# login_result = sw.ssh_connect()
-			sw = start()
-			# if login_result[0] == "Failed":
-			# 	ErrorNotify(f"Error ssh to {sw.hostname}, please console to switch to verify")
-
+			sw.ssh_reconnect()
+ 
 			sw.ssh_pdu_status()
 			sw.ssh_pdu_cycle()
 			sw.ssh_handle.close()
 			console_timer(50,msg='After power cycling the switch, wait for 50 seconds')
-
-			# login_result = sw.ssh_connect()
-			sw = start()
-			# if login_result[0] == "Failed":
-			# 	ErrorNotify(f"Error ssh to {sw.hostname}, please console to switch to verify")
-			console_timer(10,msg='After power cycling the switch and ssh to the device, wait for 10 seconds')
-
+			sw.ssh_reconnect()
+ 
 			result = sw.fsw_upgrade_ssh(build=86,version=7)
 			sw.ssh_handle.close()
 			if not result:
@@ -329,22 +321,13 @@ if __name__ == "__main__":
 			else:
 				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 is successful ############")
 			console_timer(90,msg=f"Wait for 90s for upgrading the {sw.hostname}")
-			# login_result = sw.ssh_connect()
-			sw = start()
-			# if login_result[0] == "Failed":
-			# 	ErrorNotify(f"Error ssh to {sw.hostname}, please console to switch to verify")
-
+			sw.ssh_reconnect() 
+			 
 			sw.ssh_pdu_status()
 			sw.ssh_pdu_cycle()
 			sw.ssh_handle.close()
-			console_timer(100,msg='After power cycling the switch, wait for 50 seconds')
-
-			# login_result = sw.ssh_connect()
-			
-			# if login_result[0] == "Failed":
-			# 	ErrorNotify(f"Error ssh to {sw.hostname}, please console to switch to verify")
-			console_timer(10,msg='After power cycling the switch and ssh to the device, wait for 10 seconds')
-			sw = start()
+			console_timer(60,msg='After power cycling the switch, wait for 60 seconds')
+			sw.ssh_reconnect()
 		except Exception as e:
 			Info(f"Error in some where of the loop, continue anyway")
 
