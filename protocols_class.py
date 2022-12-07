@@ -6820,6 +6820,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
             ssh_login = kwargs['ssh_login']
         else:
             ssh_login = False
+        self.ssh_handle = None
         self.last_cmd_time = None
         self.ixia_ports = device_xml.ixia_ports
         self.version = None
@@ -6867,10 +6868,8 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         self.managed = False
         self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches() 
         if ssh_login == True:
-            self.ssh_connect()
-            sleep(5)
-            self.system_status_ssh()
-
+            self.ssh_login_reliable()
+ 
     def ssh_pdu_status(self):
         a = apc()
         Status = {}
@@ -6884,6 +6883,10 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         print(Status)
     
     def ssh_connect(self):
+        if self.ssh_handle != None:
+            Info(f"Closed SSH connection to {self.hostname} before establish a new one")
+            self.ssh_handle.close()
+            sleep(2)
         result = ssh(self.mgmt_ip,self.password)
         if result[0] == "Success":
             Info(f"SSH to {self.hostname} is successfull")
@@ -6893,10 +6896,10 @@ class FortiSwitch_XML_SSH(FortiSwitch):
             ErrorNotify(f"Not able to ssh to {self.mgmt_ip} with error: {result[1]['data']}")
             self.ssh_handle = None
         self.dut = self.ssh_handle # For compatibility with old Fortiswitch codes
-        # self.system_status_ssh()
+        sleep(3)
         return result
 
-    def system_status_ssh(self,*args,**kwargs):
+    def ssh_login_reliable(self,*args,**kwargs):
         sample = """
         S548DN4K17000133 # get system status
         Version: FortiSwitch-548D v6.4.4,build0454,201106 (GA)
@@ -6910,10 +6913,9 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         System time: Tue Oct  2 06:03:37 2001
         path=system, objname=status, tablename=(null), size=0
         """
-        self.image_prefix == None
+        self.image_prefix = None
         print(f"========================== {self.hostname}: Get System Status =======================")
         while self.image_prefix == None:
-            sleep(5)
             self.ssh_connect()
             if self.ssh_handle != None:
                 output = ssh_cmd(self.ssh_handle,"get system status",timeout=20)
@@ -6923,9 +6925,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
             else:
                 ErrorNotify(f"!!!!!!! the device {self.hostname} has no ssh connection, please check your ssh connection")
                 return None
-            if output[0] == "Failed":
-                ErrorNotify("switch_system_status: get system status has NO ouput")
-                return None
+             
             for line in output:
                 if "Version:" in line:
                     k,v = line.split(":")
@@ -6953,19 +6953,16 @@ class FortiSwitch_XML_SSH(FortiSwitch):
                     device.version = self.version
                     print(f"----------------------------- Updated topo_db device infor  ------------------------")
                     device.print_info()
+            sleep(5)
         return "Success"
 
-        def ssh_reconnect(self):
-            self.ssh_connect()
-            sleep(5)
-            self.system_status_ssh()
 
     def ssh_config_cmds_lines(self,cmdblock,*args,**kwargs):
         b= cmdblock.split("\n")
         b = [x.strip() for x in b if x.strip()]
         config_return_list = []
         for cmd in b:
-            print(f"{cmd}")
+            tprint(f"{cmd}")
             config_return = ssh_cmd(self.ssh_handle,cmd)
             sleep(0.5)
             if config_return[0] == "Failed":
@@ -6990,7 +6987,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         else:
             version = "v6"
         dut = self.ssh_handle
-        dut_name = self.name
+        dut_name = self.hostname
 
         config = f"""
         config system admin
@@ -7029,8 +7026,8 @@ class FortiSwitch_XML_SSH(FortiSwitch):
                 result = True
 
             elif "Do you want to continue" in line:
-                dprint(f"Being prompted to answer yes/no 2nd time.  Prompt = {prompt}")
-                switch_enter_yes(dut)
+                tprint(f"{line}")
+                #switch_enter_yes(dut)
                 result = True
             else:
                 result = True

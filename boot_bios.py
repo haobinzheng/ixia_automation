@@ -135,53 +135,21 @@ if __name__ == "__main__":
 	tb.show_tbinfo()
 
 	######## skipping it for ixia trouble shooting
-	def start():
-		switches = []
-		for d in tb.devices:
-			switch = FortiSwitch_XML_SSH(d,topo_db=tb,ssh_login=True)
-			switches.append(switch)
-		for c in tb.connections:
-			c.update_devices_obj(switches)
-		####### skipping it for ixia trouble shooting 
-		# for c in tb.connections:
-		# 	c.shut_unused_ports()
-
-		sw = switches[0]
-		return sw
+	switches = []
+	for d in tb.devices:
+		switch = FortiSwitch_XML_SSH(d,topo_db=tb,ssh_login=True)
+		switches.append(switch)
+	for c in tb.connections:
+		c.update_devices_obj(switches)
+	####### skipping it for ixia trouble shooting 
+	# for c in tb.connections:
+	# 	c.shut_unused_ports()
+	sw = switches[0]
  		
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]
- 	
- 	############################################### Static Data Are Define Here ########################################################################
-	#  ixia_sub_intf can be overriden at each test case
-	TEST_VLAN = 10
-	TEST_VLAN_NAME = "vlan10"
-
-	mac_list = ["00:11:01:01:01:01","00:12:01:01:01:01","00:13:01:01:01:01","00:14:01:01:01:01","00:15:01:01:01:01","00:16:01:01:01:01","00:17:01:01:01:01","00:18:01:01:01:01"]
-	net4_list = ["10.1.1.10/16","10.1.2.10/16","10.1.3.10/16","10.1.4.10/16","10.1.5.10/16","10.1.6.10/16","10.1.7.10/16","10.1.8.10/16","10.1.9.10/16","10.1.10.10/16"]
-	gw4_list = ["10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1","10.1.1.1"]
-	net6_list = ["2001:10:1:1::1000/64","2001:10:1:1::2000/64","2001:10:1:1::3000/64","2001:10:1:1::4000/64","2001:10:1:1::5000/64","2001:10:1:1::6000/64","2001:10:1:1::7000/64","2001:10:1:1::8000/64"]
-	gw6_list = ["2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1","2001:10:1:1::1"]
-
-	config_interfaces = False
-	#config_interfaces = True
-	clean_acl = False
-	#clean_acl = True
-	config_acl_ingress = False
-	#config_acl_ingress = True
-	
-	# The following can be overriden at each test case based on 1) How many ixia ports you need  2) How many multiplier for each ixia port
-	ixia_sub_intf = 10
-	portList_v4_v6 = []
-	for p,m,n4,g4,n6,g6 in zip(tb.ixia.port_active_list,mac_list,net4_list,gw4_list,net6_list,gw6_list):
-		module,port = p.split("/")
-		portList_v4_v6.append([ixChassisIpList[0], int(module),int(port),m,n4,g4,n6,g6,ixia_sub_intf])
-
-	print(portList_v4_v6)
-
-	############################################### Static Data Are Define Here ########################################################################
-	 
+ 	 
 	##################################### Pre-Test setup and configuration #############################
 	if password_recovery: 
 		i = len(switches)
@@ -296,38 +264,30 @@ if __name__ == "__main__":
 
 		# if testcase == 0:
 		# 	exit()
-	sw = start()
-	for i in range(100):
-		try:
-			result = sw.fsw_upgrade_ssh(build=470,version=6)
-			sw.ssh_handle.close()
-			if not result:
-				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 Fails ########### ")
-			else:
-				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 is successful ############")
-			console_timer(80,msg=f"Wait for 80s for upgrading the {sw.hostname}")
-			sw.ssh_reconnect()
- 
-			sw.ssh_pdu_status()
-			sw.ssh_pdu_cycle()
-			sw.ssh_handle.close()
-			console_timer(50,msg='After power cycling the switch, wait for 50 seconds')
-			sw.ssh_reconnect()
- 
-			result = sw.fsw_upgrade_ssh(build=86,version=7)
-			sw.ssh_handle.close()
-			if not result:
-				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 Fails ########### ")
-			else:
-				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 is successful ############")
-			console_timer(90,msg=f"Wait for 90s for upgrading the {sw.hostname}")
-			sw.ssh_reconnect() 
-			 
-			sw.ssh_pdu_status()
-			sw.ssh_pdu_cycle()
-			sw.ssh_handle.close()
-			console_timer(60,msg='After power cycling the switch, wait for 60 seconds')
-			sw.ssh_reconnect()
-		except Exception as e:
-			Info(f"Error in some where of the loop, continue anyway")
+	for i in range(1000):
+		result = sw.fsw_upgrade_ssh(build=470,version=6)
+		if not result:
+			tprint(f"############# Upgrade {sw.hostname} to v6 build #470 Fails ########### ")
+		else:
+			tprint(f"############# Upgrade {sw.hostname} to v6 build #470 is successful ############")
+		console_timer(80,msg=f"Wait for 80s for upgrading the {sw.hostname}")
+		sw.ssh_login_reliable()
 
+		sw.ssh_pdu_status()
+		sw.ssh_pdu_cycle()
+		console_timer(50,msg='After power cycling the switch, wait for 50 seconds')
+		sw.ssh_login_reliable()
+
+		result = sw.fsw_upgrade_ssh(build=86,version=7)
+		if not result:
+			tprint(f"############# Upgrade {sw.hostname} to v7 build #86 Fails ########### ")
+		else:
+			tprint(f"############# Upgrade {sw.hostname} to v7 build #86 is successful ############")
+		console_timer(90,msg=f"Wait for 90s for upgrading the {sw.hostname}")
+		sw.ssh_login_reliable() 
+		 
+		sw.ssh_pdu_status()
+		sw.ssh_pdu_cycle()
+		console_timer(60,msg='After power cycling the switch, wait for 60 seconds')
+		sw.ssh_login_reliable()
+		 

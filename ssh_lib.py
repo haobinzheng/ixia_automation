@@ -44,8 +44,6 @@ def ssh_interactive_exec(ssh,exec_cmd,*args, **kwargs):
 	result = ssh_cmd(ssh,exec_cmd,timeout=40)
 	print(f"in ssh_interactive_exec, output of {exec_cmd}: {result}")
 	time.sleep(2)
-	exec_cmd = 'y' + '\n'
-	result = ssh_cmd(ssh,exec_cmd) 
 	return result
 	 
 
