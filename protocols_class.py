@@ -6868,6 +6868,8 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches() 
         if ssh_login == True:
             self.ssh_connect()
+            sleep(5)
+            self.system_status_ssh()
 
     def ssh_pdu_status(self):
         a = apc()
@@ -6891,7 +6893,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
             ErrorNotify(f"Not able to ssh to {self.mgmt_ip} with error: {result[1]['data']}")
             self.ssh_handle = None
         self.dut = self.ssh_handle # For compatibility with old Fortiswitch codes
-        self.system_status_ssh()
+        # self.system_status_ssh()
         return result
 
     def system_status_ssh(self,*args,**kwargs):
