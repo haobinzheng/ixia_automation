@@ -6868,6 +6868,18 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches() 
         if ssh_login == True:
             self.ssh_connect()
+
+    def ssh_pdu_status(self):
+        a = apc()
+        Status = {}
+        Status = a.get_status(self.pdu_ip, self.pdu_port)
+        print(Status)
+
+    def ssh_pdu_cycle(self):
+        a = apc()
+        Status = {}
+        Status = a.set_reboot(self.pdu_ip, self.pdu_port)
+        print(Status)
     
     def ssh_connect(self):
         result = ssh(self.mgmt_ip,self.password)
@@ -6897,40 +6909,46 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         path=system, objname=status, tablename=(null), size=0
         """
         print(f"========================== {self.hostname}: Get System Status =======================")
-        if self.ssh_handle != None:
-            output = ssh_cmd(self.ssh_handle,"get system status")
-            output = process_ssh_output(output)
-        else:
-            ErrorNotify(f"!!!!!!! the device {self.hostname} has no ssh connection, please check your ssh connection")
-            return None
-        if output[0] == "Failed":
-            ErrorNotify("switch_system_status: get system status has NO ouput")
-            return None
-        for line in output:
-            if "Version:" in line:
-                k,v = line.split(":")
-                self.version = v.split()[0].strip()
-                self.image_prefix = re.sub("FortiSwitch","FSW",self.version)
-                self.image_prefix = self.image_prefix.replace("-","_")
-                print(f"Platform version = {self.version}")
-                print(f"Image_prefix = {self.image_prefix}") 
-                continue
-            if "Hostname" in line:
-                self.discovered_hostname = line.split(":")[1].strip()
-                print(f"Discovered hostname = {self.discovered_hostname}")
-                continue
-            if "Serial-Number" in line:
-                self.serial_number = line.split(":")[1].strip()
-                print(f"Serial Number = {self.serial_number}")
+        while self.image_prefix == None:
+            sleep(5)
+            if self.ssh_handle != None:
+                output = ssh_cmd(self.ssh_handle,"get system status",timeout=20)
+                while output[0] == "Failed":
+                    output = ssh_cmd(self.ssh_handle,"get system status",timeout=20)
+                output = process_ssh_output(output)
+            else:
+                ErrorNotify(f"!!!!!!! the device {self.hostname} has no ssh connection, please check your ssh connection")
+                return None
+            if output[0] == "Failed":
+                ErrorNotify("switch_system_status: get system status has NO ouput")
+                return None
+            for line in output:
+                if "Version:" in line:
+                    k,v = line.split(":")
+                    self.version = v.split()[0].strip()
+                    self.image_prefix = re.sub("FortiSwitch","FSW",self.version)
+                    self.image_prefix = self.image_prefix.replace("-","_")
+                    print(f"Platform version = {self.version}")
+                    print(f"Image_prefix = {self.image_prefix}") 
+                    continue
+                if "Hostname" in line:
+                    self.discovered_hostname = line.split(":")[1].strip()
+                    print(f"Discovered hostname = {self.discovered_hostname}")
+                    continue
+                if "Serial-Number" in line:
+                    self.serial_number = line.split(":")[1].strip()
+                    print(f"Serial Number = {self.serial_number}")
+                else:
+                    self.serial_number = None
 
-        for device in self.tb.devices:
-            #print(device.hostname)
-            if self.serial_number == device.hostname:
-                device.serial_number = self.serial_number
-                device.discovered_hostname = self.discovered_hostname
-                device.version = self.version
-                print(f"----------------------------- Updated topo_db device infor  ------------------------")
-                device.print_info()
+            for device in self.tb.devices:
+                #print(device.hostname)
+                if self.serial_number == device.hostname:
+                    device.serial_number = self.serial_number
+                    device.discovered_hostname = self.discovered_hostname
+                    device.version = self.version
+                    print(f"----------------------------- Updated topo_db device infor  ------------------------")
+                    device.print_info()
         return "Success"
 
     def ssh_config_cmds_lines(self,cmdblock,*args,**kwargs):

@@ -30,7 +30,7 @@ from datetime import date
 
 
 if __name__ == "__main__":
-	sys.stdout = Logger(f"Log/ACL6_testing.log")
+	sys.stdout = Logger(f"Log/boot_to_bios.log")
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
 	parser.add_argument("-test", "--testcase", type=str, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
@@ -135,17 +135,19 @@ if __name__ == "__main__":
 	tb.show_tbinfo()
 
 	######## skipping it for ixia trouble shooting
-	switches = []
-	for d in tb.devices:
-		switch = FortiSwitch_XML_SSH(d,topo_db=tb,ssh_login=True)
-		switches.append(switch)
-	for c in tb.connections:
-		c.update_devices_obj(switches)
-	####### skipping it for ixia trouble shooting 
-	# for c in tb.connections:
-	# 	c.shut_unused_ports()
+	def start():
+		switches = []
+		for d in tb.devices:
+			switch = FortiSwitch_XML_SSH(d,topo_db=tb,ssh_login=True)
+			switches.append(switch)
+		for c in tb.connections:
+			c.update_devices_obj(switches)
+		####### skipping it for ixia trouble shooting 
+		# for c in tb.connections:
+		# 	c.shut_unused_ports()
 
-	sw = switches[0]
+		sw = switches[0]
+		return sw
  		
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
@@ -294,17 +296,55 @@ if __name__ == "__main__":
 
 		# if testcase == 0:
 		# 	exit()
-	
+	sw = start()
 	for i in range(100):
-		result = sw.fsw_upgrade_ssh(build=470,version=6)
-		if not result:
-			tprint(f"############# Upgrade {sw.name} to build #470 Fails ########### ")
-		else:
-			tprint(f"############# Upgrade {sw.name} to build #470 is successful ############")
-		console_timer(100,msg=f"Wait for 100s for upgrading the {sw.hostname}")
-		login_result = sw.ssh_connect()
-		if login_result[0] == "Failed":
-			ErrorNotify(f"Erro ssh to {sw.hostname}, please console to switch to verify")
+		try:
+			result = sw.fsw_upgrade_ssh(build=470,version=6)
+			sw.ssh_handle.close()
+			if not result:
+				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 Fails ########### ")
+			else:
+				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 is successful ############")
+			console_timer(80,msg=f"Wait for 80s for upgrading the {sw.hostname}")
+			# login_result = sw.ssh_connect()
+			sw = start()
+			# if login_result[0] == "Failed":
+			# 	ErrorNotify(f"Error ssh to {sw.hostname}, please console to switch to verify")
 
-	 
- 
+			sw.ssh_pdu_status()
+			sw.ssh_pdu_cycle()
+			sw.ssh_handle.close()
+			console_timer(50,msg='After power cycling the switch, wait for 50 seconds')
+
+			# login_result = sw.ssh_connect()
+			sw = start()
+			# if login_result[0] == "Failed":
+			# 	ErrorNotify(f"Error ssh to {sw.hostname}, please console to switch to verify")
+			console_timer(10,msg='After power cycling the switch and ssh to the device, wait for 10 seconds')
+
+			result = sw.fsw_upgrade_ssh(build=86,version=7)
+			sw.ssh_handle.close()
+			if not result:
+				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 Fails ########### ")
+			else:
+				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 is successful ############")
+			console_timer(90,msg=f"Wait for 90s for upgrading the {sw.hostname}")
+			# login_result = sw.ssh_connect()
+			sw = start()
+			# if login_result[0] == "Failed":
+			# 	ErrorNotify(f"Error ssh to {sw.hostname}, please console to switch to verify")
+
+			sw.ssh_pdu_status()
+			sw.ssh_pdu_cycle()
+			sw.ssh_handle.close()
+			console_timer(100,msg='After power cycling the switch, wait for 50 seconds')
+
+			# login_result = sw.ssh_connect()
+			
+			# if login_result[0] == "Failed":
+			# 	ErrorNotify(f"Error ssh to {sw.hostname}, please console to switch to verify")
+			console_timer(10,msg='After power cycling the switch and ssh to the device, wait for 10 seconds')
+			sw = start()
+		except Exception as e:
+			Info(f"Error in some where of the loop, continue anyway")
+

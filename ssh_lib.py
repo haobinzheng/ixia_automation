@@ -14,9 +14,13 @@ def ssh(ip,password,username="admin"):
 		ret = {"ip": ip, "data": error}
 		return ("Failed",ret)
 
-def ssh_cmd(ssh,cmd):
+def ssh_cmd(ssh,cmd,*args,**kwargs):
+	if "timeout" in kwargs:
+		t = kwargs['timeout']
+	else:
+		t = 10
 	try:
-		stdin, stdout, stderr = ssh.exec_command(cmd, timeout=10)
+		stdin, stdout, stderr = ssh.exec_command(cmd, timeout=t)
 		result = stdout.read()
 		result1 = result.decode()
 		error = stderr.read().decode('utf-8')
@@ -37,7 +41,7 @@ def ssh_interactive_exec(ssh,exec_cmd,*args, **kwargs):
 		enter_y = 'y'
 	utils.tprint(exec_cmd)
 	exec_cmd = exec_cmd + "\n" + enter_y
-	result = ssh_cmd(ssh,exec_cmd)
+	result = ssh_cmd(ssh,exec_cmd,timeout=40)
 	print(f"in ssh_interactive_exec, output of {exec_cmd}: {result}")
 	time.sleep(2)
 	exec_cmd = 'y' + '\n'
