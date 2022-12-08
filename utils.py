@@ -667,6 +667,10 @@ def collect_show_cmd(tn,cmd,**kwargs):
 		mode = kwargs['mode']
 	else:
 		mode = "slow"
+	if "ssh" in kwargs:
+		ssh = kwargs['ssh']
+		return ssh.cmd_proc(cmd)
+
 	Info(f"At collect_show_cmd: mode = {mode}")
 	#relogin_if_needed(tn)
 	if mode == "slow":

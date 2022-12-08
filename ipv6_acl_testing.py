@@ -137,7 +137,8 @@ if __name__ == "__main__":
 	######## skipping it for ixia trouble shooting
 	switches = []
 	for d in tb.devices:
-		switch = FortiSwitch_XML(d,topo_db=tb,ssh=True)
+		#switch = FortiSwitch_XML(d,topo_db=tb,login_ssh=True,login_console=False)
+		switch = FortiSwitch_XML(d,topo_db=tb,login_ssh=True)
 		switches.append(switch)
 	for c in tb.connections:
 		c.update_devices_obj(switches)

@@ -20,7 +20,6 @@ from test_process import *
 from common_lib import *
 from common_codes import *
 from cli_functions import *
-from ssh_lib import *
 from ssh_lib_v2 import *
 
 
@@ -1601,7 +1600,7 @@ class Switch_ACL:
         0        256   /256    512   /512    384   /384    egress        1
         0        256   /256    0     /0      0     /0      prelookup      1
         """
-        cmd_output = collect_show_cmd(self.switch.console,"get switch acl usage")
+        cmd_output = collect_show_cmd(self.switch.console,"get switch acl usage",ssh=self.switch.ssh_client)
 
         #regex = r"\d+   /\d+     \d+   /\d+    \d+  /\d+"
         regex = r"\d+\s+/\d+\s+\d+\s+/\d+\s+\d+\s+/\d+"
@@ -5665,7 +5664,7 @@ class FortiSwitch:
         """
         config_cmds_lines(self.console,config)
 
-    def find_sys_interfaces(self,*args,**kwargs):
+    def find_sys_interfaces(self,useSSH=False):
 
         # edit "internal"
         #     set ip 1.1.1.100 255.255.255.255
@@ -5709,7 +5708,10 @@ class FortiSwitch:
         # self.ipv6 = None
         if self.is_fortinet() == False:
             return 
-        cmd_output = collect_show_cmd(self.console,"show system interface",mode="fast")
+        if useSSH == False:
+            cmd_output = collect_show_cmd(self.console,"show system interface",mode="fast")
+        else:
+            cmd_output = self.ssh_client.cmd_proc("show system interface")
         debug(cmd_output)
         sys_int_list = []
         regex_name = r'\s*edit "([a-z0-9]+)"'
@@ -7043,10 +7045,16 @@ class FortiSwitch_XML(FortiSwitch):
             self.password = kwargs['password']
         else:
             self.password = device_xml.password
-        if "ssh_login" in kwargs:
-            ssh_login = kwargs['ssh_login']
+        if "login_ssh" in kwargs:
+            self.login_ssh = kwargs['login_ssh']
         else:
-            ssh_login = False
+            self.login_ssh = False
+
+        if "login_console" in kwargs:
+            self.login_console = kwargs['login_console']
+        else:
+            self.login_console = True
+
         self.last_cmd_time = None
         self.ixia_ports = device_xml.ixia_ports
         self.version = None
@@ -7094,12 +7102,16 @@ class FortiSwitch_XML(FortiSwitch):
         self.managed = False
         self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches() 
         self.ssh_client = None
-        self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
-        if ssh_login == True:
-            self.ssh_client = mySSHClient(mgmt_ip,password=self.password)
+        self.console = None
+        self._useSSH = False
+        if self.login_console:
+            self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
+        if self.login_ssh == True:
+            self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+            self._useSSH = True
         self.dut = self.console # For compatibility with old Fortiswitch codes
-        self.switch_system_status()
-        self.system_interfaces = self.find_sys_interfaces()
+        self.switch_system_status(useSSH=self._useSSH)
+        self.system_interfaces = self.find_sys_interfaces(useSSH=self._useSSH)
         self.split_ports = []
         self.split_port_exist = False
         self.find_split_ports()
@@ -7107,6 +7119,104 @@ class FortiSwitch_XML(FortiSwitch):
         self.router_isis = Router_ISIS(self)
         self.router_bgp = Router_BGP(self)
         self.system_interfaces_list = None
+
+    def ssh_login_reliable(self):
+        self.ssh_client.sshDisconect()
+        self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+
+    def ssh_output_process(self,output):
+        out_list = output.split('\n')
+        encoding = 'utf-8'
+        out_str_list = [o for o in out_list if o != ''] 
+        return out_str_list
+
+    def ssh_config_cmds_lines(self,cmdblock,*args,**kwargs):
+        b= cmdblock.split("\n")
+        b = [x.strip() for x in b if x.strip()]
+        config_return_list = []
+        for cmd in b:
+            tprint(f"{cmd}")
+            config_return = self.ssh_client.cmd_proc(cmd)
+            sleep(0.5)
+            if config_return[0] == "Failed":
+                ErrorNotify(f"Error during executing command in {self.hostname}: {cmd}")
+                return (config_return)
+        return "Success"
+
+    def ssh_interactive_exec(self,exec_cmd,*args, **kwargs):
+    #relogin_if_needed(tn)
+        if "enter_y" in kwargs:
+            enter_y = kwargs['enter_y']
+        else:
+            enter_y = 'y'
+        tprint(exec_cmd)
+        exec_cmd = exec_cmd + "\n" + enter_y
+        result = self.ssh_client.cmd_proc(exec_cmd,timeout=40)
+        print(f"in ssh_interactive_exec, output of {exec_cmd}: {result}")
+        time.sleep(2)
+        return result
+
+    def fsw_upgrade_ssh(self,*args,**kwargs):
+        samples = """
+        image_name = FSW_248E_POE-v7-build0022-FORTINET.out
+        """
+
+        if "build" in kwargs:
+            build = int(kwargs['build'])
+            build = f"{build:04}"
+        else:
+            ErrorNotify("Software build number is missing. Exmaple: build=xxx.  Exiting program")
+            exit(-1)
+        if "version" in kwargs:
+            version = kwargs['version']
+        else:
+            version = "v6"
+        dut_name = self.hostname
+
+        config = f"""
+        config system admin
+            edit "admin"
+            set accprofile "super_admin"
+            set password ENC AK1uHvbOfsDLnA6ya8BxpLwXCNcKNZ9+7K7YC1pLpb4Qvs=
+        next
+        end
+        """
+        self.ssh_config_cmds_lines(config)
+
+        image_name = f"{self.image_prefix}-v{version}-build{build}-FORTINET.out"
+
+        tprint(f"image name = {image_name}")
+        cmd = f"execute restore image tftp {image_name} {self.tftp_ip}"
+        tprint(f"upgrade command = {cmd}")
+        output = self.ssh_interactive_exec(cmd,enter_y='y'+'y'+'y')
+        print(output)
+        result = False
+
+        if output[0] == "Failed":
+            ErrorNotify(f"Error at {self.hostname} entering {cmd}")
+            return 'Failed'
+         
+        for line in output: 
+            if "Command fail" in line:
+                Info(f"upgrade with image {image_name} failed for {dut_name}: {line}")
+                result = False
+
+            elif "Check image OK" in line:
+                Info(f"At {dut_name} image {image_name} is downloaded and checked OK,upgrade should be fine: {line}")
+                result = True
+
+            elif "Writing the disk" in line:
+                Info(f"At {dut_name} image {image_name} is being written into disk, upgrade is Good!: {line}")
+                result = True
+
+            elif "Do you want to continue" in line:
+                tprint(f"{line}")
+                #switch_enter_yes(dut)
+                result = True
+            else:
+                result = True
+        return result
+
         
     def find_split_ports(self):
         self.split_ports = []
@@ -7360,6 +7470,18 @@ class FortiSwitch_XML(FortiSwitch):
             debug("something is wrong with rlogin_if_needed at functionsw_init_config, try again")
             self.switch_relogin()
 
+    def ssh_pdu_cycle(self):
+        self.pdu_cycle()
+
+    def pdu_cycle(self):
+        a = apc()
+        Status = {}
+        Status = a.set_reboot(self.pdu_ip, self.pdu_port)
+        print(Status)
+        
+    def ssh_pdu_status(self):
+        self.pdu_status()
+
     def pdu_status(self):
         a = apc()
         Status = {}
@@ -7589,7 +7711,9 @@ class FortiSwitch_XML(FortiSwitch):
         for i in range(100):
             self.console.write(cmd)
             sleep(0.2)
-         
+    
+    def ssh_pdu_cycle(self):
+        self.pdu_cycle()
 
     def pdu_cycle(self):
         a = apc()
@@ -8091,7 +8215,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password,relogin=True,console=self.console)
         self.dut = self.console # For compatibility with old Fortiswitch codes
 
-    def switch_system_status(self,*args,**kwargs):
+    def switch_system_status(self,useSSH=False):
         sample = """
         S548DN4K17000133 # get system status
         Version: FortiSwitch-548D v6.4.4,build0454,201106 (GA)
@@ -8106,11 +8230,15 @@ class FortiSwitch_XML(FortiSwitch):
         path=system, objname=status, tablename=(null), size=0
         """
         print(f"========================== {self.hostname}: Get System Status =======================")
-        if self.console != None:
-            output = collect_show_cmd(self.console,"get system status",mode="fast")
+        if useSSH == False:
+            if self.console != None:
+                output = collect_show_cmd(self.console,"get system status",mode="fast")
+            else:
+                Info(f"!!!!!!! the device {self.hostname} has no console connection, please check your console connection")
+                return None
         else:
-            Info(f"!!!!!!! the device {self.hostname} has no console connection, please check your console connection")
-            return None
+            output = self.ssh_client.cmd_proc("get system status")
+            print(output,type(output))
         if output == None:
             Info("switch_system_status: get system status has NO ouput")
             return None

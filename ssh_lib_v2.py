@@ -43,6 +43,9 @@ class mySSHClient(object):
         print("Closing ssh connection...")
         self.ssh.close()
 
+    def sshDisconect(self):
+        self.ssh.close()
+
     def sshConnect(self):
         self.ssh.connect(hostname=self.hostname,username=self.username, password=self.password,timeout = 2)
 
@@ -75,8 +78,8 @@ class mySSHClient(object):
         '''
         self._checkExitStatus = ret
 
-    def cmd_proc(self, command, returnAsString=True, timeout=0,
-            exceptionRetriesLeft=3, ignoreTimeout=False, interaction=[]):
+    def cmd_proc(self, command, returnAsString=True, timeout=40,
+            exceptionRetriesLeft=5, ignoreTimeout=False, interaction=[]):
         '''
         Meant for quick running commands that may occasionally fail because of network issues. It will retry in that case. 
         '''
@@ -100,7 +103,7 @@ class mySSHClient(object):
         except Exception as e:
             if exceptionRetriesLeft <= 0:
                 raise e
-            self.ssConnect()
+            self.sshConnect()
             return self.cmd(command=command, returnAsString=returnAsString, timeout=timeout, exceptionRetriesLeft=(exceptionRetriesLeft - 1), ignoreTimeout=ignoreTimeout, interaction=interaction)
 
     def cmdNoRetries_sync(self, command, returnAsString=True, timeout=0, ignoreTimeout=False):
@@ -114,11 +117,11 @@ class mySSHClient(object):
         self.stdout = None
         self.exit_status = None
          
-        o = self.syncCmd(command, returnAsString)
+        o = self.syncCmd(command, returnAsString,timeout)
         while self.stderr != None:
             self.makeSSH()
             self.sshConnect()
-            o = self.syncCmd(command, returnAsString)
+            o = self.syncCmd(command, returnAsString,timeout)
         return o
 
 
@@ -162,21 +165,25 @@ class mySSHClient(object):
             raise o.caught
         return o.stdout
 
-    def syncCmd(self,command,returnAsString):
-        stdin, stdout, stderr = self.ssh.exec_command(command)
-        out = stdout.readlines()
-        err = stderr.readlines()
-        self._returnAsString = returnAsString
-        if len(err) > 0:
-            if self._returnAsString:
-                self.stderr = ''.join(err)
+    def syncCmd(self,command,returnAsString,timeout):
+        try:
+            stdin, stdout, stderr = self.ssh.exec_command(command,timeout=timeout)
+            out = stdout.readlines()
+            err = stderr.readlines()
+            #print(f"in synCmd,stderr = {err}")
+            self._returnAsString = returnAsString
+            if len(err) > 0:
+                if self._returnAsString:
+                    self.stderr = ''.join(err)
+                else:
+                    self.stderr = err
             else:
-                self.stderr = err
-        else:
-            self.stderr = None
-        self.stdout = out
-        return out
-
+                self.stderr = None
+            self.stdout = out
+            return out
+        except Exception as e:
+            error = "???????,{}".format(e)
+            return error
 
     def asyncCmd(self, cmd, returnAsString=True, interaction=[]):
         '''
@@ -334,7 +341,7 @@ if __name__ == "__main__":
     ssh_client = mySSHClient("10.105.241.19",password='Fortinet123!')
     output = ssh_client.cmd_proc("get system status")
     print(f"Using process based ssh cmd: {output}")
-    output = ssh_client.cmd_proc("get system status")
+    output = ssh_client.cmd("get system status")
     print(f"Using thread based ssh cmd: {output}")
     del ssh_client
 
