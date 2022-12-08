@@ -1,6 +1,3 @@
-###############################
-# contact: maxli@fortinet.com #
-###############################
 #
 # Easy access to SSH through paramiko
 # (pip install python-paramiko)
@@ -27,7 +24,6 @@ class mySSHClient(object):
         ''' Set up SSH object to hostname. '''
         if checkHost:
             socket.getaddrinfo(hostname, 23, socket.AF_UNSPEC, socket.SOCK_STREAM)
-
         self.hostname = hostname
         self.makeSSH()
         self.username = None
@@ -40,7 +36,15 @@ class mySSHClient(object):
         self._returnAsString = None
         self._checkExitStatus = False
         self.caughtException = None
+        self.sshConnect()
         self.SSHSEMA = threading.Semaphore(1)
+
+    def __del__(self):
+        print("Closing ssh connection...")
+        self.ssh.close()
+
+    def sshConnect(self):
+        self.ssh.connect(hostname=self.hostname,username=self.username, password=self.password,timeout = 2)
 
     def makeSSH(self):
         ''' Creates a new SSHClient object. '''
@@ -48,7 +52,7 @@ class mySSHClient(object):
         # https://github.com/paramiko/paramiko/blob/master/demos/demo_simple.py
         #self.ssh.load_system_host_keys()
         self.ssh.set_missing_host_key_policy(AutoAddPolicy())
-
+ 
     def setUser(self, username, password):
         ''' Set the username and password. Also clears the privateKey. '''
         self.username = username
@@ -71,6 +75,21 @@ class mySSHClient(object):
         '''
         self._checkExitStatus = ret
 
+    def cmd_proc(self, command, returnAsString=True, timeout=0,
+            exceptionRetriesLeft=3, ignoreTimeout=False, interaction=[]):
+        '''
+        Meant for quick running commands that may occasionally fail because of network issues. It will retry in that case. 
+        '''
+        try:
+            return self.cmdNoRetries_sync(command, returnAsString=returnAsString, timeout=timeout, ignoreTimeout=ignoreTimeout)
+        except Exception as e:
+            if exceptionRetriesLeft <= 0:
+                raise e
+            self.makeSSH()
+            self.sshConnect()
+            return self.cmd_proc(command=command, returnAsString=returnAsString, timeout=timeout, exceptionRetriesLeft=(exceptionRetriesLeft - 1), ignoreTimeout=ignoreTimeout, interaction=interaction)
+
+
     def cmd(self, command, returnAsString=True, timeout=0,
             exceptionRetriesLeft=2, ignoreTimeout=False, interaction=[]):
         '''
@@ -81,8 +100,27 @@ class mySSHClient(object):
         except Exception as e:
             if exceptionRetriesLeft <= 0:
                 raise e
-            self.makeSSH()
+            self.ssConnect()
             return self.cmd(command=command, returnAsString=returnAsString, timeout=timeout, exceptionRetriesLeft=(exceptionRetriesLeft - 1), ignoreTimeout=ignoreTimeout, interaction=interaction)
+
+    def cmdNoRetries_sync(self, command, returnAsString=True, timeout=0, ignoreTimeout=False):
+        '''
+        Executes command on the remote host. Raises Exception if stderr isn't empty. 
+        By default returns the result as a string. Set returnAsString to False if that's not desirable. 
+        Default timeout is 0 seconds which means it will wait forever. Override with your own timeout values as needed.
+        If ignoreTimeout=True the command still gets terminated but stdout and stderr are processed as before.
+        '''
+        self.stderr = None
+        self.stdout = None
+        self.exit_status = None
+         
+        o = self.syncCmd(command, returnAsString)
+        while self.stderr != None:
+            self.makeSSH()
+            self.sshConnect()
+            o = self.syncCmd(command, returnAsString)
+        return o
+
 
     def cmdNoRetries(self, command, returnAsString=True, timeout=0, ignoreTimeout=False, interaction=[]):
         '''
@@ -123,6 +161,22 @@ class mySSHClient(object):
             logger.console("Re-raising caught exception during mySSHCommand.cmd() :" + pformat(vars(o)))
             raise o.caught
         return o.stdout
+
+    def syncCmd(self,command,returnAsString):
+        stdin, stdout, stderr = self.ssh.exec_command(command)
+        out = stdout.readlines()
+        err = stderr.readlines()
+        self._returnAsString = returnAsString
+        if len(err) > 0:
+            if self._returnAsString:
+                self.stderr = ''.join(err)
+            else:
+                self.stderr = err
+        else:
+            self.stderr = None
+        self.stdout = out
+        return out
+
 
     def asyncCmd(self, cmd, returnAsString=True, interaction=[]):
         '''
@@ -278,6 +332,10 @@ class mySSHCommand(threading.Thread):
 
 if __name__ == "__main__":
     ssh_client = mySSHClient("10.105.241.19",password='Fortinet123!')
-    output = ssh_client.cmd("get system status")
-    print(output,type(output))
+    output = ssh_client.cmd_proc("get system status")
+    print(f"Using process based ssh cmd: {output}")
+    output = ssh_client.cmd_proc("get system status")
+    print(f"Using thread based ssh cmd: {output}")
+    del ssh_client
+
     

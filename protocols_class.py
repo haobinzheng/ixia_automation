@@ -21,6 +21,8 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 from ssh_lib import *
+from ssh_lib_v2 import *
+
 
 class Router_BFD:   
     def __init__(self,*args,**kwargs):
@@ -7091,15 +7093,10 @@ class FortiSwitch_XML(FortiSwitch):
         self.lldp_neighbors_list = []
         self.managed = False
         self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches() 
+        self.ssh_client = None
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         if ssh_login == True:
-            result = ssh(self.mgmt_ip,self.password)
-            if result[0] == "Success":
-                Info(f"SSH to {self.hostname} is successfull")
-                self.ssh_handle = result[1]
-            else:
-                ErrorNotify(f"Not able to ssh to {self.mgmt_ip} with error: {result[1]['data']}")
-                self.ssh_handle = None
+            self.ssh_client = mySSHClient(mgmt_ip,password=self.password)
         self.dut = self.console # For compatibility with old Fortiswitch codes
         self.switch_system_status()
         self.system_interfaces = self.find_sys_interfaces()
