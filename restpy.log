@@ -1,9 +1,0 @@
-2022-12-08 18:09:21 [ixnetwork_restpy.connection] [INFO] using python version 3.7.2 (default, Dec 29 2018, 00:00:04) 
-[Clang 4.0.1 (tags/RELEASE_401/final)]
-2022-12-08 18:09:21 [ixnetwork_restpy.connection] [INFO] using ixnetwork-restpy version 1.0.57
-2022-12-08 18:09:21 [ixnetwork_restpy.connection] [WARNING] Verification of certificates is disabled
-2022-12-08 18:09:21 [ixnetwork_restpy.connection] [INFO] Determining the platform and rest_port using the 10.105.19.44 address...
-2022-12-08 18:09:22 [ixnetwork_restpy.connection] [WARNING] Unable to connect to http://10.105.19.44:443.
-2022-12-08 18:09:24 [ixnetwork_restpy.connection] [WARNING] Unable to connect to https://10.105.19.44:443.
-2022-12-08 18:09:25 [ixnetwork_restpy.connection] [WARNING] Unable to connect to http://10.105.19.44:11009.
-2022-12-08 18:09:25 [ixnetwork_restpy.connection] [WARNING] Unable to connect to https://10.105.19.44:11009.
