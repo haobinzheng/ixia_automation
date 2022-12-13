@@ -7140,7 +7140,7 @@ class FortiSwitch_XML(FortiSwitch):
         for cmd in b:
             tprint(f"{cmd}")
             config_return = self.ssh_client.cmd_proc(cmd)
-            sleep(0.5)
+            sleep(1)
             if config_return[0] == "Failed":
                 ErrorNotify(f"Error during executing command in {self.hostname}: {cmd}")
                 return (config_return)
@@ -7186,6 +7186,7 @@ class FortiSwitch_XML(FortiSwitch):
         end
         """
         self.ssh_config_cmds_lines(config)
+        sleep(10)
 
         image_name = f"{self.image_prefix}-v{version}-build{build}-FORTINET.out"
 
