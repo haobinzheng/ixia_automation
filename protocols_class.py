@@ -7154,8 +7154,8 @@ class FortiSwitch_XML(FortiSwitch):
         else:
             enter_y = 'y'
         tprint(exec_cmd)
-        #exec_cmd = exec_cmd + "\n" + enter_y
-        exec_cmd = exec_cmd  + enter_y
+        exec_cmd = exec_cmd + "\n" + enter_y
+        #exec_cmd = exec_cmd  + enter_y
         result = self.ssh_client.cmd_proc(exec_cmd,timeout=40)
         print(f"in ssh_interactive_exec, output of {exec_cmd}: {result}")
         time.sleep(2)
