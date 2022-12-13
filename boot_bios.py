@@ -269,6 +269,7 @@ if __name__ == "__main__":
 	power_time = 80
 	for i in range(1000):
 		for sw in switches:
+			sw.ssh_login_reliable()
 			result = sw.fsw_upgrade_ssh(build=470,version=6)
 			if not result:
 				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 Fails ########### ")
