@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
 			sw.ssh_pdu_status()
 			sw.ssh_pdu_cycle()
-			console_timer(power_time,msg='After power cycling the switch, wait for {power_time} seconds')
+			console_timer(power_time,msg=f'After power cycling the switch, wait for {power_time} seconds')
 			sw.ssh_login_reliable()
 
 			result = sw.fsw_upgrade_ssh(build=86,version=7)
@@ -292,6 +292,6 @@ if __name__ == "__main__":
 			 
 			sw.ssh_pdu_status()
 			sw.ssh_pdu_cycle()
-			console_timer(power_time,msg='After power cycling the switch, wait for {power_time} seconds')
+			console_timer(power_time,msg=f'After power cycling the switch, wait for {power_time} seconds')
 			sw.ssh_login_reliable()
 		 
