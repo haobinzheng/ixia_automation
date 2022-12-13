@@ -7002,7 +7002,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         end
         """
         self.ssh_config_cmds_lines(config)
-        sleep(10)
+        sleep(2)
 
         image_name = f"{self.image_prefix}-v{version}-build{build}-FORTINET.out"
 
@@ -7125,8 +7125,8 @@ class FortiSwitch_XML(FortiSwitch):
         Info(f"Logining in {self.hostname} after reboot")
         self.ssh_client.sshDisconect()
         self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
-        Info("After login via SSH, wait for 10 seconds....")
-        sleep(10)
+        Info("After login via SSH, wait for 2 seconds....")
+        sleep(2)
 
     def ssh_output_process(self,output):
         out_list = output.split('\n')
