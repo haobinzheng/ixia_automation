@@ -7187,8 +7187,8 @@ class FortiSwitch_XML(FortiSwitch):
         end
         """
         self.ssh_config_cmds_lines(config)
-        sleep(10)
-
+        sleep(2)
+        self.switch_system_status(useSSH=self._useSSH)
         image_name = f"{self.image_prefix}-v{version}-build{build}-FORTINET.out"
 
         tprint(f"image name = {image_name}")
