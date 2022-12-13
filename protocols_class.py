@@ -7121,6 +7121,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.system_interfaces_list = None
 
     def ssh_login_reliable(self):
+        Info(f"Logining in {self.hostname} after reboot")
         self.ssh_client.sshDisconect()
         self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
 
