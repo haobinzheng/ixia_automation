@@ -266,7 +266,7 @@ if __name__ == "__main__":
 		# if testcase == 0:
 		# 	exit()
 	boot_time = 100
-	power_time = 60
+	power_time = 80
 	for i in range(1000):
 		for sw in switches:
 			result = sw.fsw_upgrade_ssh(build=470,version=6)
