@@ -7191,7 +7191,7 @@ class FortiSwitch_XML(FortiSwitch):
         tprint(f"image name = {image_name}")
         cmd = f"execute restore image tftp {image_name} {self.tftp_ip}"
         tprint(f"upgrade command = {cmd}")
-        output = self.ssh_interactive_exec(cmd,enter_y='y'+'y'+'y')
+        output = self.ssh_interactive_exec(cmd,enter_y='y'+'y'+'y'+ 'y')
         print(output)
         result = False
 
