@@ -98,6 +98,7 @@ class mySSHClient(object):
         '''
         Meant for quick running commands that may occasionally fail because of network issues. It will retry in that case. 
         '''
+        self.sshDisconect()
         try:
             return self.cmdNoRetries(command, returnAsString=returnAsString, timeout=timeout, ignoreTimeout=ignoreTimeout, interaction=interaction)
         except Exception as e:
@@ -341,6 +342,8 @@ if __name__ == "__main__":
     ssh_client = mySSHClient("10.105.241.19",password='Fortinet123!')
     output = ssh_client.cmd_proc("get system status")
     print(f"Using process based ssh cmd: {output}")
+    output = ssh_client.cmd("get system status")
+    print(f"Using thread based ssh cmd: {output}")
     output = ssh_client.cmd("get system status")
     print(f"Using thread based ssh cmd: {output}")
     del ssh_client

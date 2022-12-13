@@ -128,9 +128,9 @@ if __name__ == "__main__":
 	else:
 		Setup_only = False
 		print_title("Set up Only:No")
-	file = 'tbinfo_single_sw_acl6.xml'
+	file = 'tbinfo_boot_bios.xml'
 	tb = parse_tbinfo_untangle(file)
-	testtopo_file = 'single_sw_topo.xml'
+	testtopo_file = 'topo_boot_bios.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
@@ -265,30 +265,33 @@ if __name__ == "__main__":
 
 		# if testcase == 0:
 		# 	exit()
+	boot_time = 100
+	power_time = 60
 	for i in range(1000):
-		result = sw.fsw_upgrade_ssh(build=470,version=6)
-		if not result:
-			tprint(f"############# Upgrade {sw.hostname} to v6 build #470 Fails ########### ")
-		else:
-			tprint(f"############# Upgrade {sw.hostname} to v6 build #470 is successful ############")
-		console_timer(80,msg=f"Wait for 80s for upgrading the {sw.hostname}")
-		sw.ssh_login_reliable()
+		for sw in switches:
+			result = sw.fsw_upgrade_ssh(build=470,version=6)
+			if not result:
+				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 Fails ########### ")
+			else:
+				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 is successful ############")
+			console_timer(boot_time,msg=f"Wait for {boot_time} for upgrading the {sw.hostname}")
+			sw.ssh_login_reliable()
 
-		sw.ssh_pdu_status()
-		sw.ssh_pdu_cycle()
-		console_timer(50,msg='After power cycling the switch, wait for 50 seconds')
-		sw.ssh_login_reliable()
+			sw.ssh_pdu_status()
+			sw.ssh_pdu_cycle()
+			console_timer(power_time,msg='After power cycling the switch, wait for {power_time} seconds')
+			sw.ssh_login_reliable()
 
-		result = sw.fsw_upgrade_ssh(build=86,version=7)
-		if not result:
-			tprint(f"############# Upgrade {sw.hostname} to v7 build #86 Fails ########### ")
-		else:
-			tprint(f"############# Upgrade {sw.hostname} to v7 build #86 is successful ############")
-		console_timer(90,msg=f"Wait for 90s for upgrading the {sw.hostname}")
-		sw.ssh_login_reliable() 
-		 
-		sw.ssh_pdu_status()
-		sw.ssh_pdu_cycle()
-		console_timer(60,msg='After power cycling the switch, wait for 60 seconds')
-		sw.ssh_login_reliable()
+			result = sw.fsw_upgrade_ssh(build=86,version=7)
+			if not result:
+				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 Fails ########### ")
+			else:
+				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 is successful ############")
+			console_timer(boot_time,msg=f"Wait for {boot_time} for upgrading the {sw.hostname}")
+			sw.ssh_login_reliable() 
+			 
+			sw.ssh_pdu_status()
+			sw.ssh_pdu_cycle()
+			console_timer(power_time,msg='After power cycling the switch, wait for {power_time} seconds')
+			sw.ssh_login_reliable()
 		 
