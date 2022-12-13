@@ -7124,6 +7124,7 @@ class FortiSwitch_XML(FortiSwitch):
         Info(f"Logining in {self.hostname} after reboot")
         self.ssh_client.sshDisconect()
         self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+        Info("After login via SSH, wait for 10 seconds....")
 
     def ssh_output_process(self,output):
         out_list = output.split('\n')

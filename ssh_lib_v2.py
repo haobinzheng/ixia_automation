@@ -47,7 +47,12 @@ class mySSHClient(object):
         self.ssh.close()
 
     def sshConnect(self):
-        self.ssh.connect(hostname=self.hostname,username=self.username, password=self.password,timeout = 2)
+        try:
+            self.ssh.connect(hostname=self.hostname,username=self.username, password=self.password,timeout = 2)
+        except Exception as e:
+            Info(f"Failed to login with error {e}", retry after a few seconds)
+            sleep(10)
+            self.ssh.connect(hostname=self.hostname,username=self.username, password=self.password,timeout = 2)
 
     def makeSSH(self):
         ''' Creates a new SSHClient object. '''
