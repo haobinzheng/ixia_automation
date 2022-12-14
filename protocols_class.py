@@ -20,6 +20,7 @@ from test_process import *
 from common_lib import *
 from common_codes import *
 from cli_functions import *
+from ssh_lib import *
 from ssh_lib_v2 import *
 
 
@@ -7125,6 +7126,9 @@ class FortiSwitch_XML(FortiSwitch):
         Info(f"Logining in {self.hostname} after reboot")
         self.ssh_client.sshDisconect()
         self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+        while self.switch_system_status(useSSH=self._useSSH) == None:
+            self.ssh_client.sshDisconect()
+            self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
         Info("After login via SSH, wait for 2 seconds....")
         sleep(2)
 
@@ -7188,7 +7192,7 @@ class FortiSwitch_XML(FortiSwitch):
         """
         self.ssh_config_cmds_lines(config)
         sleep(2)
-        self.switch_system_status(useSSH=self._useSSH)
+        #self.switch_system_status(useSSH=self._useSSH)
         image_name = f"{self.image_prefix}-v{version}-build{build}-FORTINET.out"
 
         tprint(f"image name = {image_name}")
@@ -8235,6 +8239,7 @@ class FortiSwitch_XML(FortiSwitch):
         System time: Tue Oct  2 06:03:37 2001
         path=system, objname=status, tablename=(null), size=0
         """
+        image_prefix = None
         print(f"========================== {self.hostname}: Get System Status =======================")
         if useSSH == False:
             if self.console != None:
@@ -8254,6 +8259,7 @@ class FortiSwitch_XML(FortiSwitch):
                 self.version = v.split()[0].strip()
                 self.image_prefix = re.sub("FortiSwitch","FSW",self.version)
                 self.image_prefix = self.image_prefix.replace("-","_")
+                image_prefix = self.image_prefix
                 print(f"Platform version = {self.version}")
                 continue
             if "Hostname" in line:
@@ -8272,7 +8278,10 @@ class FortiSwitch_XML(FortiSwitch):
                 device.version = self.version
                 print(f"----------------------------- Updated topo_db device infor  ------------------------")
                 device.print_info()
-        return "Success"
+        if image_prefix == None:
+            return None 
+        else:
+            return "Success"
 
     def sw_network_discovery(self,*args,**kwargs):
         self.discover_fortiswitch_lldp()
