@@ -11,6 +11,7 @@ import socket
 import copy
 from pprint import pformat
 from robot.api import logger
+from utils import *
 
 try:
     #from paramiko import SSHClient, WarningPolicy, AutoAddPolicy, RSAKey
