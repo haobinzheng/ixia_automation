@@ -2602,8 +2602,8 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 		else:
 			return False
 	else:
-		tprint(f"Not able to login switch {chassis_id} with ip {ip} via fortigate .....")
-		dprint(output)
+		ErrorNotify(f"Not able to login switch {chassis_id} with ip {ip} via fortigate .....")
+		ErrorNotify(output)
 		return False
 
 

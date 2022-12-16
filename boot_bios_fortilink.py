@@ -360,16 +360,22 @@ if __name__ == "__main__":
 		console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v7 build 86")
 		result = False
 		while result != True: 
+			sleep(20)
 			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
 			result = False
 			for mw in fgta.managed_switches_list:
-				if mw.up and mw.managed_sw_online():
-					Info(f"Managed switch {mw.switch_id} can be access for fortigate")
-					result = True
+				if mw.up:
+					if mw.managed_sw_online(vdom='haobin'):
+						Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
+						result = True
+					else:
+						Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+						result = False
 				else:
-					Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+					Info(f"managed switch is not UP yet, retry......")
 					result = False
 					break
+		sleep(30)
 
 		for sw in switches:
 			tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
@@ -379,15 +385,21 @@ if __name__ == "__main__":
 		console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
 		result = False
 		while result != True: 
+			sleep(20)
 			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
 			result = False
 			for mw in fgta.managed_switches_list:
-				if mw.up and mw.managed_sw_online():
-					Info(f"Managed switch {mw.switch_id} can be access for fortigate")
-					result = True
+				if mw.up:
+					if mw.managed_sw_online(vdom='haobin'):
+						Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
+						result = True
+					else:
+						Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+						result = False
 				else:
-					Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+					Info(f"managed switch is not UP yet, retry......")
 					result = False
 					break
+		sleep(30)
 
 		 

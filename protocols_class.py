@@ -8105,7 +8105,7 @@ class FortiSwitch_XML(FortiSwitch):
         cmd = "execute switch-controller switch-software list-available"
         #switch_show_cmd(fgt1,cmd)
         output = ftg_collect_execute_cmd(fgt1,cmd)
-        tprint(f"output of  switch-software list-available = {output}")
+        dprint(f"output of  switch-software list-available = {output}")
         switch_exec_cmd(fgt1, "end")
         regex = r"S[0-9a-z.\-A-Z]+swtp"
         for line in output:
@@ -8117,9 +8117,6 @@ class FortiSwitch_XML(FortiSwitch):
         ###########################
         cmd = f"execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name}"
         switch_interactive_exec(fgt1,cmd,"Do you want to continue? (y/n)")
-        # orginal commands
-        # cmd = f"execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name} " + '\n' + 'y'
-        # switch_exec_cmd(fgt1,cmd) 
         switch_exec_cmd(fgt1,"end")    
         return True
 
@@ -9574,7 +9571,7 @@ class FortiGate_XML(FortiSwitch_XML):
             config_cmds_lines(self.console,config)
 
             output = collect_show_cmd(self.console,"execute switch-controller get-conn-status",mode="fast")
-            print(output)
+            dprint(output)
         else:
             config = f"""
                 config vdom 
@@ -9595,7 +9592,7 @@ class FortiGate_XML(FortiSwitch_XML):
                 break
 
             if Found and not End and len(line) > 1: 
-                print(line)
+                dprint(line)
                 msw = Managed_Switch(self.console)
                 msw.switch_id = line.split()[0]
                 msw.major_version = line.split()[1]
