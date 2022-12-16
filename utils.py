@@ -19,6 +19,8 @@ from threading import Thread
 import subprocess
 #import spur
 
+DEBUG = False
+
 def send_Message(stock_msg):
   #stock_msg = remove_bracket(stock_msg)
   cmd = """osascript send_imessage.applescript 4088967681 '{}' """.format(stock_msg)
@@ -210,7 +212,7 @@ def print_file(msg, file,**kwargs):
 def dprint(msg):
 	# global DEBUG
 	# print(DEBUG)
-	if settings.DEBUG:
+	if settings.DEBUG or DEBUG:
 		if type(msg) == list:
 			for m in msg:
 				tprint("Debug: {}".format(m))
@@ -258,6 +260,8 @@ def tprint(*args, **kwargs):
     print(str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + " :: " + temp)
 
 def Info(*args, **kwargs):
+    if DEBUG != True:
+	    return
     tempa = ' '.join(str(a) for a in args)
     tempk = ' '.join([str(kwargs[k]) for k in kwargs])
     temp = tempa + ' ' + tempk # puts a space between the two for clean output
@@ -773,7 +777,7 @@ def ftg_collect_execute_cmd(tn,cmd,**kwargs):
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	sleep(timeout)
 	output = tn.read_very_eager()
-	print(output)
+	dprint(output)
 	#output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
@@ -782,7 +786,7 @@ def ftg_collect_execute_cmd(tn,cmd,**kwargs):
 		o_str = o.decode(encoding).strip(' \r')
 		out_str_list.append(o_str)
 	
-	print(out_str_list)
+	dprint(out_str_list)
 	return out_str_list
 
 def collect_execute_cmd(tn,cmd,**kwargs):
@@ -798,7 +802,7 @@ def collect_execute_cmd(tn,cmd,**kwargs):
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
 	sleep(timeout)
 	output = tn.read_very_eager()
-	print(output)
+	dprint(output)
 	#output = tn.read_until(("# ").encode('ascii'))
 	out_list = output.split(b'\r\n')
 	encoding = 'utf-8'
@@ -811,7 +815,7 @@ def collect_execute_cmd(tn,cmd,**kwargs):
 		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
 
 	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
-	print(good_out_list)
+	dprint(good_out_list)
 	return good_out_list
 
 def process_show_command(output):
@@ -2544,51 +2548,53 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 		more_cmd = kwargs['more_cmd']
 	else:
 		more_cmd = False
+	gabage = tn.read_very_eager()
 	cmd = f"exec ssh admin@{ip}" 
 	tn.write((cmd + '\n').encode('ascii'))
-	output = tn.expect([re.compile(b"password:")],timeout=TIMEOUT)
-	print(output)
+	output = tn.expect([re.compile(b"password:"),re.compile(b"yes/no"),re.compile(b"The remote host key has changed")],timeout=TIMEOUT)
+	dprint(output)
 	#prompt = output[2].decode().strip()
 	prompt = output[2].decode().strip()
-	print(prompt)
-	print(f"After entering the exec ssh@xxxx command, the fortigate prompt = {prompt}")
+	#print(prompt)
+	#dprint(f"After entering the {cmd} command, the fortigate prompt = {prompt},type of prompt = {type(prompt)}")
 	result = output[0]
 	if result == 0: #this is password: prompt
 		tn.write(('Fortinet123!' + '\n').encode('ascii'))
 		out = tn.expect([re.compile(b"#")],timeout=TIMEOUT)
-		print(f"after enter password, device prompt overall prompt = {out}")
+		dprint(f"after enter password, device prompt overall prompt = {out}")
 		login_result = out[0]
 		device_prompt = out[2].decode().strip()
-		print(f"after entering password, login_result = {login_result},device prompt ={device_prompt}")
+		dprint(f"after entering password, login_result = {login_result},device prompt ={device_prompt}")
 		if int(login_result) == 0 and chassis_id in device_prompt:
-			print("login successful")
+			tprint("login successful")
 			if more_cmd == False:
 				tn.write(("exit" + '\n').encode('ascii'))
+			gabage = tn.read_very_eager()
 			return True
 	elif "#" in prompt:
 		if chassis_id in prompt:
 			return True
-	elif "The remote host key has changed" in prompt:
+	elif result == 2 or result == 1: #this is yes/no prompt, headache
 		first_time_after_upgrade_prompt = """
 		Connected
  
-exec ssh admin@169.254.1.4
-FortiGate-3960E # exec ssh admin@169.254.1.4
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
-Someone could be eavesdropping on you right now (man-in-the-middle attack)!
-It is also possible that a host key has just been changed.
-The fingerprint for the ED25519 key sent by the remote host is
-SHA256:c7yDVxDblBbigD59G176xbR418eKCIhtNeFiNKrtXcE.
-Please contact your system administrator.
-Add correct host key in /tmp/home/admin/.ssh/known_hosts to get rid of this message.
-Offending ED25519 key in /tmp/home/admin/.ssh/known_hosts:3
- 
-The remote host key has changed. Do you want to accept the new key and continue connecting (yes/no)?  
-"""
-		print(f"yes/no was found in the prompt, the prompt = {prompt}")
+		exec ssh admin@169.254.1.4
+		FortiGate-3960E # exec ssh admin@169.254.1.4
+		@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+		@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+		@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+		IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+		Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+		It is also possible that a host key has just been changed.
+		The fingerprint for the ED25519 key sent by the remote host is
+		SHA256:c7yDVxDblBbigD59G176xbR418eKCIhtNeFiNKrtXcE.
+		Please contact your system administrator.
+		Add correct host key in /tmp/home/admin/.ssh/known_hosts to get rid of this message.
+		Offending ED25519 key in /tmp/home/admin/.ssh/known_hosts:3
+		 
+		The remote host key has changed. Do you want to accept the new key and continue connecting (yes/no)?  
+		"""
+		dprint(f"yes/no was found in the prompt, the prompt = {prompt}")
 		tn.write(('yes' + '\n').encode('ascii'))
 		tn.write(('Fortinet123!' + '\n').encode('ascii'))
 		if find_shell_prompt(tn,chassis_id):
@@ -2596,8 +2602,8 @@ The remote host key has changed. Do you want to accept the new key and continue 
 		else:
 			return False
 	else:
-		print("Something unexpected is happens, handle later")
-		print(output)
+		tprint(f"Not able to login switch {chassis_id} with ip {ip} via fortigate .....")
+		dprint(output)
 		return False
 
 

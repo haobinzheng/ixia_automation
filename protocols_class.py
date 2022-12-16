@@ -8094,7 +8094,7 @@ class FortiSwitch_XML(FortiSwitch):
         cmd = f"execute switch-controller switch-software upload tftp {image_name} {tftp_server}"
 
         output = ftg_collect_execute_cmd(fgt1,cmd,timeout=20)
-        tprint(f"output of upload tftp command = {output}")
+        dprint(f"output of upload tftp command = {output}")
 
         # for line in output:
         #     if "Image Saving" in line:
@@ -8649,17 +8649,26 @@ class Managed_Switch():
         print(f"Switch is Up = {self.up}")
         print(f"Switch address = {self.address}")
 
-    def managed_sw_online(self):
+    def managed_sw_online(self,*args,**kwargs):
+        # if "vdom" in kwargs:
+        #     vdom = kwargs['vdom']
+        # else:
+        #     vdom = 'root'
+        # self.direct_cmd("config vdom")
+        # self.direct_cmd(f"edit {vdom}")
         if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id) == True:
             Info(f"Successful login {self.address}")
             self.ssh_login = True
+            #self.direct_cmd("end")
             sleep(2) #after previous ssh, take a 2s break
             # self.updated_managed_sw()
             return True
         else:
-            Info(f"Not able to login {self.address}, try again....")
+            Info(f"In managed_sw_online: Not able to login {self.address}, try again....")
+            sleep(5) #wait for a few seconds before try gagin
             if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id) == True:
                 self.ssh_login = True
+                self.direct_cmd("end")
                 sleep(2) #after previous ssh, take a 2s break
                 return True
             else:
@@ -8667,7 +8676,13 @@ class Managed_Switch():
                 self.ssh_login = False
                 return False
 
-    def updated_managed_sw(self):
+    def updated_managed_sw(self,*args,**kwargs):
+        if "vdom" in kwargs:
+            vdom = kwargs['vdom']
+        else:
+            vdom = 'root'
+        self.direct_cmd("config vdom")
+        self.direct_cmd(f"edit {vdom}")
         if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
             Info(f"Successful login {self.address}")
             output = collect_show_cmd(self.ftg_console,"get system status",mode="fast")
@@ -8697,6 +8712,7 @@ class Managed_Switch():
             config_cmds_lines(self.ftg_console,config,mode="fast")
             output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
             Info(f"After entering managed switch commands, the prompt is: {output}")
+            self.direct_cmd("exit")#enter exit second time
             return "Success"
         else:
             ErrorNotify(f"Having problem ssh to managed switch with address {self.address}... Trying again....")
@@ -8705,6 +8721,7 @@ class Managed_Switch():
                 config_cmds_lines(self.ftg_console,config,mode="fast")
                 output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
                 Info(f"After entering managed switch commands, the prompt is: {output}")
+                self.direct_cmd("exit") #enter exit second time
                 return "Success"
             else:
                 ErrorNotify(f"Failed to retry ssh to managed switch with address {self.address}... Give up!!!!")
@@ -8713,6 +8730,8 @@ class Managed_Switch():
     def direct_cmd(self,cmd):
         cmd_bytes = convert_cmd_ascii_n(cmd)
         self.ftg_console.write(cmd_bytes)
+        output = self.ftg_console.read_very_eager()
+        dprint(f"console command={cmd}, output = {output}")
 
 
 class FortiGate_XML(FortiSwitch_XML):

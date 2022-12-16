@@ -169,20 +169,20 @@ if __name__ == "__main__":
 		result = False
 		for mw in fgta.managed_switches_list:
 			if mw.up:
-				if mw.managed_sw_online():
-					Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+				if mw.managed_sw_online(vdom='haobin'):
+					Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
 					result = True
 				else:
-					Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+					Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
 					# mw.direct_cmd('\x03\n')
 					result = False
 			else:
-				Info(f"managed switch is UP yet, retry......")
+				Info(f"managed switch is not UP yet, retry......")
 				result = False
 				break
 	sleep(30)
 	for mw in fgta.managed_switches_list:
-		mw.updated_managed_sw()
+		mw.updated_managed_sw(vdom='haobin')
 
 	# managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
 	# for mw in fgta.managed_switches_list:
@@ -311,8 +311,8 @@ if __name__ == "__main__":
 
 		# if testcase == 0:
 		# 	exit()
-	boot_time = 400
-	power_time = 500
+	boot_time = 200
+	power_time = 200
 	for i in range(1000):
 		#==========================  upgrade to V6 Build#470 + power cycle ================================
 		for sw in switches:
@@ -333,24 +333,24 @@ if __name__ == "__main__":
 					result = False
 					break
 
-		# for sw in switches:
-		# 	tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
-		# 	sw.ssh_pdu_status()
-		# 	sw.ssh_pdu_cycle()
+		for sw in switches:
+			tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
+			sw.ssh_pdu_status()
+			sw.ssh_pdu_cycle()
 		
-		# console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
-		# result = False
-		# while result != True: 
-		# 	managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
-		# 	result = False
-		# 	for mw in fgta.managed_switches_list:
-		# 		if mw.up and mw.managed_sw_online():
-		# 			Info(f"Managed switch {mw.switch_id} can be access for fortigate")
-		# 			result = True
-		# 		else:
-		# 			Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
-		# 			result = False
-		# 			break
+		console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
+		result = False
+		while result != True: 
+			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+			result = False
+			for mw in fgta.managed_switches_list:
+				if mw.up and mw.managed_sw_online():
+					Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+					result = True
+				else:
+					Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+					result = False
+					break
 		
 		#==========================  upgrade to V7 Build#86 + power cycle ================================
 		for sw in switches:
@@ -371,23 +371,23 @@ if __name__ == "__main__":
 					result = False
 					break
 
-		# for sw in switches:
-		# 	tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
-		# 	sw.ssh_pdu_status()
-		# 	sw.ssh_pdu_cycle()
+		for sw in switches:
+			tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
+			sw.ssh_pdu_status()
+			sw.ssh_pdu_cycle()
 		
-		# console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
-		# result = False
-		# while result != True: 
-		# 	managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
-		# 	result = False
-		# 	for mw in fgta.managed_switches_list:
-		# 		if mw.up and mw.managed_sw_online():
-		# 			Info(f"Managed switch {mw.switch_id} can be access for fortigate")
-		# 			result = True
-		# 		else:
-		# 			Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
-		# 			result = False
-		# 			break
+		console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
+		result = False
+		while result != True: 
+			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+			result = False
+			for mw in fgta.managed_switches_list:
+				if mw.up and mw.managed_sw_online():
+					Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+					result = True
+				else:
+					Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+					result = False
+					break
 
 		 
