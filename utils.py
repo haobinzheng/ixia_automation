@@ -2543,7 +2543,8 @@ def find_shell_prompt(tn,chassis_id):
 		return False
 
 def enter_console_cmd(tn,cmd):
-	tn.write((cmd + '\n').encode('ascii'))
+	cmd = convert_cmd_ascii_n(cmd)
+	tn.write(cmd)
 	gabage = tn.read_very_eager()
 	dprint(gabage)
 
