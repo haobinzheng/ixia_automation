@@ -212,7 +212,7 @@ def print_file(msg, file,**kwargs):
 def dprint(msg):
 	# global DEBUG
 	# print(DEBUG)
-	if settings.DEBUG or DEBUG:
+	if DEBUG:
 		if type(msg) == list:
 			for m in msg:
 				tprint("Debug: {}".format(m))
@@ -1155,8 +1155,8 @@ def config_cmds_lines(dut,cmdblock,*args,**kwargs):
 		config_return = switch_configure_cmd(dut,cmd,mode=config_mode,output=feedback)
 		if config_return != None:
 			config_return_list.append(config_return)
-
 		sleep(wait_time)
+
 	return config_return_list
 		 
 def print_attributes(fgt):
@@ -1252,7 +1252,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
 
 	cmd = convert_cmd_ascii_n(cmd)
-	tn.write(cmd)
+	enter_console_cmd(cmd)
 	time.sleep(0.6)
 	if output == False:
 		tn.read_until(("# ").encode('ascii'),timeout=5)
@@ -2532,12 +2532,12 @@ def switch_need_change_password(tn):
 def find_shell_prompt(tn,chassis_id):
 	TIMEOUT = 5
 	out = tn.expect([re.compile(b"#")],timeout=TIMEOUT)
-	print(f"after enter password, device prompt overall prompt = {out}")
+	dprint(f"after enter password, device prompt overall prompt = {out}")
 	login_result = out[0]
 	device_prompt = out[2].decode().strip()
 	print(f"Expecting # prompt, if return 0, # is found. return = {login_result},device prompt ={device_prompt}")
 	if int(login_result) == 0 and chassis_id in device_prompt:
-		print("login successful")
+		print("login successful!")
 		return True
 	else:
 		return False
@@ -2560,8 +2560,7 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 	dprint(output)
 	#prompt = output[2].decode().strip()
 	prompt = output[2].decode().strip()
-	#print(prompt)
-	#dprint(f"After entering the {cmd} command, the fortigate prompt = {prompt},type of prompt = {type(prompt)}")
+	dprint(f"After entering the {cmd} command, the fortigate prompt = {prompt},type of prompt = {type(prompt)}")
 	result = output[0]
 	if result == 0: #this is password: prompt
 		tn.write(('Fortinet123!' + '\n').encode('ascii'))

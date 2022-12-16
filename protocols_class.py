@@ -8707,28 +8707,21 @@ class Managed_Switch():
         if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
             Info(f"Successful login {self.address}")
             config_cmds_lines(self.ftg_console,config,mode="fast")
-            output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
-            Info(f"After entering managed switch commands, the prompt is: {output}")
-            self.direct_cmd("exit")#enter exit second time
+            enter_console_cmd(self.ftg_console,"exit")
             return "Success"
         else:
             ErrorNotify(f"Having problem ssh to managed switch with address {self.address}... Trying again....")
             if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
                 Info(f"Successful login {self.address}")
                 config_cmds_lines(self.ftg_console,config,mode="fast")
-                output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
-                Info(f"After entering managed switch commands, the prompt is: {output}")
-                self.direct_cmd("exit") #enter exit second time
+                enter_console_cmd(self.ftg_console,"exit")
                 return "Success"
             else:
                 ErrorNotify(f"Failed to retry ssh to managed switch with address {self.address}... Give up!!!!")
                 return "Failed"
 
     def direct_cmd(self,cmd):
-        cmd_bytes = convert_cmd_ascii_n(cmd)
-        self.ftg_console.write(cmd_bytes)
-        output = self.ftg_console.read_very_eager()
-        dprint(f"console command={cmd}, output = {output}")
+        enter_console_cmd(self.ftg_console,cmd)
 
 
 class FortiGate_XML(FortiSwitch_XML):
