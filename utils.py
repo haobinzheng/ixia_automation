@@ -1355,6 +1355,8 @@ def switch_interactive_exec(tn,exec_cmd,prompt):
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
+	output = tn.read_very_eager()
+	output = tn.read_very_eager()
 	time.sleep(1)
 
 def switch_login(tn,*args,**kwargs):
