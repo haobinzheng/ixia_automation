@@ -8708,6 +8708,7 @@ class Managed_Switch():
             Info(f"Successful login {self.address}")
             config_cmds_lines(self.ftg_console,config,mode="fast")
             enter_console_cmd(self.ftg_console,"exit")
+            switch_exec_cmd(self.ftg_console,"exit")
             return "Success"
         else:
             ErrorNotify(f"Having problem ssh to managed switch with address {self.address}... Trying again....")
@@ -8715,6 +8716,7 @@ class Managed_Switch():
                 Info(f"Successful login {self.address}")
                 config_cmds_lines(self.ftg_console,config,mode="fast")
                 enter_console_cmd(self.ftg_console,"exit")
+                switch_exec_cmd(self.ftg_console,"exit")
                 return "Success"
             else:
                 ErrorNotify(f"Failed to retry ssh to managed switch with address {self.address}... Give up!!!!")
