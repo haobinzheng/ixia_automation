@@ -210,8 +210,6 @@ def print_file(msg, file,**kwargs):
 			f.write(time_str("{}:{}\n".format(dut_name,msg)))
 
 def dprint(msg):
-	# global DEBUG
-	# print(DEBUG)
 	if DEBUG:
 		if type(msg) == list:
 			for m in msg:
