@@ -1341,6 +1341,7 @@ def switch_interactive_exec(tn,exec_cmd,prompt):
 	exec_cmd = exec_cmd + '\n'
 	exec_cmd = convert_cmd_ascii(exec_cmd)
 	tn.write(exec_cmd)
+	output = tn.read_very_eager()
 	time.sleep(1)
 
 	prompt = convert_cmd_ascii(prompt)
@@ -1355,8 +1356,8 @@ def switch_interactive_exec(tn,exec_cmd,prompt):
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
 	tn.write(('' + '\n').encode('ascii'))
-	output = tn.read_very_eager()
-	output = tn.read_very_eager()
+	for i in range(5):
+		tn.read_very_eager()
 	time.sleep(1)
 
 def switch_login(tn,*args,**kwargs):
@@ -2537,7 +2538,7 @@ def find_shell_prompt(tn,chassis_id):
 	dprint(f"after enter password, device prompt overall prompt = {out}")
 	login_result = out[0]
 	device_prompt = out[2].decode().strip()
-	print(f"Expecting # prompt, if return 0, # is found. return = {login_result},device prompt ={device_prompt}")
+	dprint(f"Expecting # prompt, if return 0, # is found. return = {login_result},device prompt ={device_prompt}")
 	if int(login_result) == 0 and chassis_id in device_prompt:
 		print("login successful!")
 		return True
