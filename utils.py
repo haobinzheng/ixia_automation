@@ -2542,6 +2542,11 @@ def find_shell_prompt(tn,chassis_id):
 	else:
 		return False
 
+def enter_console_cmd(tn,cmd):
+	tn.write((cmd + '\n').encode('ascii'))
+	gabage = tn.read_very_eager()
+	dprint(gabage)
+
 def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 	TIMEOUT = 30
 	if "more_cmd" in kwargs:
@@ -2568,9 +2573,8 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 		if int(login_result) == 0 and chassis_id in device_prompt:
 			tprint("login successful")
 			if more_cmd == False:
-				tn.write(("exit" + '\n').encode('ascii'))
-			gabage = tn.read_very_eager()
-			return True
+				enter_console_cmd(tn,"exit")
+ 			return True
 	elif "#" in prompt:
 		if chassis_id in prompt:
 			return True
