@@ -6832,6 +6832,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
         self.image_prefix = None
         self.name = device_xml.name
         self.hostname = device_xml.hostname
+        self.serial_number = device_xml.hostname
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
         self.tftp_ip = device_xml.tftp_ip
@@ -6956,6 +6957,7 @@ class FortiSwitch_XML_SSH(FortiSwitch):
                     device.serial_number = self.serial_number
                     device.discovered_hostname = self.discovered_hostname
                     device.version = self.version
+                    device.image_prefix = self.image_prefix
                     print(f"----------------------------- Updated topo_db device infor  ------------------------")
                     device.print_info()
             sleep(5)
@@ -7063,6 +7065,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.image_prefix = None
         self.name = device_xml.name
         self.hostname = device_xml.hostname
+        self.serial_number = device_xml.hostname
         self.console_ip = device_xml.console_ip
         self.console_line = device_xml.console_line
         self.tftp_ip = device_xml.tftp_ip
@@ -7105,18 +7108,20 @@ class FortiSwitch_XML(FortiSwitch):
         self.ftg_console = None # To be provided when the switch is managed.  see foritgate_xml discover_managed_switches() 
         self.ssh_client = None
         self.console = None
+        self.managed_switch_obj = None
         self._useSSH = False
-        if self.login_console:
+        if self.login_console == True:
             self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         if self.login_ssh == True:
             self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
             self._useSSH = True
         self.dut = self.console # For compatibility with old Fortiswitch codes
-        self.switch_system_status(useSSH=self._useSSH)
-        self.system_interfaces = self.find_sys_interfaces(useSSH=self._useSSH)
+        if self.login_console or self.login_ssh:
+            self.switch_system_status(useSSH=self._useSSH)
+            self.system_interfaces = self.find_sys_interfaces(useSSH=self._useSSH)
+            self.find_split_ports()
         self.split_ports = []
-        self.split_port_exist = False
-        self.find_split_ports()
+        self.split_port_exist = False   
         self.router_ospf = Router_OSPF(self)
         self.router_isis = Router_ISIS(self)
         self.router_bgp = Router_BGP(self)
@@ -7145,11 +7150,12 @@ class FortiSwitch_XML(FortiSwitch):
         for cmd in b:
             tprint(f"{cmd}")
             config_return = self.ssh_client.cmd_proc(cmd)
+            print(config_return)
             sleep(1)
-            if config_return[0] == "Failed":
-                ErrorNotify(f"Error during executing command in {self.hostname}: {cmd}")
-                return (config_return)
-        return "Success"
+            # if config_return[0] == "Failed":
+            #     ErrorNotify(f"Error during executing command in {self.hostname}: {cmd}")
+            #     return (config_return)
+        return config_return
 
     def ssh_interactive_exec(self,exec_cmd,*args, **kwargs):
     #relogin_if_needed(tn)
@@ -8045,15 +8051,31 @@ class FortiSwitch_XML(FortiSwitch):
             tftp_server = kwargs['tftp_server']
         else:
             tftp_server = "10.105.252.120"
+
+        if "vdom" in kwargs:
+            vdom = kwargs['vdom']
+        else:
+            vdom = "root"
         dut = self.console
         dut_name = self.name
 
         fgt1 = self.ftg_console
 
-        cmds = """
+        config = f"""
+            config system admin
+                edit "admin"
+                set accprofile "super_admin"
+                set password ENC AK1uHvbOfsDLnA6ya8BxpLwXCNcKNZ9+7K7YC1pLpb4Qvs=
+            next
+            end
+            """
+        self.managed_switch_obj.enter_managed_sw_cmds(config)
+        sleep(2)
+
+        cmds = f"""
         end
         conf vdom
-        edit root
+        edit {vdom}
         conf switch-controller global
         set https-image-push enable
         end
@@ -8061,7 +8083,7 @@ class FortiSwitch_XML(FortiSwitch):
         """
         config_cmds_lines(fgt1,cmds)
 
-        image_name = f"{self.image_prefix}-{version}-build{build}-FORTINET.out"
+        image_name = f"{self.image_prefix}-v{version}-build{build}-FORTINET.out"
         #upgrade_name = f"{self.image_prefix}-{version}-build{build}-IMG.swtp"
 
         dprint(f"image name = {image_name}")
@@ -8092,11 +8114,14 @@ class FortiSwitch_XML(FortiSwitch):
                 upgrade_name = line.split()[0]
 
         switch_exec_cmd(fgt1, "config vdom")
-        switch_exec_cmd(fgt1, "edit root")
+        switch_exec_cmd(fgt1, f"edit {vdom}")
         ###########################
         cmd = f"execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name}"
         switch_exec_cmd(fgt1,cmd)
+        output = collect_show_cmd(fgt1,"y",mode="fast")
+        Info(f"After entering y, the prompt is: {output}") 
         switch_exec_cmd(fgt1, "end")
+              
         return True
 
     def fsw_upgrade_v2(self,*args,**kwargs):
@@ -8225,6 +8250,38 @@ class FortiSwitch_XML(FortiSwitch):
         self.console = telnet_switch(self.console_ip,self.console_line,password=self.password,relogin=True,console=self.console)
         self.dut = self.console # For compatibility with old Fortiswitch codes
 
+    def update_switch_system_status(self,output):
+        for line in output:
+            if "Version:" in line:
+                k,v = line.split(":")
+                self.version = v.split()[0].strip()
+                self.image_prefix = re.sub("FortiSwitch","FSW",self.version)
+                self.image_prefix = self.image_prefix.replace("-","_")
+                image_prefix = self.image_prefix
+                print(f"Platform version = {self.version}")
+                continue
+            if "Hostname" in line:
+                self.discovered_hostname = line.split(":")[1].strip()
+                print(f"Discovered hostname = {self.discovered_hostname}")
+                continue
+            if "Serial-Number" in line:
+                self.serial_number = line.split(":")[1].strip()
+                print(f"Serial Number = {self.serial_number}")
+
+        for device in self.tb.devices:
+            #print(device.hostname)
+            if self.serial_number == device.hostname:
+                device.serial_number = self.serial_number
+                device.discovered_hostname = self.discovered_hostname
+                device.version = self.version
+                device.image_prefix = self.image_prefix
+                print(f"----------------------------- Updated topo_db device infor  ------------------------")
+                device.print_info()
+        if image_prefix == None:
+            return None 
+        else:
+            return "Success"
+
     def switch_system_status(self,useSSH=False):
         sample = """
         S548DN4K17000133 # get system status
@@ -8276,6 +8333,7 @@ class FortiSwitch_XML(FortiSwitch):
                 device.serial_number = self.serial_number
                 device.discovered_hostname = self.discovered_hostname
                 device.version = self.version
+                device.image_prefix = self.image_prefix
                 print(f"----------------------------- Updated topo_db device infor  ------------------------")
                 device.print_info()
         if image_prefix == None:
@@ -8581,6 +8639,8 @@ class Managed_Switch():
         self.address = None
         self.join_time = None
         self.switch_obj = None
+        self.ssh_login = False
+
 
     def print_managed_sw_info(self):
         print_dash_line()
@@ -8590,14 +8650,60 @@ class Managed_Switch():
         print(f"Switch is Up = {self.up}")
         print(f"Switch address = {self.address}")
 
+    def managed_sw_online(self):
+        if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id) == True:
+            Info(f"Successful login {self.address}")
+            self.ssh_login = True
+            sleep(2) #after previous ssh, take a 2s break
+            self.updated_managed_sw()
+            return True
+        else:
+            Info(f"Not able to login {self.address}")
+            self.ssh_login = False
+            return False
 
-class FortiGate_XML(FortiSwitch):
+    def updated_managed_sw(self):
+        if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
+            Info(f"Successful login {self.address}")
+            output = collect_show_cmd(self.ftg_console,"get system status",mode="fast")
+            self.switch_obj.update_switch_system_status(output)
+            output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
+            Info(f"After updated managed switch infor, the prompt is: {output}")
+
+    def enter_managed_sw_cmds(self,config):
+        if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
+            Info(f"Successful login {self.address}")
+            config_cmds_lines(self.ftg_console,config,mode="fast")
+            output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
+            Info(f"After entering managed switch commands, the prompt is: {output}")
+            self.direct_cmd("exit")
+            return "Success"
+        else:
+            ErrorNotify(f"Having problem ssh to managed switch with address {self.address}")
+            return "Failed"
+
+    def direct_cmd(self,cmd):
+        cmd_bytes = convert_cmd_ascii_n(cmd)
+        self.ftg_console.write(cmd_bytes)
+
+
+class FortiGate_XML(FortiSwitch_XML):
     def __init__(self,*args,**kwargs):
         device_xml = args[0]
         if "password" in kwargs:
             self.pwd = kwargs['password']
         else:
             self.pwd = device_xml.password
+        if "login_ssh" in kwargs:
+            self.login_ssh = kwargs['login_ssh']
+        else:
+            self.login_ssh = False
+
+        if "login_console" in kwargs:
+            self.login_console = kwargs['login_console']
+        else:
+            self.login_console = True
+
         self.ixia_ports = device_xml.ixia_ports
         self.tb=kwargs['topo_db']
         self.physical_ports = []
@@ -8634,9 +8740,24 @@ class FortiGate_XML(FortiSwitch):
         self.ixia_ports_db = device_xml.ixia_ports
         self.managed_switches_list = []
         self.switch_custom_cmds_list = []
-        self.console = telnet_switch(self.console_ip,self.console_line,password=self.pwd,platform="fortigate")
-        self.local_discovery()
-        self.change_hostname()
+        self._useSSH = False
+        if self.login_console:
+            self.console = telnet_switch(self.console_ip,self.console_line,password=self.pwd,platform="fortigate")
+            self.local_discovery()
+            self.change_hostname()
+        if self.login_ssh:
+            self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+            self._useSSH = True
+
+    def ssh_login_fortigate(self):
+        Info(f"Logining in {self.hostname} after reboot")
+        self.ssh_client.sshDisconect()
+        self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+        while self.fortigate_system_status(useSSH=self._useSSH) == None:
+            self.ssh_client.sshDisconect()
+            self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+        Info("After login via SSH, wait for 2 seconds....")
+        sleep(2)
 
     def change_hostname(self):
         if self.mode == "Active":
@@ -8827,15 +8948,24 @@ class FortiGate_XML(FortiSwitch):
         cmds = """
         get system status
         """
-        output = self.fgt_show_commands(cmds,timeout=2) #timeout has to be > 1
-        #print(output)
+
+        image_prefix = None
+        
+        if self._useSSH == False:
+            output = self.fgt_show_commands(cmds,timeout=2) #timeout has to be > 1
+            #print(output)
+        else:
+            output = self.ssh_client.cmd_proc("get system status")
+            print(output,type(output))
 
         for line in output:
             if "Version:" in line:
                 k,v = line.split(":")
                 self.version = v.split()[0].strip()
+                print(self.version)
                 self.image_prefix = re.sub("FortiGate","FGT",self.version)
                 self.image_prefix = self.image_prefix.replace("-","_")
+                image_prefix = self.image_prefix
                 print(f"Platform version = {self.version}")
                 continue
             if "Hostname" in line:
@@ -8851,9 +8981,16 @@ class FortiGate_XML(FortiSwitch):
             if self.serial_number == device.hostname:
                 device.serial_number = self.serial_number
                 device.discovered_hostname = self.discovered_hostname
+                device.image_prefix = self.image_prefix
                 device.version = self.version
                 print(f"----------------------------- Updated topo_db device infor  ------------------------")
                 device.print_info()
+        print(f"image_prefix = {image_prefix}")
+        if image_prefix == None:
+            return None 
+        else:
+            return "Success"
+
 
     def collect_physical_ports(self,*args,**kwargs):
         sample = """
@@ -9382,55 +9519,61 @@ class FortiGate_XML(FortiSwitch):
             vdom = kwargs['vdom']
         else:
             vdom = "root"
+        if self._useSSH == False:
+            config = f"""
+                config vdom
+                edit {vdom}
+            """
+            config_cmds_lines(self.console,config)
 
-        config = f"""
-            config vdom
-            edit {vdom}
-        """
-        config_cmds_lines(self.console,config)
-
-        output = collect_show_cmd(self.console,"execute switch-controller get-conn-status")
-        dprint(output)
-
+            output = collect_show_cmd(self.console,"execute switch-controller get-conn-status")
+            print(output)
+        else:
+            config = f"""
+                config vdom 
+                edit haobin
+                execute switch-controller get-conn-status
+                """
+            output = self.ssh_config_cmds_lines(config)
         Found = False
         End = False
         managed_switches = []
-        try:
-            for line in output:
-                if "SWITCH-ID" in line and "VERSION" in line and "STATUS" in line:
-                    Found = True
-                    continue
-                if "Flags: C=config sync" in line:
-                    End = True
-                    break
+         
+        for line in output:
+            if "SWITCH-ID" in line and "VERSION" in line and "STATUS" in line:
+                Found = True
+                continue
+            if "Flags: C=config sync" in line:
+                End = True
+                break
 
-                if Found and not End and len(line) > 1: 
-                    dprint(line)
-                    msw = Managed_Switch(self.console)
-                    msw.switch_id = line.split()[0]
-                    msw.major_version = line.split()[1]
-                    msw.minor_version = re.sub('[()]',"",line.split()[2])
-                    status = line.split()[3].split('/')
-                    if status[0] == "Authorized":
-                        msw.authorized = True
-                    else:
-                        msw.authorized = False
-                    if "Up" in status[1]:
-                        msw.up = True
-                    else:
-                        msw.up = False
-                    msw.flag = line.split()[4]
-                    msw.address = line.split()[5]
-                    managed_switches.append(msw)
+            if Found and not End and len(line) > 1: 
+                print(line)
+                msw = Managed_Switch(self.console)
+                msw.switch_id = line.split()[0]
+                msw.major_version = line.split()[1]
+                msw.minor_version = re.sub('[()]',"",line.split()[2])
+                status = line.split()[3].split('/')
+                if status[0] == "Authorized":
+                    msw.authorized = True
+                else:
+                    msw.authorized = False
+                if "Up" in status[1]:
+                    msw.up = True
+                else:
+                    msw.up = False
+                msw.flag = line.split()[4]
+                msw.address = line.split()[5]
+                managed_switches.append(msw)
 
-                    for sw in tb.switches:
-                        if msw.switch_id == sw.serial_number:
-                            sw.managed = True
-                            msw.switch_obj = sw
-                            msw.switch_obj.ftg_console = self.console
-                            msw.ftg_console = self.console
-        except Exception as e:
-            print("Some managed switches are not recognized by the fortigate")
+                for sw in tb.switches:
+                    if msw.switch_id == sw.serial_number:
+                        sw.managed = True
+                        sw.managed_switch_obj = msw
+                        msw.switch_obj = sw
+                        msw.switch_obj.ftg_console = self.console
+                        #msw.ftg_console = self.console
+        
         self.managed_switches_list = managed_switches
         return self.managed_switches_list
 
@@ -9782,6 +9925,7 @@ class Device_XML():
         self.active = False
         self.uplink_ports = None
         self.serial_number = None
+        self.image_prefix = None
         self.discovered_hostname = None
         self.version = None
         self.pdu_model = None
@@ -9816,6 +9960,7 @@ class Device_XML():
         print(f"License = {self.license}")
         print(f"Device actively used this the test topo = {self.active}")
         print(f"Device role in this the test topo = {self.role}")
+        print(f"Device image prefix = {self.image_prefix}")
 
 class POE_TESTER():
     def __init__(self,*args,**kwargs):

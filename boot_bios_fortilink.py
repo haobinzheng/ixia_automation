@@ -128,26 +128,66 @@ if __name__ == "__main__":
 	else:
 		Setup_only = False
 		print_title("Set up Only:No")
-	file = 'tbinfo_boot_bios.xml'
+	file = 'tbinfo_boot_bios_fortigate.xml'
 	tb = parse_tbinfo_untangle(file)
-	testtopo_file = 'topo_boot_bios.xml'
+	testtopo_file = 'topo_boot_bios_fortigate.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
 	######## skipping it for ixia trouble shooting
 	switches = []
+	fortigates = []
+	devices=[]
 	for d in tb.devices:
-		#switch = FortiSwitch_XML_SSH(d,topo_db=tb,ssh_login=True)
-		#switch = FortiSwitch_XML(d,topo_db=tb,login_ssh=True,login_console=False)
-		switch = FortiSwitch_XML(d,topo_db=tb,login_ssh=False,login_console=False)
-		switches.append(switch)
+		if d.type == "FSW" and d.active == True:
+			switch = FortiSwitch_XML_SSH(d,topo_db=tb,ssh_login=False)
+			switch = FortiSwitch_XML(d,topo_db=tb,login_ssh=False,login_console=False)
+			switches.append(switch)
+			devices.append(switch)
+		elif d.type == "FGT" and d.active == True:
+			fgt = FortiGate_XML(d,topo_db=tb,login_ssh=False,login_console=True)
+			fortigates.append(fgt)
+			devices.append(fgt)
+		else:
+			pass
+	tb.switches = switches
+
 	for c in tb.connections:
 		c.update_devices_obj(switches)
 	####### skipping it for ixia trouble shooting 
 	# for c in tb.connections:
 	# 	c.shut_unused_ports()
-	sw = switches[0]
- 		
+	#sw = switches[0]
+	fgta = fortigates[0]
+
+	#fgta.ssh_login_fortigate()
+
+	result = False
+	while result != True: 
+		managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+		result = False
+		for mw in fgta.managed_switches_list:
+			if mw.up and mw.managed_sw_online():
+				Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+				result = True
+			else:
+				Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+				result = False
+				break
+			
+	# for mw in fgta.managed_switches_list:
+	# 	if mw.up and mw.managed_sw_online():
+	# 		mw.updated_managed_sw()
+
+	# managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+	# for mw in fgta.managed_switches_list:
+	# 	mw.print_managed_sw_info()
+	# 	if mw.managed_sw_online():
+	# 		Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+	# 	else:
+	# 		Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+	# if fgt_ssh_chassis(fgta.console,"10.255.1.3","S424EFTF21000590") == True:
+	# 	Info("Successful login 10.255.1.3")
 	apiServerIp = tb.ixia.ixnetwork_server_ip
 	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]
@@ -266,34 +306,83 @@ if __name__ == "__main__":
 
 		# if testcase == 0:
 		# 	exit()
-	boot_time = 100
-	power_time = 80
+	boot_time = 400
+	power_time = 500
 	for i in range(1000):
+		#==========================  upgrade to V6 Build#470 + power cycle ================================
 		for sw in switches:
-			sw.ssh_login_reliable()
-			result = sw.fsw_upgrade_ssh(build=470,version=6)
-			if not result:
-				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 Fails ########### ")
-			else:
-				tprint(f"############# Upgrade {sw.hostname} to v6 build #470 is successful ############")
-			console_timer(boot_time,msg=f"Wait for {boot_time} for upgrading the {sw.hostname}")
-			sw.ssh_login_reliable()
-
-			sw.ssh_pdu_status()
-			sw.ssh_pdu_cycle()
-			console_timer(power_time,msg=f'After power cycling the switch {sw.hostname}, wait for {power_time} seconds')
-			sw.ssh_login_reliable()
-
-			result = sw.fsw_upgrade_ssh(build=86,version=7)
-			if not result:
-				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 Fails ########### ")
-			else:
-				tprint(f"############# Upgrade {sw.hostname} to v7 build #86 is successful ############")
-			console_timer(boot_time,msg=f"Wait for {boot_time} for upgrading the {sw.hostname}")
-			sw.ssh_login_reliable() 
-			 
-			sw.ssh_pdu_status()
-			sw.ssh_pdu_cycle()
-			console_timer(power_time,msg=f'After power cycling the switch {sw.hostname}, wait for {power_time} seconds')
-			sw.ssh_login_reliable()
+			tprint(f"========  Upgrading SW on {sw.hostname} to v6 build #470  ============\n")
+			sw.ftg_sw_upgrade_no_wait(build=470,version=6,tftp_server="10.105.19.44",vdom="haobin")
 		
+		console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v6 build 470")
+		result = False
+		while result != True: 
+			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+			result = False
+			for mw in fgta.managed_switches_list:
+				if mw.up and mw.managed_sw_online():
+					Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+					result = True
+				else:
+					Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+					result = False
+					break
+
+		# for sw in switches:
+		# 	tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
+		# 	sw.ssh_pdu_status()
+		# 	sw.ssh_pdu_cycle()
+		
+		# console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
+		# result = False
+		# while result != True: 
+		# 	managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+		# 	result = False
+		# 	for mw in fgta.managed_switches_list:
+		# 		if mw.up and mw.managed_sw_online():
+		# 			Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+		# 			result = True
+		# 		else:
+		# 			Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+		# 			result = False
+		# 			break
+		
+		#==========================  upgrade to V7 Build#86 + power cycle ================================
+		for sw in switches:
+			tprint(f"========  Upgrading SW on {sw.hostname} to v7 build #86  ============\n")
+			sw.ftg_sw_upgrade_no_wait(build=86,version=7,tftp_server="10.105.19.44",vdom="haobin")
+		
+		console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v7 build 86")
+		result = False
+		while result != True: 
+			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+			result = False
+			for mw in fgta.managed_switches_list:
+				if mw.up and mw.managed_sw_online():
+					Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+					result = True
+				else:
+					Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+					result = False
+					break
+
+		# for sw in switches:
+		# 	tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
+		# 	sw.ssh_pdu_status()
+		# 	sw.ssh_pdu_cycle()
+		
+		# console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
+		# result = False
+		# while result != True: 
+		# 	managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+		# 	result = False
+		# 	for mw in fgta.managed_switches_list:
+		# 		if mw.up and mw.managed_sw_online():
+		# 			Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+		# 			result = True
+		# 		else:
+		# 			Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+		# 			result = False
+		# 			break
+
+		 

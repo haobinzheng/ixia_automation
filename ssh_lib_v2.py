@@ -125,6 +125,7 @@ class mySSHClient(object):
         self.exit_status = None
          
         o = self.syncCmd(command, returnAsString,timeout)
+        print(self.stderr)
         while self.stderr != None:
             self.makeSSH()
             self.sshConnect()
@@ -177,7 +178,7 @@ class mySSHClient(object):
             stdin, stdout, stderr = self.ssh.exec_command(command,timeout=timeout)
             out = stdout.readlines()
             err = stderr.readlines()
-            #print(f"in synCmd,stderr = {err}")
+            print(f"in synCmd,stderr = {err},cmd={command}")
             self._returnAsString = returnAsString
             if len(err) > 0:
                 if self._returnAsString:

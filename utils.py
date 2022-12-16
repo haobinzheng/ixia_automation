@@ -2522,35 +2522,42 @@ def switch_need_change_password(tn):
 		return True
 
 def find_shell_prompt(tn,chassis_id):
+	TIMEOUT = 5
 	out = tn.expect([re.compile(b"#")],timeout=TIMEOUT)
-	dprint(f"after enter password, device prompt overall prompt = {out}")
+	print(f"after enter password, device prompt overall prompt = {out}")
 	login_result = out[0]
 	device_prompt = out[2].decode().strip()
-	dprint(f"Expecting # prompt, if return 0, # is found. return = {login_result},device prompt ={device_prompt}")
+	print(f"Expecting # prompt, if return 0, # is found. return = {login_result},device prompt ={device_prompt}")
 	if int(login_result) == 0 and chassis_id in device_prompt:
-		dprint("login successful")
+		print("login successful")
 		return True
 	else:
 		return False
 
-def fgt_ssh_chassis(tn,ip,chassis_id):
-	TIMEOUT = 3
+def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
+	TIMEOUT = 10
+	if "more_cmd" in kwargs:
+		more_cmd = kwargs['more_cmd']
+	else:
+		more_cmd = False
 	cmd = f"exec ssh admin@{ip}"
 	tn.write((cmd + '\n').encode('ascii'))
 	output = tn.expect([re.compile(b"password:")],timeout=TIMEOUT)
-	dprint(output)
+	print(output)
 	prompt = output[2].decode().strip()
-	dprint(f"After entering the exec ssh@xxxx command, the fortigate prompt = {prompt}")
+	print(f"After entering the exec ssh@xxxx command, the fortigate prompt = {prompt}")
 	result = output[0]
 	if result == 0: #this is password: prompt
-		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('Fortinet123!' + '\n').encode('ascii'))
 		out = tn.expect([re.compile(b"#")],timeout=TIMEOUT)
-		dprint(f"after enter password, device prompt overall prompt = {out}")
+		print(f"after enter password, device prompt overall prompt = {out}")
 		login_result = out[0]
 		device_prompt = out[2].decode().strip()
-		dprint(f"after entering password, login_result = {login_result},device prompt ={device_prompt}")
+		print(f"after entering password, login_result = {login_result},device prompt ={device_prompt}")
 		if int(login_result) == 0 and chassis_id in device_prompt:
-			dprint("login successful")
+			print("login successful")
+			if more_cmd == False:
+				tn.write(("exit" + '\n').encode('ascii'))
 			return True
 	elif "#" in prompt:
 		if chassis_id in prompt:
@@ -2576,7 +2583,7 @@ Offending ED25519 key in /tmp/home/admin/.ssh/known_hosts:3
 The remote host key has changed. Do you want to accept the new key and continue connecting (yes/no)?  
 """
 		tn.write(('yes' + '\n').encode('ascii'))
-		tn.write(('fortinet123' + '\n').encode('ascii'))
+		tn.write(('Fortinet123!' + '\n').encode('ascii'))
 		if find_shell_prompt(tn,chassis_id):
 			return True
 		else:
