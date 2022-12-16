@@ -2564,7 +2564,7 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 	else:
 		more_cmd = False
 
-	clear_console_buffer()
+	clear_console_buffer(tn)
 	cmd = f"exec ssh admin@{ip}" 
 	tn.write((cmd + '\n').encode('ascii'))
 	output = tn.expect([re.compile(b"password:"),re.compile(b"yes/no"),re.compile(b"The remote host key has changed")],timeout=TIMEOUT)
