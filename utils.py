@@ -771,6 +771,7 @@ def ftg_collect_execute_cmd(tn,cmd,**kwargs):
 		timeout = 8
 	#relogin_if_needed(tn)
 	original_cmd = cmd
+	tprint(f"Executing command: {cmd}")
 	cmd_bytes = convert_cmd_ascii_n(cmd)
 	tn.write(cmd_bytes)
 	tn.write(('' + '\n').encode('ascii')) # uncomment this line if doesn't work
@@ -2581,7 +2582,7 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 		device_prompt = out[2].decode().strip()
 		dprint(f"after entering password, login_result = {login_result},device prompt ={device_prompt}")
 		if int(login_result) == 0 and chassis_id in device_prompt:
-			tprint("login successful")
+			tprint(f"Fortigate exect ssh successful to {chassis_id} via IP address {ip}")
 			if more_cmd == False:
 				enter_console_cmd(tn,"exit")
 			return True

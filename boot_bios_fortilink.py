@@ -30,7 +30,7 @@ from datetime import date
 
 
 if __name__ == "__main__":
-	sys.stdout = Logger(f"Log/boot_to_bios.log")
+	sys.stdout = Logger(f"Log/boot_to_bios_fortilink.log")
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-c", "--config", help="Configure switches before starting testing", action="store_true")
 	parser.add_argument("-test", "--testcase", type=str, help="Specific which test case you want to run. Example: 1/1-3/1,3,4,7 etc")
