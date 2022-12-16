@@ -8105,7 +8105,7 @@ class FortiSwitch_XML(FortiSwitch):
         cmd = "execute switch-controller switch-software list-available"
         #switch_show_cmd(fgt1,cmd)
         output = ftg_collect_execute_cmd(fgt1,cmd)
-        dprint(f"output of  switch-software list-available = {output}")
+        print(f"output of  switch-software list-available = {output}")
         switch_exec_cmd(fgt1, "end")
         regex = r"S[0-9a-z.\-A-Z]+swtp"
         for line in output:
