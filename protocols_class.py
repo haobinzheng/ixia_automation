@@ -7972,7 +7972,6 @@ class FortiSwitch_XML(FortiSwitch):
         S248EFTF18002594  S248EF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
         S248EFTF18002618  S248EF-v7.0.0-build037,210610 (Interim)        (0/0/0)   N/A  (Idle) 
         """
-
         return True
 
     def ftg_sw_upgrade_no_wait(self,*args,**kwargs):
@@ -8069,7 +8068,7 @@ class FortiSwitch_XML(FortiSwitch):
             next
             end
             """
-        self.managed_switch_obj.enter_managed_sw_cmds(config)
+        self.managed_switch_obj.enter_managed_sw_cmds(config,vdom="haobin")
         sleep(2)
 
         cmds = f"""
@@ -8117,11 +8116,11 @@ class FortiSwitch_XML(FortiSwitch):
         switch_exec_cmd(fgt1, f"edit {vdom}")
         ###########################
         cmd = f"execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name}"
-        switch_exec_cmd(fgt1,cmd)
-        output = collect_show_cmd(fgt1,"y",mode="fast")
-        Info(f"After entering y, the prompt is: {output}") 
-        switch_exec_cmd(fgt1, "end")
-              
+        switch_interactive_exec(fgt1,cmd,"Do you want to continue? (y/n)")
+        # orginal commands
+        # cmd = f"execute switch-controller switch-software upgrade {self.serial_number} {upgrade_name} " + '\n' + 'y'
+        # switch_exec_cmd(fgt1,cmd) 
+        switch_exec_cmd(fgt1,"end")    
         return True
 
     def fsw_upgrade_v2(self,*args,**kwargs):
@@ -8655,32 +8654,61 @@ class Managed_Switch():
             Info(f"Successful login {self.address}")
             self.ssh_login = True
             sleep(2) #after previous ssh, take a 2s break
-            self.updated_managed_sw()
+            # self.updated_managed_sw()
             return True
         else:
-            Info(f"Not able to login {self.address}")
-            self.ssh_login = False
-            return False
+            Info(f"Not able to login {self.address}, try again....")
+            if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id) == True:
+                self.ssh_login = True
+                sleep(2) #after previous ssh, take a 2s break
+                return True
+            else:
+                self.direct_cmd('\x03\n')
+                self.ssh_login = False
+                return False
 
     def updated_managed_sw(self):
         if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
             Info(f"Successful login {self.address}")
             output = collect_show_cmd(self.ftg_console,"get system status",mode="fast")
             self.switch_obj.update_switch_system_status(output)
+            # config = f"""
+            # config system admin
+            #     edit "admin"
+            #     set accprofile "super_admin"
+            #     set password ENC AK1uHvbOfsDLnA6ya8BxpLwXCNcKNZ9+7K7YC1pLpb4Qvs=
+            # next
+            # end
+            # """
+            # config_cmds_lines(self.ftg_console,config,mode="fast")
             output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
             Info(f"After updated managed switch infor, the prompt is: {output}")
 
-    def enter_managed_sw_cmds(self,config):
+    def enter_managed_sw_cmds(self,config,*args,**kwargs):
+        if "vdom" in kwargs:
+            vdom = kwargs['vdom']
+        else:
+            vdom = 'root'
+        self.direct_cmd("config vdom")
+        self.direct_cmd(f"edit {vdom}")
+
         if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
             Info(f"Successful login {self.address}")
             config_cmds_lines(self.ftg_console,config,mode="fast")
             output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
             Info(f"After entering managed switch commands, the prompt is: {output}")
-            self.direct_cmd("exit")
             return "Success"
         else:
-            ErrorNotify(f"Having problem ssh to managed switch with address {self.address}")
-            return "Failed"
+            ErrorNotify(f"Having problem ssh to managed switch with address {self.address}... Trying again....")
+            if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
+                Info(f"Successful login {self.address}")
+                config_cmds_lines(self.ftg_console,config,mode="fast")
+                output = collect_show_cmd(self.ftg_console,"exit",mode="fast")
+                Info(f"After entering managed switch commands, the prompt is: {output}")
+                return "Success"
+            else:
+                ErrorNotify(f"Failed to retry ssh to managed switch with address {self.address}... Give up!!!!")
+                return "Failed"
 
     def direct_cmd(self,cmd):
         cmd_bytes = convert_cmd_ascii_n(cmd)
@@ -9526,7 +9554,7 @@ class FortiGate_XML(FortiSwitch_XML):
             """
             config_cmds_lines(self.console,config)
 
-            output = collect_show_cmd(self.console,"execute switch-controller get-conn-status")
+            output = collect_show_cmd(self.console,"execute switch-controller get-conn-status",mode="fast")
             print(output)
         else:
             config = f"""

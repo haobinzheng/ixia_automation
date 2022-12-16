@@ -1347,6 +1347,10 @@ def switch_interactive_exec(tn,exec_cmd,prompt):
 	answer = convert_cmd_ascii('y')
 	#answer = convert_cmd_ascii('y' + '\n')
 	tn.write(answer)
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
+	tn.write(('' + '\n').encode('ascii'))
 	time.sleep(1)
 
 def switch_login(tn,*args,**kwargs):
@@ -2535,16 +2539,18 @@ def find_shell_prompt(tn,chassis_id):
 		return False
 
 def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
-	TIMEOUT = 10
+	TIMEOUT = 30
 	if "more_cmd" in kwargs:
 		more_cmd = kwargs['more_cmd']
 	else:
 		more_cmd = False
-	cmd = f"exec ssh admin@{ip}"
+	cmd = f"exec ssh admin@{ip}" 
 	tn.write((cmd + '\n').encode('ascii'))
 	output = tn.expect([re.compile(b"password:")],timeout=TIMEOUT)
 	print(output)
+	#prompt = output[2].decode().strip()
 	prompt = output[2].decode().strip()
+	print(prompt)
 	print(f"After entering the exec ssh@xxxx command, the fortigate prompt = {prompt}")
 	result = output[0]
 	if result == 0: #this is password: prompt
@@ -2562,7 +2568,7 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 	elif "#" in prompt:
 		if chassis_id in prompt:
 			return True
-	elif "(yes/no)" in prompt:
+	elif "The remote host key has changed" in prompt:
 		first_time_after_upgrade_prompt = """
 		Connected
  
@@ -2582,6 +2588,7 @@ Offending ED25519 key in /tmp/home/admin/.ssh/known_hosts:3
  
 The remote host key has changed. Do you want to accept the new key and continue connecting (yes/no)?  
 """
+		print(f"yes/no was found in the prompt, the prompt = {prompt}")
 		tn.write(('yes' + '\n').encode('ascii'))
 		tn.write(('Fortinet123!' + '\n').encode('ascii'))
 		if find_shell_prompt(tn,chassis_id):

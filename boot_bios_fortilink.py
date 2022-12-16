@@ -164,20 +164,25 @@ if __name__ == "__main__":
 
 	result = False
 	while result != True: 
+		sleep(20)
 		managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
 		result = False
 		for mw in fgta.managed_switches_list:
-			if mw.up and mw.managed_sw_online():
-				Info(f"Managed switch {mw.switch_id} can be access for fortigate")
-				result = True
+			if mw.up:
+				if mw.managed_sw_online():
+					Info(f"Managed switch {mw.switch_id} can be access for fortigate")
+					result = True
+				else:
+					Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+					# mw.direct_cmd('\x03\n')
+					result = False
 			else:
-				Info(f"Managed switch {mw.switch_id} can NOT be access for fortigate")
+				Info(f"managed switch is UP yet, retry......")
 				result = False
 				break
-			
-	# for mw in fgta.managed_switches_list:
-	# 	if mw.up and mw.managed_sw_online():
-	# 		mw.updated_managed_sw()
+	sleep(30)
+	for mw in fgta.managed_switches_list:
+		mw.updated_managed_sw()
 
 	# managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
 	# for mw in fgta.managed_switches_list:
