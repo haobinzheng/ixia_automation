@@ -1251,7 +1251,7 @@ def switch_configure_cmd(tn,cmd,**kwargs):
 		dut_prompt = find_dut_prompt(tn)
 		tprint("configuring {}: {}".format(dut_prompt,cmd))
 
-	cmd = convert_cmd_ascii_n(cmd)
+	#cmd = convert_cmd_ascii_n(cmd)
 	enter_console_cmd(tn,cmd)
 	time.sleep(0.6)
 	if output == False:
