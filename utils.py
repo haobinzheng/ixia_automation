@@ -2582,7 +2582,7 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 		device_prompt = out[2].decode().strip()
 		dprint(f"after entering password, login_result = {login_result},device prompt ={device_prompt}")
 		if int(login_result) == 0 and chassis_id in device_prompt:
-			tprint(f"Fortigate exect ssh successful to {chassis_id} via IP address {ip}")
+			tprint(f"Fortigate exec ssh successful to {chassis_id} via IP address {ip}")
 			if more_cmd == False:
 				enter_console_cmd(tn,"exit")
 			return True
