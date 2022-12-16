@@ -2551,13 +2551,20 @@ def enter_console_cmd(tn,cmd):
 	gabage = tn.read_very_eager()
 	dprint(gabage)
 
+def clear_console_buffer(tn):
+	for i in range(10):
+		tn.write(('' + '\n').encode('ascii'))
+		sleep(0.5)
+		tn.read_very_eager()
+
 def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 	TIMEOUT = 30
 	if "more_cmd" in kwargs:
 		more_cmd = kwargs['more_cmd']
 	else:
 		more_cmd = False
-	gabage = tn.read_very_eager()
+
+	clear_console_buffer()
 	cmd = f"exec ssh admin@{ip}" 
 	tn.write((cmd + '\n').encode('ascii'))
 	output = tn.expect([re.compile(b"password:"),re.compile(b"yes/no"),re.compile(b"The remote host key has changed")],timeout=TIMEOUT)

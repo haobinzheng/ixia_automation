@@ -8647,12 +8647,6 @@ class Managed_Switch():
         print(f"Switch address = {self.address}")
 
     def managed_sw_online(self,*args,**kwargs):
-        # if "vdom" in kwargs:
-        #     vdom = kwargs['vdom']
-        # else:
-        #     vdom = 'root'
-        # self.direct_cmd("config vdom")
-        # self.direct_cmd(f"edit {vdom}")
         if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id) == True:
             Info(f"Successful login {self.address}")
             self.ssh_login = True
