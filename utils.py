@@ -2574,7 +2574,7 @@ def fgt_ssh_chassis(tn,ip,chassis_id,*args,**kwargs):
 			tprint("login successful")
 			if more_cmd == False:
 				enter_console_cmd(tn,"exit")
- 			return True
+			return True
 	elif "#" in prompt:
 		if chassis_id in prompt:
 			return True
