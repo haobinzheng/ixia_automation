@@ -8699,7 +8699,7 @@ class Managed_Switch():
         self.direct_cmd(f"edit {vdom}")
 
         if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
-            Info(f"Successful login {self.address}")
+            tprint(f"Successful login {self.address} to {self.switch_id}")
             config_cmds_lines(self.ftg_console,config,mode="fast")
             enter_console_cmd(self.ftg_console,"exit")
             switch_exec_cmd(self.ftg_console,"exit")

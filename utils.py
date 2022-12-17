@@ -2539,7 +2539,7 @@ def find_shell_prompt(tn,chassis_id):
 	device_prompt = out[2].decode().strip()
 	dprint(f"Expecting # prompt, if return 0, # is found. return = {login_result},device prompt ={device_prompt}")
 	if int(login_result) == 0 and chassis_id in device_prompt:
-		print("login successful!")
+		tprint(f"login successful to {chassis_id}!")
 		return True
 	else:
 		return False
