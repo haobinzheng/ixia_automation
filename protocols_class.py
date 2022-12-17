@@ -8700,16 +8700,20 @@ class Managed_Switch():
 
         if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
             tprint(f"Successful login {self.address} to {self.switch_id}")
-            config_cmds_lines(self.ftg_console,config,mode="fast")
+            config_cmds_lines(self.ftg_console,config)
+            sleep(2)
             enter_console_cmd(self.ftg_console,"exit")
+            sleep(2)
             switch_exec_cmd(self.ftg_console,"exit")
             return "Success"
         else:
             ErrorNotify(f"Having problem ssh to managed switch with address {self.address}... Trying again....")
             if fgt_ssh_chassis(self.ftg_console,self.address,self.switch_id,more_cmd = True) == True:
                 Info(f"Successful login {self.address}")
-                config_cmds_lines(self.ftg_console,config,mode="fast")
+                config_cmds_lines(self.ftg_console,config)
+                sleep(2)
                 enter_console_cmd(self.ftg_console,"exit")
+                sleep(2)
                 switch_exec_cmd(self.ftg_console,"exit")
                 return "Success"
             else:
