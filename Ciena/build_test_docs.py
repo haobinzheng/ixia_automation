@@ -78,7 +78,9 @@ for k in selected_list_dict.keys():
 print(f"other_list- = {other_list}")
 function_list_dict = {}
 
-must_list.pop(0)
+#Only must list needs to pop the first element which is the description of E column
+must_list.pop(0)   
+#other_list has all the final selected test cases
 #other_list.pop(0)
 #print(must_list)
 #print(other_list)
