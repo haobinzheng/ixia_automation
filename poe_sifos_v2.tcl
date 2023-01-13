@@ -68,7 +68,7 @@ proc at_power_up {} {
 				puts $port 
 				puts $power
 				puts "power_port $port c 6 p $power"
-        			power_port $port c 6 p $power
+        		power_port $port c 6 p $power
 				puts "pstatus $port"
 				set status [lindex [pstatus $port stat] 3]
 				after 10
@@ -95,35 +95,40 @@ proc at_power_up {} {
 proc bt_power_basic {} {
 	set port_list {"5,1","6,1","7,1","8,1","9,1","10,1","11,1","12,1"}
 	#set port_list {"5,1","6,1","7,1"}
-	set power_list {60} 
-	regsub -all {(,")|(",)|"} $port_list " " port_list;
+    set power_list {13.7 3.9 6.7 13.7 28.7 43.7 57.3} 
+    set class_list {0 1 2 3 4 5 6}
+    set zipped [lmap a $class_list b $power_list {list $a $b}]
+    puts $zipped
+ 	regsub -all {(,")|(",)|"} $port_list " " port_list;
 	puts $port_list
 	puts $power_list
 	for {set i 0} {$i < 1} {incr i} {
-		foreach power $power_list {
-			foreach port $port_list {
-				#puts $port 
-				#puts $power
-				puts "power_bt c 6 p $power $port"
-        			power_bt c 6 p $power $port
-				puts "pstatus $port"
-				set status [lindex [pstatus $port stat] 3]
-				after 10
-				puts $status
-				#pstatus $port
- 				puts "power_check $port"
-				power_check $port
-				set state [power_check 1,1]
-				after 10
-				puts $state
-				st_wait 5
-				#psa_disconnect $port
-				puts "vdcaverage $port stat"	
-				#vdcaverage $port
-				set VportMaxR [lindex [vdcaverage $port stat] 3]	
-				after 10
-				puts $VportMaxR
-				st_wait 5
+			foreach z $zipped {
+                set class [lindex $z 0]
+                puts $class
+                set power [lindex $z 1]
+                puts $power
+                foreach port $port_list {
+                    puts "power_bt $port c $class p $power"
+                    set status [power_bt $port c $class p $power]
+                    puts $status
+                    puts "pstatus $port"
+                    set status [lindex [pstatus $port stat] 3]
+                    after 10
+                    puts $status
+                    puts "power_check $port"
+                    power_check $port
+                    set state [power_check 1,1]
+                    after 10
+                    puts $state
+                    st_wait 5
+                    #psa_disconnect $port
+                    puts "vdcaverage $port stat"	
+                    #vdcaverage $port
+                    set VportMaxR [lindex [vdcaverage $port stat] 3]	
+                    after 10
+                    puts $VportMaxR
+                    st_wait 5
   			}
 		}
 	}
