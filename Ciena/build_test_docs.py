@@ -41,10 +41,10 @@ args = parser.parse_args()
 if args.config:
     config_xlsx = args.config
 else:
-    config_xlsx = input("Please enter the Excel file name(example:CATP_Master_Feature_List_ver5Jan23.xlsx):")
+    config_xlsx = input("Please enter the Excel file name(example:CATP_Master_Feature_List.xlsx):")
 
 if config_xlsx == '':
-        config_xlsx = "CATP_Master_Feature_List_ver5Jan23.xlsx"
+        config_xlsx = "CATP_Master_Feature_List.xlsx"
 
 if args.output:
 	output_docx = args.output
@@ -62,20 +62,23 @@ dataframe = openpyxl.load_workbook(config_xlsx)
 
 # Define variable to read sheet
 dataframe1 = dataframe.active
-#for c in dataframe1['J']:
+#for c in dataframe1['F']:
 #    print(c.value)
 must_list_dict = {re.search(r'\d+',c.coordinate).group():c.value for c in dataframe1['B'] if c.value is not None}
 other_list_dict ={re.search(r'\d+',c.coordinate).group():c.value for c in dataframe1['E'] if c.value is not None}
-#selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['J'] if c.value is not None and c.value != ' ' or c.value == 'x' or c.value == "X"}
-selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['J'] if c.value is not None and c.value != ' ' and (c.value == 'x' or c.value == "X")}
+#selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['F'] if c.value is not None and c.value != ' ' or c.value == 'x' or c.value == "X"}
+selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['F'] if c.value is not None and c.value != ' ' and (c.value == 'x' or c.value == "X" or c.value == 'y' or c.value == 'Y' )}
 
-print(must_list_dict,other_list_dict,selected_list_dict)
+print(f"must_list_dict = {must_list_dict}")
+print(f"other_list_dict = {other_list_dict}")
+      
+print(f"selected_list_dict = {selected_list_dict}")
 
 other_list = []
 must_list = list(must_list_dict.values())
 for k in selected_list_dict.keys():
     other_list.append(other_list_dict[k])
-print(f"other_list- = {other_list}")
+print(f"other_list = {other_list}")
 function_list_dict = {}
 
 #Only must list needs to pop the first element which is the description of E column
@@ -84,7 +87,7 @@ must_list.pop(0)
 #other_list.pop(0)
 #print(must_list)
 #print(other_list)
-regex_index = r'[0-9.]+'
+regex_index = r'[0-9.]{2,}'
 must_list_num = []
 other_list_num = []
 
@@ -100,13 +103,13 @@ for i in other_list:
         num = (matched.group())
         #print(num)
         other_list_num.append(num)
-#print(f"must_list_num = {must_list_num}")
+print(f"must_list_num = {must_list_num}")
 print(f"other_list_num = {other_list_num}")
      
 test_files = []
-for file in glob.glob("test_cases_docs\*.docx"):
+for file in glob.glob("test_cases_docs_1\*.docx"):
     test_files.append(file)
-#print(test_files)
+print(test_files)
 test_cases_dict = {}
 for file in test_files:
     matched = re.search(regex_index,file)
@@ -116,13 +119,13 @@ for file in test_files:
         test_cases_dict[test_num] = file
         continue
 
-print(test_cases_dict)
+print(f"This is the dict with index: filename. test_cases_dict = {test_cases_dict}" )
 
 build_tests = []                
 for n in must_list_num :
    if n in test_cases_dict:
       build_tests.append(test_cases_dict[n])
-#print(build_tests)
+print(build_tests)
 for n in other_list_num:
     if n in test_cases_dict:
       build_tests.append(test_cases_dict[n])
