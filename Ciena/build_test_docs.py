@@ -87,7 +87,7 @@ must_list.pop(0)
 #other_list.pop(0)
 #print(must_list)
 #print(other_list)
-regex_index = r'[0-9.]{2,}'
+regex_index = r'[0-9.]{2,}' #this regex match 5.1, 5.1.1, 5.1.1.1 etc.  But will not match test_case_1 
 must_list_num = []
 other_list_num = []
 
