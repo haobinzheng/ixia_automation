@@ -314,99 +314,101 @@ if __name__ == "__main__":
 	boot_time = 300
 	power_time = 300
 	for i in range(1000):
-		#==========================  upgrade to V6 Build#470 + power cycle ================================
-		for sw in switches:
-			tprint(f"========  Upgrading SW on {sw.hostname} to v6 build #470  ============\n")
-			sw.ftg_sw_upgrade_no_wait(build=470,version=6,tftp_server="10.105.19.44",vdom="haobin")
-		
-		console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v6 build 470")
-		while result != True: 
-			sleep(20)
-			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
-			result = False
-			for mw in fgta.managed_switches_list:
-				if mw.up:
-					if mw.managed_sw_online(vdom='haobin'):
-						Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
-						result = True
+		try:
+			#==========================  upgrade to V6 Build#470 + power cycle ================================
+			for sw in switches:
+				tprint(f"========  Upgrading SW on {sw.hostname} to v6 build #470  ============\n")
+				sw.ftg_sw_upgrade_no_wait(build=470,version=6,tftp_server="10.105.19.44",vdom="haobin")
+			
+			console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v6 build 470")
+			while result != True: 
+				sleep(20)
+				managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+				result = False
+				for mw in fgta.managed_switches_list:
+					if mw.up:
+						if mw.managed_sw_online(vdom='haobin'):
+							Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
+							result = True
+						else:
+							Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+							result = False
 					else:
-						Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+						Info(f"managed switch is not UP yet, retry......")
 						result = False
-				else:
-					Info(f"managed switch is not UP yet, retry......")
-					result = False
-					break
- 
-		for sw in switches:
-			tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
-			sw.ssh_pdu_status()
-			sw.ssh_pdu_cycle()
-		
-		console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
-		result = False
-		while result != True: 
-			sleep(20)
-			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+						break
+	 
+			for sw in switches:
+				tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
+				sw.ssh_pdu_status()
+				sw.ssh_pdu_cycle()
+			
+			console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
 			result = False
-			for mw in fgta.managed_switches_list:
-				if mw.up:
-					if mw.managed_sw_online(vdom='haobin'):
-						Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
-						result = True
+			while result != True: 
+				sleep(20)
+				managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+				result = False
+				for mw in fgta.managed_switches_list:
+					if mw.up:
+						if mw.managed_sw_online(vdom='haobin'):
+							Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
+							result = True
+						else:
+							Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+							result = False
 					else:
-						Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+						Info(f"managed switch is not UP yet, retry......")
 						result = False
-				else:
-					Info(f"managed switch is not UP yet, retry......")
-					result = False
-					break
- 		
-		#==========================  upgrade to V7 Build#86 + power cycle ================================
-		for sw in switches:
-			tprint(f"========  Upgrading SW on {sw.hostname} to v7 build #86  ============\n")
-			sw.ftg_sw_upgrade_no_wait(build=86,version=7,tftp_server="10.105.19.44",vdom="haobin")
-		
-		console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v7 build 86")
-		result = False
-		while result != True: 
-			sleep(20)
-			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+						break
+	 		
+			#==========================  upgrade to V7 Build#86 + power cycle ================================
+			for sw in switches:
+				tprint(f"========  Upgrading SW on {sw.hostname} to v7 build #86  ============\n")
+				sw.ftg_sw_upgrade_no_wait(build=86,version=7,tftp_server="10.105.19.44",vdom="haobin")
+			
+			console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v7 build 86")
 			result = False
-			for mw in fgta.managed_switches_list:
-				if mw.up:
-					if mw.managed_sw_online(vdom='haobin'):
-						Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
-						result = True
+			while result != True: 
+				sleep(20)
+				managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+				result = False
+				for mw in fgta.managed_switches_list:
+					if mw.up:
+						if mw.managed_sw_online(vdom='haobin'):
+							Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
+							result = True
+						else:
+							Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+							result = False
 					else:
-						Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+						Info(f"managed switch is not UP yet, retry......")
 						result = False
-				else:
-					Info(f"managed switch is not UP yet, retry......")
-					result = False
-					break
- 
-		for sw in switches:
-			tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
-			sw.ssh_pdu_status()
-			sw.ssh_pdu_cycle()
-		
-		console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
-		result = False
-		while result != True: 
-			sleep(20)
-			managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+						break
+	 
+			for sw in switches:
+				tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
+				sw.ssh_pdu_status()
+				sw.ssh_pdu_cycle()
+			
+			console_timer(power_time,msg=f"Wait for {power_time} after power cycle")
 			result = False
-			for mw in fgta.managed_switches_list:
-				if mw.up:
-					if mw.managed_sw_online(vdom='haobin'):
-						Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
-						result = True
+			while result != True: 
+				sleep(20)
+				managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+				result = False
+				for mw in fgta.managed_switches_list:
+					if mw.up:
+						if mw.managed_sw_online(vdom='haobin'):
+							Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
+							result = True
+						else:
+							Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+							result = False
 					else:
-						Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+						Info(f"managed switch is not UP yet, retry......")
 						result = False
-				else:
-					Info(f"managed switch is not UP yet, retry......")
-					result = False
-					break
- 
+						break
+	 	except Exception as e:
+	 		tprint(f"Something is going on in this iteration: {e}")
 		 
