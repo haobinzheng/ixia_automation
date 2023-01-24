@@ -5,8 +5,10 @@ import openpyxl
 import argparse
 import re
 import glob
-
-
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# import ../db.py
+from utils import *
 
 def combine_word_documents(files,output):
     merged_document = Document()
@@ -35,13 +37,14 @@ def combine_all_docx(files_list,output):
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", type=str,help="Provide the config file in Microsoft Excel File,For Example: CATP_Master_Feature_List_ver5Jan23.xlsx", )
 parser.add_argument("-o", "--output", type=str,help="Provide the output filename in Microsoft Excel File,For Example: CATP_Master_Result.xlsx", )
+parser.add_argument("-f", "--folder", type=str,help="Provide the name of the folder where test case docs are located,For Example: test_cases_docs", )
  
 args = parser.parse_args()
 
 if args.config:
     config_xlsx = args.config
 else:
-    config_xlsx = input("Please enter the Excel file name(example:CATP_Master_Feature_List.xlsx):")
+    config_xlsx = input("Please enter the Excel file name(default:CATP_Master_Feature_List.xlsx):")
 
 if config_xlsx == '':
         config_xlsx = "CATP_Master_Feature_List.xlsx"
@@ -49,14 +52,24 @@ if config_xlsx == '':
 if args.output:
 	output_docx = args.output
 else:
-	output_docx = input("Please enter the output word doc name(example:output.docx):") 
+	output_docx = input("Please enter the output word doc name(default:output.docx):") 
 
 if output_docx == '':
         output_docx = "output.docx"
 
-print(f"Configure File In Microsoft Excel = {config_xlsx}")
+if args.folder:
+	docx_folder = args.folder
+else:
+	docx_folder = input("Please enter folder under the current directory where the test case docs reside(default:test_cases_docs_1):") 
+
+if docx_folder == '':
+    docx_folder = "test_cases_docs_1"
+
+print_double_line()
+print(f"Folder that contain all the test case docx = {docx_folder}")
+print(f"Deployment requirment file In Microsoft Excel = {config_xlsx}")
 print(f"Output File In Microsoft Word = {output_docx}")
-  
+print_double_line()  
 # Define variable to load the dataframe
 dataframe = openpyxl.load_workbook(config_xlsx)
 
@@ -69,16 +82,16 @@ other_list_dict ={re.search(r'\d+',c.coordinate).group():c.value for c in datafr
 #selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['F'] if c.value is not None and c.value != ' ' or c.value == 'x' or c.value == "X"}
 selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['F'] if c.value is not None and c.value != ' ' and (c.value == 'x' or c.value == "X" or c.value == 'y' or c.value == 'Y' )}
 
-print(f"must_list_dict = {must_list_dict}")
-print(f"other_list_dict = {other_list_dict}")
+dprint(f"must_list_dict = {must_list_dict}")
+dprint(f"other_list_dict = {other_list_dict}")
       
-print(f"selected_list_dict = {selected_list_dict}")
+dprint(f"selected_list_dict = {selected_list_dict}")
 
 other_list = []
 must_list = list(must_list_dict.values())
 for k in selected_list_dict.keys():
     other_list.append(other_list_dict[k])
-print(f"other_list = {other_list}")
+dprint(f"other_list = {other_list}")
 function_list_dict = {}
 
 #Only must list needs to pop the first element which is the description of E column
@@ -103,13 +116,13 @@ for i in other_list:
         num = (matched.group())
         #print(num)
         other_list_num.append(num)
-print(f"must_list_num = {must_list_num}")
-print(f"other_list_num = {other_list_num}")
+dprint(f"must_list_num = {must_list_num}")
+dprint(f"other_list_num = {other_list_num}")
      
 test_files = []
-for file in glob.glob("test_cases_docs_1\*.docx"):
+for file in glob.glob(f"{docx_folder}\*.docx"):
     test_files.append(file)
-print(test_files)
+dprint(test_files)
 test_cases_dict = {}
 for file in test_files:
     matched = re.search(regex_index,file)
@@ -119,17 +132,17 @@ for file in test_files:
         test_cases_dict[test_num] = file
         continue
 
-print(f"This is the dict with index: filename. test_cases_dict = {test_cases_dict}" )
+dprint(f"This is the dict with index: filename. test_cases_dict = {test_cases_dict}" )
 
 build_tests = []                
 for n in must_list_num :
    if n in test_cases_dict:
       build_tests.append(test_cases_dict[n])
-print(build_tests)
+dprint(build_tests)
 for n in other_list_num:
     if n in test_cases_dict:
       build_tests.append(test_cases_dict[n])
-print(build_tests)
+dprint(build_tests)
 
 
 
