@@ -1,0 +1,24 @@
+---
+policyspecrules:
+
+###############
+# NA Policies #
+###############
+
+  - description : 'XYZ border default for peering: import and export to LOCAL and ARN only for Polaris MVP'
+    match:
+        geoscopetype    : METRO
+        geoscopevalues  : [ 'XYZ' ]
+        peertypes       : [ 'PrivatePeering', 'PublicPeering', 'Tier1Peering' ]
+        action          : continue
+    policy:
+        import:
+            scoping:
+                permit : { metros: [ 'LOCAL' ] }
+        export:
+            restrictout:
+                -
+                    termname:          'ALLOW-XYZ-ONLY'
+                    match:
+                        community: [ 'METRO-XYZ' ]
+                    terminatingaction: 'next policy'

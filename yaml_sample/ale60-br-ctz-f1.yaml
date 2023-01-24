@@ -1,0 +1,285 @@
+site:
+  name: ale60-br-ctz-f1
+  region: ale
+  fabric: catzilla
+  type: micro
+  number_of_bricks: 1
+  cluster_id: 0.7.27.128/26
+  base_ipv6_64: 260f:d3fd:2d00:4000::/64
+
+main:
+  brick_os: 18.4X16.9
+  brick_fw_version: V0018.6U
+
+bricks:
+  brick_1:
+    brick_rack_topology: rack_2_0
+    build_state: LIVE
+    customers:
+      customer_1:
+        role: br-agg
+        stripe: [1]
+        speed: 100
+      customer_2:
+        role: ec2
+        stripe: [2]
+        speed: 100
+        positions: [1,2,3,4,5,6,7,8]
+        connector:
+          ale60-60-br-svc-r101:
+            lag: 0
+            members:
+              interfaces:
+              - et-0/0/0: et-0/0/0
+                et-0/0/1: et-0/0/2
+              - et-0/0/0: et-0/0/8
+                et-0/0/1: et-0/0/14
+              - et-0/0/0: et-0/0/18
+                et-0/0/1: et-0/0/20
+              - et-0/0/0: et-0/0/24
+                et-0/0/1: et-0/0/26
+            min_links: 2
+            asn: 65316
+            stripe: [2]
+          ale60-60-br-svc-r102:
+            lag: 4
+            members:
+              interfaces:
+              - et-0/0/2: et-0/0/0
+                et-0/0/3: et-0/0/2
+              - et-0/0/2: et-0/0/8
+                et-0/0/3: et-0/0/14
+              - et-0/0/2: et-0/0/18
+                et-0/0/3: et-0/0/20
+              - et-0/0/2: et-0/0/24
+                et-0/0/3: et-0/0/26
+            min_links: 2
+            asn: 65316
+            stripe: [2]
+          ale60-60-br-svc-r103:
+            lag: 8
+            members:
+              interfaces:
+              - et-0/0/4: et-0/0/0
+                et-0/0/5: et-0/0/2
+              - et-0/0/4: et-0/0/8
+                et-0/0/5: et-0/0/14
+              - et-0/0/4: et-0/0/18
+                et-0/0/5: et-0/0/20
+              - et-0/0/4: et-0/0/24
+                et-0/0/5: et-0/0/26
+            min_links: 2
+            asn: 65316
+            stripe: [2]
+          ale60-60-br-svc-r104:
+            lag: 12
+            members:
+              interfaces:
+              - et-0/0/6: et-0/0/0
+                et-0/0/7: et-0/0/2
+              - et-0/0/6: et-0/0/8
+                et-0/0/7: et-0/0/14
+              - et-0/0/6: et-0/0/18
+                et-0/0/7: et-0/0/20
+              - et-0/0/6: et-0/0/24
+                et-0/0/7: et-0/0/26
+            min_links: 2
+            asn: 65316
+            stripe: [2]
+      customer_3:
+        role: br-lbe
+        stripe: [3]
+        speed: 100
+        positions: [1,2,5,6,7,8,9,10,11]
+        connector:
+          ale60-br-lbe-p1-r1:
+            lag: 0
+            members:
+              interfaces:
+              - et-0/0/0: et-0/0/12
+              - et-0/0/0: et-0/0/14
+              - et-0/0/0: et-0/0/16
+              - et-0/0/0: et-0/0/18
+            stripe: [3]
+          ale60-br-lbe-p2-r1:
+            lag: 4
+            members:
+              interfaces:
+              - et-0/0/1: et-0/0/12
+              - et-0/0/1: et-0/0/14
+              - et-0/0/1: et-0/0/16
+              - et-0/0/1: et-0/0/18
+            stripe: [3]
+          ale60-br-lbe-j1-r1:
+            lag: 16
+            members:
+              interfaces:
+              - et-0/0/4: et-0/0/28
+              - et-0/0/4: et-0/0/29
+              - et-0/0/4: et-0/0/30
+              - et-0/0/4: et-0/0/31
+            stripe: [3]
+          ale60-br-lbe-j1-r2:
+            lag: 20
+            members:
+              interfaces:
+              - et-0/0/5: et-0/0/28
+              - et-0/0/5: et-0/0/29
+              - et-0/0/5: et-0/0/30
+              - et-0/0/5: et-0/0/31
+            stripe: [3]
+          ale60-br-lbe-j1-r3:
+            lag: 24
+            members:
+              interfaces:
+              - et-0/0/6: et-0/0/28
+              - et-0/0/6: et-0/0/29
+              - et-0/0/6: et-0/0/30
+              - et-0/0/6: et-0/0/31
+            stripe: [3]
+          ale62-br-lbe-n1-r1:
+            lag: 28
+            members:
+              interfaces:
+              - et-0/0/7: et-0/0/12
+              - et-0/0/7: et-0/0/14
+              - et-0/0/7: et-0/0/16
+              - et-0/0/7: et-0/0/18
+            stripe: [3]
+          ale62-br-lbe-n1-r2:
+            lag: 32
+            members:
+              interfaces:
+              - et-0/0/8: et-0/0/12
+              - et-0/0/8: et-0/0/14
+              - et-0/0/8: et-0/0/16
+              - et-0/0/8: et-0/0/18
+            stripe: [3]
+          ale62-br-lbe-n1-r3:
+            lag: 36
+            members:
+              interfaces:
+              - et-0/0/9: et-0/0/12
+              - et-0/0/9: et-0/0/14
+              - et-0/0/9: et-0/0/16
+              - et-0/0/9: et-0/0/18
+            stripe: [3]
+          ale62-br-lbe-n1-r4:
+            lag: 40
+            members:
+              interfaces:
+              - et-0/0/10: et-0/0/12
+              - et-0/0/10: et-0/0/14
+              - et-0/0/10: et-0/0/16
+              - et-0/0/10: et-0/0/18
+            stripe: [3]
+      customer_4:
+        role: bfw
+        stripe: [4]
+        speed: 100
+        positions: [1,2,3,4]
+        connector:
+          ale60-60-br-svc-r301:
+            lag: 0
+            members:
+              interfaces:
+              - et-0/0/0: et-0/0/0
+              - et-0/0/0: et-0/0/8
+              - et-0/0/0: et-0/0/18
+              - et-0/0/0: et-0/0/24
+            min_links: 1
+            stripe: [4]
+          ale60-60-br-svc-r302:
+            lag: 4
+            members:
+              interfaces:
+              - et-0/0/1: et-0/0/0
+              - et-0/0/1: et-0/0/8
+              - et-0/0/1: et-0/0/18
+              - et-0/0/1: et-0/0/24
+            min_links: 1
+            stripe: [4]
+          ale60-60-br-svc-r303:
+            lag: 8
+            members:
+              interfaces:
+              - et-0/0/2: et-0/0/0
+              - et-0/0/2: et-0/0/8
+              - et-0/0/2: et-0/0/18
+              - et-0/0/2: et-0/0/24
+            min_links: 1
+            stripe: [4]
+          ale60-60-br-svc-r304:
+            lag: 12
+            members:
+              interfaces:
+              - et-0/0/3: et-0/0/0
+              - et-0/0/3: et-0/0/8
+              - et-0/0/3: et-0/0/18
+              - et-0/0/3: et-0/0/24
+            min_links: 1
+            stripe: [4]
+      customer_5:
+        role: ws-fw
+        stripe: [4]
+        speed: 100
+        positions: [10]
+        connector:
+          ale60-60-ws-tra-r1:
+            lag: 36
+            stripe: [4]
+            members:
+              interfaces:
+              - et-0/0/9: et-0/0/0
+                et-0/0/9: et-0/0/4
+                et-0/0/9: et-0/0/24
+                et-0/0/9: et-0/0/28
+              - et-0/0/9: et-0/0/0
+                et-0/0/9: et-0/0/4
+                et-0/0/9: et-0/0/24
+                et-0/0/9: et-0/0/28
+              - et-0/0/9: et-0/0/0
+                et-0/0/9: et-0/0/4
+                et-0/0/9: et-0/0/24
+                et-0/0/9: et-0/0/28
+              - et-0/0/9: et-0/0/0
+                et-0/0/9: et-0/0/4
+                et-0/0/9: et-0/0/24
+                et-0/0/9: et-0/0/28
+            stripe: [4]
+      customer_6:
+        role: snowball
+        stripe: [4]
+        speed: 10
+        positions: [14,15]
+
+management_network:
+  builder_server:
+#Confirm these IPs
+    - 100.64.96.26
+    - 100.64.98.26
+    - 100.64.100.26
+  management_allocation_22: 100.90.8.0/22
+  prod_svc: ale60-60-ws-svc
+  prod_svc_asn: 65095
+  prod_svc_allocation:
+    r101:
+      peering: 100.64.80.10/31
+      lag: ae1
+      remote_port: xe-0/0/26
+      remote_lag: ae35
+    r102:
+      peering: 100.64.80.42/31
+      lag: ae1
+      remote_port: xe-0/0/26
+      remote_lag: ae35
+    r103:
+      peering: 100.64.80.74/31
+      lag: ae2
+      remote_port: xe-0/0/26
+      remote_lag: ae35
+    r104:
+      peering: 100.64.80.106/31
+      lag: ae2
+      remote_port: xe-0/0/26
+      remote_lag: ae35

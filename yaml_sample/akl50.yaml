@@ -1,0 +1,612 @@
+# This is an example site yaml consumed by bmn_builder.py                           #
+# Please make sure you have all required setting for each clients/VRFs as per below #
+#                                                                                   #
+region:
+    cluster: syd
+sites:
+    akl50:
+        legacy: False # Set this to True if you are converting existing sites to be supported with bmn_builder.py. (Please note only those site hich has AUTOATTRS attributes in routerspecific.attr)
+        prod_aggregate:
+        # Aggregate /22, /23 is split into below:-
+        #  
+        #  * 1x/26 - PROD (Main) Infra
+        #  * 1x/26 - Prod-IAD-Customers VRF infra (Only when BMN mapped region is IAD, otherwise one would need to allocate from PROD-IAD scope)
+        #  * 1x/27 - P2P for IPSEC interfaces towards Regional PROD Headends
+        #  * 1x/28 - P2P for IPSEC interfaces towards PROD-IAD (Only when BMN mapped region is IAD, otherwise one would need to allocate from PROD-IAD scope)
+        #  * 1x/24 - P2P for mgt-agg-r <> ToRs (32 Racks)
+        #  * 1x/22 - Dom0 Allocation (32 Racks)
+        #  
+        # Spares for future use:
+        #  * 1x/26 or 1x/25 - Spares (/26 spare when BMN mapped region is IAD, 
+        #  else a /25 is left as spare)
+        #  * 1x/28 or 1x/27 - Sapres (/28 spare when BMN mapped region is IAD, 
+        #  else a /27 is left as spare)
+            - 100.73.56.0/22
+            - 100.73.60.0/23
+        vrfs:
+            CORP-CUSTOMERS:
+                infrastructure: 10.255.87.64/26 # Subnet ID will be for OSPF Area ID for its clients. Allocated from corp_aggregate
+                vlan_id: 20
+                fabric: corp
+                rib_leak: True # rib leak from parent fabric (in this example it is corp) into this vrf
+                redist_default: True # redistribute default into ospf
+                clients:
+                    LENEL:
+                        subnet: 10.255.87.128/27 # Allocated from corp_aggregate
+                        type: vlan # This type configure irb (SVI) interface and will use 1st host ip is used by the router/switch
+                    CORP_TORS:
+                        type: tor
+                        p2p_subnet: 10.255.87.0/26 # Allocated from corp_aggregate
+                        dom0_subnet: 10.255.86.0/24 # Allocated from corp_aggregate
+                        # In case if you need to override OSPF Area ID of ToR facing interface you can use area_id falg.
+                        # This falg is added for supporting legacy builds.
+                        # Example:-
+                        #area_id: 0.0.0.0
+                    CONSOLES:
+                        subnet: 10.255.87.160/27 # Allocated from corp_aggregate
+                        type: vlan
+            PROD-IAD-CUSTOMERS:
+                vlan_id: 40
+                infrastructure: 10.4.237.128/26 # Subnet ID will be for OSPF Area ID for its clients. Allocated from prod_aggregate only when BMN site is mapped to IAD else do a allocation from bmn aggregate from prod-iad scope.
+                fabric: prod-iad
+                rib_leak: True # rib leak from parent fabric (in this example it is prod-iad) into this vrf
+                clients:
+                    CLOUDFRONT:
+                        # In an event when you have discontiguous subnets allocated for p2p
+                        # between cf device and br-mgt-sw[12], then one can provide them as a list
+                        #
+                        # NOTE: The subnets are allocated sequencially. ie, mgt-sw1 follwed by mgt-sw2.
+                        #       If multiple CF ports are assigned then the logic is 1st set of /31 will
+                        #       be assigned for CF1 followed by next CF.
+                        #
+                        # Example:
+                        # p2p_subnet: [ '10.251.128.32/30', '10.251.128.36/30' ]
+                        #     Here 2x/30 i.e, 4x/31 subnets allocated for CF. These are assigned to CF facing
+                        #     interfaces on sw1 and sw2. CF is always dual-homed. each en-mag-f1acc-v will have
+                        #     one connection to each mgt-sw[12]. Here, the 1st set of /31 (2x/31) will be
+                        #     assigned for 1st f1acc-v1 for by next f1acc-v2
+                        #     (i.e, 10.251.128.32/31 for f1-acc-v1 <> mgt-sw1
+                        #           10.251.128.34/31 for f1-acc-v1 <> mgt-sw2
+                        #           10.251.128.36/31 for f1-acc-v2 <> mgt-sw1
+                        #           10.251.128.36/31 for f1-acc-v2 <> mgt-sw2)
+                        #
+                        p2p_subnet: ['10.250.191.34/31', '10.250.191.36/31', '10.225.152.34/31', '10.225.152.36/31']  # Even IP is used by BMN. This is provided by CF Team
+                        # Below networks are provided by CF team. Generaly they provide a private_lan network (/24)
+                        # and a Hook network (/26).
+                        #
+                        # NOTE: p2p_subents are generally carved out of private_lan segment
+                        #
+                        cf_private_net: ['10.250.191.0/24', '10.250.69.0/26', '10.225.152.0/24', '10.250.94.0/26']
+                        rr_client: True # Enable it as RR Client
+                        type: CF #This type is specifically for CloudFont
+            PROD: # PROD is part of MAIN. Does not require vlan-id
+                fabric: prod
+                vlan_id: 10 # This ID must be unique within each site.
+                infrastructure: auto
+                clients:
+                    PROD_TORS:
+                        type: tor # This type will enable ospf stub area towards tor and add area-summary for allocated dom0
+                        # In the even when you have p2p and dom0 split into multiple subnets
+                        # you can provide them as a list
+                        # Example:
+                        # p2p_subnet: [ '100.71.18.16/29', '100.71.18.24/29' ]
+                        # dom0_subnet: [ '100.71.20.64/27', '100.71.20.96/27' ]
+                        #
+                        # This option is currently only applicable for customer type: "tor"
+                        p2p_subnet: auto # Allocated from prod_aggregate
+                        dom0_subnet: auto # Allocated from prod_aggregate
+        acc-v1:
+            internet_circuit:
+                local-interface: ge-0/0/13
+                name: DatacomMNS
+                circuit_id: 78_27_63_01
+                     # Circuit ID format: VENDOR/CID/XCID (XCID might be not present at some sites)
+                ip_details:
+                    oob_snat_ip: 202.175.131.101/29
+                    gw: 202.175.131.97
+                        # Without prefixlen
+                    ip: 202.175.131.100/29
+                speed: auto
+                duplex: auto
+            border:
+                management_ip: 103.8.172.150
+                1: # this is ae number
+                    local-interface: xe-0/0/16 # local-interface refers to acc-v
+                    device: akl50-br-cor-r1
+                    interface: et-0/0/57:0
+                    lag_interface: ae181
+                    subnet: 100.64.178.0/31 # ODD IP to be used on BMN side
+                2:
+                    local-interface: xe-0/0/17
+                    device: akl50-br-cor-r3
+                    interface: et-0/0/57:0
+                    lag_interface: ae181
+                    subnet: 100.64.178.2/31
+                    # If you want to override default allocation policy of allocating OOD IP. Add local_ip var to define it.
+                    # local_ip: 100.64.178.2/31
+            create_tunnels:
+                # When converting existing sites to be compatible with BMN Builder and to have the some P2P address for IPSEC towards
+                # headed, add manual_override and state weather True/False each fabric type, if you would need to provide manual assignment.
+                # In the below example, manual override is enabled for prod and corp fabrics
+                #
+                # The data structure for manual assignment is as follows:-
+                #   { <headend_1_site_code>: [<p2p_ip_for_border_tunnel>, <p2p_ip_for_internet_tunnel>],
+                #     <headend_2_site_code>: [<p2p_ip_for_border_tunnel>, <p2p_ip_for_internet_tunnel>], }
+                # Also please pay close attention to how the P2P subnets are defined. BMN Builder will add the provided 
+                # IP Address as it is (No changes are made to provided IP address).
+                # Example: 
+                #     SIN2-2 headend has 'SIN2-2': ['100.71.16.83/31', '100.71.16.77/31']
+                #     Here, '100.71.16.83/31' is assigned for BORDER and '100.71.16.77/31' for INTERNET 
+                #   
+                manual_override:
+                    prod: False
+                    corp: False
+                    prod-iad: False
+                p2p_subnets:
+                # Plese note how the overrides are added for prod and corp. They both represent identically. Choose which ever formart is easy to understand.
+                # Values can be auto/aggregate subnet/override values. Below allocation has each of them defined.
+                #   - prod and corp has override values defined
+                #   - prod-iad has a aggregate defined.
+                #
+                # NOTE: For prod and corp fabric if site aggregates defined (prod_aggregate, corp_aggregate), then bmn_builder will automatically carve out
+                #       a required subnets size for IPSEC P2P's. Also keyword 'auto' can be added when BMN is built using new procedure (By allocating
+                #       prod_aggregate, corp_aggregate variables.)
+                #
+                    prod: auto
+                #       headend_site_code: [ <border_tunnel_p2p_ip_with_prefix_len> <internet_tunnel_p2p_ip_with_prefix_len>> ]
+                    corp: 10.255.87.192/29
+                    prod-iad: 10.4.238.128/29
+                border:
+                    prod: True
+                    corp: True
+                    prod-iad: True
+                internet:
+                    prod: True
+                    corp: True
+                    prod-iad: True
+            # Use custom_attributes to add any custom attributes for a device.
+            # This falg is added for supporting legacy builds.
+            # Example:-
+            #custom_attributes:
+            #    - ODIN BGP PROD com.amazon.networking.managed.prod.border_mgmt_nw.bgp SERIAL 4
+            #    - ODIN IKE PROD com.amazon.networking.managed.prod.border_mgmt_nw.crypto SERIAL 2
+            #    - ODIN BGP PROD-IAD com.amazon.networking.managed.prod-iad.border_mgmt_nw.bgp SERIAL 1
+            #    - ODIN IKE PROD-IAD com.amazon.networking.managed.prod-iad.border_mgmt_nw.crypto SERIAL 1
+            #    - ODIN BGP CORP com.amazon.networking.managed.corp.border_mgmt_nw.bgp SERIAL 2
+            #    - ODIN IKE CORP com.amazon.networking.managed.corp.border_mgmt_nw.crypto SERIAL 2
+            #    - ODIN SNMP CORP com.amazon.networking.managed.prod.snmp.border SERIAL 1
+            #    - ODIN BGP ILA com.amazon.networking.managed.corp.iborder_mgt_nw_ila.bgp SERIAL 1
+            #    - ODIN IKE ILA com.amazon.networking.managed.corp.iborder_mgt_nw_ila.ike SERIAL 1
+            # Use exclude_shared_attr, in case you do not want any shared attribute file from symlink
+            # This falg is added for supporting legacy builds.
+            # Example:-
+            #exclude_shared_attr:
+            #    global: materialsets.attr
+            #    shared: switchbuilder.attr
+        acc-v2:
+            internet_circuit:
+                local-interface: ge-0/0/13
+                name: DatacomMNS
+                circuit_id: 78_27_63_02
+                     # Circuit ID format: VENDOR/CID/XCID (XCID might be not present at some sites)
+                ip_details:
+                    oob_snat_ip: 202.175.131.109/29
+                    gw: 202.175.131.105
+                        # Without prefixlen
+                    ip: 202.175.131.108/29
+                speed: auto
+                duplex: auto
+            border:
+                management_ip: 103.8.172.151
+                1: # this id is used for constructing local ae number. example: this will be ae1
+                    local-interface: xe-0/0/16 # local-interface refers to acc-v
+                    device: akl50-br-cor-r2
+                    interface: et-0/0/57:0
+                    lag_interface: ae182
+                    subnet: 100.64.178.4/31
+                2:
+                    local-interface: xe-0/0/17
+                    device: akl50-br-cor-r4
+                    interface: et-0/0/57:0
+                    lag_interface: ae182
+                    subnet: 100.64.178.6/31
+            create_tunnels:
+                p2p_subnets: # ODD IP is applied on BMN side
+                    prod: auto
+                    corp: 10.255.87.200/29
+                    prod-iad: 10.4.238.136/29
+                border:
+                    prod: True
+                    corp: True
+                    prod-iad: True
+                internet:
+                    prod: True
+                    corp: True
+                    prod-iad: True
+        # If you want to add custom attributes to an agg then you can also achieve this by following below example.
+        # This falg is added for supporting legacy builds. (used in ewr52-br-mgt-agg-r1/r2)
+        # agg-r1:
+        #    custom_attributes:
+        #        - ## CUSTOM ATTR TT0168620310 ##
+        #        - LOCAL-INTERFACE xe-0/0/80 REMOTE-INTERFACE xe-0/2/0 NEIGHBOR ewr52-br-mgt-sw9
+        #        - LOCAL-INTERFACE xe-0/0/80 VRF MAIN IP 172.25.7.125
+        #        - LOCAL-INTERFACE xe-0/0/80 VRF PROD-IAD-CUSTOMERS IP 172.25.11.61
+        #        - LOCAL-INTERFACE xe-0/0/80 VRF CORP-CUSTOMERS IP 10.105.155.125
+        #        - 
+        #        - BGP VRF MAIN NEIGH ewr52-br-mgt-sw9 IP 172.25.7.79 RR-CLIENT
+        #        - BGP VRF PROD-IAD-CUSTOMERS NEIGH ewr52-br-mgt-sw9 IP 172.25.11.15 RR-CLIENT
+        #        - BGP VRF CORP-CUSTOMERS NEIGH ewr52-br-mgt-sw9 IP 10.105.155.79 RR-CLIENT 
+        agg-r[12]: #Hardcoding to have agg-r[12] symmetrical config as it is always used for connecting Customer Racks ToR dual homed
+            PROD_TORS: # 32 Ports are pre-allocated. Starting from 0 - 31. Port are allocated in such order to cater for asciibetical sorting which would otherwise re-order Dom0 allocation and cause pain when higher order ports are added later on. For more details please refer to https://code.amazon.com/reviews/CR-3645194 
+                xe-0/0/0:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/1:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/2:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/3:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/4:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/5:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/6:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/7:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/8:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/9:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/10:
+                    desc: "LB9 for Phoenix Heimdall akl50-vc-(car/cas)-syd-p1"
+                xe-0/0/11:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/12:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/13:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/14:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/15:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/16:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/17:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/18:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/19:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/20:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/21:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/22:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/23:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/24:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/25:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/26:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/27:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/28:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/29:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/30:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/31:
+                    desc: "PROD - Rack TOR"
+            CORP_TORS:
+                xe-0/0/48:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/49:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/50:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/51:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/52:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/53:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/54:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/55:
+                    desc: "CORP - Rack TOR"
+        sw1:
+            LENEL:
+                ge-0/0/0:
+                    desc: "NVR #2"
+                    properties:
+                        - EDGE # L2 PORT, attached to LENEL VLAN
+                ge-0/0/1:
+                    desc: "NVR #1"
+                    properties:
+                        - EDGE
+                ge-0/0/2:
+                    desc: "Controller"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "CCTV #1"
+                    properties:
+                        - EDGE # L2 PORT, attached to LENEL VLAN
+                        - POE # L2 PORT, attached to LENEL VLAN + Enable POE
+                ge-0/0/4:
+                    desc: "CCTV #2"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/5:
+                    desc: "CCTV #3"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/6:
+                    desc: "CCTV #4"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/7:
+                    desc: "CCTV #5"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/8:
+                    desc: "CCTV #6"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/9:
+                    desc: "CCTV #7"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/10:
+                    desc: "CCTV #8"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/11:
+                    desc: "CCTV #9"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/12:
+                    desc: "CCTV #10"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/13:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/14:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/15:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/16:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/17:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/18:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/19:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/20:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/21:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/22:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/23:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/24:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/25:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/26:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/27:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/28:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/29:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+            CLOUDFRONT:
+                ge-0/0/30:
+                    desc: "akl50-br-mgt-sw1 ge-0/0/30 --> akl50-en-mag-f1acc-v1"
+                    properties:
+                        - P2P
+                ge-0/0/31:
+                    desc: "akl50-br-mgt-sw1 ge-0/0/31 --> akl50-en-mag-f2acc-v1"
+                    properties:
+                        - P2P
+        sw2:
+            CLOUDFRONT:
+                ge-0/0/30:
+                    desc: "akl50-br-mgt-sw2 ge-0/0/30 --> akl50-en-mag-f1acc-v1"
+                    properties:
+                        - P2P
+                ge-0/0/31:
+                    desc: "akl50-br-mgt-sw2 ge-0/0/31 --> akl50-en-mag-f2acc-v1"
+                    properties:
+                        - P2P
+            CONSOLES:
+                ge-0/0/0:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/1:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/2:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/4:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/5:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/6:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/7:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/8:
+                    desc: "RESERVED for akl50 Heimdall Rack console"
+                    properties:
+                        - EDGE
+                ge-0/0/9:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/10:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/11:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/12:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/13:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/14:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/15:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/16:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/17:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/18:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/19:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/20:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/21:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/22:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/23:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/24:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/25:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/26:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/27:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/28:
+                    desc: "DrawBridge2.0 FW:SOPHOS SG-450"
+                    properties:
+                        - EDGE
+                ge-0/0/29:
+                    desc: "DrawBridge2.0 FW:SOPHOS SG-450"
+                    properties:
+                        - EDGE
+        con-r1:
+            device_type: ISR4331 # Can be either C2901 or ISR4331

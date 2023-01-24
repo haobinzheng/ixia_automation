@@ -1,0 +1,466 @@
+# This is an example site yaml consumed by bmn_builder.py                           #
+# Please make sure you have all required setting for each clients/VRFs as per below #
+#                                                                                   #
+region:
+    cluster: dub
+sites:
+    ams58:
+        legacy: False
+        multi-creds-all: True
+        prod_aggregate:
+            - 100.66.190.0/23
+        vrfs:
+            CORP-CUSTOMERS:
+                infrastructure: 10.255.149.0/26
+                vlan_id: 20
+                fabric: corp
+                rib_leak: True
+                redist_default: True
+                clients:
+                    LENEL:
+                        subnet: 10.39.163.96/27
+                        type: vlan
+                    CONSOLES:
+                        subnet: 10.39.163.16/28
+                        type: vlan
+                    CORP_TORS_1:
+                        type: tor
+                        p2p_subnet: 10.105.233.24/29
+                        dom0_subnet: 10.201.112.48/28
+                        dom0_size: '28'
+            PROD:
+                fabric: prod
+                vlan_id: 10
+                infrastructure: auto
+                clients:
+                    PROD_TORS:
+                        type: tor
+                        p2p_subnet: auto
+                        dom0_subnet: auto
+                    PROD_TORS_1:
+                        type: tor
+                        p2p_subnet: 100.66.181.48/28
+                        dom0_subnet: 100.66.187.128/25
+                        dom0_size: '26'
+                    PROD_TORS_2:
+                        type: tor
+                        p2p_subnet: 100.66.187.16/28
+                        dom0_subnet: 100.66.184.128/25
+                        dom0_size: '26'
+            LCI-CP-BACKUP:
+                fabric: prod
+                vlan_id: 90
+                infrastructure: 100.64.178.64/26
+                rib_leak: True
+                clients:
+                    LCI-CP:
+                        type: LCI
+                        p2p_subnet:
+                            - 100.94.3.0/31
+                            - 100.94.3.8/31
+                            - 100.94.3.16/31
+                            - 100.94.3.24/31
+                            - 100.94.3.32/31
+                            - 100.94.3.40/31
+                            - 100.94.3.48/31
+                            - 100.94.3.56/31
+            BLACKWATCH:
+                vlan_id: 300
+                infrastructure: 10.4.246.192/26
+                fabric: blackwatch
+                provisioning_region: DUB
+                clients:
+                    BW_TORS:
+                        type: P2P-OSPF
+                        p2p_subnet: 10.255.2.128/25
+                    BLACKWATCH_IT_FNC:
+                        subnet: 10.129.146.0/24
+                    BH16_BWIT_FNC_PSC_CONSOLE:
+                        subnet: 10.129.146.96/28
+                        type: vlan
+        acc-v1:
+            internet_circuit:
+                local-interface: ge-0/0/13
+                name: fake1
+                circuit_id: Fake1/TBD
+                ip_details:
+                    oob_snat_ip: 127.0.7.3/29
+                    gw: 127.0.7.1
+                    ip: 127.0.7.2/29
+                speed: auto
+                duplex: auto
+            create_tunnels:
+                p2p_subnets:
+                    prod: auto
+                    corp: 10.39.163.0/29
+                    blackwatch:
+                        internet:
+                            vpc-a: 10.129.146.2/31
+                            vpc-b: 10.129.146.4/31
+                border:
+                    prod: False
+                    corp: False
+                internet:
+                    prod: True
+                    corp: True
+                    blackwatch: True
+                remote_asn:
+                    blackwatch: &id001
+                        vpc-a: '64523'
+                        vpc-b: '64524'
+                endpoint_ips:
+                    blackwatch: &id002
+                        vpc-a: 18.130.11.195
+                        vpc-b: 35.176.187.194
+        acc-v2:
+            internet_circuit:
+                local-interface: ge-0/0/13
+                name: fake2
+                circuit_id: Fake2/TBD     # Circuit ID format: VENDOR/CID/XCID (XCID might be not present at some sites)
+                ip_details:
+                    oob_snat_ip: 127.0.8.3/29
+                    gw: 127.0.8.1
+                    ip: 127.0.8.2/29
+                speed: auto
+                duplex: auto
+            create_tunnels:
+                p2p_subnets:
+                    prod: auto
+                    corp: 10.39.163.8/29
+                    blackwatch:
+                        internet:
+                            vpc-a: 10.129.146.6/31
+                            vpc-b: 10.129.146.8/31
+                border:
+                    prod: False
+                    corp: False
+                internet:
+                    prod: True
+                    corp: True
+
+                    blackwatch: True
+                remote_asn:
+                    blackwatch: *id001
+                endpoint_ips:
+                    blackwatch: *id002
+        agg-r[12]:
+            PROD_TORS:
+                xe-0/0/6:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/7:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/8:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/9:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/10:
+                    desc: "PROD - ams58-br-fnc-f1-dos-mgmt-sw1"
+                xe-0/0/11:
+                    desc: "PROD - ams58-br-fnc-f1-lul-mgmt-sw1"
+                xe-0/0/12:
+                    desc: "PROD - ams58-br-cpu-c1-mgmt-r1"
+                xe-0/0/13:
+                    desc: "PROD - ams58-br-cpu-c2-mgmt-r1"
+            PROD_TORS_1:
+                xe-0/0/21:
+                    desc: PROD - ams58-br-fnc-f1-b1-mgmt-sw1
+                xe-0/0/25:
+                    desc: PROD - ams58-br-fnc-f1-b2-mgmt-sw1
+            PROD_TORS_2:
+                xe-0/0/22:
+                    desc: PROD - ams58-br-fnc-f1-s1-mgmt-sw1
+                xe-0/0/26:
+                    desc: PROD - ams58-br-fnc-f1-s3-mgmt-sw1
+            LCI-CP:
+                xe-0/0/15:
+                    desc: --> ams58-br-cpu-c1-acc-r1
+                xe-0/0/16:
+                    desc: --> ams58-br-cpu-c1-acc-r2
+                xe-0/0/17:
+                    desc: --> ams58-br-cpu-c2-acc-r1
+                xe-0/0/18:
+                    desc: --> ams58-br-cpu-c2-acc-r2
+            CORP_TORS_1:
+                xe-0/0/14:
+                    desc: ams58-br-eng-mgmt-sw1
+            BW_TORS:
+                xe-0/0/44:
+                    desc: ams58-br-fnc-f1-dmt-sw1
+                xe-0/0/45:
+                    desc: ams58-br-fnc-f1-dmt-sw2
+        sw1:
+            LENEL:
+                ge-0/0/0:
+                    desc: "NVR #2"
+                    properties:
+                        - EDGE # L2 PORT, attached to LENEL VLAN
+                ge-0/0/1:
+                    desc: "NVR #1"
+                    properties:
+                        - EDGE
+                ge-0/0/2:
+                    desc: "Controller"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "CCTV #1"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/4:
+                    desc: "CCTV #2"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/5:
+                    desc: "CCTV #3"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/6:
+                    desc: "CCTV #4"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/7:
+                    desc: "CCTV #5"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/8:
+                    desc: "CCTV #6"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/9:
+                    desc: "CCTV #7"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/10:
+                    desc: "CCTV #8"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/11:
+                    desc: "CCTV #9"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/12:
+                    desc: "CCTV #10"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/13:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/14:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/15:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/16:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/17:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/18:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/19:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/20:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/21:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/22:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/23:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/24:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/25:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/26:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/27:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/28:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/29:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+        sw2:
+            CONSOLES:
+                ge-0/0/0:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/1:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/2:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/4:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/5:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/6:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/7:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/8:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/9:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/10:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/11:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/12:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/13:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/14:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/15:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/16:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/17:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/19:
+                    desc: "ams58-br-fnc-f1-b1-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/20:
+                    desc: "ams58-br-fnc-f1-b2-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/21:
+                    desc: "ams58-br-fnc-f1-s1-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/22:
+                    desc: "ams58-br-fnc-f1-s3-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/23:
+                    desc: "ams58-br-fnc-f1-lul-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/24:
+                    desc: "ams58-br-cpu-c1-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/25:
+                    desc: "ams58-br-cpu-c2-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/26:
+                    desc: "ams58-br-eng-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/27:
+                    desc: "ams58-br-fnc-f1-dos-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/28:
+                    desc: "DrawBridge2.0 FW:SOPHOS SG-450"
+                    properties:
+                        - EDGE
+                ge-0/0/29:
+                    desc: "DrawBridge2.0 FW:SOPHOS SG-450"
+                    properties:
+                        - EDGE
+            BH16_BWIT_FNC_PSC_CONSOLE:
+                ge-0/0/18:
+                    desc: ams58-blackhole16-psc console
+                    properties:
+                        - EDGE
+        con-r1:
+            device_type: ISR4331 # Can be either C2901 or ISR4331
+        crpd_mgmt_subnet:
+            - '100.66.189.0/24'

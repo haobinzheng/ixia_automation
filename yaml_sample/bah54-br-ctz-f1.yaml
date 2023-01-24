@@ -1,0 +1,254 @@
+site:
+  name: bah54-br-ctz-f1
+  region: bah
+  fabric: catzilla
+  type: micro
+  number_of_bricks: 1
+  cluster_id:  0.7.20.192/26
+  base_ipv6_64: 2a01:578:0:4602::/64
+
+main:
+  brick_os: 15.1X53-D235.1
+  brick_fw_version: V0018.6U
+
+bricks:
+  brick_1:
+    brick_rack_topology: rack_2_0
+    build_state: LIVE
+    customers:
+      customer_1:
+        role: br-agg
+        stripe: [1]
+        speed: 40
+      customer_2:
+        role: ec2
+        stripe: [2]
+        speed: 10
+        positions: [1,2,3,4,5,6,7,8]
+      customer_3:
+        role: br-lbe
+        stripe: [3]
+        speed: 10
+        positions: [1,2,3,4,5,6,7,8,9,10,11]
+        connector:
+          bah54-br-lbe-j2-r1:
+            lag: 32
+            members:
+              interfaces:
+              - xe-0/0/8:0: xe-0/0/24
+                xe-0/0/8:1: xe-0/0/25
+                xe-0/0/8:2: xe-0/0/26
+                xe-0/0/8:3: xe-0/0/27
+              - xe-0/0/8:0: xe-0/0/28
+                xe-0/0/8:1: xe-0/0/29
+                xe-0/0/8:2: xe-0/0/30
+                xe-0/0/8:3: xe-0/0/31
+              - xe-0/0/8:0: xe-0/0/32
+                xe-0/0/8:1: xe-0/0/33
+                xe-0/0/8:2: xe-0/0/34
+                xe-0/0/8:3: xe-0/0/35
+              - xe-0/0/8:0: xe-0/0/36
+                xe-0/0/8:1: xe-0/0/37
+                xe-0/0/8:2: xe-0/0/38
+                xe-0/0/8:3: xe-0/0/39
+            stripe: [3]
+          bah54-br-lbe-j2-r2:
+            lag: 36
+            members:
+              interfaces:
+              - xe-0/0/9:0: xe-0/0/24
+                xe-0/0/9:1: xe-0/0/25
+                xe-0/0/9:2: xe-0/0/26
+                xe-0/0/9:3: xe-0/0/27
+              - xe-0/0/9:0: xe-0/0/28
+                xe-0/0/9:1: xe-0/0/29
+                xe-0/0/9:2: xe-0/0/30
+                xe-0/0/9:3: xe-0/0/31
+              - xe-0/0/9:0: xe-0/0/32
+                xe-0/0/9:1: xe-0/0/33
+                xe-0/0/9:2: xe-0/0/34
+                xe-0/0/9:3: xe-0/0/35
+              - xe-0/0/9:0: xe-0/0/36
+                xe-0/0/9:1: xe-0/0/37
+                xe-0/0/9:2: xe-0/0/38
+                xe-0/0/9:3: xe-0/0/39
+            stripe: [3]
+          bah54-br-lbe-j2-r3:
+            lag: 40
+            members:
+              interfaces:
+              - xe-0/0/10:0: xe-0/0/24
+                xe-0/0/10:1: xe-0/0/25
+                xe-0/0/10:2: xe-0/0/26
+                xe-0/0/10:3: xe-0/0/27
+              - xe-0/0/10:0: xe-0/0/28
+                xe-0/0/10:1: xe-0/0/29
+                xe-0/0/10:2: xe-0/0/30
+                xe-0/0/10:3: xe-0/0/31
+              - xe-0/0/10:0: xe-0/0/32
+                xe-0/0/10:1: xe-0/0/33
+                xe-0/0/10:2: xe-0/0/34
+                xe-0/0/10:3: xe-0/0/35
+              - xe-0/0/10:0: xe-0/0/36
+                xe-0/0/10:1: xe-0/0/37
+                xe-0/0/10:2: xe-0/0/38
+                xe-0/0/10:3: xe-0/0/39
+            stripe: [3]
+      customer_4:
+        role: ws-fw
+        stripe: [4]
+        speed: 10
+        connector:
+          bah54-54-ws-tra-r1:
+            lag: 0
+            members:
+              interfaces:
+                 - xe-0/0/0:0: xe-0/0/0
+                   xe-0/0/0:1: xe-0/0/1
+                   xe-0/0/0:2: xe-0/0/2
+                   xe-0/0/0:3: xe-0/0/3
+                 - xe-0/0/0:0: xe-0/0/12
+                   xe-0/0/0:1: xe-0/0/13
+                   xe-0/0/0:2: xe-0/0/14
+                   xe-0/0/0:3: xe-0/0/15
+                 - xe-0/0/0:0: xe-0/0/24
+                   xe-0/0/0:1: xe-0/0/25
+                   xe-0/0/0:2: xe-0/0/26
+                   xe-0/0/0:3: xe-0/0/27
+                 - xe-0/0/0:0: xe-0/0/36
+                   xe-0/0/0:1: xe-0/0/37
+                   xe-0/0/0:2: xe-0/0/38
+                   xe-0/0/0:3: xe-0/0/39
+            stripe: [4]
+      customer_5:
+        role: bfw
+        stripe: [4]
+        speed: 10
+      customer_6:
+        role: ec2
+        stripe: [2]
+        speed: 100
+        positions: [9,10,11,12,13,14,15,16]
+        connector:
+          bah54-54-br-svc-r105:
+            lag: 0
+            members:
+              interfaces:
+              - et-0/0/8: et-0/0/0
+                et-0/0/9: et-0/0/2
+              - et-0/0/8: et-0/0/8
+                et-0/0/9: et-0/0/10
+              - et-0/0/8: et-0/0/16
+                et-0/0/9: et-0/0/18
+              - et-0/0/8: et-0/0/24
+                et-0/0/9: et-0/0/26
+            min_links: 2
+            asn: 65305
+            stripe: [2]
+          bah54-54-br-svc-r106:
+            lag: 8
+            members:
+              interfaces:
+              - et-0/0/10: et-0/0/0
+                et-0/0/11: et-0/0/2
+              - et-0/0/10: et-0/0/8
+                et-0/0/11: et-0/0/10
+              - et-0/0/10: et-0/0/16
+                et-0/0/11: et-0/0/18
+              - et-0/0/10: et-0/0/24
+                et-0/0/11: et-0/0/26
+            min_links: 2
+            asn: 65305
+            stripe: [2]
+          bah54-54-br-svc-r107:
+            lag: 16
+            members:
+              interfaces:
+              - et-0/0/12: et-0/0/0
+                et-0/0/13: et-0/0/2
+              - et-0/0/12: et-0/0/8
+                et-0/0/13: et-0/0/10
+              - et-0/0/12: et-0/0/16
+                et-0/0/13: et-0/0/18
+              - et-0/0/12: et-0/0/24
+                et-0/0/13: et-0/0/26
+            min_links: 2
+            asn: 65305
+            stripe: [2]
+          bah54-54-br-svc-r108:
+            lag: 24
+            members:
+              interfaces:
+              - et-0/0/14: et-0/0/0
+                et-0/0/15: et-0/0/2
+              - et-0/0/14: et-0/0/8
+                et-0/0/15: et-0/0/10
+              - et-0/0/14: et-0/0/16
+                et-0/0/15: et-0/0/18
+              - et-0/0/14: et-0/0/24
+                et-0/0/15: et-0/0/26
+            min_links: 2
+            asn: 65305
+            stripe: [2]
+      customer_7:
+        role: br-lbe
+        stripe: [3]
+        speed: 100
+        positions: [12,13,14]
+        connector:
+          bah54-br-lbe-j3-r1:
+            lag: 44
+            members:
+              interfaces:
+              - et-0/0/11: et-0/0/28
+              - et-0/0/11: et-0/0/29
+              - et-0/0/11: et-0/0/30
+              - et-0/0/11: et-0/0/31
+            stripe: [3]
+          bah54-br-lbe-j3-r2:
+            lag: 48
+            members:
+              interfaces:
+              - et-0/0/12: et-0/0/28
+              - et-0/0/12: et-0/0/29
+              - et-0/0/12: et-0/0/30
+              - et-0/0/12: et-0/0/31
+            stripe: [3]
+          bah54-br-lbe-j3-r3:
+            lag: 52
+            members:
+              interfaces:
+              - et-0/0/13: et-0/0/28
+              - et-0/0/13: et-0/0/29
+              - et-0/0/13: et-0/0/30
+              - et-0/0/13: et-0/0/31
+            stripe: [3]
+management_network:
+  builder_server:
+    - 100.64.96.26
+    - 100.64.98.26
+    - 100.64.100.26
+  management_allocation_22: 100.90.40.0/22
+  prod_svc: bah54-54-ws-svc
+  prod_svc_asn: 65063
+  prod_svc_allocation:
+    r101:
+      peering: 100.64.81.10/31
+      lag: ae1
+      remote_port: xe-0/0/26
+      remote_lag: ae35
+    r102:
+      peering: 100.64.81.42/31
+      lag: ae1
+      remote_port: xe-0/0/26
+      remote_lag: ae35
+    r103:
+      peering: 100.64.81.74/31
+      lag: ae2
+      remote_port: xe-0/0/26
+      remote_lag: ae35
+    r104:
+      peering: 100.64.81.106/31
+      lag: ae2
+      remote_port: xe-0/0/26
+      remote_lag: ae35

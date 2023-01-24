@@ -1,0 +1,825 @@
+# This is an example site yaml consumed by bmn_builder.py                           #
+# Please make sure you have all required setting for each clients/VRFs as per below #
+#                                                                                   #
+region:
+    cluster: arn
+switchbuilder: # THIS TAG IS NOT NEEDED ANY MORE. DATA IS PULLED FROM NSM-COP DIRECTLY #
+    # SwitchBuilder Discovery Service IP Address. (These are the IP HELPER Address
+    # NOTE: This will be replace in future to get the information automatically from
+    # https://nms-cop.amazon.com/api/v1/address_groups/IP-HELPER:L3
+    prod: # Look for PROD-<cluster> in https://nms-cop.amazon.com/api/v1/address_groups/IP-HELPER:L3
+        - 100.64.96.30
+        - 100.64.100.22
+        - 100.64.98.26
+    corp: # Look for CORP-GLOBAL in https://nms-cop.amazon.com/api/v1/address_groups/IP-HELPER:L3
+        - 100.64.96.230
+        - 100.64.97.134
+        - 100.64.97.226
+sites:
+    arn53:
+        legacy: True # Set this to True if you are converting existing sites to be supported with bmn_builder.py. (Please note only those site hich has AUTOATTRS attributes in routerspecific.attr)
+        vrfs:
+            CORP-CUSTOMERS:
+                infrastructure: 10.105.134.192/26 # Subnet ID will be for OSPF Area ID for its clients. Allocated from corp_aggregate
+                vlan_id: 20
+                fabric: corp
+                rib_leak: True # rib leak from parent fabric (in this example it is corp) into this vrf
+                redist_default: True # redistribute default into ospf
+                clients:
+                    CORP_TORS:
+                        type: tor
+                        p2p_subnet: 10.255.220.0/26  # Allocated from corp_aggregate
+                        dom0_subnet: 10.255.221.0/24  # Allocated from corp_aggregate
+                    BFB-KNOX:
+                        type: tor
+                        p2p_subnet: 10.105.192.112/28  # Allocated from corp_aggregate
+                        dom0_subnet: 10.105.167.128/26  # Allocated from corp_aggregate
+                    CONGO-DWDM-WAVESERVERS-SW3:
+                        subnet: 10.105.239.64/27 # Allocated from corp_aggregate
+                        type: vlan  # Allocated from corp_aggregate
+                    CONGO-DWDM-WAVESERVERS-SW4:
+                        subnet: 10.105.239.32/27 # Allocated from corp_aggregate
+                        type: vlan  # Allocated from corp_aggregate
+                    CONGO-DWDM-WAVESERVERS-SW5:
+                        subnet: 10.105.239.0/27 # Allocated from corp_aggregate
+                        type: vlan  # Allocated from corp_aggregate
+                    LENEL:
+                        subnet: 10.255.220.64/27
+                        type: vlan
+                    CONSOLES-ADD:
+                        subnet: 10.255.220.96/27  # Allocated from corp_aggregate
+                        type: vlan
+            CONGO-DWDM-EXTERNAL-ARNPP5:
+                vlan_id: 40
+                fabric: corp
+                rib_leak: True # rib leak from parent fabric (in this example it is corp) into this vrf
+                redist_default: True # redistribute default into ospf
+                infrastructure: 10.112.179.0/26 # Allocate only when required
+                clients: # Part of Congo Deployment
+                    CONGO-DWDM-LINE-SHELF-ARNPP5:
+                        type: DWDM-EXTERNAL-LIA # This type is specifically for CONGO
+                        sharedsubnet: 10.105.255.240/28 # Allocate only when required. This will ve set as OSPF Area ID
+                        p2p_subnet: 10.112.179.176/29 # Allocate only when required. CONGO-P2P segment. ODD IP is used by BMN
+                        enable_ospf: True
+            CONGO-DWDM-EXTERNAL-ARNPP7:
+                vlan_id: 50
+                fabric: corp
+                rib_leak: True # rib leak from parent fabric (in this example it is corp) into this vrf
+                redist_default: True # redistribute default into ospf
+                infrastructure: 10.112.179.64/26 # Allocate only when required
+                clients: # Part of Congo Deployment
+                    CONGO-DWDM-LINE-SHELF-ARNPP7:
+                        type: DWDM-EXTERNAL-LIA # This type is specifically for CONGO
+                        sharedsubnet: 10.105.255.208/28 # Allocate only when required. This will ve set as OSPF Area ID
+                        p2p_subnet: 10.112.179.160/29 # Allocate only when required. CONGO-P2P segment. ODD IP is used by BMN
+                        enable_ospf: True
+            CONGO-DWDM-EXTERNAL-ARNPP9:
+                vlan_id: 60
+                fabric: corp
+                rib_leak: True # rib leak from parent fabric (in this example it is corp) into this vrf
+                redist_default: True # redistribute default into ospf
+                infrastructure: 10.112.180.0/26 # Allocate only when required
+                clients: # Part of Congo Deployment
+                    CONGO-DWDM-LINE-SHELF-ARNPP9:
+                        type: DWDM-EXTERNAL-LIA # This type is specifically for CONGO
+                        sharedsubnet: 10.105.255.224/28 # Allocate only when required. This will ve set as OSPF Area ID
+                        p2p_subnet: 10.112.179.168/29 # Allocate only when required. CONGO-P2P segment. ODD IP is used by BMN
+                        enable_ospf: True
+            PROD-IAD-CUSTOMERS:
+                vlan_id: 30
+                infrastructure: 10.4.234.0/26 # Subnet ID will be for OSPF Area ID for its clients.
+                fabric: prod-iad
+                rib_leak: True
+            PROD: # PROD is part of MAIN. Does not require vlan-id
+                fabric: prod
+                vlan_id: 10 # This ID must be unique within each site.
+                infrastructure: 100.73.0.0/26
+                clients:
+                    PROD_TORS:
+                        type: tor # This type will enable ospf stub area towards tor and add area-summary for allocated dom0
+                        p2p_subnet: 100.73.23.0/24 # Allocated from prod_aggregate
+                        dom0_subnet: 100.73.24.0/22 # Allocated from prod_aggregate
+                    BFB:
+                        type: tor # This type will enable ospf stub area towards tor and add area-summary for allocated dom0
+                        p2p_subnet: ['100.73.18.0/29', '100.73.18.64/29'] # Allocated from prod_aggregate
+                        dom0_subnet: 100.73.20.0/26 # Allocated from prod_aggregate
+                    BORDER-OOB:
+                        type: tor # This type will enable ospf stub area towards tor and add area-summary for allocated dom0
+                        p2p_subnet: ['100.73.18.8/29', '100.73.18.16/29', '100.73.18.72/29', '100.73.18.80/29'] # Allocated from prod_aggregate
+                        dom0_subnet: 100.73.20.128/25 # Allocated from prod_aggregate
+                    CONSOLES:
+                        subnet: 100.73.22.0/28  # Allocated from corp_aggregate
+                        type: vlan
+            LCI-CP-BACKUP:
+                fabric: prod
+                vlan_id: 90
+                infrastructure: 100.64.178.64/26
+                rib_leak: True
+                clients:
+                    LCI-CP:
+                        type: LCI
+                        p2p_subnet:
+                            - 100.94.3.0/31
+                            - 100.94.3.8/31
+                            - 100.94.3.16/31
+                            - 100.94.3.24/31
+                            - 100.94.3.32/31
+                            - 100.94.3.40/31
+                            - 100.94.3.48/31
+                            - 100.94.3.56/31
+        acc-v1:
+            internet_circuit:
+                local-interface: ge-0/0/13     # local-interface refers to acc-v
+                name: IPOnly
+                circuit_id: IPOnly/CID:XA9687-1A
+                ip_details:
+                    oob_snat_ip: 213.212.34.27/29
+                    gw: 213.212.34.25     # Without prefixlen
+                    ip: 213.212.34.26/29
+            border:
+                management_ip: 52.46.213.148
+                1: # this is ae number
+                    local-interface: xe-0/0/16 # local-interface refers to acc-v
+                    device: arn53-br-cor-r1
+                    interface: et-0/0/57:0
+                    lag_interface: ae181
+                    subnet: 100.64.178.0/31 # ODD IP to be used on BMN side
+                2:
+                    local-interface: xe-0/0/17
+                    device: arn53-br-cor-r3
+                    interface: et-0/0/57:0
+                    lag_interface: ae181
+                    subnet: 100.64.178.2/31
+            create_tunnels:
+                manual_override:
+                    prod: True
+                    corp: True
+                    prod-iad: False
+                p2p_subnets:
+                    prod:
+                        ARN50-50: ['100.73.16.13/31', '100.73.16.1/31']
+                        ARN51-51: ['100.73.16.15/31', '100.73.16.3/31']
+                        ARN52-52: ['100.73.16.17/31', '100.73.16.5/31']
+                    corp:
+                        IAD2: ['10.105.160.217/31', '10.105.160.209/31']
+                        SEA3: ['10.105.160.219/31', '10.105.160.211/31']
+                    prod-iad: 172.25.0.208/29
+                border:
+                    prod: True
+                    corp: True
+                    prod-iad: True
+                internet:
+                    prod: True
+                    corp: True
+                    prod-iad: True
+        acc-v2:
+            internet_circuit:
+                local-interface: ge-0/0/13
+                name: IPOnly
+                circuit_id: IPOnly/CID:XA9687-1B
+                ip_details:
+                    oob_snat_ip: 213.212.34.43/29
+                    gw: 213.212.34.41     # Without prefixlen
+                    ip: 213.212.34.42/29
+            border:
+                management_ip: 52.46.213.149
+                1: # this id is used for constructing local ae number. example: this will be ae1
+                    local-interface: xe-0/0/16 # local-interface refers to acc-v
+                    device: arn53-br-cor-r2
+                    interface: et-0/0/57:0
+                    lag_interface: ae182
+                    subnet: 100.64.178.4/31
+                2:
+                    local-interface: xe-0/0/17
+                    device: arn53-br-cor-r4
+                    interface: et-0/0/57:0
+                    lag_interface: ae182
+                    subnet: 100.64.178.6/31
+            create_tunnels:
+                manual_override:
+                    prod: True
+                    corp: True
+                    prod-iad: False
+                p2p_subnets:
+                    prod:
+                        ARN50-50: ['100.73.16.19/31', '100.73.16.7/31']
+                        ARN51-51: ['100.73.16.21/31', '100.73.16.9/31']
+                        ARN52-52: ['100.73.16.23/31', '100.73.16.11/31']
+                    corp:
+                        IAD2: ['10.105.160.221/31', '10.105.160.213/31']
+                        SEA3: ['10.105.160.223/31', '10.105.160.215/31']
+                    prod-iad: 172.25.0.216/29
+                border:
+                    prod: True
+                    corp: True
+                    prod-iad: True
+                internet:
+                    prod: True
+                    corp: True
+                    prod-iad: True
+        agg-r[12]: #Hardcoding to have agg-r[12] symmetrical config as it is always used for connecting Customer Racks ToR dual homed
+            BFB: # 32 Ports are pre-allocated. Starting from 0 - 31. Port are allocated in such order to cater for asciibetical sorting which would otherwise re-order Dom0 allocation and cause pain when higher order ports are added later on. For more details please refer to https://code.amazon.com/reviews/CR-3645194 
+                xe-0/0/0:
+                    desc: "arn53-br-mgt-agg-r[12] xe-0/0/0 --> Brick-#1 - arn53-br-bfb-mgt-sw1 TOR2"
+                xe-0/0/1:
+                    desc: "arn53-br-mgt-agg-r[12] xe-0/0/1 --> Brick-#1 - arn53-br-bfb-mgt-sw2 TOR1"
+            BFB-KNOX:
+                xe-0/0/2:
+                    desc: "arn53-br-mgt-agg-r[12] xe-0/0/2 --> Brick-#1 - arn53-br-bfb-mgt-sw3 TOR3"
+                xe-0/0/3:
+                    desc: "arn53-br-mgt-agg-r[12] xe-0/0/3 --> Brick-#1 - arn53-br-bfb-mgt-sw4 TOR4"
+            BORDER-OOB:
+                xe-0/0/4:
+                    desc: "arn53-br-mgt-agg-r[12] xe-0/0/4 --> arn53-br-tct-mgmt-sw1 TOR"
+                xe-0/0/5:
+                    desc: "arn53-br-mgt-agg-r[12] xe-0/0/5 --> arn53-br-tct-mgmt-sw2 TOR"
+                xe-0/0/6:
+                    desc: "arn53-br-mgt-agg-r[12] xe-0/0/6 --> arn53-br-rrr-mgmt-sw1 TOR"
+                xe-0/0/7:
+                    desc: "arn53-br-mgt-agg-r[12] xe-0/0/7 --> arn53-br-lle-dcr-mgmt-sw1 TOR"
+            PROD_TORS:
+                xe-0/0/8:
+                    desc: "arn53-br-bfb-f1-b2-mgmt-sw1"
+                xe-0/0/9:
+                    desc: "arn53-br-bfb-f1-b2-mgmt-sw2"
+                xe-0/0/10:
+                    desc: "arn53-br-bfb-f1-s1-mgmt-sw1"
+                xe-0/0/11:
+                    desc: "arn53-br-bfb-f1-s2-mgmt-sw1"
+                xe-0/0/12:
+                    desc: "RESERVED for arn53-vc-car-arn-p1-v5-r[12] TOR"
+                xe-0/0/13:
+                    desc: "RESERVED for arn53-vc-cor-b1-r[1234] TOR"
+                xe-0/0/14:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/15:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/16:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/17:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/18:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/19:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/20:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/21:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/22:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/23:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/24:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/25:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/26:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/27:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/28:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/29:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/30:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/31:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/32:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/33:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/34:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/35:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/36:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/37:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/38:
+                    desc: "PROD - Rack TOR"
+                xe-0/0/39:
+                    desc: "PROD - Rack TOR"
+            CORP_TORS:
+                xe-0/0/48:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/49:
+                    desc: "arn53-br-bfb-f1-b2-mgmt-sw3"
+                xe-0/0/50:
+                    desc: "arn53-br-bfb-f1-b2-mgmt-sw4"
+                xe-0/0/51:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/52:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/53:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/54:
+                    desc: "CORP - Rack TOR"
+                xe-0/0/55:
+                    desc: "CORP - Rack TOR"
+            LCI-CP:
+                xe-0/0/76:
+                    desc: "--> arn53-br-cpu-c1-acc-r1"
+                xe-0/0/77:
+                    desc: "--> arn53-br-cpu-c1-acc-r2"
+                xe-0/0/78:
+                    desc: "--> arn53-br-cpu-c2-acc-r1"
+                xe-0/0/79:
+                    desc: "--> arn53-br-cpu-c2-acc-r2"
+        sw1:
+            LENEL:
+                ge-0/0/0:
+                    desc: "NVR #2"
+                    properties:
+                        - EDGE # L2 PORT, attached to LENEL VLAN
+                ge-0/0/1:
+                    desc: "NVR #1"
+                    properties:
+                        - EDGE
+                ge-0/0/2:
+                    desc: "Controller"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "CCTV #1"
+                    properties:
+                        - EDGE # L2 PORT, attached to LENEL VLAN
+                        - POE # L2 PORT, attached to LENEL VLAN + Enable POE
+                ge-0/0/4:
+                    desc: "CCTV #2"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/5:
+                    desc: "CCTV #3"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/6:
+                    desc: "CCTV #4"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/7:
+                    desc: "CCTV #5"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/8:
+                    desc: "CCTV #6"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/9:
+                    desc: "CCTV #7"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/10:
+                    desc: "CCTV #8"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/11:
+                    desc: "CCTV #9"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/12:
+                    desc: "CCTV #10"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/13:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/14:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/15:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/16:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/17:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/18:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/19:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/20:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/21:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/22:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/23:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/24:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/25:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/26:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/27:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/28:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+                ge-0/0/29:
+                    desc: "RESERVED: FOR LENEL"
+                    properties:
+                        - EDGE
+                        - POE
+        sw2:
+            CONSOLES-ADD:
+                ge-0/0/0:
+                    desc: "RESERVED for arn53-vc-car-arn-p1-v5-r[12] console router"
+                    properties:
+                        - EDGE
+                ge-0/0/1:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/2:
+                    desc: "arn1-br-cdn-p2-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "Reserved for BFBv3 arn53-br-bfb-f1-b2-oob-r1 Gi0/1"
+                    properties:
+                        - EDGE
+                ge-0/0/4:
+                    desc: "Reserved for BFBv3 arn53-br-bfb-f1-b2-oob-r2 Gi0/1"
+                    properties:
+                        - EDGE
+                ge-0/0/5:
+                    desc: "Reserved for BFBv3 arn53-br-bfb-f1-s1-oob-r1 Gi0/1"
+                    properties:
+                        - EDGE
+                ge-0/0/6:
+                    desc: "Reserved for BFBv3 arn53-br-bfb-f1-s2-oob-r1 Gi0/1"
+                    properties:
+                        - EDGE
+                ge-0/0/7:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/8:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/9:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/10:
+                    desc: "RESERVED for arn53-vc-cor-arn-b1-r[1234] console router"
+                    properties:
+                        - EDGE
+                ge-0/0/11:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/12:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/13:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/14:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/15:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/16:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/17:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/18:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/19:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/20:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/21:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/22:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/23:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/24:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/25:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/26:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/27:
+                    desc: "Clients Console Router"
+                    properties:
+                        - EDGE
+                ge-0/0/28:
+                    desc: "DrawBridge2.0 FW:SOPHOS SG-450"
+                    properties:
+                        - EDGE
+                ge-0/0/29:
+                    desc: "DrawBridge2.0 FW:SOPHOS SG-450"
+                    properties:
+                        - EDGE
+            CONSOLES:
+                ge-0/0/36:
+                    desc: "Console Router arn53-p1-oob-con-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/37:
+                    desc: "Console Router arn53-br-bfb-f1-b1-oob-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/38:
+                    desc: "Console Router arn53-br-bfb-f1-b1-oob-r2"
+                    properties:
+                        - EDGE
+                ge-0/0/39:
+                    desc: "Console Router arn53-br-rrr-oob-con-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/40:
+                    desc: "Console Router arn53-br-tct-oob-con-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/41:
+                    desc: "Console Router arn53-br-tct-oob-con-r2"
+                    properties:
+                        - EDGE
+                ge-0/0/42:
+                    desc: "Console Router arn53-br-lle-oob-con-r1"
+                    properties:
+                        - EDGE
+                ge-0/0/44:
+                    desc: "Console Router arn53-br-bpn-v1"
+                    properties:
+                        - EDGE
+                ge-0/0/45:
+                    desc: "Console Router arn53-br-bpn-v2"
+                    properties:
+                        - EDGE
+        sw3: # This is only needed when CONGO customer is attached to BMN
+            CONGO-DWDM-WAVESERVERS-SW3:
+                ge-0/0/2:
+                    desc: "Waveserver #1"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "Waveserver #2"
+                    properties:
+                        - EDGE
+                ge-0/0/4:
+                    desc: "Waveserver #3"
+                    properties:
+                        - EDGE
+                ge-0/0/5:
+                    desc: "Waveserver #4"
+                    properties:
+                        - EDGE
+                ge-0/0/6:
+                    desc: "Waveserver #5"
+                    properties:
+                        - EDGE
+                ge-0/0/7:
+                    desc: "Waveserver #6"
+                    properties:
+                        - EDGE
+                ge-0/0/8:
+                    desc: "Waveserver #7"
+                    properties:
+                        - EDGE
+                ge-0/0/9:
+                    desc: "Waveserver #8"
+                    properties:
+                        - EDGE
+                ge-0/0/10:
+                    desc: "Waveserver #9"
+                    properties:
+                        - EDGE
+                ge-0/0/11:
+                    desc: "Waveserver #10"
+                    properties:
+                        - EDGE
+                ge-0/0/12:
+                    desc: "Waveserver #11"
+                    properties:
+                        - EDGE
+                ge-0/0/13:
+                    desc: "Waveserver #12"
+                    properties:
+                        - EDGE
+            CONGO-DWDM-LINE-SHELF-ARNPP5:
+                ge-0/0/46:
+                    desc: "arn53-wdm-pp5y-s1 VRF:CONGO-DWDM-EXTERNAL-ARNPP5"
+                    properties:
+                        - P2P
+                    p2p_net: 10.112.179.181/30
+                ge-0/0/47:
+                    desc: "arn53-wdm-pp5x-s1 VRF:CONGO-DWDM-EXTERNAL-ARNPP5"
+                    properties:
+                        - P2P
+                    p2p_net: 10.112.179.177/30
+        sw4: # This is only needed when CONGO customer is attached to BMN
+            CONGO-DWDM-WAVESERVERS-SW4:
+                ge-0/0/2:
+                    desc: "Waveserver #1"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "Waveserver #2"
+                    properties:
+                        - EDGE
+                ge-0/0/4:
+                    desc: "Waveserver #3"
+                    properties:
+                        - EDGE
+                ge-0/0/5:
+                    desc: "Waveserver #4"
+                    properties:
+                        - EDGE
+                ge-0/0/6:
+                    desc: "Waveserver #5"
+                    properties:
+                        - EDGE
+                ge-0/0/7:
+                    desc: "Waveserver #6"
+                    properties:
+                        - EDGE
+                ge-0/0/8:
+                    desc: "Waveserver #7"
+                    properties:
+                        - EDGE
+                ge-0/0/9:
+                    desc: "Waveserver #8"
+                    properties:
+                        - EDGE
+                ge-0/0/10:
+                    desc: "Waveserver #9"
+                    properties:
+                        - EDGE
+                ge-0/0/11:
+                    desc: "Waveserver #10"
+                    properties:
+                        - EDGE
+                ge-0/0/12:
+                    desc: "Waveserver #11"
+                    properties:
+                        - EDGE
+                ge-0/0/13:
+                    desc: "Waveserver #12"
+                    properties:
+                        - EDGE
+            CONGO-DWDM-LINE-SHELF-ARNPP7:
+                ge-0/0/46:
+                    desc: "arn53-wdm-pp7y-s1 VRF:CONGO-DWDM-EXTERNAL-ARNPP7"
+                    properties:
+                        - P2P
+                    p2p_net: 10.112.179.165/30
+                ge-0/0/47:
+                    desc: "arn53-wdm-pp7x-s1 VRF:CONGO-DWDM-EXTERNAL-ARNPP7"
+                    properties:
+                        - P2P
+                    p2p_net: 10.112.179.161/30
+        sw5: # This is only needed when CONGO customer is attached to BMN
+            CONGO-DWDM-WAVESERVERS-SW5:
+                ge-0/0/2:
+                    desc: "Waveserver #1"
+                    properties:
+                        - EDGE
+                ge-0/0/3:
+                    desc: "Waveserver #2"
+                    properties:
+                        - EDGE
+                ge-0/0/4:
+                    desc: "Waveserver #3"
+                    properties:
+                        - EDGE
+                ge-0/0/5:
+                    desc: "Waveserver #4"
+                    properties:
+                        - EDGE
+                ge-0/0/6:
+                    desc: "Waveserver #5"
+                    properties:
+                        - EDGE
+                ge-0/0/7:
+                    desc: "Waveserver #6"
+                    properties:
+                        - EDGE
+                ge-0/0/8:
+                    desc: "Waveserver #7"
+                    properties:
+                        - EDGE
+                ge-0/0/9:
+                    desc: "Waveserver #8"
+                    properties:
+                        - EDGE
+                ge-0/0/10:
+                    desc: "Waveserver #9"
+                    properties:
+                        - EDGE
+                ge-0/0/11:
+                    desc: "Waveserver #10"
+                    properties:
+                        - EDGE
+                ge-0/0/12:
+                    desc: "Waveserver #11"
+                    properties:
+                        - EDGE
+                ge-0/0/13:
+                    desc: "Waveserver #12"
+                    properties:
+                        - EDGE
+            CONGO-DWDM-LINE-SHELF-ARNPP9:
+                ge-0/0/46:
+                    desc: "arn53-wdm-pp9y-s1 VRF:CONGO-DWDM-EXTERNAL-ARNPP9"
+                    properties:
+                        - P2P
+                    p2p_net: 10.112.179.173/30
+                ge-0/0/47:
+                    desc: "arn53-wdm-pp9x-s1 VRF:CONGO-DWDM-EXTERNAL-ARNPP9"
+                    properties:
+                        - P2P
+                    p2p_net: 10.112.179.169/30
+        con-r1:
+            device_type: C2901 # Can be either C2901 or ISR4331
+        crpd_mgmt_subnet:
+            - '100.73.64.0/24'
