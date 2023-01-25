@@ -86,6 +86,158 @@ proc psl_power_up {} {
 	}
 }
 
+proc psl_power_onoff {} {
+# Configure all ports to 2-Pair Alt-A and define ports to power
+psl_setup p99 2pA
+set addrList "p1 p2 p3 p4 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24"
+# Power 8 Ports to Class 3, 11.5 watts
+set poweredPorts ""
+foreach addr $addrList {
+ set status [power_pse $addr c 3 p 11.5]
+ if { [lindex $status 0] != "POWERED" } {
+ puts "Test Port $addr FAILED TO POWER !"
+ } else {
+ puts "Test Port $addr Succeeded TO POWER !"
+ lappend poweredPorts $addr
+ }
+}
+puts "Ports $poweredPorts are powering 11.5W"
+# Configure and arm Load Transients
+foreach addr $poweredPorts {
+ ptrans p99 i 400 short arm
+}
+# Disconnect Signatures to prevent re-powering
+# and Fire All Transients
+port p99 isolate
+trigout p0
+# Recover Port Power Status
+set unpoweredPorts ""
+foreach addr $poweredPorts {
+ set status [lindex [pstatus $addr stat] 3]
+ if { $status == "OFF" } {
+ lappend unpoweredPorts $addr
+ puts "$addr has been Unpowered!"
+ }
+}
+puts "Ports that removed power with transient: $unpoweredPorts"
+# Disconnect and shut down all ports
+psa_disconnect p99
+}
+
+proc psl_change_load_4p {} {
+# Load the PSE Attributes from a PSE Attributes file myBtPse
+# This will describe PSE to PSA software and configure ports to 4-Pair mode
+#psa_pse myBtPSE
+# Emulate Dual Class 4 power-up to 20 W
+power_pse p1 c 4D p 20
+# Adjust load on Pairset A to 22W
+psl_set_load p1,A p 22
+# Adjust load on Pairset B to 29.5W
+psl_set_load p1,B p 29.5
+# Wait 3 seconds, then assess power on each pairset
+st_wait 3
+paverage p1 period 1s
+paverage p1,A stat
+paverage p1,B stat
+psa_disconnect p1
+}
+
+proc psl_lldp_basic {} {
+	set addrList "p1 p2 p3 p4 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24"
+	foreach p1 $addrList {
+	puts "power_pse $p1 c 4 p 24 lldp_at force 24.3 timeout 15"
+	set status [power_pse $p1 c 4 p 24 lldp_at force 24.3 timeout 15]
+	puts $status
+	puts "paverage $p1 period 1s stat"
+	set status [paverage $p1 period 1s stat]
+	puts $status
+	puts "psa_check_lan_state $p1"
+	set status [psa_check_lan_state $p1]
+	puts $status
+	puts "psa_disconnect $p1"
+	psa_disconnect $p1
+	psa_check_lan_state $p1
+	}
+}
+
+
+proc psl_lldp_frames {} {
+	set mac [pd_mac_init p99 root 00.4a.30.00.0 store]
+	puts "Allocated MAC addresses:"
+	puts $mac
+	puts "!!! executing: psa_lan p1 lldp" 
+	psa_lan p1 lldp	
+	puts "!!! executing: pd_frame p1 type 2 source pse priority high pwr_alloc echo"
+	pd_frame p1 type 2 source pse priority high pwr_alloc echo
+	set poe_config [pd_frame p1 ?]
+	after 10
+	puts "pd_frame p1 ? output = "
+	puts $poe_config
+ 	pd_req p1 pwr 22.2 class 4 period 15 count 0  
+	#power_pse p1 c 3
+	puts "!!! exectuing: pd_req p1 ?"
+	set parameter [pd_req p1 ?]
+	puts $parameter
+
+	pse_link_wait p1 timeout 5
+	pse_frame p1 start
+	pse_lldp_wait p1 timeout 30
+	puts "!!! executing: pse_frame p1 stat"
+	set stat [pse_frame p1 stat]
+	puts $stat
+	puts "!!! executing: pse_lldp p1 stat"
+	set stat [pse_lldp p1 stat]
+	puts $stat 
+}
+
+proc psl_lldp_frames_all {} {
+	set mac [pd_mac_init p99 root 00.4a.30.00.0 store]
+	puts "Allocated MAC addresses:"
+	puts $mac
+	set addrList "p1 p2 p3 p4 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24"
+	foreach port $addrList {
+		puts "!!! executing: psa_lan $port lldp" 
+		psa_lan $port lldp	
+		puts "!!! executing: pd_frame $port type 2 source pse priority high pwr_alloc echo"
+		pd_frame $port type 2 source pse priority high pwr_alloc echo
+		set poe_config [pd_frame $port ?]
+		after 10
+		puts "pd_frame $port ? output = "
+		puts $poe_config
+		pd_req $port pwr 22.2 class 4 period 15 count 0  
+		#power_pse $port c 3
+		puts "!!! exectuing: pd_req $port ?"
+		set parameter [pd_req $port ?]
+		puts $parameter
+
+		pse_link_wait $port timeout 5
+		pse_frame $port start
+		pse_lldp_wait $port timeout 30
+		puts "!!! executing: pse_frame $port stat"
+		set stat [pse_frame $port stat]
+		puts $stat
+		puts "!!! executing: pse_lldp $port stat"
+		set stat [pse_lldp $port stat]
+		puts $stat 
+	}
+}
+
+proc psl_lldp_trace {} {	
+set addrList "p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24"
+#set addrList "p2 p3"
+foreach p $addrList {
+passive $p r 24
+class $p 4
+iload $p i 50
+port $p connect
+psa_lan $p lldp
+set status [pse_link_wait $p timeout 15]
+puts $status
+pd_req $p class 4 pwr 24.3
+psa_lldp_trace $p period 8 duration 1
+}
+}
+
 proc at_power_up {} {
 	set port_list {"1,1","6,1","7,1","8,1","9,1","10,1","11,1","12,1"}
 	set power_list {60} 
