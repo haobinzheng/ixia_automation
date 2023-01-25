@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(
-    ['C:\\Users\\zhengh\\ixia_automation\\Ciena\\build_docs.py'],
+    ['C:\\Users\\mzheng\\Coding\\Python\\ixia_automation\\Ciena\\build_docs.py'],
     pathex=[],
     binaries=[],
     datas=[],
