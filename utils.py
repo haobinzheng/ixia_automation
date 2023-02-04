@@ -20,6 +20,7 @@ import subprocess
 #import spur
 
 DEBUG = False
+#This is the original copy
 
 def send_Message(stock_msg):
   #stock_msg = remove_bracket(stock_msg)
