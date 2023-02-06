@@ -154,9 +154,9 @@ proc psl_lldp_basic {} {
 	puts "psa_check_lan_state $p1"
 	set status [psa_check_lan_state $p1]
 	puts $status
-	puts "psa_disconnect $p1"
-	psa_disconnect $p1
-	psa_check_lan_state $p1
+	# puts "psa_disconnect $p1"
+	# psa_disconnect $p1
+	# psa_check_lan_state $p1
 	}
 }
 

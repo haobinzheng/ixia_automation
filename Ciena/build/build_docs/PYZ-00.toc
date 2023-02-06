@@ -1842,9 +1842,9 @@
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.10_3.10.2544.0_x64__qbz5n2kfra8p0\\lib\\site-packages\\_distutils_hack\\override.py',
    'PYMODULE'),
-  ('tracemalloc',
+  ('_py_abc',
    'C:\\Program '
-   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.10_3.10.2544.0_x64__qbz5n2kfra8p0\\lib\\tracemalloc.py',
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.10_3.10.2544.0_x64__qbz5n2kfra8p0\\lib\\_py_abc.py',
    'PYMODULE'),
   ('stringprep',
    'C:\\Program '
@@ -1866,9 +1866,9 @@
    'C:\\Program '
    'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.10_3.10.2544.0_x64__qbz5n2kfra8p0\\lib\\http\\cookiejar.py',
    'PYMODULE'),
-  ('_py_abc',
+  ('tracemalloc',
    'C:\\Program '
-   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.10_3.10.2544.0_x64__qbz5n2kfra8p0\\lib\\_py_abc.py',
+   'Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.10_3.10.2544.0_x64__qbz5n2kfra8p0\\lib\\tracemalloc.py',
    'PYMODULE'),
   ('glob',
    'C:\\Program '
