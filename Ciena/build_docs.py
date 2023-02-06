@@ -6,11 +6,18 @@ import argparse
 import re
 import glob
 import os, sys
-#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # import ../db.py
-#from utils import *
+from utils import *
 
-DEBUG = False
+DEBUG = True
+
+def tprint(*args, **kwargs):
+    tempa = ' '.join(str(a) for a in args)
+    tempk = ' '.join([str(kwargs[k]) for k in kwargs])
+    temp = tempa + ' ' + tempk # puts a space between the two for clean output
+    print(str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + " :: " + temp)
+
 
 def print_double_line():
 	print("======================================================================================================")
@@ -95,21 +102,25 @@ must_list_dict = {re.search(r'\d+',c.coordinate).group():c.value for c in datafr
 other_list_dict ={re.search(r'\d+',c.coordinate).group():c.value for c in dataframe1['E'] if c.value is not None}
 #selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['F'] if c.value is not None and c.value != ' ' or c.value == 'x' or c.value == "X"}
 selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['F'] if c.value is not None and c.value != ' ' and (c.value == 'x' or c.value == "X" or c.value == 'y' or c.value == 'Y' )}
+must_selected_list_dict =  {re.search(r"\d+",c.coordinate).group():c.value for c in dataframe1['D'] if c.value is not None and c.value != ' ' and (c.value == 'x' or c.value == "X" or c.value == 'y' or c.value == 'Y' )}
 
 dprint(f"must_list_dict = {must_list_dict}")
 dprint(f"other_list_dict = {other_list_dict}")
       
 dprint(f"selected_list_dict = {selected_list_dict}")
+dprint(f"must_selected_list_dict = {must_selected_list_dict}")
 
 other_list = []
-must_list = list(must_list_dict.values())
+#must_list = list(must_list_dict.values())
+must_list = [must_list_dict[i] for i in must_selected_list_dict.keys()]
 for k in selected_list_dict.keys():
     other_list.append(other_list_dict[k])
 dprint(f"other_list = {other_list}")
+dprint(f"must_list = {must_list}")
 function_list_dict = {}
 
 #Only must list needs to pop the first element which is the description of E column
-must_list.pop(0)   
+#must_list.pop(0)   
 #other_list has all the final selected test cases, not need to pop
 #other_list.pop(0)
 #print(must_list)
