@@ -276,7 +276,7 @@ proc at_power_up {} {
 
 proc bt_power_basic {} {
 	set port_list {"5,1","6,1","7,1","8,1","9,1","10,1","11,1","12,1"}
-	#set port_list {"5,1","6,1","7,1"}
+	set port_list {"9,1","10,1","11,1","12,1"}
     set power_list {13.7 3.9 6.7 13.7 28.7 43.7 57.3} 
     set class_list {0 1 2 3 4 5 6}
     set zipped [lmap a $class_list b $power_list {list $a $b}]
@@ -319,17 +319,17 @@ proc bt_power_basic {} {
 #Capturing a Power-Up Current (Extended) Trace on Connection of Class 6 (Single Signature) PD
 proc bt_power_current {} {
   # Estatblish 4-Pair Single Signature Connection (PD emulation)
-  psa_4pair 5,1 single
+  psa_4pair 9,1 single
   # Establish proper polarities & detection signatures for pairsets
-  polarity 5,1 mdi+mdix
-  passive 5,1 r 25 c 0
+  polarity 9,1 mdi+mdix
+  passive 9,1 r 25 c 0
   # Establish Class Signture
   # Multi-Event signatures are not applied until Class Event #1
   # Class 6 will by default set 2mA mark load
-  class 5,1 6
+  class 9,1 6
   # Configure the Current Trace to 2 second high resolution aperture
   # Arm the meter for an event trigger
-  idctrace 5,1 trig ext period 2sx stat
+  idctrace 1,1 trig ext period 2sx stat
   # Configure a Load Transient to simulate Inrush load and Steady State load (850mA)
   # Trigger transient on 39V at power-up
   itrans 5,1 i1 400 t1 80m i2 850 t2 hold trig1
