@@ -21,7 +21,7 @@ from common_lib import *
 from common_codes import *
 from cli_functions import *
 from ssh_lib import *
-from ssh_lib_v2 import *
+#from ssh_lib_v2 import *
 
 
 class Router_BFD:   
@@ -7127,15 +7127,15 @@ class FortiSwitch_XML(FortiSwitch):
         self.router_bgp = Router_BGP(self)
         self.system_interfaces_list = None
 
-    def ssh_login_reliable(self):
-        Info(f"Logining in {self.hostname} after reboot")
-        self.ssh_client.sshDisconect()
-        self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
-        while self.switch_system_status(useSSH=self._useSSH) == None:
-            self.ssh_client.sshDisconect()
-            self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
-        Info("After login via SSH, wait for 2 seconds....")
-        sleep(2)
+    # def ssh_login_reliable(self):
+    #     Info(f"Logining in {self.hostname} after reboot")
+    #     self.ssh_client.sshDisconect()
+    #     self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+    #     while self.switch_system_status(useSSH=self._useSSH) == None:
+    #         self.ssh_client.sshDisconect()
+    #         self.ssh_client = mySSHClient(self.mgmt_ip,password=self.password)
+    #     Info("After login via SSH, wait for 2 seconds....")
+    #     sleep(2)
 
     def ssh_output_process(self,output):
         out_list = output.split('\n')

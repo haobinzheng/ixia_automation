@@ -316,27 +316,27 @@ if __name__ == "__main__":
 	for i in range(1000):
 		try:
 			#==========================  upgrade to V6 Build#470 + power cycle ================================
-			for sw in switches:
-				tprint(f"========  Upgrading SW on {sw.hostname} to v6 build #470  ============\n")
-				sw.ftg_sw_upgrade_no_wait(build=470,version=6,tftp_server="10.105.19.44",vdom="haobin")
+			# for sw in switches:
+			# 	tprint(f"========  Upgrading SW on {sw.hostname} to v6 build #470  ============\n")
+			# 	sw.ftg_sw_upgrade_no_wait(build=470,version=6,tftp_server="10.105.19.44",vdom="haobin")
 			
-			console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v6 build 470")
-			while result != True: 
-				sleep(20)
-				managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
-				result = False
-				for mw in fgta.managed_switches_list:
-					if mw.up:
-						if mw.managed_sw_online(vdom='haobin'):
-							Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
-							result = True
-						else:
-							Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
-							result = False
-					else:
-						Info(f"managed switch is not UP yet, retry......")
-						result = False
-						break
+			# console_timer(power_time,msg=f"Wait for {power_time} after upgrading switches to v6 build 470")
+			# while result != True: 
+			# 	sleep(20)
+			# 	managed_sw_list = fgta.discover_managed_switches(topology=tb,vdom='haobin')
+			# 	result = False
+			# 	for mw in fgta.managed_switches_list:
+			# 		if mw.up:
+			# 			if mw.managed_sw_online(vdom='haobin'):
+			# 				Info(f"Managed switch {mw.switch_id} can be ssh from fortigate")
+			# 				result = True
+			# 			else:
+			# 				Info(f"Before testing starts, Managed switch {mw.switch_id} can NOT be access from fortigate")
+			# 				result = False
+			# 		else:
+			# 			Info(f"managed switch is not UP yet, retry......")
+			# 			result = False
+			# 			break
 	 
 			for sw in switches:
 				tprint(f"========  Power cycle SW on {sw.hostname} ============\n") 
