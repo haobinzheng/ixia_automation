@@ -2,5 +2,4 @@
 <testtopo>
  <dev1 type="FSW" role="DUT"> </dev1>
  <dev3 type="FGT" role="FGT_Active-1"> </dev3>
- <trafgen1 type="IXIA" model="IXIA" role="trafgen"> </trafgen1>
 </testtopo>
