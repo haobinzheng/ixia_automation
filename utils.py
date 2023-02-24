@@ -2356,7 +2356,7 @@ def console_timer_no_count(seconds,**kwargs):
 	if 'msg' in kwargs:
 		notice = kwargs['msg']
 		tprint(f'========================= Wait for {seconds} seconds: {notice} ==========================')
-		sleep(seconds)
+	sleep(seconds)
 
 
 def get_switch_telnet_connection(ip_address, console_port,**kwargs):

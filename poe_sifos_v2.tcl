@@ -1,6 +1,85 @@
+- How to connect to a PSA chasssis? 
+psa <ip_addr>
+
+- PSA: How to define a slot as 4-pair port?
+psa_4pair 9,1 single -- single signature
+psa_4pair 9,1 dual  -- dual signature
+psa_4pair 9,1 disable  -- 2 pair mode 
+
+- PSA: How to source power from PSE port with 802.3bt standard?
+power_bt 9,1 c 6 p 57.3
+
+- PSA: How to configure the PSA attributes? 
+
+psa_pse -spec bt -grant phy+lldp 
+
+psa_pse -grant phy+lldp
+psa_pse -grant phy 
+
+Use psa_saveConfig to permanently save PSE Attribute settings: BT.
+PSA-9,2>psa_saveConfig
+
+******** PSA: How to emulate PD LLDP for 802.3BT? 
+
+# Program Default LLDP Packet Parameters to ALL Test Ports 
+pd_default_lldp 99,99
+
+# Program Unique MAC Addresses to ALL Test Ports with specified 9-digit ROOT # Store these in non-volatile memory in each test port
+pd_mac_init 99,99 root 00.4a.30.00.0 store Slot,Port 1,1 004A30000011
+
+# Connect the LLDP Subsystem on all ports
+psa_lan 99,99 connect
+
+
+# Give the PSE Some Time to Link with PSA Test Ports
+after 2000
+
+# Program 802.3bt PD Power Request & Message Transmission Parameters to ALL Ports 
+
+pd_req 99,99 sspwr 36.2 class 4 period 12 count 0 trig off init
+pd_req 1,1 sspwr 36.2 class 4 period 12 count 0 trig off init
+
+
+# Query the PD request configuration on port 2
+pd_req 1,1 stat 
+pd_req 1,2 stat 
+pd_req 2,1 stat 
+pd_req 2,2 stat 
+pd_req 3,1 stat 
+pd_req 3,2 stat 
+
+
+******* How to edumlate LLDP for 802.3AT POE PD? 
+# Connect the LLDP Subsystem
+psa_lan 1,1 connect
+ 
+# Program LLDP Packet Parameters – Mostly Power-Up Defaults 
+pd_lldp 1,1 lldpaddr 01.80.C2.00.00.0E ch_id 4 004a30000011 port_id 3 004a30000011
+pd_lldp 1,1 ttl 120 vlan disable
+# Query LLDP Packet 
+pd_lldp 1,1 ?  
+
+# Program PD MAC and PoE TLV Parameters
+pd_frame 1,1 mac 00.4a.30.00.00.11
+pd_frame 1,1 type 2 source pse priority high pwr_alloc echo 
+# Query LLDP PoE Configuration
+pd_frame 1,1 ?
+
+# Program 802.3at PD Power Request and Message Transmission Parameters 
+pd_req 1,1 pwr 22.2 class 4 period 15 count 0 trig off init
+
+# Query PD LLDP Transmission Parameters
+pd_req 1,1 ?
+ 
+# Start PD LLDP Transmission 
+pd_req 1,1 stat
+ 
+ 
+
+===================================== PSA Informaiton ======================================
 psa 10.105.241.47
 psa 10.105.241.49
-psa_4pair 5,1 single
+
 
 Model                           SN                        APC                                                  Rack            Mgmt IP
 Sifos PSL 3424L     3424006      10.105.241.146 port 12     9/07          10.105.241.49
@@ -141,6 +220,8 @@ paverage p1,A stat
 paverage p1,B stat
 psa_disconnect p1
 }
+
+power_pse 1,1 c 4 p 24 lldp_at force 24.3 timeout 15
 
 proc psl_lldp_basic {} {
 	set addrList "p1 p2 p3 p4 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19 p20 p21 p22 p23 p24"
@@ -342,7 +423,7 @@ proc bt_power_current {} {
 }
 
  
-proc lldp_t {} {	 
+proc lldp_trace {} {	 
 set port_list {"6,1" "7,1"}
 puts $port_list
 #regsub -all {(,")|(",)|"} $port_list " " port_list;

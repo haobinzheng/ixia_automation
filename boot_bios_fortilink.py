@@ -311,7 +311,7 @@ if __name__ == "__main__":
 		# 	exit()
 	boot_time = 300
 	power_time = 300
-	Wakeup = True # In case switch stuck at the unmanaged state, power cycle it
+	Wakeup = False # In case switch stuck at the unmanaged state, power cycle it
 	for i in range(1000):
 		try:
 			#==========================  upgrade to V6 Build#470 + power cycle ================================
