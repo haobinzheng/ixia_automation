@@ -1,25 +1,37 @@
-- How to connect to a PSA chasssis? 
+******************* How to connect to a PSA chasssis? ***************************
 psa <ip_addr>
 
-- PSA: How to define a slot as 4-pair port?
+************ PSA: How to define a slot as 4-pair port? ***************
 psa_4pair 9,1 single -- single signature
 psa_4pair 9,1 dual  -- dual signature
 psa_4pair 9,1 disable  -- 2 pair mode 
 
-- PSA: How to source power from PSE port with 802.3bt standard?
-power_bt 9,1 c 6 p 57.3
 
-- PSA: How to configure the PSA attributes? 
+************ PSA: How to power up a 4-pair port ********************
+psa_4pair 5,1 single
+
+************ PSA: How to source power from PSE port with 802.3bt standard?************
+proc psa_bt {} {	 
+set port_list {"6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+foreach port $port_list {
+	psa_disconnect $port
+	puts "psa_4pair $port single"
+	psa_4pair $port single
+	puts "power_bt $port c 6 p 70"
+ 	power_bt $port c 6 p 57
+}
+}
+*************** PSA: How to configure the PSA attributes? **************************
 
 psa_pse -spec bt -grant phy+lldp 
 
 psa_pse -grant phy+lldp
 psa_pse -grant phy 
 
-Use psa_saveConfig to permanently save PSE Attribute settings: BT.
-PSA-9,2>psa_saveConfig
+#Use psa_saveConfig to permanently save PSE Attribute settings: BT.
+psa_saveConfig
 
-******** PSA: How to emulate PD LLDP for 802.3BT? 
+******** PSA: How to emulate PD LLDP for 802.3BT? ******************
 
 # Program Default LLDP Packet Parameters to ALL Test Ports 
 pd_default_lldp 99,99
@@ -49,7 +61,7 @@ pd_req 3,1 stat
 pd_req 3,2 stat 
 
 
-******* How to edumlate LLDP for 802.3AT POE PD? 
+**************** How to edumlate LLDP protocol for 802.3AT POE PD? *************
 # Connect the LLDP Subsystem
 psa_lan 1,1 connect
  
@@ -75,6 +87,36 @@ pd_req 1,1 ?
 pd_req 1,1 stat
  
  
+ ************ PSA/PSL: How to trace a 3AT LLDP POE transaction *******************
+proc lldp_trace {} {	 
+set port_list {"1,1"}
+puts $port_list
+#regsub -all {(,")|(",)|"} $port_list " " port_list;
+foreach port $port_list {
+	#c: Capacitance Must be 0,5,7,11 uF
+	puts $port
+	passive $port r 25 c 0
+	class $port 4
+	port $port connect
+	psa_lan $port connect
+	pse_link_wait $port timeout 30
+	pd_req $port class 4 pwr 24.3
+	psa_lldp_trace $port period 10 duration 2
+}
+}
+
+**************PSA: How to power up 3AT with LLDP ? ************************
+proc at_lldp_powerup {} {
+set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2" "5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+foreach port $port_list {
+	psa_disconnect $port
+	puts "power_port $port c 4 p 37 lldp force 30 timeout 20"
+	power_port $port c 4 p 37 lldp force 30 timeout 20
+	paverage $port period 500m stat
+	# psa_disconnect 1,1
+	# psa_check_lan_state 1,1
+}
+}
 
 ===================================== PSA Informaiton ======================================
 psa 10.105.241.47
@@ -321,7 +363,8 @@ psa_lldp_trace $p period 8 duration 1
 
 proc at_power_up {} {
 	set port_list {"1,1","6,1","7,1","8,1","9,1","10,1","11,1","12,1"}
-	set power_list {60} 
+	set port_list {"1,1","1,2","2,1","2,2","3,1","3,2","4,1","4,2"}
+	set power_list {48} 
 	regsub -all {(,")|(",)|"} $port_list " " port_list;
 	puts $port_list
 	puts $power_list
@@ -331,7 +374,7 @@ proc at_power_up {} {
 				puts $port 
 				puts $power
 				puts "power_port $port c 6 p $power"
-        		power_port $port c 6 p $power
+        		power_bt $port c 4 p $power
 				puts "pstatus $port"
 				set status [lindex [pstatus $port stat] 3]
 				after 10
@@ -424,7 +467,7 @@ proc bt_power_current {} {
 
  
 proc lldp_trace {} {	 
-set port_list {"6,1" "7,1"}
+set port_list {"2,1"}
 puts $port_list
 #regsub -all {(,")|(",)|"} $port_list " " port_list;
 foreach port $port_list {
@@ -436,7 +479,7 @@ foreach port $port_list {
 	psa_lan $port connect
 	pse_link_wait $port timeout 15
 	pd_req $port class 4 pwr 25
-	psa_lldp_trace $port period 10 duration 1
+	psa_lldp_trace $port period 10 duration 2
 }
 }
 
