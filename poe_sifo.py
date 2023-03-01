@@ -17,7 +17,7 @@ exit()
 tcl_shell.expect('%')
 
 # Print the output from the TCL shell
-print(tcl_shell.before.decode())
+print(tcl_shell.before
 
 # Exit the TCL shell
 tcl_shell.sendline('exit')
