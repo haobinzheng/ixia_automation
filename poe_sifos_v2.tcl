@@ -7,18 +7,77 @@ psa_4pair 9,1 dual  -- dual signature
 psa_4pair 9,1 disable  -- 2 pair mode 
 
 
+************ PSA: How to test load for 803.3AT ********
+psa_test_load 1,2 fast c 3 -force t 20
+
+Class Min Load 		Max Load
+0 		0.5 Watts		15.3 Watts 
+1 		0.5 Watts		3.9 Watts
+2 		0.5 Watts		6.9 Watts
+3 		7.1 Watts		15.3 Watts
+4 		15.5 Watts	29.8 Watts
+
+psa_4pair 2,1 single
+psa_test_load 5,1 fast c 0 -force t 20
+psa_test_load 5,1 fast c 1 -force t 20
+psa_test_load 5,1 fast c 2 -force t 20
+psa_test_load 5,1 fast c 3 -force t 20
+psa_test_load 5,1 fast c 4 -force t 20
+
+
 ************ PSA: How to power up a 4-pair port ********************
 psa_4pair 5,1 single
 
 ************ PSA: How to source power from PSE port with 802.3bt standard?************
 proc psa_bt {} {	 
-set port_list {"6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+#set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+set port_list {"2,1"}
 foreach port $port_list {
+	puts "psa_disconnect $port"
 	psa_disconnect $port
 	puts "psa_4pair $port single"
 	psa_4pair $port single
-	puts "power_bt $port c 6 p 70"
- 	power_bt $port c 6 p 57
+	puts "power_bt $port c 8 p 60 "
+ 	power_bt $port c 8 p 60
+}
+}
+
+
+**************PSA: How to basically power up 3AT ? ************************
+proc psa_at {} {
+set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
+foreach port $port_list {
+	psa_disconnect $port
+	puts "power_port $port c 4 p 30"
+	power_port $port c 4 p 30
+	paverage $port period 500m stat
+	# psa_disconnect 1,1
+	# psa_check_lan_state 1,1
+}
+}
+
+************ PSA: How to emulate 3AT PD quickly **********************
+proc psa_at_emulate {} {
+set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
+foreach port $port_list {
+puts "psa_disconnect $port"
+psa_disconnect $port
+puts "psa_emulate_pd $port start c 4 p 25.5 o 5"
+psa_emulate_pd $port start c 4 p 25.5 o 5
+}
+}
+
+
+**************PSA: How to power up 3AT with LLDP ? ************************
+proc psa_at_lldp {} {
+set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
+foreach port $port_list {
+	psa_disconnect $port
+	puts "power_port $port c 4 p 37 lldp force 30 timeout 20"
+	power_port $port c 4 p 37 lldp force 30 timeout 20
+	paverage $port period 500m stat
+	# psa_disconnect 1,1
+	# psa_check_lan_state 1,1
 }
 }
 *************** PSA: How to configure the PSA attributes? **************************
@@ -105,18 +164,7 @@ foreach port $port_list {
 }
 }
 
-**************PSA: How to power up 3AT with LLDP ? ************************
-proc at_lldp_powerup {} {
-set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2" "5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
-foreach port $port_list {
-	psa_disconnect $port
-	puts "power_port $port c 4 p 37 lldp force 30 timeout 20"
-	power_port $port c 4 p 37 lldp force 30 timeout 20
-	paverage $port period 500m stat
-	# psa_disconnect 1,1
-	# psa_check_lan_state 1,1
-}
-}
+
 
 ===================================== PSA Informaiton ======================================
 psa 10.105.241.47
@@ -169,7 +217,7 @@ proc psl_power_up {} {
 	#set port_list {"1,2","2,2","3,2","4,2","5,2","6,2","7,2","8,2" "9,2","10,2","11,2","12,2","13,2","14,2","15,2","16,2"}
 	#set port_list {"1,1","2,1","3,1","4,1","5,1","6,1","7,1","8,1" "9,1","10,1","11,1","12,1","13,1","14,1","15,1","16,1","17,1","18,1","19,1","20,1","21,1","22,1","23,1","24,1"}
     set port_list {"1,2","2,2","3,2","4,2","5,2","6,2","7,2","8,2" "9,2","10,2","11,2","12,2","13,2","14,2","15,2","16,2","17,2","18,2","19,2","20,2","21,2","22,2","23,2","24,2"}
-	set power_list {13.7 3.9 6.7 13.7 28.7} 
+	  set power_list {13.7 3.9 6.7 13.7 28.7} 
     set class_list {0 1 2 3 4}
     set zipped [lmap a $class_list b $power_list {list $a $b}]
     puts $zipped
