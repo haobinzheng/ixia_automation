@@ -2,8 +2,8 @@ import wexpect
 
 # Spawn a new process for the TCL shell
 #tcl_shell = wexpect.spawn('/c/Program\\ Files\\ (x86)/Sifos/PSA3000/PowerShell\\ TCL.exe')
-tcl_shell = wexpect.spawn('powershell_tcl.exe')
-tcl_shell.sendline('\n')
+tcl_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
+tcl_shell.sendline('\n\n\n\n')
 tcl_shell.sendline('puts "Hello, world!"')
 # Wait for the TCL prompt to appear
 tcl_shell.expect('%')
