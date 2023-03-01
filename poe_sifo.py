@@ -1,7 +1,7 @@
 import wexpect
 
 # Spawn a new process for the TCL shell
-tcl_shell = wexpect.spawn('C:/Program\\ Files\\ (x86)/Sifos/PSA3000/PowerShell\\ TCL')
+tcl_shell = wexpect.spawn('/c/Program Files (x86)/Sifos/PSA3000/PowerShell\\ TCL.exe')
 
 # Wait for the TCL prompt to appear
 tcl_shell.expect('%')
