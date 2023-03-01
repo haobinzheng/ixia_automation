@@ -12,6 +12,9 @@ tcl_shell.expect('>')
 tcl_shell.sendline('puts "Hello, world!"')
 output = tcl_shell.before
 print(output)
+tcl_shell.sendline('psa_test_load 3,2 fast c 4 -force t 20')
+tcl_shell.expect('>')
+print(tcl_shell.before)
 exit()
 # Wait for the TCL prompt to appear again
 tcl_shell.expect('%')
