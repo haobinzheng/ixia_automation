@@ -22,6 +22,7 @@ print(output)
 tcl_shell.sendline('psa_test_load 1,1 fast c 4 -force t 20')
 tcl_shell.expect('>')
 print(tcl_shell.before)
+output = input("enter any key to continue:")
 exit()
 # Wait for the TCL prompt to appear again
 tcl_shell.expect('%')
