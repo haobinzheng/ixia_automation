@@ -6,7 +6,7 @@ tcl_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
 tcl_shell.sendline('\n\n\n\n')
 tcl_shell.sendline('puts "Hello, world!"')
 # Wait for the TCL prompt to appear
-tcl_shell.expect('%')
+tcl_shell.expect('>')
 
 # Send a command to the TCL shell
 tcl_shell.sendline('puts "Hello, world!"')
