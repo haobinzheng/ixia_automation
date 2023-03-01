@@ -10,7 +10,7 @@ tcl_shell.expect('>')
 
 # Send a command to the TCL shell
 tcl_shell.sendline('puts "Hello, world!"')
-
+exit()
 # Wait for the TCL prompt to appear again
 tcl_shell.expect('%')
 
