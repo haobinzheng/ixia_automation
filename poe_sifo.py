@@ -1,7 +1,7 @@
-import wpexpect
+import wexpect
 
 # Spawn a new process for the TCL shell
-tcl_shell = pexpect.spawn('C:\Program Files (x86)\Sifos\PSA3000')
+tcl_shell = wexpect.spawn('C:\Program Files (x86)\Sifos\PSA3000')
 
 # Wait for the TCL prompt to appear
 tcl_shell.expect('%')
