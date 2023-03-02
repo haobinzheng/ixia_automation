@@ -28,12 +28,14 @@ from ssh_lib import *
 
 class power_shell_tcl:
     def __init__(self, *args, **kwargs):
-        self.power_shell = self.launch_shell()
+        self.power_shell = self.tcl_launch_shell()
 
     def tcl_launch_shell(self):
         power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
         power_shell.sendline('\n')
-        sleep(3)
+        sleep(15)
+        power_shell.sendline('psa 10.105.241.47')
+        sleep(10)
         return power_shell
 
     def tcl_exit_shell(self):
@@ -41,6 +43,7 @@ class power_shell_tcl:
 
     def tcl_send_simple_cmd(self,cmd):
         self.power_shell.sendline(cmd)
+        self.power_shell.close()
 
     def tcl_read_cmd(self,cmd):
         self.power_shell.sendline(cmd)
@@ -60,7 +63,11 @@ class power_shell_tcl:
             cmds_list.append(cmd)
         cmds_list.append("}")
         print(cmds_list)
+        for c in cmds_list:
+            self.tcl_send_simple_cmd(c)
 
+        self.tcl_send_simple_cmd(proc_name)
+        self.power_shell.expect('>')
 
 
 class Router_BFD:   
@@ -7149,6 +7156,7 @@ class FortiSwitch_XML(FortiSwitch):
         self.console = None
         self.managed_switch_obj = None
         self._useSSH = False
+        self.split_port_exist = False   
         if self.login_console == True:
             self.console = telnet_switch(self.console_ip,self.console_line,password=self.password)
         if self.login_ssh == True:
@@ -7160,7 +7168,6 @@ class FortiSwitch_XML(FortiSwitch):
             self.system_interfaces = self.find_sys_interfaces(useSSH=self._useSSH)
             self.find_split_ports()
         self.split_ports = []
-        self.split_port_exist = False   
         self.router_ospf = Router_OSPF(self)
         self.router_isis = Router_ISIS(self)
         self.router_bgp = Router_BGP(self)
@@ -7281,6 +7288,9 @@ class FortiSwitch_XML(FortiSwitch):
                 port_name = port.split(".")[0]
                 self.split_ports.append(port_name)
                 self.split_port_exist = True
+            else:
+                self.split_port_exist = False
+
         Info(f"At switch {self.hostname}, split ports are {self.split_ports}")
         Info(f"At switch {self.hostname}, split ports exist = {self.split_port_exist}")
 
