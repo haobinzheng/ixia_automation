@@ -4,6 +4,7 @@ import time
 import re
 import argparse
 import threading
+import wexpect
 from threading import Thread
 from time import sleep
 import multiprocessing
@@ -12,6 +13,7 @@ from random import randint
 import yaml
 from jinja2 import Environment, PackageLoader
 from jinja2 import Template
+
 
 from utils import *
 from apc import *
@@ -22,6 +24,33 @@ from common_codes import *
 from cli_functions import *
 from ssh_lib import *
 #from ssh_lib_v2 import *
+
+
+class power_shell_tcl:
+    def __init__(self, *args, **kwargs):
+        self.power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
+        self.power_shell.sendline('\n')
+        sleep(3)
+
+    def tcl_send_cmd_nowait(self,cmd):
+        self.power_shell.sendline(cmd)
+
+    def tcl_read_cmd(self,cmd):
+        lck = 'def_sw_read_cmd_file.lck'
+        seek_lock(lck)
+        f = open(log_file,'w')
+        router.child.logfile_read = f
+        no_more = 'system shell set global-more off'
+        router.child.sendline(no_more)
+        router.child.expect([router.prompt2, router.prompt])
+        router.child.sendline(cmd)
+        #this line can not be deleted as it needs to wait for prompt to read result
+        router.child.expect([router.prompt2, router.prompt])
+        result = router.child.before
+        #print "for debugging lsp display sw_read_cmd result = %s" % result
+        f.close()
+        release_lock(lck)
+        return result 
 
 
 class Router_BFD:   
