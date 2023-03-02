@@ -25,17 +25,92 @@ from cli_functions import *
 from ssh_lib import *
 #from ssh_lib_v2 import *
 
+class dict2obj(object):
+    def __init__(self, d):
+        for k, v in d.items():
+            if isinstance(k, (list, tuple)):
+                setattr(self, k, [dict2obj(x) if isinstance(x, dict) else x for x in v])
+            else:
+                setattr(self, k, dict2obj(v) if isinstance(v, dict) else v)
+
+
+class test_setup:
+    def __init__(self,yaml_file,*args,**kwargs):
+        self.setup_yaml_file = yaml_file
+        self.nodes_list = []
+        self.dut_list_dict = []
+        self.tester_list_dict = []
+        self.testcase_list_dict = []
+        self.dut_obj_list = []
+        self.tester_obj_list = []
+        self.testcase_obj_list = []
+        self.parse_setup_yaml()
+
+    def __str__(self):
+        lines = [self.__class__.__name__ + ':']
+        for key, val in vars(self).items():
+            lines += '{}: {}'.format(key, val).split('\n')
+        return '\n    '.join(lines)
+
+    def pretty_print(clas, indent=0):
+        print(' ' * indent +  type(clas).__name__ +  ':')
+        indent += 4
+        for k,v in clas.__dict__.items():
+            if '__dict__' in dir(v):
+                pretty_print(v,indent)
+            else:
+                print(' ' * indent +  k + ': ' + str(v))
+
+    def parse_setup_yaml(self):
+        with open(self.setup_yaml_file) as f:
+            setup_yaml = yaml.safe_load(f)
+            self.dut_list_dict = setup_yaml["DUT_list"]
+            self.tester_list_dict = setup_yaml["Tester_list"]
+            self.testcase_list_dict = setup_yaml["Test_Case_list"]
+            print_dict(self.dut_list_dict)
+            print_dict(self.tester_list_dict)
+            print_dict(self.testcase_list_dict)
+            self.dut_obj_list = []
+            for d in self.dut_list_dict:
+                obj = dict2obj(d)
+                self.dut_obj_list.append(obj)
+                print(obj.hostname)
+                print(obj.serial)
+                print(obj.mgmt_ip)
+            self.tester_obj_list = []
+            for d in self.tester_list_dict:
+                obj = dict2obj(d)
+                self.tester_obj_list.append(obj)
+                print(obj.hostname)
+                print(obj.platform)
+                print(obj.type)
+            self.testcase_obj_list = []
+            for d in self.testcase_list_dict:
+                obj = dict2obj(d)
+                self.testcase_obj_list.append(obj)
+                print(obj.case_name)
+
+            # self.dut_list_obj = dict2obj(self.dut_list_dict)
+            # self.tester_list_obj = dict2obj(self.tester_list_dict)
+            # self.testcase_list_obj = dict2obj(self.testcase_list_dict)
+            # for obj in self.testcase_list_obj:
+            #     print(obj.proc_name)
+            # for k in dataMap.keys():
+            #     device_db = dict2obj(dataMap[k])
+            #     print_dict(dataMap[k])
+            #     self.nodes_list.append(device_db)
 
 class power_shell_tcl:
-    def __init__(self, *args, **kwargs):
+    def __init__(self,sifo_ip,*args, **kwargs):
+        self.ip = sifo_ip
         self.power_shell = self.tcl_launch_shell()
 
     def tcl_launch_shell(self):
         power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
         power_shell.sendline('\n')
-        sleep(15)
-        power_shell.sendline('psa 10.105.241.47')
-        sleep(10)
+        sleep(20)
+        power_shell.sendline(f"psa {self.ip}")
+        sleep(20)
         return power_shell
 
     def tcl_exit_shell(self):
@@ -43,6 +118,9 @@ class power_shell_tcl:
 
     def tcl_send_simple_cmd(self,cmd):
         self.power_shell.sendline(cmd)
+
+    def tcl_close_shell(self):
+        self.power_shell.sendline('exit')
         self.power_shell.close()
 
     def tcl_read_cmd(self,cmd):

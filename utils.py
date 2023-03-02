@@ -18,9 +18,14 @@ import pexpect
 from threading import Thread
 import subprocess
 #import spur
+import yaml
+
 
 DEBUG = False
 #This is the original copy
+
+def print_dict(d):
+	print(yaml.dump(d, default_flow_style=False, explicit_start=True,sort_keys=False))
 
 def send_Message(stock_msg):
   #stock_msg = remove_bracket(stock_msg)
