@@ -16,13 +16,15 @@ Class Min Load 		Max Load
 2 		0.5 Watts		6.9 Watts
 3 		7.1 Watts		15.3 Watts
 4 		15.5 Watts	29.8 Watts
+5     40 Watts    51 Watts
+6     51 Watts    60 Watts
 
-psa_4pair 2,1 single
-psa_test_load 5,1 fast c 0 -force t 20
-psa_test_load 5,1 fast c 1 -force t 20
-psa_test_load 5,1 fast c 2 -force t 20
-psa_test_load 5,1 fast c 3 -force t 20
-psa_test_load 5,1 fast c 4 -force t 20
+psa_4pair 5,1 single
+psa_test_load 3,2 fast c 0 -force t 20
+psa_test_load 3,2 fast c 1 -force t 20
+psa_test_load 3,2 fast c 2 -force t 20
+psa_test_load 3,2 fast c 3 -force t 20
+psa_test_load 3,2 fast c 4 -force t 20
 
 
 ************ PSA: How to power up a 4-pair port ********************
@@ -30,15 +32,17 @@ psa_4pair 5,1 single
 
 ************ PSA: How to source power from PSE port with 802.3bt standard?************
 proc psa_bt {} {	 
-#set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
-set port_list {"2,1"}
+set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+#set port_list {"7,1"}
 foreach port $port_list {
 	puts "psa_disconnect $port"
 	psa_disconnect $port
 	puts "psa_4pair $port single"
 	psa_4pair $port single
-	puts "power_bt $port c 8 p 60 "
- 	power_bt $port c 8 p 60
+	puts "psa_auto_port $port BT"
+	psa_auto_port $port BT
+	puts "power_bt $port c 4 p 30  "
+ 	power_bt $port c 4 p 30
 }
 }
 
