@@ -5,17 +5,34 @@ from time import sleep
 if __name__ == "__main__":
 	# Spawn a new process for the TCL shell
 	#tcl_shell = wexpect.spawn('/c/Program\\ Files\\ (x86)/Sifos/PSA3000/PowerShell\\ TCL.exe')
-	tcl_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
-	tcl_shell.sendline('\n')
-	sleep(1)
-	tcl_shell.sendline('\n')
-	sleep(1)
-	tcl_shell.sendline('\n')
-	sleep(1)
-	tcl_shell.sendline('\n')
-	tcl_shell.sendline('puts "Hello, world!"')
-	# Wait for the TCL prompt to appear
-	tcl_shell.expect('>')
+	# tcl_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
+	# tcl_shell.sendline('\n')
+	# sleep(1)
+	# tcl_shell.sendline('\n')
+	# sleep(1)
+	# tcl_shell.sendline('\n')
+	# sleep(1)
+	# tcl_shell.sendline('\n')
+	# tcl_shell.sendline('puts "Hello, world!"')
+	# # Wait for the TCL prompt to appear
+	# tcl_shell.expect('>')
+
+	pshell = power_shell_tcl()
+	cmds = """
+ 	set port_list {"7,1"}
+	foreach port $port_list {
+		puts "psa_disconnect $port"
+		psa_disconnect $port
+		puts "psa_4pair $port single"
+		psa_4pair $port single
+		puts "psa_auto_port $port BT"
+		psa_auto_port $port BT
+		puts "power_bt $port c 4 p 30  "
+		power_bt $port c 4 p 30
+	}
+	"""
+	pshell.tcl_send_commands(cmds,"psa_bt")
+	exit()
 
 	# Send a command to the TCL shell
 	tcl_shell.sendline('puts "Hello, world!"')

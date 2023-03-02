@@ -28,29 +28,39 @@ from ssh_lib import *
 
 class power_shell_tcl:
     def __init__(self, *args, **kwargs):
-        self.power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
-        self.power_shell.sendline('\n')
-        sleep(3)
+        self.power_shell = self.launch_shell()
 
-    def tcl_send_cmd_nowait(self,cmd):
+    def tcl_launch_shell(self):
+        power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
+        power_shell.sendline('\n')
+        sleep(3)
+        return power_shell
+
+    def tcl_exit_shell(self):
+        self.power_shell.sendline('exit')
+
+    def tcl_send_simple_cmd(self,cmd):
         self.power_shell.sendline(cmd)
 
     def tcl_read_cmd(self,cmd):
-        lck = 'def_sw_read_cmd_file.lck'
-        seek_lock(lck)
-        f = open(log_file,'w')
-        router.child.logfile_read = f
-        no_more = 'system shell set global-more off'
-        router.child.sendline(no_more)
-        router.child.expect([router.prompt2, router.prompt])
-        router.child.sendline(cmd)
+        self.power_shell.sendline(cmd)
         #this line can not be deleted as it needs to wait for prompt to read result
-        router.child.expect([router.prompt2, router.prompt])
+        self.power_shell.expect('>')
         result = router.child.before
-        #print "for debugging lsp display sw_read_cmd result = %s" % result
-        f.close()
-        release_lock(lck)
         return result 
+
+    def tcl_send_commands(self,cmdblock,proc_name):
+        cmds = cmdblock.split("\n")
+        cmds = [x.strip() for x in cmds if x.strip()]
+        cmds_list = []
+        header = f"proc {proc_name}"
+        header += " {} {"
+        cmds_list.append(header)
+        for cmd in cmds:
+            cmds_list.append(cmd)
+        cmds_list.append("}")
+        print(cmds_list)
+
 
 
 class Router_BFD:   
