@@ -53,7 +53,7 @@ if __name__ == "__main__":
 		# Start the timer
 		start_time = time.time()
 		for tcl in test.tcl_procedure_list:
-			timer = 60*10 #15 minutes
+			timer = 60*15 #10 minutes
 			if type(tcl) == dict:
 				tcl = dict2obj(tcl)
 			print(tcl)
@@ -73,7 +73,8 @@ if __name__ == "__main__":
 			poe_inline_dict = {}
 			while True:
 				if time.time() - start_time >  timer:
-					ErrorNotify(f"POE Class {tcl.poe_class}: Not to deliever power to all switch ports {test.dut_port_list}")
+					ErrorNotify(f"Failed After {timer} seconds:  test case {test.case_name} |  TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}: Not to deliever power to all switch ports {test.dut_port_list}")
+					break
 				sleep(10)
 				#sw.print_show_command("get switch poe inline")
 				output = collect_show_cmd(sw.console,"get switch poe inline")
@@ -89,20 +90,6 @@ if __name__ == "__main__":
 							power_comsumption = items[5]
 							priority = items[6]
 							poe_class = items[7]
-							# if portname in poe_inline_dict:
-							# 	poe_inline_dict[portname]["status"] =status
-							# 	poe_inline_dict[portname]["state"] = state
-							# 	poe_inline_dict[portname]["max_power"] = max_power
-							# 	poe_inline_dict[portname]["power_comsumption"] = power_comsumption
-							# 	poe_inline_dict[portname]["priority"] = priority
-							# 	poe_inline_dict[portname]["poe_class"] = poe_class
-							# 	print(str(poe_inline_dict[portname]["max_power"]),str(tcl.max_power))
-							# 	print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power))
-							# 	if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power):
-							# 		poe_inline_dict[portname]["powered"] = False
-							# 	else:
-							# 		poe_inline_dict[portname]["powered"] = True
-							# else:	
 							poe_inline_dict.setdefault(portname,{}) 
 							poe_inline_dict[portname]["status"] =status
 							poe_inline_dict[portname]["state"] = state
@@ -110,7 +97,6 @@ if __name__ == "__main__":
 							poe_inline_dict[portname]["power_comsumption"] = power_comsumption
 							poe_inline_dict[portname]["priority"] = priority
 							poe_inline_dict[portname]["poe_class"] = poe_class
-							print(str(poe_inline_dict[portname]["max_power"]),str(tcl.max_power))
 							print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power))
 							if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power):
 								poe_inline_dict[portname]["powered"] = False
@@ -129,8 +115,9 @@ if __name__ == "__main__":
 						result = False
 						break
 				if result == True:
-					tprint(f"Test Pass: POE Class =  {tcl.poe_class}")
+					tprint(f"PASSED: test case {test.case_name} | TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}")
 					break
+					 
 				# keyin = input("Please check poe inline output. Do you want to finish showing this command?(Y/N): ")
 				# if keyin.upper() == "Y":
 				# 	break
