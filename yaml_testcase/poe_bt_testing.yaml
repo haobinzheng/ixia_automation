@@ -74,8 +74,17 @@ Test_Case_list:
       tcl_procedure_list:
         - proc_name: psa_bt_6
           poe_class: 6
+          max_power: 60
+          execute: False
           sifo_ip: 10.105.241.47
           tcl_close: False
+          disconect_name: disconnect
+          disconnect_commands: |
+            set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+              }
           commands: |
               set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
               foreach port $port_list {
@@ -98,9 +107,18 @@ Test_Case_list:
           - port15
           - port16
         - proc_name: psa_bt_4
+          execute: False
           poe_class: 4
+          max_power: 34.00
           sifo_ip: 10.105.241.47
           tcl_close: False
+          disconect_name: disconnect
+          disconnect_commands: |
+            set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+              }
           commands: |
               set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
               foreach port $port_list {
@@ -122,6 +140,141 @@ Test_Case_list:
           - port14
           - port15
           - port16
-
+        - proc_name: psa_bt_3
+          execute: False
+          poe_class: 3
+          max_power: 16.4
+          sifo_ip: 10.105.241.47
+          tcl_close: False
+          disconect_name: disconnect
+          disconnect_commands: |
+            set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+              }
+          commands: |
+              set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_4pair $port single"
+                psa_4pair $port single
+                puts "psa_auto_port $port BT"
+                psa_auto_port $port BT
+                puts "power_bt $port c 3 p 15.3"
+                power_bt $port c 3 p 15.3
+              }
+          dut_port_list:
+          - port9
+          - port10
+          - port11
+          - port12
+          - port13
+          - port14
+          - port15
+          - port16
+        - proc_name: psa_bt_1
+          execute: True
+          poe_class: 2
+          max_power: 16.4
+          sifo_ip: 10.105.241.47
+          tcl_close: False
+          disconect_name: disconnect
+          disconnect_commands: |
+            set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+              }
+          commands: |
+              set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_4pair $port single"
+                psa_4pair $port single
+                puts "psa_auto_port $port BT"
+                psa_auto_port $port BT
+                puts "power_bt $port c 2 p 6.9"
+                power_bt $port c 2 p 6.9
+              }
+          dut_port_list:
+          - port9
+          - port10
+          - port11
+          - port12
+          - port13
+          - port14
+          - port15
+          - port16
+        - proc_name: psa_bt_1
+          execute: False
+          poe_class: 1
+          max_power: 3.9
+          sifo_ip: 10.105.241.47
+          tcl_close: False
+          disconect_name: disconnect
+          disconnect_commands: |
+            set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+              }
+          commands: |
+              set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_4pair $port single"
+                psa_4pair $port single
+                puts "psa_auto_port $port BT"
+                psa_auto_port $port BT
+                puts "power_bt $port c 1 p 3.9"
+                power_bt $port c 1 p 3.9
+              }
+          dut_port_list:
+          - port9
+          - port10
+          - port11
+          - port12
+          - port13
+          - port14
+          - port15
+          - port16
+        - proc_name: psa_bt_0
+          execute: False
+          poe_class: 0
+          max_power: 15.3
+          sifo_ip: 10.105.241.47
+          tcl_close: False
+          disconect_name: disconnect
+          disconnect_commands: |
+            set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+              }
+          commands: |
+              set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+              foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_4pair $port single"
+                psa_4pair $port single
+                puts "psa_auto_port $port BT"
+                psa_auto_port $port BT
+                puts "power_bt $port c 0 p 15.3"
+                power_bt $port c 0 p 15.3
+              }
+          dut_port_list:
+          - port9
+          - port10
+          - port11
+          - port12
+          - port13
+          - port14
+          - port15
+          - port16
 
 
