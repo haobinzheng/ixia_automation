@@ -1,3 +1,15 @@
+{% set poe_4pair_port_list = ['5,1', '6,1', '7,1','8,1','9,1','10,1','11,1','12,1'] %}
+{% set poe_4pair_port_list_tcl = "{" + poe_4pair_port_list | join(" ") + "}" %}
+{% set poe_2pair_port_list = ['1,1', '1,2', '2,1','2,2','3,1','3,2','4,1','4,2'] %}
+{% set dut_2pair_port_list = ['port1', 'port2', 'port3','port4','port5','port6','port7','port8'] %}
+{% set dut_4pair_port_list = ['port9', 'port10', 'port11','port12','port13','port14','port15','port16'] %}
+{% set class_max_power = [60,34.0,16.4,16.4,16.4,16.4] %}
+{% set class_test_list = [6,4,3,2,1,0] %}
+{% set tcl_execute_list = [True,False,False,False,False,False] %}
+{% set tcl_proc_list = ["psa_bt_6","psa_bt_4","psa_bt_3","psa_bt_2","psa_bt_1","psa_bt_0"] %}
+
+
+
 DUT_list:
     - hostname: S624FFTV22000027
       serial: S624FFTV22000027
@@ -34,62 +46,34 @@ Tester_list:
       pdu_ip: 10.105.241.97
       pdu_line: 17
 
-{% set poe_4pair_list = ['5,1', '6,1', '7,1'] %}
-{% set colors = ['red', 'yellow', 'orange'] %}
 
 Test_Case_list:
     - case_name: bt_scan_class_power
       tester: PSA3000
       execute: True
       poe_tester: PSA3000
-      poe_port_list: 
-        - 5,1
-        - 6,1
-        - 7,1
-        - 8,1
-        - 9,1
-        - 10,1
-        - 11,1
-        - 12,1
-      class_list:
-      - 0
-      - 1
-      - 2
-      - 3
-      - 4
-      - 6
-      power_list:
-      - 15.3
-      - 3.9
-      - 6.9
-      - 15.3
-      - 29.8
-      - 60
-      dut_port_list:
-      - port9
-      - port10
-      - port11
-      - port12
-      - port13
-      - port14
-      - port15
-      - port16
+      poe_port_list: {{poe_4pair_port_list}}
+      class_list:{{class_test_list}}
+      dut_port_list:{{dut_4pair_port_list}}
       tcl_procedure_list:
-        - proc_name: psa_bt_6
-          poe_class: 6
-          max_power: 60
-          execute: True
+      {% for tcl_name,class_power,class_name,run in zip(tcl_proc_list, class_max_power,class_test_list,tcl_execute_list) %}
+        - proc_name: {{tcl_name}}
+          poe_class: {{class_name}}
+          max_power: {{class_power}}
+          execute: {{run}}
           sifo_ip: 10.105.241.47
           tcl_close: False
-          disconect_name: disconnect
           disconnect_commands: |
-            set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+            proc disconnect {} {
+             set port_list {{poe_4pair_port_list_tcl}}
               foreach port $port_list {
                 puts "psa_disconnect $port"
                 psa_disconnect $port
               }
+             }
           commands: |
-              set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+            proc {{tcl_name}} {}
+              set port_list {{poe_4pair_port_list_tcl}}
               foreach port $port_list {
                 puts "psa_disconnect $port"
                 psa_disconnect $port
@@ -97,16 +81,9 @@ Test_Case_list:
                 psa_4pair $port single
                 puts "psa_auto_port $port BT"
                 psa_auto_port $port BT
-                puts "power_bt $port c 6 p 60  "
-                power_bt $port c 6 p 60
+                puts "power_bt $port c {{class_name}} p {{class_power}}  "
+                power_bt $port c {{class_name}} p {{class_power}}
               }
-          dut_port_list:
-          - port9
-          - port10
-          - port11
-          - port12
-          - port13
-          - port14
-          - port15
-          - port16
+            }
+      {% endfor %}
         
