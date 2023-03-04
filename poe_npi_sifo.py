@@ -66,6 +66,7 @@ if __name__ == "__main__":
 	# pshell = power_shell_tcl()
 	new_power_shell = True
 	sw = switches[0]
+	timer = 60*15 #10 minutes
 	for test in setup.testcase_obj_list:
 		if test.execute == False:
 			continue
@@ -75,13 +76,10 @@ if __name__ == "__main__":
 		print(test.poe_port_list)
 		
 		# Start the timer
-		start_time = time.time()
 		for tcl in test.tcl_procedure_list:
-			timer = 60*15 #10 minutes
 			if type(tcl) == dict:
 				tcl = dict2obj(tcl)
 			print(tcl)
-
 			print(tcl.proc_name)
 			print(tcl.commands)
 			print(tcl.poe_class)
@@ -95,6 +93,7 @@ if __name__ == "__main__":
 			sleep(60)
 			pshell.tcl_send_commands_direct(tcl.commands,tcl.proc_name)
 			poe_inline_dict = {}
+			start_time = time.time()
 			while True:
 				if time.time() - start_time >  timer:
 					ErrorNotify(f"Failed After {timer} seconds:  test case {test.case_name} |  TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}: Not to deliever power to all switch ports {test.dut_port_list}")
@@ -106,7 +105,7 @@ if __name__ == "__main__":
 					for p in test.dut_port_list:
 						if p in line and "Delivering Power" in line and str(tcl.poe_class) in line :
 							items = line.split()
-							print(items)
+							dprint(items)
 							portname = items[0]
 							status = items[1]
 							state = f"{items[2]} {items[3]}"
@@ -121,7 +120,7 @@ if __name__ == "__main__":
 							poe_inline_dict[portname]["power_comsumption"] = power_comsumption
 							poe_inline_dict[portname]["priority"] = priority
 							poe_inline_dict[portname]["poe_class"] = poe_class
-							print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power))
+							dprint(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power))
 							if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power):
 								poe_inline_dict[portname]["powered"] = False
 							else:
