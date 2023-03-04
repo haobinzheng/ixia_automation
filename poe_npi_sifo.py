@@ -91,7 +91,7 @@ if __name__ == "__main__":
 				tprint(f"Launching Power Shell TCL with PSA IP = {tcl.sifo_ip}")
 				pshell = power_shell_tcl(tcl.sifo_ip)
 				new_power_shell = False
-			pshell.tcl_send_commands_direct(tcl.disconnect_commands,"disconect")
+			pshell.tcl_send_commands_direct(tcl.disconnect_commands,"disconnect")
 			sleep(60)
 			pshell.tcl_send_commands_direct(tcl.commands,tcl.proc_name)
 			poe_inline_dict = {}
