@@ -215,13 +215,14 @@ def print_file(msg, file,**kwargs):
 		else:
 			f.write(time_str("{}:{}\n".format(dut_name,msg)))
 
-def dprint(msg):
+def dprint(*args):
 	if DEBUG:
-		if type(msg) == list:
-			for m in msg:
-				tprint("Debug: {}".format(m))
-		else:
-			tprint("Debug: {}".format(msg))
+		for msg in args:
+			if type(msg) == list:
+				for m in msg:
+					tprint("Debug: {}".format(m))
+			else:
+				tprint("Debug: {}".format(msg))
 
 def print_output_list(msg):
 	if type(msg) == list:
