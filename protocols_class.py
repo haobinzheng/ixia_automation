@@ -130,6 +130,20 @@ class power_shell_tcl:
         result = router.child.before
         return result 
 
+    def tcl_send_commands_direct(self,cmdblock,proc_name):
+        cmds = cmdblock.split("\n")
+        cmds = [x.strip() for x in cmds if x.strip()]
+        cmds_list = []
+        for cmd in cmds:
+            cmds_list.append(cmd)
+        print(cmds_list)
+        for c in cmds_list:
+            self.tcl_send_simple_cmd(c)
+
+        self.tcl_send_simple_cmd(proc_name)
+        self.power_shell.expect('>')
+
+
     def tcl_send_commands(self,cmdblock,proc_name):
         cmds = cmdblock.split("\n")
         cmds = [x.strip() for x in cmds if x.strip()]

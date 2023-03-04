@@ -53,10 +53,10 @@ Test_Case_list:
       execute: True
       poe_tester: PSA3000
       poe_port_list: {{poe_4pair_port_list}}
-      class_list:{{class_test_list}}
-      dut_port_list:{{dut_4pair_port_list}}
+      class_list: {{class_test_list}}
+      dut_port_list: {{dut_4pair_port_list}}
       tcl_procedure_list:
-      {% for tcl_name,class_power,class_name,run in zip(tcl_proc_list, class_max_power,class_test_list,tcl_execute_list) %}
+      {% for tcl_name,class_power,class_name,run in tcl_proc_list|jinja_zip(class_max_power,class_test_list,tcl_execute_list) %}
         - proc_name: {{tcl_name}}
           poe_class: {{class_name}}
           max_power: {{class_power}}
@@ -72,7 +72,7 @@ Test_Case_list:
               }
              }
           commands: |
-            proc {{tcl_name}} {}
+            proc {{tcl_name}} {} {
               set port_list {{poe_4pair_port_list_tcl}}
               foreach port $port_list {
                 puts "psa_disconnect $port"

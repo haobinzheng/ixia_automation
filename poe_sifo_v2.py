@@ -4,12 +4,14 @@ from protocols_class import *
 from device_config import *
 from jinja2 import Template
 from jinja2 import Environment, FileSystemLoader
+import jinja2.ext
+
+def jinja2_zip(*args):
+    return zip(*args)
 
 if __name__ == "__main__":
 	sys.stdout = Logger("Log/poe_bt_testing.log")
-	setup = test_setup("yaml_testcase/poe_bt_testing.yaml")
-	#print(setup)
-	setup.pretty_print()
+	
 	# for test in setup.testcase_obj_list:
 	# 	print(test.case_name)
 	# 	print(test.dut_port_list)
@@ -23,16 +25,26 @@ if __name__ == "__main__":
 	# 			print(tcl.commands)
 	# exit()
 
-	env = Environment(loader=FileSystemLoader('/Users/mike.zheng2008/Python/python/ixia_automation/yaml_testcase'))
+	def jinja_zip(*args):
+		return zip(*args)
+	env = Environment(loader=FileSystemLoader('yaml_testcase'),extensions=[jinja2.ext.do])
+	print(env.loader.list_templates())
+
+	# env = Environment()
+	# env.filters['zip'] = jinja2_zip
+	env.filters['jinja_zip'] = jinja_zip
 	template = env.get_template('poe_testing.yml.j2')
 	yaml_str = template.render()
-	# Convert the YAML string to a Python dictionary
+	print(yaml_str)
 	yaml_dict = yaml.safe_load(yaml_str)
-
+	 
 	# Write the dictionary to a YAML file
-	with open('/Users/mike.zheng2008/Python/python/ixia_automation/yaml_testcase/result.yaml', 'w') as f:
-	    yaml.dump(yaml_dict, f)
-	exit()
+	with open('yaml_testcase/poe_npi_testing.yaml', 'w') as f:
+			yaml.dump(yaml_dict, f)
+	#Use this newly generated yaml file to set up testing
+	setup = test_setup("yaml_testcase/poe_npi_testing.yaml")
+	#setup.pretty_print()
+
 	file = 'tbinfo_poe_testing_npi.xml'
 	tb = parse_tbinfo_untangle(file)
 	testtopo_file = 'topo_poe_npi_6xx.xml'
@@ -79,9 +91,9 @@ if __name__ == "__main__":
 				tprint(f"Launching Power Shell TCL with PSA IP = {tcl.sifo_ip}")
 				pshell = power_shell_tcl(tcl.sifo_ip)
 				new_power_shell = False
-			pshell.tcl_send_commands(tcl.disconnect_commands,tcl.disconect_name)
+			pshell.tcl_send_commands_direct(tcl.disconnect_commands,"disconect")
 			sleep(60)
-			pshell.tcl_send_commands(tcl.commands,tcl.proc_name)
+			pshell.tcl_send_commands_direct(tcl.commands,tcl.proc_name)
 			poe_inline_dict = {}
 			while True:
 				if time.time() - start_time >  timer:
