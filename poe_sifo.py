@@ -5,7 +5,6 @@ from device_config import *
 
 
 if __name__ == "__main__":
-<<<<<<< Updated upstream
 	sys.stdout = Logger("Log/poe_bt_testing.log")
 	setup = test_setup("yaml_testcase/poe_bt_testing.yaml")
 	#print(setup)
@@ -28,7 +27,6 @@ if __name__ == "__main__":
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
-=======
 	pshell = power_shell_tcl()
 	cmds = """
  	set port_list {"7,1"}

@@ -110,55 +110,60 @@ class test_setup:
             else:
                 print(' ' * indent + k + ': ' + str(v))
 
+    def parse_setup_yaml(self):
+        with open(self.setup_yaml_file) as f:
+            setup_yaml = yaml.safe_load(f)
+            self.yaml_obj = dict2obj(**setup_yaml)
 
+
+class poe_test_setup:
+    def __init__(self,yaml_file,*args,**kwargs):
+        self.setup_yaml_file = yaml_file
+        self.yaml_obj = None
+        self.parse_setup_yaml()
+
+    def __str__(self):
+        attributes = []
+        for key, value in vars(self).items():
+            if isinstance(value, dict2obj):
+                value_str = str(value)
+            else:
+                value_str = repr(value)
+            attributes.append(f"{key}={value_str}")
+        return f"{type(self).__name__}({', '.join(attributes)})"
+        #return f"{', '.join(attributes)}"
+
+
+    def pretty_print(self, indent=0):
+        print(' ' * indent + type(self).__name__ + ':')
+        indent += 4
+        for k, v in self.__dict__.items():
+            if isinstance(v, dict):
+                print(' ' * indent + k + ':')
+                pretty_print(v, indent + 4)
+            elif isinstance(v, list):
+                print(' ' * indent + k + ':')
+                for item in v:
+                    if isinstance(item, dict):
+                        pretty_print(item, indent + 4)
+                    else:
+                        print(' ' * (indent + 4) + str(item))
+            elif isinstance(v, dict2obj):
+                print(' ' * indent + k + ':')
+                v.pretty_print(indent + 4)
+            else:
+                print(' ' * indent + k + ': ' + str(v))
 
     def parse_setup_yaml(self):
         with open(self.setup_yaml_file) as f:
             setup_yaml = yaml.safe_load(f)
             self.yaml_obj = dict2obj(**setup_yaml)
-            ########### End of new code ###########
-
-            # self.dut_list_dict = setup_yaml["DUT_list"]
-            # self.tester_list_dict = setup_yaml["Tester_list"]
-            # self.testcase_list_dict = setup_yaml["Test_Case_list"]
-            # print_dict(self.dut_list_dict)
-            # print_dict(self.tester_list_dict)
-            # print_dict(self.testcase_list_dict)
-            # self.dut_obj_list = []
-            # for d in self.dut_list_dict:
-            #     obj = dict2obj(**d)
-            #     self.dut_obj_list.append(obj)
-            #     print(obj.hostname)
-            #     print(obj.serial)
-            #     print(obj.mgmt_ip)
-            # self.tester_obj_list = []
-            # for d in self.tester_list_dict:
-            #     obj = dict2obj(**d)
-            #     self.tester_obj_list.append(obj)
-            #     print(obj.hostname)
-            #     print(obj.platform)
-            #     print(obj.type)
-            # self.testcase_obj_list = []
-            # for d in self.testcase_list_dict:
-            #     obj = dict2obj(**d)
-            #     self.testcase_obj_list.append(obj)
-            #     print(obj.case_name)
-
-            # self.dut_list_obj = dict2obj(self.dut_list_dict)
-            # self.tester_list_obj = dict2obj(self.tester_list_dict)
-            # self.testcase_list_obj = dict2obj(self.testcase_list_dict)
-            # for obj in self.testcase_list_obj:
-            #     print(obj.proc_name)
-            # for k in dataMap.keys():
-            #     device_db = dict2obj(dataMap[k])
-            #     print_dict(dataMap[k])
-            #     self.nodes_list.append(device_db)
-
+             
 class power_shell_tcl:
     def __init__(self,sifo_ip,*args, **kwargs):
         self.ip = sifo_ip
         self.power_shell = self.tcl_launch_shell()
-        self.current_psa_ip = None 
+        self.current_psa_ip = self.ip 
 
     def tcl_launch_shell(self):
         power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
@@ -167,6 +172,8 @@ class power_shell_tcl:
         power_shell.sendline(f"psa {self.ip}")
         console_timer(20,msg=f"After connect to Sifo Chassis {self.ip}, wait for 20 sec")
         return power_shell
+
+
 
     def tcl_exit_shell(self):
         self.power_shell.sendline('exit')

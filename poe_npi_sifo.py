@@ -108,7 +108,7 @@ if __name__ == "__main__":
 	with open('yaml_testcase/poe_npi_testing.yaml', 'w') as f:
 		yaml.dump(yaml_dict, f)
 	#Use this newly generated yaml file to set up testing
-	setup = test_setup("yaml_testcase/poe_npi_testing.yaml")
+	setup = poe_test_setup("yaml_testcase/poe_npi_testing.yaml")
 	print("======================= Pretty print ======================")
 	setup.pretty_print()
 	# print(setup)
