@@ -69,8 +69,10 @@ if __name__ == "__main__":
 								poe_inline_dict[portname]["power_comsumption"] = power_comsumption
 								poe_inline_dict[portname]["priority"] = priority
 								poe_inline_dict[portname]["poe_class"] = poe_class
-								print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power),poe_inline_dict[portname]["state"],poe_inline_dict[portname]["poe_class"])
-								 
+								try:
+									print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power),poe_inline_dict[portname]["state"],poe_inline_dict[portname]["poe_class"])
+								except Exception as e:
+									pass
 								if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power) \
 								or poe_inline_dict[portname]["state"] != "Delivering Power" \
 								or poe_inline_dict[portname]["poe_class"] != str(tcl.poe_class):
