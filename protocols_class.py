@@ -11,9 +11,9 @@ import multiprocessing
 from random import seed                                                 
 from random import randint 
 import yaml
+import types
 from jinja2 import Environment, PackageLoader
 from jinja2 import Template
-
 
 from utils import *
 from apc import *
@@ -25,70 +25,124 @@ from cli_functions import *
 from ssh_lib import *
 #from ssh_lib_v2 import *
 
-class dict2obj(object):
-    def __init__(self, d):
-        for k, v in d.items():
-            if isinstance(k, (list, tuple)):
-                setattr(self, k, [dict2obj(x) if isinstance(x, dict) else x for x in v])
-            else:
-                setattr(self, k, dict2obj(v) if isinstance(v, dict) else v)
 
+
+class dict2obj:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            if isinstance(value, dict):
+                setattr(self, key, dict2obj(**value))
+            elif isinstance(value, list):
+                setattr(self, key, [dict2obj(**item) if isinstance(item, dict) else item for item in value])
+            else:
+                setattr(self, key, value)
+
+    def __str__(self):
+        attributes = []
+        for key, value in vars(self).items():
+            if isinstance(value, dict2obj):
+                value_str = str(value)
+            elif isinstance(value, list):
+                nested_list = []
+                for item in value:
+                    if isinstance(item, dict2obj):
+                        nested_list.append(str(item))
+                    else:
+                        nested_list.append(repr(item))
+                value_str = "[" + ", ".join(nested_list) + "]"
+            else:
+                value_str = repr(value)
+            attributes.append(f"{key}={value_str}")
+        #return f"{type(self).__name__}({', '.join(attributes)})"
+        return f"({', '.join(attributes)})"
+
+
+    def pretty_print(self, indent=0):
+        for key, value in self.__dict__.items():
+            if isinstance(value, dict):
+                print(' ' * indent + key + ':')
+                dict2obj(value).pretty_print(indent+4)
+            elif isinstance(value, list):
+                print(' ' * indent + key + ':')
+                for item in value:
+                    if hasattr(item, 'pretty_print'):
+                        item.pretty_print(indent+4)
+                    else:
+                        print(' ' * (indent+4) + str(item))
+            else:
+                print(' ' * indent + key + ': ' + str(value))
 
 class test_setup:
     def __init__(self,yaml_file,*args,**kwargs):
         self.setup_yaml_file = yaml_file
-        self.nodes_list = []
-        self.dut_list_dict = []
-        self.tester_list_dict = []
-        self.testcase_list_dict = []
-        self.dut_obj_list = []
-        self.tester_obj_list = []
-        self.testcase_obj_list = []
+        self.yaml_obj = None
         self.parse_setup_yaml()
 
     def __str__(self):
-        lines = [self.__class__.__name__ + ':']
-        for key, val in vars(self).items():
-            lines += '{}: {}'.format(key, val).split('\n')
-        return '\n    '.join(lines)
-
-    def pretty_print(clas, indent=0):
-        print(' ' * indent +  type(clas).__name__ +  ':')
-        indent += 4
-        for k,v in clas.__dict__.items():
-            if '__dict__' in dir(v):
-                pretty_print(v,indent)
+        attributes = []
+        for key, value in vars(self).items():
+            if isinstance(value, dict2obj):
+                value_str = str(value)
             else:
-                print(' ' * indent +  k + ': ' + str(v))
+                value_str = repr(value)
+            attributes.append(f"{key}={value_str}")
+        return f"{type(self).__name__}({', '.join(attributes)})"
+        #return f"{', '.join(attributes)}"
+
+
+    def pretty_print(self, indent=0):
+        print(' ' * indent + type(self).__name__ + ':')
+        indent += 4
+        for k, v in self.__dict__.items():
+            if isinstance(v, dict):
+                print(' ' * indent + k + ':')
+                pretty_print(v, indent + 4)
+            elif isinstance(v, list):
+                print(' ' * indent + k + ':')
+                for item in v:
+                    if isinstance(item, dict):
+                        pretty_print(item, indent + 4)
+                    else:
+                        print(' ' * (indent + 4) + str(item))
+            elif isinstance(v, dict2obj):
+                print(' ' * indent + k + ':')
+                v.pretty_print(indent + 4)
+            else:
+                print(' ' * indent + k + ': ' + str(v))
+
+
 
     def parse_setup_yaml(self):
         with open(self.setup_yaml_file) as f:
             setup_yaml = yaml.safe_load(f)
-            self.dut_list_dict = setup_yaml["DUT_list"]
-            self.tester_list_dict = setup_yaml["Tester_list"]
-            self.testcase_list_dict = setup_yaml["Test_Case_list"]
-            print_dict(self.dut_list_dict)
-            print_dict(self.tester_list_dict)
-            print_dict(self.testcase_list_dict)
-            self.dut_obj_list = []
-            for d in self.dut_list_dict:
-                obj = dict2obj(d)
-                self.dut_obj_list.append(obj)
-                print(obj.hostname)
-                print(obj.serial)
-                print(obj.mgmt_ip)
-            self.tester_obj_list = []
-            for d in self.tester_list_dict:
-                obj = dict2obj(d)
-                self.tester_obj_list.append(obj)
-                print(obj.hostname)
-                print(obj.platform)
-                print(obj.type)
-            self.testcase_obj_list = []
-            for d in self.testcase_list_dict:
-                obj = dict2obj(d)
-                self.testcase_obj_list.append(obj)
-                print(obj.case_name)
+            self.yaml_obj = dict2obj(**setup_yaml)
+            ########### End of new code ###########
+
+            # self.dut_list_dict = setup_yaml["DUT_list"]
+            # self.tester_list_dict = setup_yaml["Tester_list"]
+            # self.testcase_list_dict = setup_yaml["Test_Case_list"]
+            # print_dict(self.dut_list_dict)
+            # print_dict(self.tester_list_dict)
+            # print_dict(self.testcase_list_dict)
+            # self.dut_obj_list = []
+            # for d in self.dut_list_dict:
+            #     obj = dict2obj(**d)
+            #     self.dut_obj_list.append(obj)
+            #     print(obj.hostname)
+            #     print(obj.serial)
+            #     print(obj.mgmt_ip)
+            # self.tester_obj_list = []
+            # for d in self.tester_list_dict:
+            #     obj = dict2obj(**d)
+            #     self.tester_obj_list.append(obj)
+            #     print(obj.hostname)
+            #     print(obj.platform)
+            #     print(obj.type)
+            # self.testcase_obj_list = []
+            # for d in self.testcase_list_dict:
+            #     obj = dict2obj(**d)
+            #     self.testcase_obj_list.append(obj)
+            #     print(obj.case_name)
 
             # self.dut_list_obj = dict2obj(self.dut_list_dict)
             # self.tester_list_obj = dict2obj(self.tester_list_dict)
