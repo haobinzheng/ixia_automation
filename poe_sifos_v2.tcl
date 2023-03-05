@@ -51,7 +51,14 @@ foreach port $port_list {
 proc psa_at {} {
 set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
 foreach port $port_list {
+	puts "psa_disconnect $port"
 	psa_disconnect $port
+	puts "psa_4pair $port disable"
+	psa_4pair $port disable
+	puts "psa_auto_port $port AT"
+	psa_auto_port $port AT
+	puts "alt $port A"
+	alt $port A
 	puts "power_port $port c 4 p 30"
 	power_port $port c 4 p 30
 	paverage $port period 500m stat
