@@ -5,6 +5,7 @@ from device_config import *
 
 
 if __name__ == "__main__":
+<<<<<<< Updated upstream
 	sys.stdout = Logger("Log/poe_bt_testing.log")
 	setup = test_setup("yaml_testcase/poe_bt_testing.yaml")
 	#print(setup)
@@ -27,6 +28,24 @@ if __name__ == "__main__":
 	parse_testtopo_untangle(testtopo_file,tb)
 	tb.show_tbinfo()
 
+=======
+	pshell = power_shell_tcl()
+	cmds = """
+ 	set port_list {"7,1"}
+	foreach port $port_list {
+		puts "psa_disconnect $port"
+		psa_disconnect $port
+		puts "psa_4pair $port single"
+		psa_4pair $port single
+		puts "psa_auto_port $port BT"
+		psa_auto_port $port BT
+		puts "power_bt $port c 4 p 30  "
+		power_bt $port c 4 p 30
+	}
+	"""
+	pshell.tcl_send_commands(cmds,"psa_bt")
+	exit()
+>>>>>>> Stashed changes
 
 	switches = []
 	devices=[]
