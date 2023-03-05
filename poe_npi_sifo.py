@@ -71,14 +71,14 @@ if __name__ == "__main__":
 								poe_inline_dict[portname]["poe_class"] = poe_class
 								try:
 									print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power),poe_inline_dict[portname]["state"],poe_inline_dict[portname]["poe_class"])
+									if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power) \
+									or poe_inline_dict[portname]["state"] != "Delivering Power" \
+									or poe_inline_dict[portname]["poe_class"] != str(tcl.poe_class):
+										poe_inline_dict[portname]["powered"] = False
+									else:
+										poe_inline_dict[portname]["powered"] = True
 								except Exception as e:
 									pass
-								if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power) \
-								or poe_inline_dict[portname]["state"] != "Delivering Power" \
-								or poe_inline_dict[portname]["poe_class"] != str(tcl.poe_class):
-									poe_inline_dict[portname]["powered"] = False
-								else:
-									poe_inline_dict[portname]["powered"] = True
 										 
 				print_dict(poe_inline_dict)
 				ports = poe_inline_dict.keys()

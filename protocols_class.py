@@ -158,6 +158,7 @@ class power_shell_tcl:
     def __init__(self,sifo_ip,*args, **kwargs):
         self.ip = sifo_ip
         self.power_shell = self.tcl_launch_shell()
+        self.current_psa_ip = None 
 
     def tcl_launch_shell(self):
         power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
