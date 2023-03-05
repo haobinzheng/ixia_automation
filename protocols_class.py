@@ -162,9 +162,9 @@ class power_shell_tcl:
     def tcl_launch_shell(self):
         power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
         power_shell.sendline('\n')
-        sleep(20)
+        console_timer(20,msg="After launching powershell tcl, wait for 20 sec")
         power_shell.sendline(f"psa {self.ip}")
-        sleep(20)
+        console_timer(20,msg=f"After connect to Sifo Chassis {self.ip}, wait for 20 sec")
         return power_shell
 
     def tcl_exit_shell(self):

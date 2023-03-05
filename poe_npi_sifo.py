@@ -34,29 +34,49 @@ if __name__ == "__main__":
 				#sw.print_show_command("get switch poe inline")
 				output = collect_show_cmd(sw.console,"get switch poe inline")
 				for line in output:
+					#skip line with N/A such as Power Fault situation
+					if "N/A" in line:
+						continue
 					for p in test.dut_port_list:
-						if p in line and "Delivering Power" in line and str(tcl.poe_class) in line :
-							items = line.split()
-							dprint(items)
-							portname = items[0]
-							status = items[1]
-							state = f"{items[2]} {items[3]}"
-							max_power = items[4]
-							power_comsumption = items[5]
-							priority = items[6]
-							poe_class = items[7]
-							poe_inline_dict.setdefault(portname,{}) 
-							poe_inline_dict[portname]["status"] =status
-							poe_inline_dict[portname]["state"] = state
-							poe_inline_dict[portname]["max_power"] = max_power
-							poe_inline_dict[portname]["power_comsumption"] = power_comsumption
-							poe_inline_dict[portname]["priority"] = priority
-							poe_inline_dict[portname]["poe_class"] = poe_class
-							dprint(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power))
-							if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power):
-								poe_inline_dict[portname]["powered"] = False
+						#if p in line and "Delivering Power" in line and str(tcl.poe_class) in line :
+						if p in line:
+							if "Delivering Power" in line and str(tcl.poe_class) in line:
+								items = line.split()
+								dprint(items)
+								portname = items[0]
+								status = items[1]
+								state = f"{items[2]} {items[3]}"
+								max_power = items[4]
+								power_comsumption = items[5]
+								priority = items[6]
+								poe_class = items[7]
+								#Only port delivering power will be taken a record
+								poe_inline_dict.setdefault(portname,{}) 
 							else:
-								poe_inline_dict[portname]["powered"] = True
+								items = line.split()
+								dprint(items)
+								portname = items[0]
+								status = items[1]
+								state = items[2]
+								max_power = items[3]
+								power_comsumption = items[4]
+								priority = items[5]
+								poe_class = items[6]
+							if portname in poe_inline_dict:
+								poe_inline_dict[portname]["status"] =status
+								poe_inline_dict[portname]["state"] = state
+								poe_inline_dict[portname]["max_power"] = max_power
+								poe_inline_dict[portname]["power_comsumption"] = power_comsumption
+								poe_inline_dict[portname]["priority"] = priority
+								poe_inline_dict[portname]["poe_class"] = poe_class
+								print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power),poe_inline_dict[portname]["state"],poe_inline_dict[portname]["poe_class"])
+								 
+								if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power) \
+								or poe_inline_dict[portname]["state"] != "Delivering Power" \
+								or poe_inline_dict[portname]["poe_class"] != str(tcl.poe_class):
+									poe_inline_dict[portname]["powered"] = False
+								else:
+									poe_inline_dict[portname]["powered"] = True
 										 
 				print_dict(poe_inline_dict)
 				ports = poe_inline_dict.keys()

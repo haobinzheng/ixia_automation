@@ -11,12 +11,10 @@
 {% set bt_tcl_proc_list = ["psa_bt_6","psa_bt_4","psa_bt_3","psa_bt_2","psa_bt_1","psa_bt_0"] %}
 
 {% set at_class_max_power_list = [34.0,16.4,16.4,16.4,16.4] %}
-{% set at_class_deliver_power_list = [30,15.3,6.9,3.9,15.3] %}
+{% set at_class_deliver_power_list = [25,15.3,6.9,3.9,15.3] %}
 {% set at_class_test_list = [4,3,2,1,0] %}
 {% set at_tcl_execute_list = [True,True,True,True,True] %}
 {% set at_tcl_proc_list = ["psa_at_4","psa_at_3","psa_at_2","psa_at_1","psa_at_0"] %}
-
-
 
 DUT_list:
     - hostname: S624FFTV22000027
@@ -63,6 +61,7 @@ Test_Case_list:
       poe_tester: PSA3000
       poe_port_list: {{poe_4pair_port_list}}
       class_list: {{bt_class_test_list}}
+      deliver_power_list: {{bt_class_deliver_power_list}}
       dut_port_list: {{dut_4pair_port_list}}
       python_verify_func: scan_get_poe_inline
       tcl_procedure_list:
@@ -103,7 +102,9 @@ Test_Case_list:
       poe_tester: PSA3000
       poe_port_list: {{poe_2pair_port_list}}
       class_list: {{at_class_test_list}}
+      deliver_power_list: {{at_class_deliver_power_list}}
       dut_port_list: {{dut_2pair_port_list}}
+      python_verify_func: scan_get_poe_inline
       tcl_procedure_list:
       {% for tcl_name,class_power,class_name,run,d_power in at_tcl_proc_list|jinja_zip(at_class_max_power_list,at_class_test_list,at_tcl_execute_list,at_class_deliver_power_list) %}
         - proc_name: {{tcl_name}}
@@ -126,8 +127,8 @@ Test_Case_list:
               foreach port $port_list {
                 puts "psa_disconnect $port"
                 psa_disconnect $port
-                puts "power_port $port c {{class_name}} p {{d_power}}  "
-                power_port $port c {{class_name}} p {{d_power}}
+                puts "psa_emulate_pd $port start c {{class_name}} p {{d_power}} o 5"
+                psa_emulate_pd $port start c {{class_name}} p {{d_power}} o 0
               }
             }
       {% endfor %}
