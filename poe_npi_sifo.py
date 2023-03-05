@@ -99,20 +99,26 @@ if __name__ == "__main__":
 	env = Environment(loader=FileSystemLoader('yaml_testcase'),extensions=[jinja2.ext.do])
 	dprint(env.loader.list_templates())
 	env.filters['jinja_zip'] = jinja_zip
+
 	template = env.get_template('poe_testing.yml.j2')
 	yaml_str = template.render()
 	print(yaml_str)
 	yaml_dict = yaml.safe_load(yaml_str)
 	 
 	# Write the dictionary to a YAML file
-	with open('yaml_testcase/poe_npi_testing.yaml', 'w') as f:
-		yaml.dump(yaml_dict, f)
-	#Use this newly generated yaml file to set up testing
-	setup = poe_test_setup("yaml_testcase/poe_npi_testing.yaml")
-	print("======================= Pretty print ======================")
-	setup.pretty_print()
-	# print(setup)
-
+	# with open('yaml_testcase/poe_npi_testing.yaml', 'w') as f:
+	# 	yaml.dump(yaml_dict, f)
+	# #Use this newly generated yaml file to set up testing
+	# setup = poe_test_setup("yaml_testcase/poe_npi_testing.yaml")
+	# print("======================= Pretty print ======================")
+	# setup.pretty_print()
+	
+	topology = switch_poe_topology("yaml_testcase/poe_sifos_switch_connection.yaml")
+	topology.pretty_print()
+	for connection in topology.database.Switch_Sifos_Connections:
+		print(connection.switch_port)
+		print(connection.sifos_ip)
+	exit()
 	file = 'tbinfo_poe_testing_npi.xml'
 	tb = parse_tbinfo_untangle(file)
 	testtopo_file = 'topo_poe_npi_6xx.xml'

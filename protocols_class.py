@@ -72,11 +72,13 @@ class dict2obj:
             else:
                 print(' ' * indent + key + ': ' + str(value))
 
-class test_setup:
+class switch_poe_topology:
     def __init__(self,yaml_file,*args,**kwargs):
         self.setup_yaml_file = yaml_file
-        self.yaml_obj = None
-        self.parse_setup_yaml()
+        self.database = None
+        self.switch = None 
+        self.tcl_shell = None
+        self.parse_topology_yaml()
 
     def __str__(self):
         attributes = []
@@ -110,11 +112,13 @@ class test_setup:
             else:
                 print(' ' * indent + k + ': ' + str(v))
 
-    def parse_setup_yaml(self):
+    def parse_topology_yaml(self):
         with open(self.setup_yaml_file) as f:
             setup_yaml = yaml.safe_load(f)
-            self.yaml_obj = dict2obj(**setup_yaml)
+            self.database = dict2obj(**setup_yaml)
 
+    def power_switch_ports(self,*args,**kwargs):
+        pass
 
 class poe_test_setup:
     def __init__(self,yaml_file,*args,**kwargs):
@@ -172,8 +176,6 @@ class power_shell_tcl:
         power_shell.sendline(f"psa {self.ip}")
         console_timer(20,msg=f"After connect to Sifo Chassis {self.ip}, wait for 20 sec")
         return power_shell
-
-
 
     def tcl_exit_shell(self):
         self.power_shell.sendline('exit')

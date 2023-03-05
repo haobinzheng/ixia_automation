@@ -6,7 +6,7 @@ from device_config import *
 
 if __name__ == "__main__":
 	sys.stdout = Logger("Log/poe_bt_testing.log")
-	setup = test_setup("yaml_testcase/poe_bt_testing.yaml")
+	setup = poe_test_setup("yaml_testcase/poe_bt_testing.yaml")
 	#print(setup)
 	setup.pretty_print()
 	# for test in setup.testcase_obj_list:
