@@ -90,7 +90,6 @@ if __name__ == "__main__":
 	print("======================= Pretty print ======================")
 	setup.pretty_print()
 	# print(setup)
-	# exit()
 
 	file = 'tbinfo_poe_testing_npi.xml'
 	tb = parse_tbinfo_untangle(file)
@@ -120,10 +119,9 @@ if __name__ == "__main__":
 			tprint(f"Launching Power Shell TCL with PSA IP = {test.sifo_ip}")
 			pshell = power_shell_tcl(test.sifo_ip)
 			new_power_shell = False
-		print(test.case_name)
-		print(test.dut_port_list)
-		print(test.class_list)
-		print(test.poe_port_list)
-		#kwargs = test.kwargs
+		dprint(test.case_name)
+		dprint(test.dut_port_list)
+		dprint(test.class_list)
+		dprint(test.poe_port_list)
 		result = globals()[test.python_verify_func]()
 	pshell.tcl_close_shell()
