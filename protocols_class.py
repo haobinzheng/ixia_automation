@@ -191,7 +191,7 @@ class power_shell_tcl:
         self.power_shell.sendline(cmd)
         #this line can not be deleted as it needs to wait for prompt to read result
         self.power_shell.expect('>')
-        result = router.child.before
+        result = self.power_shell.before
         return result 
 
     def tcl_send_commands_direct(self,cmdblock,proc_name):

@@ -1,3 +1,149 @@
+******************* How do I know what PSA commands are available? #############
+psa_command
+
+=====================================================================================
+PowerShell Command Set (alphabetical): See Reference Manual Section 4 for further
+                     details. Use '<command> -?' for command-specific help.
+=====================================================================================
+         Command  Function
+----------------  -------------------------------------------------------------------
+         acvolts  Configures and initiates AC Ripple Measurement with control
+                  of frequency band (low or high) and measurement interval.
+----------------  -------------------------------------------------------------------
+             alt  Configures port to ALT A or ALT B.  Use to disconnect and
+                  connect port as well.
+----------------  -------------------------------------------------------------------
+           class  Configures classification load current.  Alternative to using
+                  iload with proper value.
+----------------  -------------------------------------------------------------------
+  get_sync_parms  Returns parameters utilized for pre-detection synchronization.
+----------------  -------------------------------------------------------------------
+      idcaverage  Configures and initiates average DC current measurements
+                  including control for triggering and timeout.  Note: Use
+                  'idcaverage_2' with SA Port Combiners for High Power PSE testing.
+----------------  -------------------------------------------------------------------
+         idcpeak  Configures and initiates peak DC current measurements including
+                  min/max peak, trigger control, and timeout.Note: Use 'idcpeak_2'
+                  with SA Port Combiners for High Power PSE testing.
+----------------  -------------------------------------------------------------------
+        idctrace  Configures and initiates a sampled current trace including
+                  control of trigger mode, sampling rate, and timeout. Note:
+                  Use 'idctrace_2' with SA Port Combiners for High Power PSE testing.
+----------------  -------------------------------------------------------------------
+           iload  Configures current load for classification and power up
+                  testing.  Note: Use 'iload_2' with PSA Port Combiners for High Power.
+----------------  -------------------------------------------------------------------
+          itrans  Configures and initiates 2-step load current transients
+                  including control of load levels, durations, and slew.
+----------------  -------------------------------------------------------------------
+       multiport  Run sequence of PSE Multi-Port Tests and store to specified report.
+----------------  -------------------------------------------------------------------
+         passive  Configures detection resistance and capacitance.
+                  including control for triggering and timeout.
+----------------  -------------------------------------------------------------------
+        paverage  Returns immediate average power measurement.
+                  including control for integrating period. Note: Use 'paverage_2'
+                  with PSA Port Combiners for High Power PSE Testing.
+----------------  -------------------------------------------------------------------
+        polarity  Configures port for normal (MDI) or inverted (MDI-X) polarity.
+
+----------------  -------------------------------------------------------------------
+            port  Connects or Disconnects (isolates) Detection Passives and
+                  AC Ripple Sense.
+----------------  -------------------------------------------------------------------
+     power_check  Reports if a port is powered.
+----------------  -------------------------------------------------------------------
+      power_port  Emulates and verifies a PD power up to specified class
+                  (0 - 4) or power level. Note: Use 'power_port_2' with SA Port
+                  Combiners for High Power PSE testing.
+----------------  -------------------------------------------------------------------
+             psa  Specifies IP address of PSA to be controlled by TCL.
+----------------  -------------------------------------------------------------------
+       psa_4pair  Enable/Disable 4-Pair PoE Testing with PSA-3102 or PSL-3102 Blade.
+----------------  -------------------------------------------------------------------
+   psa_auto_port  Return PSE ALT and Polarity configuration and replicate.
+                  to all ports.
+----------------  -------------------------------------------------------------------
+      psa_config  Return configuration of a chassis.
+----------------  -------------------------------------------------------------------
+  psa_conn_check  Evaluates connections between PSE and selected PSA test ports.
+----------------  -------------------------------------------------------------------
+     psa_connect  Integrates 'port connect' with other config changes such as 'iload'.
+----------------  -------------------------------------------------------------------
+        psa_demo  Activates or Deactivates Demo (Emulation) Mode.
+----------------  -------------------------------------------------------------------
+    psa_det_char  Characterize the open circuit detection signaling of PSE.
+----------------  -------------------------------------------------------------------
+    psa_det_sync  Sync to the open circuit detection signaling of PSE.
+----------------  -------------------------------------------------------------------
+  psa_disconnect  Forces PSE (AC and DC MPS) to remove power from the port.
+                  Note: Use 'psa_disconnect_2' with SA Port Combiners for High Power
+                  PSE testing.
+----------------  -------------------------------------------------------------------
+    psa_download  Download firmware file to chassis controller upper memory.
+----------------  -------------------------------------------------------------------
+  psa_edge_count  Counts voltage transitions at specified level over specified time.
+ psa_edge_search  Finds waveform edges in traces from trace meters.
+ psa_pulse_remove  Removes specified pulses from a captured trace.
+  psa_pulse_sync  Sync to a specified pulse found during detection signaling.
+----------------  -------------------------------------------------------------------
+      psa_enable  Query or key-word configure PSA Chassis Features.
+----------------  -------------------------------------------------------------------
+      psa_expire  Force a triggered measurement to terminate before timing out.
+----------------  -------------------------------------------------------------------
+         psa_lan  Connect PSA-3102 or PSL-3102 Blade for LLDP vs Through mode.
+----------------  -------------------------------------------------------------------
+         psa_pse  <or 'psa_getConfig'> Configure PSA and Conformance Tests for
+                  specific PSE Settings (ALT, Polarity, MPS, etc).
+----------------  -------------------------------------------------------------------
+ psa_update_port  Install downloaded blade-port firmware to target location(s).
+----------------  -------------------------------------------------------------------
+  psa_show_trace  Enable or Disable trace displays as PSE Conformance Tests run.
+----------------  -------------------------------------------------------------------
+       psa_trace  Display trace captured from vdctrace or idctrace in PowerShell.
+----------------  -------------------------------------------------------------------
+        psa_wait  Return measurement result from triggered measurement function.
+----------------  -------------------------------------------------------------------
+ psa_triggered_connect  Perform edge-sync'd port connections.
+----------------  -------------------------------------------------------------------
+         pstatus  Return LED states for a selected port.
+----------------  -------------------------------------------------------------------
+ replicate_ports  Copy a configuration type from one port to other ports.
+----------------  -------------------------------------------------------------------
+        sequence  Run sequence of PSE Conformance Tests and store to specified report.
+----------------  -------------------------------------------------------------------
+          timint  Configures and initiates a time interval measurement with
+                  control of start and stop event criteria and timeout.
+----------------  -------------------------------------------------------------------
+           trig1  Configures and enables trigger 1.
+----------------  -------------------------------------------------------------------
+           trig2  Configures trigger 2.  Trigger 2 enabled by trigger 1.
+----------------  -------------------------------------------------------------------
+         trigout  Initiates immediate trigger out signal.
+----------------  -------------------------------------------------------------------
+       trig_port  Configures external trigger port to input or output.
+----------------  -------------------------------------------------------------------
+      vdcaverage  Configures and initiates average DC voltage measurements
+          (vdca)  including control for triggering and timeout.
+----------------  -------------------------------------------------------------------
+         vdcpeak  Configures and initiates peak DC voltage measurements
+          (vdcp)  including min/max peak, trigger control, and timeout.
+----------------  -------------------------------------------------------------------
+        vdctrace  Configures and initiates a sampled voltage trace including
+          (vdct)  control of trigger mode, sampling rate, and timeout.
+=====================================================================================
+
+###################### How to disconnect ports ################################
+
+proc disconnect {} {
+	set port_list {1,2 2,1 2,2 3,1 3,2 4,1 4,2}
+	foreach port $port_list {
+	puts "psa_disconnect $port"
+	psa_disconnect $port
+}
+}
+
+
 ******************* How to connect to a PSA chasssis? ***************************
 psa <ip_addr>
 
