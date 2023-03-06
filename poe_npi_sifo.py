@@ -93,7 +93,8 @@ if __name__ == "__main__":
 						break
 				if result == True:
 					tprint(f"PASSED: test case {test.case_name} | TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}")
-					break
+					sleep(60)
+					return
 	sys.stdout = Logger("Log/poe_bt_testing.log")
 	
 	env = Environment(loader=FileSystemLoader('yaml_testcase'),extensions=[jinja2.ext.do])
