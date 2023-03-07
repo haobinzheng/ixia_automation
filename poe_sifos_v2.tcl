@@ -193,19 +193,23 @@ foreach port $port_list {
 }
 
 proc psa_bt {} {     
-set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+#set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+set port_list {"5,1" "6,1"}
 #set port_list {"7,1"}
 foreach port $port_list {
     puts "psa_4pair $port single"
     psa_4pair $port single
     puts "psa_disconnect $port"
     psa_disconnect $port
-    puts "power_bt $port c 4 p 30  "
+    # puts "polarity $port mdi+mdix"
+    # polarity $port mdi+mdix
+    puts "power_bt $port c 6 p 60  "
     power_bt $port c 6 p 60
 }
 }
 
 **************PSA: How to basically power up 3AT ? ************************
+!!!!!!!! This procedure doesn't work after BT 
 proc psa_at {} {
 set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
 foreach port $port_list {
@@ -225,14 +229,13 @@ foreach port $port_list {
 }
 }
 
+
+
 ************ PSA: How to emulate 3AT PD quickly **********************
+!!!!! This procedure is fast and works !!!!!!!!!!!!!
 proc psa_at_emulate {} {
 set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
 foreach port $port_list {
-puts "psa_4pair $port disable"    
-psa_4pair $port disable
-puts "alt $port A"
-alt $port A
 puts "psa_disconnect $port"
 psa_disconnect $port
 puts "psa_emulate_pd $port start c 4 p 25.5 o 5"
@@ -258,7 +261,7 @@ foreach port $port_list {
 psa_pse -spec bt -grant phy+lldp 
 
 psa_pse -grant phy+lldp
-psa_pse -grant phy 
+psa_pse -grant phy -spec at -pol mdix -alt A
 
 #Use psa_saveConfig to permanently save PSE Attribute settings: BT.
 psa_saveConfig

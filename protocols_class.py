@@ -181,6 +181,7 @@ class power_shell_tcl:
         self.power_shell.sendline('exit')
 
     def tcl_send_simple_cmd(self,cmd):
+        print(f"tcl command: {cmd}")
         self.power_shell.sendline(cmd)
 
     def tcl_close_shell(self):

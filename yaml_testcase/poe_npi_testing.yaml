@@ -63,6 +63,7 @@ Test_Case_list:
   poe_tester: PSA3000
   python_verify_func: scan_get_poe_inline
   sifo_ip: 10.105.241.47
+  tcl_global: puts bt_scan_class_power
   tcl_procedure_list:
   - commands: "proc psa_bt_6 {} {\n  set port_list {5,1 6,1 7,1 8,1 9,1 10,1 11,1\
       \ 12,1}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n  \
@@ -71,8 +72,9 @@ Test_Case_list:
       \ BT\n    puts \"power_bt $port c 6 p 60  \"\n    power_bt $port c 6 p 60\n\
       \  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {5,1 6,1 7,1 8,1 9,1\
-      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\
-      \n    psa_disconnect $port\n  }\n }\n"
+      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_4pair $port single\"\
+      \n    psa_4pair $port single\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 60
     poe_class: 6
@@ -86,8 +88,9 @@ Test_Case_list:
       \ BT\n    puts \"power_bt $port c 4 p 30  \"\n    power_bt $port c 4 p 30\n\
       \  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {5,1 6,1 7,1 8,1 9,1\
-      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\
-      \n    psa_disconnect $port\n  }\n }\n"
+      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_4pair $port single\"\
+      \n    psa_4pair $port single\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 34.0
     poe_class: 4
@@ -101,8 +104,9 @@ Test_Case_list:
       \ BT\n    puts \"power_bt $port c 3 p 15.3  \"\n    power_bt $port c 3 p 15.3\n\
       \  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {5,1 6,1 7,1 8,1 9,1\
-      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\
-      \n    psa_disconnect $port\n  }\n }\n"
+      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_4pair $port single\"\
+      \n    psa_4pair $port single\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 16.4
     poe_class: 3
@@ -116,8 +120,9 @@ Test_Case_list:
       \ BT\n    puts \"power_bt $port c 2 p 6.9  \"\n    power_bt $port c 2 p 6.9\n\
       \  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {5,1 6,1 7,1 8,1 9,1\
-      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\
-      \n    psa_disconnect $port\n  }\n }\n"
+      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_4pair $port single\"\
+      \n    psa_4pair $port single\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 16.4
     poe_class: 2
@@ -131,8 +136,9 @@ Test_Case_list:
       \ BT\n    puts \"power_bt $port c 1 p 3.9  \"\n    power_bt $port c 1 p 3.9\n\
       \  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {5,1 6,1 7,1 8,1 9,1\
-      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\
-      \n    psa_disconnect $port\n  }\n }\n"
+      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_4pair $port single\"\
+      \n    psa_4pair $port single\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 16.4
     poe_class: 1
@@ -146,8 +152,9 @@ Test_Case_list:
       \ BT\n    puts \"power_bt $port c 0 p 15.3  \"\n    power_bt $port c 0 p 15.3\n\
       \  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {5,1 6,1 7,1 8,1 9,1\
-      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\
-      \n    psa_disconnect $port\n  }\n }\n"
+      \ 10,1 11,1 12,1}\n  foreach port $port_list {\n    puts \"psa_4pair $port single\"\
+      \n    psa_4pair $port single\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 16.4
     poe_class: 0
@@ -188,14 +195,17 @@ Test_Case_list:
   poe_tester: PSA3000
   python_verify_func: scan_get_poe_inline
   sifo_ip: 10.105.241.47
+  tcl_global: psa_pse -grant phy -spec at -pol mdix -alt A
   tcl_procedure_list:
   - commands: "proc psa_at_4 {} {\n  set port_list {1,2 2,1 2,2 3,1 3,2 4,1 4,2}\n\
-      \  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
-      \ $port\n    puts \"psa_emulate_pd $port start c 4 p 25 o 5\"\n    psa_emulate_pd\
-      \ $port start c 4 p 25 o 0\n  }\n}\n"
+      \  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\n    #psa_4pair\
+      \ $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect $port\n\
+      \    puts \"psa_emulate_pd $port start c 4 p 25 o 0\"\n    psa_emulate_pd $port\
+      \ start c 4 p 25 o 0\n  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {1,2 2,1 2,2 3,1 3,2\
-      \ 4,1 4,2}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n\
-      \    psa_disconnect $port\n  }\n }\n"
+      \ 4,1 4,2}\n  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\
+      \n    #psa_4pair $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 34.0
     poe_class: 4
@@ -203,12 +213,14 @@ Test_Case_list:
     sifo_ip: 10.105.241.47
     tcl_close: false
   - commands: "proc psa_at_3 {} {\n  set port_list {1,2 2,1 2,2 3,1 3,2 4,1 4,2}\n\
-      \  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
-      \ $port\n    puts \"psa_emulate_pd $port start c 3 p 15.3 o 5\"\n    psa_emulate_pd\
+      \  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\n    #psa_4pair\
+      \ $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect $port\n\
+      \    puts \"psa_emulate_pd $port start c 3 p 15.3 o 0\"\n    psa_emulate_pd\
       \ $port start c 3 p 15.3 o 0\n  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {1,2 2,1 2,2 3,1 3,2\
-      \ 4,1 4,2}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n\
-      \    psa_disconnect $port\n  }\n }\n"
+      \ 4,1 4,2}\n  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\
+      \n    #psa_4pair $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 16.4
     poe_class: 3
@@ -216,12 +228,14 @@ Test_Case_list:
     sifo_ip: 10.105.241.47
     tcl_close: false
   - commands: "proc psa_at_2 {} {\n  set port_list {1,2 2,1 2,2 3,1 3,2 4,1 4,2}\n\
-      \  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
-      \ $port\n    puts \"psa_emulate_pd $port start c 2 p 6.9 o 5\"\n    psa_emulate_pd\
-      \ $port start c 2 p 6.9 o 0\n  }\n}\n"
+      \  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\n    #psa_4pair\
+      \ $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect $port\n\
+      \    puts \"psa_emulate_pd $port start c 2 p 6.9 o 0\"\n    psa_emulate_pd $port\
+      \ start c 2 p 6.9 o 0\n  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {1,2 2,1 2,2 3,1 3,2\
-      \ 4,1 4,2}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n\
-      \    psa_disconnect $port\n  }\n }\n"
+      \ 4,1 4,2}\n  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\
+      \n    #psa_4pair $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 16.4
     poe_class: 2
@@ -229,12 +243,14 @@ Test_Case_list:
     sifo_ip: 10.105.241.47
     tcl_close: false
   - commands: "proc psa_at_1 {} {\n  set port_list {1,2 2,1 2,2 3,1 3,2 4,1 4,2}\n\
-      \  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
-      \ $port\n    puts \"psa_emulate_pd $port start c 1 p 3.9 o 5\"\n    psa_emulate_pd\
-      \ $port start c 1 p 3.9 o 0\n  }\n}\n"
+      \  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\n    #psa_4pair\
+      \ $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect $port\n\
+      \    puts \"psa_emulate_pd $port start c 1 p 3.9 o 0\"\n    psa_emulate_pd $port\
+      \ start c 1 p 3.9 o 0\n  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {1,2 2,1 2,2 3,1 3,2\
-      \ 4,1 4,2}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n\
-      \    psa_disconnect $port\n  }\n }\n"
+      \ 4,1 4,2}\n  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\
+      \n    #psa_4pair $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 16.4
     poe_class: 1
@@ -242,12 +258,14 @@ Test_Case_list:
     sifo_ip: 10.105.241.47
     tcl_close: false
   - commands: "proc psa_at_0 {} {\n  set port_list {1,2 2,1 2,2 3,1 3,2 4,1 4,2}\n\
-      \  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
-      \ $port\n    puts \"psa_emulate_pd $port start c 0 p 15.3 o 5\"\n    psa_emulate_pd\
+      \  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\n    #psa_4pair\
+      \ $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect $port\n\
+      \    puts \"psa_emulate_pd $port start c 0 p 15.3 o 0\"\n    psa_emulate_pd\
       \ $port start c 0 p 15.3 o 0\n  }\n}\n"
     disconnect_commands: "proc disconnect {} {\n set port_list {1,2 2,1 2,2 3,1 3,2\
-      \ 4,1 4,2}\n  foreach port $port_list {\n    puts \"psa_disconnect $port\"\n\
-      \    psa_disconnect $port\n  }\n }\n"
+      \ 4,1 4,2}\n  foreach port $port_list {\n    #puts \"psa_4pair $port disable\"\
+      \n    #psa_4pair $port disable\n    puts \"psa_disconnect $port\"\n    psa_disconnect\
+      \ $port\n  }\n }\n"
     execute: true
     max_power: 16.4
     poe_class: 0

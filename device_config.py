@@ -43,16 +43,16 @@ def _parse_xml(file):
 
 def parse_tbinfo_untangle(file):
     obj = untangle.parse(file)
-    print(obj.testbed.children)
+    dprint(obj.testbed.children)
     root_elements = getattr(obj.testbed,'children')
     devices = []
     ixia = None  #this is to deal with topology with no IXIA
     connections = None # This is to deal with topoloy with no connections
     for e in root_elements:
         name = e.__dict__['_name']
-        print(name)
+        dprint(name)
         if "dev" in name:
-            print("this is a device element")
+            dprint("this is a device element")
             device = Device_XML()
             device.name = name
             device.type = e.get_attribute("type")
@@ -101,10 +101,10 @@ def parse_tbinfo_untangle(file):
                     dprint("------this is uplink")
                     dprint(ee)
                     device.uplink_port = ee.get_attribute("port")
-            device.print_info()
+            #device.print_info()
             devices.append(device)  
         elif "trafgen" in name:
-            print("this is a ixia traffic generator element")
+            dprint("this is a ixia traffic generator element")
             #<trafgen1 type="IXIA" model="IXIA" chassis_ip="10.160.12.5" tcl_server_ip="10.160.12.5" ixnetwork_server_ip="10.160.37.24:8030">
             ixia = IXIA_XML()
             ixia.name = name
@@ -113,12 +113,12 @@ def parse_tbinfo_untangle(file):
             ixia.chassis_ip= e.get_attribute("chassis_ip")
             ixia.tcl_server_ip = e.get_attribute("tcl_server_ip")
             ixia.ixnetwork_server_ip,ixia.ixnetwork_server_port = e.get_attribute("ixnetwork_server_ip").split(":")
-            ixia.print_ixia_info()
+            #ixia.print_ixia_info()
         elif "connections" in name:
-            print("this is a connection element")
+            dprint("this is a connection element")
             connections = []
             for ee in e.get_elements():
-                print(ee)
+                dprint(ee)
                 name = ee.__dict__['_name']
                 connection = Connection_XML()
                 connection.name = name
@@ -126,7 +126,7 @@ def parse_tbinfo_untangle(file):
                 connection.type = ee.get_attribute("type")
                 connection.mode = ee.get_attribute("mode")
                 connection.parse_string()
-                connection.print_connection_info()
+                #connection.print_connection_info()
                 connections.append(connection)
     tb = tbinfo()
     tb.devices = devices
@@ -147,13 +147,13 @@ def parse_tbinfo_untangle(file):
 
 def parse_testtopo_untangle(file,tb):
     obj = untangle.parse(file)
-    print(obj.testtopo.children)
+    dprint(obj.testtopo.children)
     root_elements = getattr(obj.testtopo,'children')
     devices = tb.devices
     links = tb.connections
     for e in root_elements:
         name = e.__dict__['_name']
-        print(name)
+        dprint(name)
         if "dev" in name:
             dprint("this is a device element in parse_testtopo_untangle")
             device = list(filter(lambda d: d.name == name, devices))[0]
@@ -162,11 +162,11 @@ def parse_testtopo_untangle(file,tb):
                 exit()
             device.role = e.get_attribute("role")
             device.active = True
-            device.print_info()
+            #device.print_info()
         elif "connections" in name:
-            print("this is a connection element")
+            dprint("this is a connection element")
             for ee in e.get_elements():
-                print(ee)
+                dprint(ee)
                 link_name = ee.__dict__['_name']
                 link_string = ee.get_attribute("link")
                 left,right = link_string.split(',')

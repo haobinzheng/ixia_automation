@@ -6,12 +6,21 @@ from jinja2 import Template
 from jinja2 import Environment, FileSystemLoader
 import jinja2.ext
 import pprint
+from apc import *
 
 def jinja_zip(*args):
 	return zip(*args)
 
 if __name__ == "__main__":
+	def pdu_cycle_sifos(tester):
+		tprint(f"Power cycling Sifos Chassis {tester.pdu_ip}: {tester.pdu_line}")
+		a = apc()
+		Status = {}
+		Status = a.set_reboot(tester.pdu_ip, str(tester.pdu_line))
+		print(Status)
+
 	def scan_get_poe_inline():
+		pshell.tcl_send_simple_cmd(test.tcl_global)
 		for tcl in test.tcl_procedure_list:
 			# if type(tcl) == dict:
 			# 	tcl = dict2obj(tcl)
@@ -22,7 +31,7 @@ if __name__ == "__main__":
 			if tcl.execute == False:
 				continue
 			pshell.tcl_send_commands_direct(tcl.disconnect_commands,"disconnect")
-			sleep(60)
+			console_timer(60,msg="After disconnecting POE power at switch ports: {test.dut_port_list}, wait for 120 sec")
 			pshell.tcl_send_commands_direct(tcl.commands,tcl.proc_name)
 			poe_inline_dict = {}
 			start_time = time.time()
@@ -51,7 +60,8 @@ if __name__ == "__main__":
 								priority = items[6]
 								poe_class = items[7]
 								#Only port delivering power will be taken a record
-								poe_inline_dict.setdefault(portname,{}) 
+								if portname not in poe_inline_dict:
+									poe_inline_dict[portname] = {}
 							else:
 								items = line.split()
 								dprint(items)
@@ -93,8 +103,8 @@ if __name__ == "__main__":
 						break
 				if result == True:
 					tprint(f"PASSED: test case {test.case_name} | TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}")
-					sleep(60)
-					return
+					console_timer(10,msg="wait for 10 sec after passing one test case")
+					break
 	sys.stdout = Logger("Log/poe_bt_testing.log")
 	
 	env = Environment(loader=FileSystemLoader('yaml_testcase'),extensions=[jinja2.ext.do])
@@ -103,7 +113,7 @@ if __name__ == "__main__":
 
 	template = env.get_template('poe_testing.yml.j2')
 	yaml_str = template.render()
-	print(yaml_str)
+	#print(yaml_str)
 	yaml_dict = yaml.safe_load(yaml_str)
 	 
 	# Write the dictionary to a YAML file
@@ -111,19 +121,24 @@ if __name__ == "__main__":
 		yaml.dump(yaml_dict, f)
 	#Use this newly generated yaml file to set up testing
 	setup = poe_test_setup("yaml_testcase/poe_npi_testing.yaml")
-	print("======================= Pretty print ======================")
-	setup.pretty_print()
+	# print("======================= Pretty print ======================")
+	# setup.pretty_print()
+
+	for test in setup.yaml_obj.Test_Case_list:
+		if test.execute == True:
+			tprint(f"test case to be executed = {test.case_name}")
 	
-	topology = switch_poe_topology("yaml_testcase/poe_sifos_switch_connection.yaml")
-	topology.pretty_print()
-	for connection in topology.database.Switch_Sifos_Connections:
-		print(connection.switch_port)
-		print(connection.sifos_ip)
+	# This is for future
+	# topology = switch_poe_topology("yaml_testcase/poe_sifos_switch_connection.yaml")
+	# topology.pretty_print()
+	# for connection in topology.database.Switch_Sifos_Connections:
+	# 	print(connection)
+
 	file = 'tbinfo_poe_testing_npi.xml'
 	tb = parse_tbinfo_untangle(file)
 	testtopo_file = 'topo_poe_npi_6xx.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
-	tb.show_tbinfo()
+	#tb.show_tbinfo()
 
 	switches = []
 	devices=[]
@@ -139,7 +154,12 @@ if __name__ == "__main__":
 	sw = switches[0]
 	timer = 60*15 #15 minutes
 	new_power_shell = True
-	 
+	
+	for tester in setup.yaml_obj.Tester_list:
+		pdu_cycle_sifos(tester)
+
+	console_timer(120,msg="After power cycling Sifos, wait for 120 sec")
+
 	for test in setup.yaml_obj.Test_Case_list:
 		if test.execute == False:
 			continue
@@ -152,4 +172,7 @@ if __name__ == "__main__":
 		dprint(test.class_list)
 		dprint(test.poe_port_list)
 		result = globals()[test.python_verify_func]()
+		for tester in setup.yaml_obj.Tester_list:
+			pdu_cycle_sifos(tester)
+		console_timer(120,msg="After power cycling Sifos, wait for 120 sec")
 	pshell.tcl_close_shell()
