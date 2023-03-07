@@ -187,11 +187,23 @@ foreach port $port_list {
 	psa_4pair $port single
 	puts "psa_auto_port $port BT"
 	psa_auto_port $port BT
-	puts "power_bt $port c 4 p 30  "
- 	power_bt $port c 4 p 30
+	puts "power_bt $port c 6 p 60  "
+ 	power_bt $port c 6 p 60
 }
 }
 
+proc psa_bt {} {     
+set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+#set port_list {"7,1"}
+foreach port $port_list {
+    puts "psa_4pair $port single"
+    psa_4pair $port single
+    puts "psa_disconnect $port"
+    psa_disconnect $port
+    puts "power_bt $port c 4 p 30  "
+    power_bt $port c 6 p 60
+}
+}
 
 **************PSA: How to basically power up 3AT ? ************************
 proc psa_at {} {
@@ -217,6 +229,10 @@ foreach port $port_list {
 proc psa_at_emulate {} {
 set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
 foreach port $port_list {
+puts "psa_4pair $port disable"    
+psa_4pair $port disable
+puts "alt $port A"
+alt $port A
 puts "psa_disconnect $port"
 psa_disconnect $port
 puts "psa_emulate_pd $port start c 4 p 25.5 o 5"
