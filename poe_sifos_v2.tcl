@@ -230,7 +230,6 @@ foreach port $port_list {
 }
 
 
-
 ************ PSA: How to emulate 3AT PD quickly **********************
 !!!!! This procedure is fast and works !!!!!!!!!!!!!
 proc psa_at_emulate {} {

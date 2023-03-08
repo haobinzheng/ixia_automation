@@ -164,18 +164,33 @@ class poe_test_setup:
             self.yaml_obj = dict2obj(**setup_yaml)
              
 class power_shell_tcl:
-    def __init__(self,sifo_ip,*args, **kwargs):
-        self.ip = sifo_ip
+    def __init__(self,*args, **kwargs):
         self.power_shell = self.tcl_launch_shell()
-        self.current_psa_ip = self.ip 
+        self.current_psa_ip = None
+        self.current_psa_reboot = None 
 
     def tcl_launch_shell(self):
         power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
         power_shell.sendline('\n')
         console_timer(20,msg="After launching powershell tcl, wait for 20 sec")
-        power_shell.sendline(f"psa {self.ip}")
-        console_timer(20,msg=f"After connect to Sifo Chassis {self.ip}, wait for 20 sec")
+        power_shell.sendline("puts hello")
+        power_shell.expect('>')
+        print(power_shell.before)
+        # power_shell.sendline(f"psa {self.ip}")
+        # console_timer(20,msg=f"After connect to Sifo Chassis {self.ip}, wait for 20 sec")
         return power_shell
+
+         
+    def tcl_psa_connect(self,ip):
+        tprint(f"Connecting to Sifos Chassis {ip} ......")
+        self.tcl_send_simple_cmd(f"psa {ip}")
+        self.current_psa_ip = ip
+        console_timer(20,msg=f"After connect to Sifo Chassis {self.current_psa_ip}, wait for 20 sec")
+
+    def tcl_psa_reconnect_current(self):
+        tprint(f"Re-Connecting to Sifos Current Chassis {self.current_psa_ip} ......")
+        self.tcl_send_simple_cmd(f"psa {self.current_psa_ip}")
+        console_timer(20,msg=f"After reconnect to Sifo Chassis {self.current_psa_ip}, wait for 20 sec")
 
     def tcl_exit_shell(self):
         self.power_shell.sendline('exit')
@@ -188,12 +203,24 @@ class power_shell_tcl:
         self.power_shell.sendline('exit')
         self.power_shell.close()
 
+    def tcl_read_output(self):
+        return self.power_shell.before
+
     def tcl_read_cmd(self,cmd):
         self.power_shell.sendline(cmd)
         #this line can not be deleted as it needs to wait for prompt to read result
         self.power_shell.expect('>')
         result = self.power_shell.before
         return result 
+
+    def tcl_execute(self,tcl):
+        for tcl_command in tcl.tcl_command_list:
+            if self.current_psa_reboot == True:
+                self.tcl_psa_connect(tcl_command.sifo_ip)
+                self.current_psa_reboot = False   
+            if tcl_command.sifo_ip != self.current_psa_ip :
+                self.tcl_psa_connect(tcl_command.sifo_ip)
+            self.tcl_send_commands_direct(tcl_command.commands,tcl_command.name)
 
     def tcl_send_commands_direct(self,cmdblock,proc_name):
         cmds = cmdblock.split("\n")
@@ -207,6 +234,7 @@ class power_shell_tcl:
 
         self.tcl_send_simple_cmd(proc_name)
         self.power_shell.expect('>')
+        console_timer(60,msg=f"After running {proc_name}, wait for 60 sec")
 
 
     def tcl_send_commands(self,cmdblock,proc_name):
