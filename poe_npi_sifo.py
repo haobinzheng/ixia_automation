@@ -9,8 +9,8 @@ import pprint
 from apc import *
 
 TROUBLE_SHOOTING = True 
-REBOOT = False
-SW_LOGIN = False
+REBOOT = True
+SW_LOGIN = True
 
 def jinja_zip(*args):
 	return zip(*args)
@@ -23,30 +23,24 @@ if __name__ == "__main__":
 			Status = {}
 			Status = a.set_reboot(tester.pdu_ip, str(tester.pdu_line))
 			print(Status)
-		console_timer(120,msg=f"Power cycling Sifos Before testing stars, wait for 120 sec")
+		#console_timer(120,msg=f"Power cycling Sifos Before testing stars, wait for 120 sec")
+		pshell.current_psa_reboot = True
 
 	def show_lldp_trace():
-		pshell.tcl_send_simple_cmd(test.tcl_global)
+		pshell.tcl_psa_connect_testcase(test)
+		pshell.tcl_send_cmd_expect_prompt(test.tcl_global)
 		for tcl in test.tcl_procedure_list:
 			if tcl.execute == False:
 				continue
 			pshell.tcl_execute(tcl)
-		start_time = time.time()
-		timer = 120 #trace LLDP for 120 seconds
-		while True:
-			if time.time() - start_time >  timer:
-				return
-			output = pshell.tcl_read_output()
-			sleep(10)
-			print(output)
-
+		 
 	def scan_get_poe_inline():
-		pshell.tcl_psa_connect(test.sifo_ip)
+		pshell.tcl_psa_connect_testcase(test)
 		pshell.tcl_send_simple_cmd(test.tcl_global)
 		for tcl in test.tcl_procedure_list:
 			if tcl.execute == False:
 				continue
-			pshell.tcl_execute(tcl)
+			pshell.tcl_execute(tcl,expect=False)
 			poe_inline_dict = {}
 			timer = 60*15 #15 minutes	
 			start_time = time.time()
@@ -157,8 +151,6 @@ if __name__ == "__main__":
 	testtopo_file = 'topo_poe_npi_6xx.xml'
 	parse_testtopo_untangle(testtopo_file,tb)
 	#tb.show_tbinfo()
-	if REBOOT:
-		pdu_cycle_sifos()
 	
 	switches = []
 	devices=[]
@@ -177,10 +169,13 @@ if __name__ == "__main__":
 	
 	tprint(f"Launching Power Shell TCL Command From GIT Bash Shell")
 	pshell = power_shell_tcl()
-	pshell.tcl_psa_connect("10.105.241.47")
-	print(pshell.tcl_send_cmd_expect_prompt("pstatus 1,1 stat"))
-	exit()
+	#pshell.tcl_psa_connect("10.105.241.47")
+	# print(pshell.tcl_send_cmd_expect_prompt("pstatus 1,1 stat"))
+	# exit()
 
+	if REBOOT:
+		pdu_cycle_sifos()
+	
 	for test in setup.yaml_obj.Test_Case_list:
 		if test.execute == False:
 			continue
@@ -191,7 +186,7 @@ if __name__ == "__main__":
 		result = globals()[test.python_verify_func]()
 		if REBOOT:
 			pdu_cycle_sifos()
-			pshell.tcl_psa_reconnect_current()
+			# pshell.tcl_psa_reconnect_current()
 	pshell.tcl_close_shell()
 
 

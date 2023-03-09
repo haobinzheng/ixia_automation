@@ -171,10 +171,11 @@ class power_shell_tcl:
 
     def tcl_launch_shell(self):
         #power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
-        power_shell = wexpect.spawn('./powershell_tcl.exe')
+        power_shell = wexpect.spawn('./powershell_tcl.exe', maxread=10000)
         power_shell.sendline('\n')
         power_shell.expect('PSA-[0-9]+,[0-9]+>')
         print(power_shell.before)
+        print(power_shell.after)
         # power_shell.sendline(f"psa {self.ip}")
         # console_timer(20,msg=f"After connect to Sifo Chassis {self.ip}, wait for 20 sec")
         return power_shell
@@ -182,57 +183,80 @@ class power_shell_tcl:
          
     def tcl_psa_connect(self,ip):
         tprint(f"Connecting to Sifos Chassis {ip} ......")
-        self.tcl_send_cmd_expect_prompt(f"psa {ip}")
+        result,error = self.tcl_send_cmd_expect_prompt(f"psa {ip}",wait=60)
+        while ">>> Installing the 2-Pair PSE Conformance Test Suite..." not in result:
+            sleep(20)
+            result,error = self.tcl_send_cmd_expect_prompt(f"psa {ip}",wait=60)
         self.current_psa_ip = ip
 
-    def tcl_send_cmd_expect_prompt(self,cmd):
-        tprint(f"TCL command: {cmd}")
+    def tcl_send_cmd_expect_prompt(self,cmd,wait=30):
+        print(f"wait time = {wait}")
+        print(f"TCL command: {cmd}")
         self.tcl_send_simple_cmd(cmd)
-        self.power_shell.expect('PSA-[0-9]+,[0-9]+>')
+        self.power_shell.expect('PSA-[0-9]+,[0-9]+>',timeout=wait)
         result = self.power_shell.before
         error = self.power_shell.after
-        print(self.power_shell.before)
-        print(self.power_shell.after)
+        print(f"Result of command: {cmd}\n{self.power_shell.before}")
+        print(f"After command: {cmd}\n{self.power_shell.after}")
         return(result,error)
 
     def tcl_psa_reconnect_current(self):
         tprint(f"Re-Connecting to Sifos Current Chassis {self.current_psa_ip} ......")
         self.tcl_send_cmd_expect_prompt(f"psa {self.current_psa_ip}")
+
     def tcl_exit_shell(self):
         self.power_shell.sendline('exit')
 
     def tcl_send_simple_cmd(self,cmd):
-        print(f"tcl command: {cmd}")
+        dprint(f"tcl command: {cmd}")
         self.power_shell.sendline(cmd)
 
     def tcl_close_shell(self):
         self.power_shell.sendline('exit')
         self.power_shell.close()
 
-    def tcl_read_output(self):
-        return self.power_shell.before
+    #Before each testcase is executed, we need to find out whether we need to reconnect to the current PSA. 
+    def tcl_psa_connect_testcase(self,test):
+        if test.sifo_ip != self.current_psa_ip or self.current_psa_reboot == True :
+            tprint(f"test.case_name: I need to connect to chassis {test.sifo_ip}")
+            self.tcl_psa_connect(test.sifo_ip)
+            self.current_psa_reboot = False
+        else:
+            tprint(f"test.case_name: I don't need to connect to chassis {test.sifo_ip}")
 
-    def tcl_execute(self,tcl):
+    def tcl_execute(self,tcl,expect=True):
         for tcl_command in tcl.tcl_command_list:
             if self.current_psa_reboot == True:
                 self.tcl_psa_connect(tcl_command.sifo_ip)
                 self.current_psa_reboot = False   
             if tcl_command.sifo_ip != self.current_psa_ip :
                 self.tcl_psa_connect(tcl_command.sifo_ip)
-            self.tcl_send_commands_direct(tcl_command.commands,tcl_command.name)
+            self.tcl_send_commands_direct(tcl_command.commands,tcl_command.name,wait=expect)
 
-    def tcl_send_commands_direct(self,cmdblock,proc_name):
+    def tcl_read_output_no_command(self):
+        self.power_shell.expect('PSA-[0-9]+,[0-9]+>',timeout=wait)
+        result = self.power_shell.before
+        error = self.power_shell.after
+        print(f"Result of command: {cmd}\n{self.power_shell.before}")
+        print(f"After command: {cmd}\n{self.power_shell.after}")
+        return(result,error)
+
+    def tcl_send_commands_direct(self,cmdblock,proc_name,wait=True):
         cmds = cmdblock.split("\n")
         cmds = [x.strip() for x in cmds if x.strip()]
         cmds_list = []
         for cmd in cmds:
             cmds_list.append(cmd)
-        print(cmds_list)
+        dprint(cmds_list)
         for c in cmds_list:
+            print(c)
             self.tcl_send_simple_cmd(c)
-
-        self.tcl_send_cmd_expect_prompt(proc_name)
-        #console_timer(60,msg=f"After running {proc_name}, wait for 60 sec")
+        if wait == True:
+            self.power_shell.expect('PSA-[0-9]+,[0-9]+>',timeout=10)
+            self.tcl_send_cmd_expect_prompt(proc_name,wait=120)
+        else:
+            self.tcl_send_simple_cmd(proc_name)
+            console_timer(60,msg=f"After running {proc_name}, wait for 60 sec")
 
     # Will remove this procedure soon !!!!!
     def tcl_send_commands(self,cmdblock,proc_name):
