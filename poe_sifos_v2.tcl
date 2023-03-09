@@ -133,6 +133,17 @@ PowerShell Command Set (alphabetical): See Reference Manual Section 4 for furthe
           (vdct)  control of trigger mode, sampling rate, and timeout.
 =====================================================================================
 
+
+############### How do I know the status of the PSA port #######################
+pstatus 1,1 stat
+
+
+
+############### How to configure global PSA parameters #########################
+
+psa_pse -grant phy+lldp -spec at -pol mdix -alt A
+
+
 ###################### How to disconnect ports ################################
 
 proc disconnect {} {
@@ -245,11 +256,12 @@ psa_emulate_pd $port start c 4 p 25.5 o 5
 
 **************PSA: How to power up 3AT with LLDP ? ************************
 proc psa_at_lldp {} {
-set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
+#set port_list {"1,2" "2,1" "2,2" "3,1" "3,2" "4,1" "4,2"}
+set port_list {"1,1"}
 foreach port $port_list {
 	psa_disconnect $port
-	puts "power_port $port c 4 p 37 lldp force 30 timeout 20"
-	power_port $port c 4 p 37 lldp force 30 timeout 20
+	puts "power_port $port c 4 p 23 lldp force 30 timeout 20"
+	power_port $port c 4 p 23 lldp force 30 timeout 20
 	paverage $port period 500m stat
 	# psa_disconnect 1,1
 	# psa_check_lan_state 1,1
@@ -322,7 +334,19 @@ pd_req 1,1 stat
  
  
  ************ PSA/PSL: How to trace a 3AT LLDP POE transaction *******************
-proc lldp_trace {} {	 
+
+ !!!!! This is the best command !!!!!!
+trace_lldp_pwrup 1,1 c 4 pwr 22.2 duration 120
+
+trace_lldp_pwrup 1,1 c 3 pwr 13 duration 120
+
+trace_lldp_change 1,1 c 4 pwr1 18 pwr2 22 duration 120 
+
+power_port 1,1 c 4 p 18 lldp force 23 timeout 120
+power_port 1,1 lldp force 19 timeout 120
+
+
+proc lldp_trace_c3 {} {	 
 set port_list {"1,1"}
 puts $port_list
 #regsub -all {(,")|(",)|"} $port_list " " port_list;
@@ -330,16 +354,48 @@ foreach port $port_list {
 	#c: Capacitance Must be 0,5,7,11 uF
 	puts $port
 	passive $port r 25 c 0
-	class $port 4
+	class $port 3
 	port $port connect
 	psa_lan $port connect
 	pse_link_wait $port timeout 30
-	pd_req $port class 4 pwr 24.3
-	psa_lldp_trace $port period 10 duration 2
+	pd_req $port class 3 pwr 11.3
+	psa_lldp_trace $port period 10 duration 1 onSync -e
 }
 }
 
+proc lldp_trace_c2 {} {     
+set port_list {"1,1"}
+puts $port_list
+#regsub -all {(,")|(",)|"} $port_list " " port_list;
+foreach port $port_list {
+    #c: Capacitance Must be 0,5,7,11 uF
+    puts $port
+    passive $port r 25 c 0
+    class $port 2
+    port $port connect
+    psa_lan $port connect
+    pse_link_wait $port timeout 30
+    pd_req $port class 2 pwr 5.6
+    psa_lldp_trace $port period 10 duration 1 -v -e onSync 4.4
+}
+}
 
+proc lldp_trace_c4 {} {     
+set port_list {"1,1"}
+puts $port_list
+#regsub -all {(,")|(",)|"} $port_list " " port_list;
+foreach port $port_list {
+    #c: Capacitance Must be 0,5,7,11 uF
+    puts $port
+    passive $port r 25 c 0
+    class $port 4
+    port $port connect
+    psa_lan $port connect
+    pse_link_wait $port timeout 30
+    pd_req $port class 4 pwr 24.3
+     psa_lldp_trace $port period 10 duration 1 -e -v onSync 17
+}
+}
 
 ===================================== PSA Informaiton ======================================
 psa 10.105.241.47

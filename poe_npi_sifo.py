@@ -177,6 +177,9 @@ if __name__ == "__main__":
 	
 	tprint(f"Launching Power Shell TCL Command From GIT Bash Shell")
 	pshell = power_shell_tcl()
+	pshell.tcl_psa_connect("10.105.241.47")
+	print(pshell.tcl_send_cmd_expect_prompt("pstatus 1,1 stat"))
+	exit()
 
 	for test in setup.yaml_obj.Test_Case_list:
 		if test.execute == False:
