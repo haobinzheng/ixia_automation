@@ -79,9 +79,6 @@ if __name__ == "__main__":
 			topo.add_ipv6(gateway="fixed")
 			
 		myixia.start_protocol(wait=20)
-
-		# for i in range(0,len(tb.ixia.port_active_list)-1):
-		# 	for j in range(i+1,len(tb.ixia.port_active_list)):
 		 
 		for i in range(0,1):
 			for j in range(1,2):
