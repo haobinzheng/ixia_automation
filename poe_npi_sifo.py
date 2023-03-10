@@ -7,6 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 import jinja2.ext
 import pprint
 import threading
+import signal
 from threading import Thread
 from time import sleep
 import multiprocessing
@@ -21,7 +22,7 @@ def jinja_zip(*args):
 	return zip(*args)
 
 if __name__ == "__main__":
-	def thread_traffic():
+	def bg_thread_traffic(exit_event):
 		apiServerIp = tb.ixia.ixnetwork_server_ip
 		ixChassisIpList = [tb.ixia.chassis_ip]
 		TEST_VLAN_NAME = "vlan2"
@@ -84,14 +85,14 @@ if __name__ == "__main__":
 				myixia.create_traffic_v6(src_topo=myixia.topologies[i].topology, dst_topo=myixia.topologies[j].topology,traffic_name=f"t{i+1}_to_t{j+1}_v6",tracking_name=f"Tracking_{i+1}_{j+1}_v6",rate=5)
 				myixia.create_traffic_v6(src_topo=myixia.topologies[j].topology, dst_topo=myixia.topologies[i].topology,traffic_name=f"t{j+1}_to_t{i+1}_v6",tracking_name=f"Tracking_{j+1}_{i+1}_v6",rate=5)
 
-		while True:
+		while not exit_event.is_set():
 			myixia.start_traffic()
 			sleep(5)
 			myixia.stop_traffic()
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-
+		print("Background thread received exit signal. Exiting...")
 
 	def load_traffic():
 		apiServerIp = tb.ixia.ixnetwork_server_ip
@@ -274,7 +275,110 @@ if __name__ == "__main__":
 			if tcl.execute == False:
 				continue
 			pshell.tcl_execute(tcl)
-		 
+
+	def signal_handler(sig, frame):
+		print("Signal received. Sending exit signal to background thread...")
+		exit_event.set()
+
+	def scan_get_poe_inline_traffic():
+		global exit_event
+		exit_event = threading.Event()
+
+		# create a background thread
+		bg_thread = threading.Thread(target=bg_thread_traffic, args=(exit_event,))
+		bg_thread.start()
+		# register a signal handler for SIGINT (Ctrl-C) and SIGTERM (kill)
+		signal.signal(signal.SIGINT, signal_handler)
+		signal.signal(signal.SIGTERM, signal_handler)
+
+		pshell.tcl_psa_connect_testcase(test)
+		pshell.tcl_send_simple_cmd(test.tcl_global)
+		for tcl in test.tcl_procedure_list:
+			if tcl.execute == False:
+				continue
+			pshell.tcl_execute(tcl,expect=False)
+			poe_inline_dict = {}
+			timer = 60*15 #15 minutes	
+			start_time = time.time()
+			while True:
+				if time.time() - start_time >  timer:
+					ErrorNotify(f"Failed After {timer} seconds:  test case {test.case_name} |  TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}: Not to deliever power to all switch ports {test.dut_port_list}")
+					if TROUBLE_SHOOTING == True:
+						exit(0)
+					else:
+						break
+				sleep(10)
+				#sw.print_show_command("get switch poe inline")
+				output = collect_show_cmd(sw.console,"get switch poe inline")
+				for line in output:
+					#skip line with N/A such as Power Fault situation
+					if "N/A" in line:
+						continue
+					for p in test.dut_port_list:
+						#if p in line and "Delivering Power" in line and str(tcl.poe_class) in line :
+						if p in line:
+							if "Delivering Power" in line and str(tcl.poe_class) in line:
+								items = line.split()
+								dprint(items)
+								portname = items[0]
+								status = items[1]
+								state = f"{items[2]} {items[3]}"
+								max_power = items[4]
+								power_comsumption = items[5]
+								priority = items[6]
+								poe_class = items[7]
+								#Only port delivering power will be taken a record
+								if portname not in poe_inline_dict:
+									poe_inline_dict[portname] = {}
+							else:
+								items = line.split()
+								dprint(items)
+								portname = items[0]
+								status = items[1]
+								state = items[2]
+								max_power = items[3]
+								power_comsumption = items[4]
+								priority = items[5]
+								poe_class = items[6]
+							if portname in poe_inline_dict:
+								poe_inline_dict[portname]["status"] =status
+								poe_inline_dict[portname]["state"] = state
+								poe_inline_dict[portname]["max_power"] = max_power
+								poe_inline_dict[portname]["power_comsumption"] = power_comsumption
+								poe_inline_dict[portname]["priority"] = priority
+								poe_inline_dict[portname]["poe_class"] = poe_class
+								try:
+									print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power),poe_inline_dict[portname]["state"],poe_inline_dict[portname]["poe_class"])
+									if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power) \
+									or poe_inline_dict[portname]["state"] != "Delivering Power" \
+									or poe_inline_dict[portname]["poe_class"] != str(tcl.poe_class):
+										poe_inline_dict[portname]["powered"] = False
+									else:
+										poe_inline_dict[portname]["powered"] = True
+								except Exception as e:
+									pass
+										 
+				print_dict(poe_inline_dict)
+				ports = poe_inline_dict.keys()
+				result = True
+				if set(ports) != set(test.dut_port_list):
+					result = False
+					continue
+				for p,p_status in poe_inline_dict.items():
+					if p_status["powered"] == False:
+						print(f'{p} poe checking result = {p_status["powered"]}')
+						result = False
+						break
+				if result == True:
+					tprint(f"PASSED: test case {test.case_name} | TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}")
+					console_timer(10,msg="wait for 10 sec after one TCL procedure has been successfuly executed")
+					break
+
+		exit_event.set()
+		# wait for the background thread to exit
+		bg_thread.join()
+		print("Background thread has exited. Exiting create_thread()...")
+ 
 	def scan_get_poe_inline():
 		pshell.tcl_psa_connect_testcase(test)
 		pshell.tcl_send_simple_cmd(test.tcl_global)

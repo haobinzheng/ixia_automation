@@ -196,7 +196,7 @@ Test_Case_list:
   - 11,1
   - 12,1
   poe_tester: PSA3000
-  python_verify_func: load_traffic
+  python_verify_func: scan_get_poe_inline_traffic
   sifo_ip: 10.105.241.47
   tcl_global: puts bt_scan_class_power
   tcl_procedure_list:
