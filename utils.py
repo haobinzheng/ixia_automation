@@ -25,6 +25,10 @@ import inspect
 DEBUG = False
 #This is the original copy
 
+def current_date_time():
+    now ="{date:%Y-%m-%d-%H:%M:%S}".format(date=datetime.now())
+    return now
+
 def ErrorFunction(function_name,*args, **kwargs):
 	tempa = ' '.join(str(a) for a in args)
 	tempk = ' '.join([str(kwargs[k]) for k in kwargs])

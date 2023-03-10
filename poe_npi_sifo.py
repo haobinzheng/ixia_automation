@@ -468,7 +468,7 @@ if __name__ == "__main__":
 					break
 
 
-	sys.stdout = Logger("Log/poe_bt_testing.log")
+	sys.stdout = Logger(f'Log/poe_bt_testing_{current_date_time().replace(":","-")}.log')
 	
 	env = Environment(loader=FileSystemLoader('yaml_testcase'),extensions=[jinja2.ext.do])
 	dprint(env.loader.list_templates())
