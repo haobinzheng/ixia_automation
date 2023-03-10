@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
 	def bg_thread_traffic(exit_event):
-		logging("Starting background traffic thread to monitor traffic forwarding during POE power provisioning")
+		logging.info("Starting background traffic thread to monitor traffic forwarding during POE power provisioning")
 		apiServerIp = tb.ixia.ixnetwork_server_ip
 		ixChassisIpList = [tb.ixia.chassis_ip]
 		TEST_VLAN_NAME = "vlan2"
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 			sw.config_cmds_fast(cmds)
 			sleep(2)
 
-		logging(portList_v4_v6)
+		logging.info(portList_v4_v6)
 		myixia = IXIA(apiServerIp,ixChassisIpList,portList_v4_v6)
 		for topo in myixia.topologies:
 			topo.add_ipv4(gateway="fixed",ip_incremental="0.0.0.1")
