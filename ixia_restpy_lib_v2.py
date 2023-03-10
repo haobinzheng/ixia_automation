@@ -1196,9 +1196,9 @@ class IXIA:
         #portList: chassis_ip, module,port,mac,bgp_network,bgp_as,ip_address/mask, gateway
         self.apiServerIp = args[0]
         self.ixChassisIpList = args[1]
+        self.portList = args[2]
         self.traffic_items_v6 = []
         self.traffic_items_v4 = []
-        self.portList = args[2]
         if "different_vlan" in kwargs:
             different_vlan = kwargs['different_vlan']
         else:

@@ -150,7 +150,6 @@ if __name__ == "__main__":
 	sw1 = switches[1]
 	
 	apiServerIp = tb.ixia.ixnetwork_server_ip
-	#ixChassisIpList = ['10.105.241.234']
 	ixChassisIpList = [tb.ixia.chassis_ip]
  	
  	############################################### Static Data Are Define Here ########################################################################

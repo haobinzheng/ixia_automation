@@ -24,9 +24,11 @@
   <license licenses="Z5HFJ-VCBGQ-Y7D9L-G8FHL-RG6QQ-Z9ZF3-7,655PQ-YSYKX-LN8YG-USPNH-JYN6C-ZFS6A-T"> </license>
   <location location="324/6/17" > </location>
  </dev2>
+
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.44:11009">
+ </trafgen1>
  <connections>
-  <link1 link="dev1:port1,dev2:port1" type="poe_link" mode="Copper"> </link1>
-  <link2 link="dev1:port2,dev2:port2" type="poe_link" mode="Copper"> </link2>
-  <link3 link="dev1:port3,dev2:port3" type="poe_link" mode="Copper"> </link3>
- </connections>
+  <link1 link="dev1:port9,trafgen1:6/10" type="ixia_link" mode="copper"> </link1>
+  <link2 link="dev1:port10,trafgen1:6/11" type="ixia_link" mode="copper"> </link2>
+  </connections>
 </testbed>

@@ -164,14 +164,14 @@ class poe_test_setup:
             self.yaml_obj = dict2obj(**setup_yaml)
              
 class power_shell_tcl:
-    def __init__(self,*args, **kwargs):
+    def __init__(self,reboot=False):
         self.power_shell = self.tcl_launch_shell()
         self.current_psa_ip = None
-        self.current_psa_reboot = None 
+        self.current_psa_reboot = reboot
 
     def tcl_launch_shell(self):
         #power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
-        power_shell = wexpect.spawn('./powershell_tcl.exe', maxread=10000)
+        power_shell = wexpect.spawn('./powershell_tcl.exe', maxread=10000,timeout=1200)
         power_shell.sendline('\n')
         power_shell.expect('PSA-[0-9]+,[0-9]+>')
         print(power_shell.before)
@@ -217,12 +217,19 @@ class power_shell_tcl:
 
     #Before each testcase is executed, we need to find out whether we need to reconnect to the current PSA. 
     def tcl_psa_connect_testcase(self,test):
-        if test.sifo_ip != self.current_psa_ip or self.current_psa_reboot == True :
-            tprint(f"test.case_name: I need to connect to chassis {test.sifo_ip}")
+        try:
+            if test.sifo_ip != self.current_psa_ip or self.current_psa_reboot == True :
+                tprint(f"{test.case_name}: need to connect to chassis {test.sifo_ip}")
+                self.tcl_psa_connect(test.sifo_ip)
+                self.current_psa_reboot = False
+            else:
+                tprint(f"test.case_name: don't need to connect to chassis {test.sifo_ip}")
+        except Exception as e:
+            ErrorFunction(inspect.currentframe().f_code.co_name,f"psa {test.sifo_ip} timeout")
+            self.power_shell = self.tcl_launch_shell()
             self.tcl_psa_connect(test.sifo_ip)
             self.current_psa_reboot = False
-        else:
-            tprint(f"test.case_name: I don't need to connect to chassis {test.sifo_ip}")
+
 
     def tcl_execute(self,tcl,expect=True):
         for tcl_command in tcl.tcl_command_list:

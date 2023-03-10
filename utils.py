@@ -19,11 +19,19 @@ from threading import Thread
 import subprocess
 #import spur
 import yaml
+import inspect
 
 
 DEBUG = False
 #This is the original copy
 
+def ErrorFunction(function_name,*args, **kwargs):
+	tempa = ' '.join(str(a) for a in args)
+	tempk = ' '.join([str(kwargs[k]) for k in kwargs])
+	temp = tempa + ' ' + tempk # puts a space between the two for clean output
+	output = f"{function_name}: {temp}"
+	print(str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) + " :: " + "Error: " + output)
+ 
 def print_dict(d):
 	print(yaml.dump(d, default_flow_style=False, explicit_start=True,sort_keys=False))
 
