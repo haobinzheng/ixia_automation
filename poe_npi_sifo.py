@@ -8,6 +8,7 @@ import jinja2.ext
 import pprint
 import threading
 import signal
+import logging
 from threading import Thread
 from time import sleep
 import multiprocessing
@@ -20,6 +21,9 @@ SW_LOGIN = True
 
 def jinja_zip(*args):
 	return zip(*args)
+
+logging.basicConfig(level=logging.INFO)
+
 
 if __name__ == "__main__":
 	def bg_thread_traffic(exit_event):
@@ -92,7 +96,7 @@ if __name__ == "__main__":
 			sleep(10)
 			myixia.collect_stats()
 			myixia.check_traffic()
-		print("Background thread received exit signal. Exiting...")
+		logging.info("Background thread received exit signal. Exiting...")
 
 	def load_traffic():
 		apiServerIp = tb.ixia.ixnetwork_server_ip
@@ -279,6 +283,7 @@ if __name__ == "__main__":
 	def signal_handler(sig, frame):
 		print("Signal received. Sending exit signal to background thread...")
 		exit_event.set()
+		raise KeyboardInterrupt
 
 	def scan_get_poe_inline_traffic():
 		global exit_event
@@ -300,79 +305,83 @@ if __name__ == "__main__":
 			poe_inline_dict = {}
 			timer = 60*15 #15 minutes	
 			start_time = time.time()
-			while True:
-				if time.time() - start_time >  timer:
-					ErrorNotify(f"Failed After {timer} seconds:  test case {test.case_name} |  TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}: Not to deliever power to all switch ports {test.dut_port_list}")
-					if TROUBLE_SHOOTING == True:
-						exit(0)
-					else:
-						break
-				sleep(10)
-				#sw.print_show_command("get switch poe inline")
-				output = collect_show_cmd(sw.console,"get switch poe inline")
-				for line in output:
-					#skip line with N/A such as Power Fault situation
-					if "N/A" in line:
-						continue
-					for p in test.dut_port_list:
-						#if p in line and "Delivering Power" in line and str(tcl.poe_class) in line :
-						if p in line:
-							if "Delivering Power" in line and str(tcl.poe_class) in line:
-								items = line.split()
-								dprint(items)
-								portname = items[0]
-								status = items[1]
-								state = f"{items[2]} {items[3]}"
-								max_power = items[4]
-								power_comsumption = items[5]
-								priority = items[6]
-								poe_class = items[7]
-								#Only port delivering power will be taken a record
-								if portname not in poe_inline_dict:
-									poe_inline_dict[portname] = {}
-							else:
-								items = line.split()
-								dprint(items)
-								portname = items[0]
-								status = items[1]
-								state = items[2]
-								max_power = items[3]
-								power_comsumption = items[4]
-								priority = items[5]
-								poe_class = items[6]
-							if portname in poe_inline_dict:
-								poe_inline_dict[portname]["status"] =status
-								poe_inline_dict[portname]["state"] = state
-								poe_inline_dict[portname]["max_power"] = max_power
-								poe_inline_dict[portname]["power_comsumption"] = power_comsumption
-								poe_inline_dict[portname]["priority"] = priority
-								poe_inline_dict[portname]["poe_class"] = poe_class
-								try:
-									print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power),poe_inline_dict[portname]["state"],poe_inline_dict[portname]["poe_class"])
-									if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power) \
-									or poe_inline_dict[portname]["state"] != "Delivering Power" \
-									or poe_inline_dict[portname]["poe_class"] != str(tcl.poe_class):
-										poe_inline_dict[portname]["powered"] = False
-									else:
-										poe_inline_dict[portname]["powered"] = True
-								except Exception as e:
-									pass
-										 
-				print_dict(poe_inline_dict)
-				ports = poe_inline_dict.keys()
-				result = True
-				if set(ports) != set(test.dut_port_list):
-					result = False
-					continue
-				for p,p_status in poe_inline_dict.items():
-					if p_status["powered"] == False:
-						print(f'{p} poe checking result = {p_status["powered"]}')
+			try:
+				while True:
+					if time.time() - start_time >  timer:
+						ErrorNotify(f"Failed After {timer} seconds:  test case {test.case_name} |  TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}: Not to deliever power to all switch ports {test.dut_port_list}")
+						if TROUBLE_SHOOTING == True:
+							exit(0)
+						else:
+							break
+					sleep(10)
+					#sw.print_show_command("get switch poe inline")
+					output = collect_show_cmd(sw.console,"get switch poe inline")
+					for line in output:
+						#skip line with N/A such as Power Fault situation
+						if "N/A" in line:
+							continue
+						for p in test.dut_port_list:
+							#if p in line and "Delivering Power" in line and str(tcl.poe_class) in line :
+							if p in line:
+								if "Delivering Power" in line and str(tcl.poe_class) in line:
+									items = line.split()
+									dprint(items)
+									portname = items[0]
+									status = items[1]
+									state = f"{items[2]} {items[3]}"
+									max_power = items[4]
+									power_comsumption = items[5]
+									priority = items[6]
+									poe_class = items[7]
+									#Only port delivering power will be taken a record
+									if portname not in poe_inline_dict:
+										poe_inline_dict[portname] = {}
+								else:
+									items = line.split()
+									dprint(items)
+									portname = items[0]
+									status = items[1]
+									state = items[2]
+									max_power = items[3]
+									power_comsumption = items[4]
+									priority = items[5]
+									poe_class = items[6]
+								if portname in poe_inline_dict:
+									poe_inline_dict[portname]["status"] =status
+									poe_inline_dict[portname]["state"] = state
+									poe_inline_dict[portname]["max_power"] = max_power
+									poe_inline_dict[portname]["power_comsumption"] = power_comsumption
+									poe_inline_dict[portname]["priority"] = priority
+									poe_inline_dict[portname]["poe_class"] = poe_class
+									try:
+										print(float(poe_inline_dict[portname]["max_power"]),float(tcl.max_power),poe_inline_dict[portname]["state"],poe_inline_dict[portname]["poe_class"])
+										if float(poe_inline_dict[portname]["max_power"]) != float(tcl.max_power) \
+										or poe_inline_dict[portname]["state"] != "Delivering Power" \
+										or poe_inline_dict[portname]["poe_class"] != str(tcl.poe_class):
+											poe_inline_dict[portname]["powered"] = False
+										else:
+											poe_inline_dict[portname]["powered"] = True
+									except Exception as e:
+										pass
+											 
+					print_dict(poe_inline_dict)
+					ports = poe_inline_dict.keys()
+					result = True
+					if set(ports) != set(test.dut_port_list):
 						result = False
+						continue
+					for p,p_status in poe_inline_dict.items():
+						if p_status["powered"] == False:
+							print(f'{p} poe checking result = {p_status["powered"]}')
+							result = False
+							break
+					if result == True:
+						tprint(f"PASSED: test case {test.case_name} | TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}")
+						console_timer(10,msg="wait for 10 sec after one TCL procedure has been successfuly executed")
 						break
-				if result == True:
-					tprint(f"PASSED: test case {test.case_name} | TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}")
-					console_timer(10,msg="wait for 10 sec after one TCL procedure has been successfuly executed")
-					break
+			except KeyboardInterrupt:
+				logging.info("Exiting program due to user interrupt...")
+				exit_event.set()
 
 		exit_event.set()
 		# wait for the background thread to exit
