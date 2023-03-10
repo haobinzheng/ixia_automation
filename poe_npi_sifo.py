@@ -518,12 +518,6 @@ if __name__ == "__main__":
 
 		sw = switches[0]
 	
-	# tprint(f"Launching Power Shell TCL Command From GIT Bash Shell")
-	# pshell = power_shell_tcl()
-	#pshell.tcl_psa_connect("10.105.241.47")
-	# print(pshell.tcl_send_cmd_expect_prompt("pstatus 1,1 stat"))
-	# exit()
-
 	#have to reboot first, sometimes PSA is too busy to respond
 	if REBOOT:
 		pdu_cycle_sifos()
