@@ -3,6 +3,7 @@ import signal
 import time
 import logging
 
+
 logging.basicConfig(level=logging.INFO)
 
 def background_thread(exit_event):

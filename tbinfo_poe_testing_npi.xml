@@ -2,7 +2,7 @@
 <testbed name="hb-tb">
  <dev1 type="FSW" hostname="S624FFTV22000026" model="S624FFPOE">
   <console ip="10.105.241.145" line="2096"> </console>
-  <login username="admin" password="Fortinet123!"> </login>
+  <login username="admin" password="Fortinet123!!"> </login>
   <mgmt ip="10.105.241.157" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN_M" ip="10.105.241.95" port="17"> </pdu>
   <tftp ip="10.105.19.44" local_ip="10.105.0.122" gateway="10.105.241.254" netmask="255.255.254.0" > </tftp>
@@ -25,7 +25,7 @@
   <location location="324/6/17" > </location>
  </dev2>
 
- <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.44:11009">
+ <trafgen1 type="IXIA" model="IXIA" chassis_ip="10.105.241.234" tcl_server_ip="10.105.241.234" ixnetwork_server_ip="10.105.19.14:11009">
  </trafgen1>
  <connections>
   <link1 link="dev1:port9,trafgen1:6/10" type="ixia_link" mode="copper"> </link1>

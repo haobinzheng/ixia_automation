@@ -492,3 +492,9 @@ Tester_list:
   pdu_line: 17
   platform: PSA
   type: POE
+- hostname: PSL3434L_2
+  mgmt_ip: 10.105.241.49
+  pdu_ip: 10.105.241.146
+  pdu_line: 12
+  platform: PSL
+  type: POE
