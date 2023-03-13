@@ -132,14 +132,16 @@ PowerShell Command Set (alphabetical): See Reference Manual Section 4 for furthe
         vdctrace  Configures and initiates a sampled voltage trace including
           (vdct)  control of trigger mode, sampling rate, and timeout.
 =====================================================================================
+############### PSL: How to power up 4pair ####################
+ psl_setup p2 single
+ power_pse p2 c 6 p 59
 
-
-############### How do I know the status of the PSA port #######################
+############### PSA: How do I know the status of the PSA port #######################
 pstatus 1,1 stat
 
 
 
-############### How to configure global PSA parameters #########################
+############### PSA: How to configure global PSA parameters #########################
 
 psa_pse -grant phy+lldp -spec at -pol mdix -alt A
 
