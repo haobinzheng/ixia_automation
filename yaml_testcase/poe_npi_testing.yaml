@@ -50,6 +50,14 @@ Test_Case_list:
   - port14
   - port15
   - port16
+  - port17
+  - port18
+  - port19
+  - port20
+  - port21
+  - port22
+  - port23
+  - port24
   execute: false
   poe_port_list:
   - 5,1
@@ -77,6 +85,11 @@ Test_Case_list:
         \ }\n}\n"
       name: disconnect
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_6 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 6 p 60\"\n power_pse $port c 6 p 60\n}\n}\n"
+      name: psa_bt_6
+      sifo_ip: 10.105.241.49
     - commands: "proc psa_bt_6 {} {\nset port_list {5,1 6,1 7,1 8,1 9,1 10,1 11,1\
         \ 12,1}\nforeach port $port_list {\n puts \"psa_disconnect $port\"\n psa_disconnect\
         \ $port\n puts \"psa_4pair $port single\"\n psa_4pair $port single\n puts\
@@ -96,6 +109,11 @@ Test_Case_list:
         \ }\n}\n"
       name: disconnect
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_4 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 4 p 30\"\n power_pse $port c 4 p 30\n}\n}\n"
+      name: psa_bt_4
+      sifo_ip: 10.105.241.49
     - commands: "proc psa_bt_4 {} {\nset port_list {5,1 6,1 7,1 8,1 9,1 10,1 11,1\
         \ 12,1}\nforeach port $port_list {\n puts \"psa_disconnect $port\"\n psa_disconnect\
         \ $port\n puts \"psa_4pair $port single\"\n psa_4pair $port single\n puts\
@@ -115,6 +133,11 @@ Test_Case_list:
         \ }\n}\n"
       name: disconnect
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_3 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 3 p 15.3\"\n power_pse $port c 3 p 15.3\n}\n}\n"
+      name: psa_bt_3
+      sifo_ip: 10.105.241.49
     - commands: "proc psa_bt_3 {} {\nset port_list {5,1 6,1 7,1 8,1 9,1 10,1 11,1\
         \ 12,1}\nforeach port $port_list {\n puts \"psa_disconnect $port\"\n psa_disconnect\
         \ $port\n puts \"psa_4pair $port single\"\n psa_4pair $port single\n puts\
@@ -134,6 +157,11 @@ Test_Case_list:
         \ }\n}\n"
       name: disconnect
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_2 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 2 p 6.9\"\n power_pse $port c 2 p 6.9\n}\n}\n"
+      name: psa_bt_2
+      sifo_ip: 10.105.241.49
     - commands: "proc psa_bt_2 {} {\nset port_list {5,1 6,1 7,1 8,1 9,1 10,1 11,1\
         \ 12,1}\nforeach port $port_list {\n puts \"psa_disconnect $port\"\n psa_disconnect\
         \ $port\n puts \"psa_4pair $port single\"\n psa_4pair $port single\n puts\
@@ -153,6 +181,11 @@ Test_Case_list:
         \ }\n}\n"
       name: disconnect
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_1 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 1 p 3.9\"\n power_pse $port c 1 p 3.9\n}\n}\n"
+      name: psa_bt_1
+      sifo_ip: 10.105.241.49
     - commands: "proc psa_bt_1 {} {\nset port_list {5,1 6,1 7,1 8,1 9,1 10,1 11,1\
         \ 12,1}\nforeach port $port_list {\n puts \"psa_disconnect $port\"\n psa_disconnect\
         \ $port\n puts \"psa_4pair $port single\"\n psa_4pair $port single\n puts\
@@ -185,6 +218,14 @@ Test_Case_list:
   - port14
   - port15
   - port16
+  - port17
+  - port18
+  - port19
+  - port20
+  - port21
+  - port22
+  - port23
+  - port24
   execute: true
   poe_port_list:
   - 5,1
@@ -219,6 +260,11 @@ Test_Case_list:
         \ c 6 p 60  \"\n power_bt $port c 6 p 60\n}\n}\n"
       name: psa_bt_6
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_6 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 6 p 60\"\n power_pse $port c 6 p 60\n}\n}\n"
+      name: psa_bt_6
+      sifo_ip: 10.105.241.49
   - execute: true
     max_power: 34.0
     poe_class: 4
@@ -238,6 +284,11 @@ Test_Case_list:
         \ c 4 p 30  \"\n power_bt $port c 4 p 30\n}\n}\n"
       name: psa_bt_4
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_4 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 4 p 30\"\n power_pse $port c 4 p 30\n}\n}\n"
+      name: psa_bt_4
+      sifo_ip: 10.105.241.49
   - execute: true
     max_power: 16.4
     poe_class: 3
@@ -257,6 +308,11 @@ Test_Case_list:
         \ c 3 p 15.3  \"\n power_bt $port c 3 p 15.3\n}\n}\n"
       name: psa_bt_3
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_3 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 3 p 15.3\"\n power_pse $port c 3 p 15.3\n}\n}\n"
+      name: psa_bt_3
+      sifo_ip: 10.105.241.49
   - execute: true
     max_power: 16.4
     poe_class: 2
@@ -276,6 +332,11 @@ Test_Case_list:
         \ c 2 p 6.9  \"\n power_bt $port c 2 p 6.9\n}\n}\n"
       name: psa_bt_2
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_2 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 2 p 6.9\"\n power_pse $port c 2 p 6.9\n}\n}\n"
+      name: psa_bt_2
+      sifo_ip: 10.105.241.49
   - execute: true
     max_power: 16.4
     poe_class: 1
@@ -295,6 +356,11 @@ Test_Case_list:
         \ c 1 p 3.9  \"\n power_bt $port c 1 p 3.9\n}\n}\n"
       name: psa_bt_1
       sifo_ip: 10.105.241.47
+    - commands: "proc psa_bt_1 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8}\nforeach\
+        \ port $port_list {\n puts \"psl_setup $port single\"\n psl_setup $port single\n\
+        \ puts \"power_pse $port c 1 p 3.9\"\n power_pse $port c 1 p 3.9\n}\n}\n"
+      name: psa_bt_1
+      sifo_ip: 10.105.241.49
   tester: PSA3000
 - case_name: at_scan_class_power
   class_list:
@@ -492,7 +558,7 @@ Tester_list:
   pdu_line: 17
   platform: PSA
   type: POE
-- hostname: PSL3434L_2
+- hostname: PSL3434L_3
   mgmt_ip: 10.105.241.49
   pdu_ip: 10.105.241.146
   pdu_line: 12

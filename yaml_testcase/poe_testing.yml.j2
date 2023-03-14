@@ -3,7 +3,10 @@
 {% set poe_4pair_port_list_tcl = "{" + poe_4pair_port_list | join(" ") + "}" %}
 {% set poe_2pair_port_list = ['1,2', '2,1','2,2','3,1','3,2','4,1','4,2'] %}
 {% set poe_2pair_port_list_tcl = "{" + poe_2pair_port_list | join(" ") + "}" %}
-{% set dut_4pair_port_list = ['port9', 'port10', 'port11','port12','port13','port14','port15','port16'] %}
+{% set psl_port_list = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'] %}
+{% set psl_port_list_tcl = "{" + psl_port_list | join(" ") + "}" %}
+
+{% set dut_4pair_port_list = ['port9', 'port10', 'port11','port12','port13','port14','port15','port16','port17','port18','port19','port20','port21','port22','port23','port24'] %}
 {% set dut_2pair_port_list = ['port2', 'port3','port4','port5','port6','port7','port8'] %}
 {% set bt_class_max_power_list = [60,34.0,16.4,16.4,16.4,16.4] %}
 {% set bt_class_deliver_power_list = [60,30,15.3,6.9,3.9,15.3] %}
@@ -55,7 +58,7 @@ Tester_list:
       mgmt_ip: &psa_ip_1 10.105.241.47
       pdu_ip: 10.105.241.97
       pdu_line: 17
-    - hostname: PSL3434L_2
+    - hostname: PSL3434L_3
       platform: PSL
       type: POE
       mgmt_ip: &psa_ip_3 10.105.241.49
@@ -94,6 +97,18 @@ Test_Case_list:
                  puts "psa_disconnect $port"
                  psa_disconnect $port
                 }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_3
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{psl_port_list_tcl}}
+               foreach port $port_list {
+                puts "psl_setup $port single"
+                psl_setup $port single
+                puts "power_pse $port c {{class_name}} p {{d_power}}"
+                power_pse $port c {{class_name}} p {{d_power}}
+               }
                }
             - name: {{tcl_name}}
               sifo_ip: *psa_ip_1
@@ -159,6 +174,19 @@ Test_Case_list:
                 power_bt $port c {{class_name}} p {{d_power}}
                }
                }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_3
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{psl_port_list_tcl}}
+               foreach port $port_list {
+                puts "psl_setup $port single"
+                psl_setup $port single
+                puts "power_pse $port c {{class_name}} p {{d_power}}"
+                power_pse $port c {{class_name}} p {{d_power}}
+               }
+               }
+
       {% endfor %}
     - case_name: at_scan_class_power
       tester: PSA3000
