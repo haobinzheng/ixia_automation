@@ -16,7 +16,7 @@ from ixia_restpy_lib_v2 import *
 from apc import *
 
 TROUBLE_SHOOTING = False 
-REBOOT = True
+REBOOT = False
 SW_LOGIN = True
 
 def jinja_zip(*args):
@@ -26,6 +26,30 @@ logging.basicConfig(level=logging.INFO)
 
 
 if __name__ == "__main__":
+
+	def negative_smbus():
+		pshell_dict[test.sifo_ip].tcl_send_simple_cmd(test.tcl_global)
+		for tcl in test.tcl_procedure_list:
+			if tcl.execute == False:
+				continue
+			for tcl_command in tcl.tcl_command_list:  
+				pshell = pshell_dict[tcl_command.sifo_ip] 
+				pshell.tcl_send_commands_direct(tcl_command.commands,tcl_command.name,wait=False)
+
+			# pshell.tcl_execute(tcl,expect=False)
+			poe_inline_dict = {}
+			timer = 60*15 #15 minutes	
+			start_time = time.time()
+			while True:
+				if time.time() - start_time >  timer:
+					break
+				sleep(10)
+				#sw.print_show_command("get switch poe inline")
+				output = collect_show_cmd(sw.console,"get switch poe inline")
+				sw.exec_command("execute log filter start-line 1")
+				sw.exec_command("execute log filter view-lines 100")
+				output = collect_show_cmd(sw.console,"execute log display")
+
 	def bg_thread_traffic(exit_event):
 		logging.info("Starting background traffic thread to monitor traffic forwarding during POE power provisioning")
 		apiServerIp = tb.ixia.ixnetwork_server_ip
@@ -260,12 +284,11 @@ if __name__ == "__main__":
 			Status = {}
 			Status = a.set_reboot(tester.pdu_ip, str(tester.pdu_line))
 			print(Status)
-		#At start, PSAs are rebooted before power_shell is launched, so need to protect.  
-		try:
-			if REBOOT:
-				pshell.current_psa_reboot = True
-		except Exception:
-			pass
+			try:
+				pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
+				pshell_dict[tester.mgmt_ip].current_psa_reboot = True
+			except Exception:
+				pass
 		 
 	def show_lldp_trace():
 		pshell.tcl_psa_connect_testcase(test)
@@ -291,16 +314,22 @@ if __name__ == "__main__":
 		signal.signal(signal.SIGINT, signal_handler)
 		signal.signal(signal.SIGTERM, signal_handler)
 
-		pshell.tcl_psa_connect_testcase(test)
-		pshell.tcl_send_simple_cmd(test.tcl_global)
+		
+		# for tester in setup.yaml_obj.Tester_list:
+		# 	pshell_dict[tester.mgmt_ip].tcl_psa_connect_testcase(test)
+		pshell_dict[test.sifo_ip].tcl_send_simple_cmd(test.tcl_global)
 		for tcl in test.tcl_procedure_list:
-			if tcl.execute == False:
-				continue
-			pshell.tcl_execute(tcl,expect=False)
-			poe_inline_dict = {}
-			timer = 60*15 #15 minutes	
-			start_time = time.time()
 			try:
+				if tcl.execute == False:
+					continue
+				for tcl_command in tcl.tcl_command_list:  
+					pshell = pshell_dict[tcl_command.sifo_ip] 
+					pshell.tcl_send_commands_direct(tcl_command.commands,tcl_command.name,wait=False)
+
+				# pshell.tcl_execute(tcl,expect=False)
+				poe_inline_dict = {}
+				timer = 60*15 #15 minutes	
+				start_time = time.time()
 				while True:
 					if time.time() - start_time >  timer:
 						ErrorNotify(f"Failed After {timer} seconds:  test case {test.case_name} |  TCL procedure {tcl.proc_name} | POE Class {tcl.poe_class}: Not to deliever power to all switch ports {test.dut_port_list}")
@@ -523,20 +552,24 @@ if __name__ == "__main__":
 		pdu_cycle_sifos()
 
 	tprint(f"Launching Power Shell TCL Command From GIT Bash Shell")
-	pshell = power_shell_tcl(reboot=REBOOT)
+	pshell_dict = {}
+	for tester in setup.yaml_obj.Tester_list:
+		pshell_dict[tester.mgmt_ip] = power_shell_tcl(reboot=REBOOT)
+		pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
 	
-	for test in setup.yaml_obj.Test_Case_list:
-		if test.execute == False:
-			continue
-		dprint(test.case_name)
-		dprint(test.dut_port_list)
-		dprint(test.class_list)
-		dprint(test.poe_port_list)
-		result = globals()[test.python_verify_func]()
-		if REBOOT:
-			pdu_cycle_sifos()
-			# pshell.tcl_psa_reconnect_current()
-	pshell.tcl_close_shell()
+	while True:
+		for test in setup.yaml_obj.Test_Case_list:
+			if test.execute == False:
+				continue
+			dprint(test.case_name)
+			dprint(test.dut_port_list)
+			dprint(test.class_list)
+			dprint(test.poe_port_list)
+			result = globals()[test.python_verify_func]()
+			if REBOOT:
+				pdu_cycle_sifos()
+				# pshell.tcl_psa_reconnect_current()
+		pshell.tcl_close_shell()
 
 
 
