@@ -318,6 +318,8 @@ Test_Case_list:
                 psa_disconnect $port
                 puts "psa_4pair $port single"
                 psa_4pair $port single
+                puts "psa_auto_port $port BT"
+                psa_auto_port $port BT
                 puts "power_bt $port c {{class_name}} p {{d_power}}  "
                 power_bt $port c {{class_name}} p {{d_power}}
                }
@@ -333,7 +335,7 @@ Test_Case_list:
       deliver_power_list: {{at_class_deliver_power_list}}
       dut_port_list: {{dut_2pair_port_list}}
       python_verify_func: negative_smbus
-      tcl_global: puts negative-at
+      tcl_global: psa_pse -grant phy -spec at -pol mdix -alt A
       tcl_procedure_list:
       {% for tcl_name,class_power,class_name,run,d_power in at_tcl_proc_list|jinja_zip(at_class_max_power_list,at_class_test_list,at_tcl_execute_list,at_class_deliver_power_list) %}
         - proc_name: {{tcl_name}}
@@ -361,12 +363,30 @@ Test_Case_list:
                proc {{tcl_name}} {} {
                set port_list {{poe_2pair_port_list_tcl}}
                foreach port $port_list {
-                #puts "psa_4pair $port disable"
-                #psa_4pair $port disable
+                puts "psa_4pair $port disable"
+                psa_4pair $port disable
                 puts "psa_disconnect $port"
                 psa_disconnect $port
                 puts "psa_emulate_pd $port start c {{class_name}} p {{d_power}} o 0"
                 psa_emulate_pd $port start c {{class_name}} p {{d_power}} o 0
+                }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{poe_2pair_port_list_tcl}}
+               foreach port $port_list {
+                puts "psa_4pair $port disable"
+                psa_4pair $port disable
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_auto_port $port AT"
+                psa_auto_port $port AT
+                puts "alt $port A"
+                alt $port A
+                puts "power_port $port {{class_name}} p {{d_power}}"
+                power_port $port c {{class_name}} p {{d_power}}
                 }
                }
       {% endfor %}

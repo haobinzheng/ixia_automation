@@ -17,6 +17,7 @@ from apc import *
 
 TROUBLE_SHOOTING = False 
 REBOOT = False
+INIT_REBOOT = True
 SW_LOGIN = True
 
 def jinja_zip(*args):
@@ -288,7 +289,8 @@ if __name__ == "__main__":
 				pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
 				pshell_dict[tester.mgmt_ip].current_psa_reboot = True
 			except Exception:
-				pass
+				print("This is the initial reboot, no power shell is connected")
+		sleep(120)
 		 
 	def show_lldp_trace():
 		pshell.tcl_psa_connect_testcase(test)
@@ -548,7 +550,7 @@ if __name__ == "__main__":
 		sw = switches[0]
 	
 	#have to reboot first, sometimes PSA is too busy to respond
-	if REBOOT:
+	if INIT_REBOOT:
 		pdu_cycle_sifos()
 
 	tprint(f"Launching Power Shell TCL Command From GIT Bash Shell")
@@ -569,7 +571,7 @@ if __name__ == "__main__":
 			if REBOOT:
 				pdu_cycle_sifos()
 				# pshell.tcl_psa_reconnect_current()
-		pshell.tcl_close_shell()
+	pshell.tcl_close_shell()
 
 
 
