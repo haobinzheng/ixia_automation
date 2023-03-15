@@ -1,0 +1,6 @@
+alias dev3='telnet 10.105.240.44 2093'
+alias dev2='telnet 10.105.241.44 2089'
+alias dev1='telnet 10.105.241.44 2085'
+alias ubuntu='ssh zhengh@10.105.252.121'
+alias ftg="ssh admin@10.105.152.52"
+

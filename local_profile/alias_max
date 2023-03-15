@@ -1,0 +1,5 @@
+alias jump1='ssh mi009109@msi-lmgmt01.sslmda.net'
+alias jump2='ssh mi009109@ssl-lmgmt01.ssd.loral.com'
+alias juniper1='telnet 158.184.33.95 2003'
+alias juniper2='telnet 158.184.33.95 2004'
+alias vxrail='ssh netadmin@10.48.128.241'

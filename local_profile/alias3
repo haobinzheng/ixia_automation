@@ -1,0 +1,20 @@
+alias dev1='telnet 10.105.241.144 2071'
+alias dev2='telnet 10.105.241.243 2035'
+alias dev3='telnet 10.105.240.44 2020'
+alias dev4='telnet 10.105.240.44 2007'
+alias dev5='telnet 10.105.240.144 2070'
+alias dev6='telnet 10.105.241.144 2090'
+alias n9k='telnet 10.105.241.243 2045'
+alias ubuntu='ssh zhengh@10.105.252.121'
+alias mini='ssh admin@172.30.197.2'
+alias mini_home='ssh admin@192.168.1.80'
+alias auto='ssh auto@10.105.0.126'
+alias ex="telnet 10.105.241.44 2090"
+alias ftg="ssh admin@10.105.50.112"
+alias ftg_console="telnet 10.105.50.1 2090"
+alias ftg_3k="telnet 10.105.240.244 2074"
+alias fsw_fortilink='telnet 10.105.240.144 2068'
+
+alias dhcp2='telnet 10.105.240.144 2087'
+alias dhcp1='telnet 10.105.240.44 2093'
+
