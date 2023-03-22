@@ -17,7 +17,7 @@ from apc import *
 
 TROUBLE_SHOOTING = False 
 REBOOT = False
-INIT_REBOOT = True
+INIT_REBOOT = False
 SW_LOGIN = True
 
 def jinja_zip(*args):
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
 			# pshell.tcl_execute(tcl,expect=False)
 			poe_inline_dict = {}
-			timer = 60*15 #15 minutes	
+			timer = 60*5 #15 minutes	
 			start_time = time.time()
 			while True:
 				if time.time() - start_time >  timer:
@@ -71,8 +71,11 @@ if __name__ == "__main__":
 		vlan_id=re.match(r'vlan([0-9]+)',vlan).group(1)
 		cmds = f"""
 		config system interface
+		delete {vlan}
+		end
+		config system interface
 		edit {vlan}
-			set ip {gw4_list[0]} 255.255.0.0
+			set ip {gw4_list[0]} 255.255.255.0
 		    config ipv6
                 set ip6-address {gw6_list[0]}/64
                 set ip6-allowaccess ping https http ssh telnet
@@ -415,12 +418,15 @@ if __name__ == "__main__":
 		print("Background thread has exited. Exiting create_thread()...")
  
 	def scan_get_poe_inline():
-		pshell.tcl_psa_connect_testcase(test)
-		pshell.tcl_send_simple_cmd(test.tcl_global)
+		pshell_dict[test.sifo_ip].tcl_send_simple_cmd(test.tcl_global)
 		for tcl in test.tcl_procedure_list:
 			if tcl.execute == False:
 				continue
-			pshell.tcl_execute(tcl,expect=False)
+
+			for tcl_command in tcl.tcl_command_list:  
+				pshell = pshell_dict[tcl_command.sifo_ip] 
+				pshell.tcl_send_commands_direct(tcl_command.commands,tcl_command.name,wait=False)
+
 			poe_inline_dict = {}
 			timer = 60*15 #15 minutes	
 			start_time = time.time()
@@ -558,7 +564,7 @@ if __name__ == "__main__":
 	for tester in setup.yaml_obj.Tester_list:
 		pshell_dict[tester.mgmt_ip] = power_shell_tcl(reboot=REBOOT)
 		pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
-	
+	sw.dual_pdu_up_down(pdu_unit="pdu1",action="up")
 	while True:
 		for test in setup.yaml_obj.Test_Case_list:
 			if test.execute == False:
@@ -571,8 +577,8 @@ if __name__ == "__main__":
 			if REBOOT:
 				pdu_cycle_sifos()
 				# pshell.tcl_psa_reconnect_current()
-	pshell.tcl_close_shell()
-
+	for tester in setup.yaml_obj.Tester_list:
+		pshell_dict[tester.mgmt_ip].tcl_close_shell()
 
 
 

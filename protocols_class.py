@@ -7754,13 +7754,34 @@ class FortiSwitch_XML(FortiSwitch):
 
     def ssh_pdu_cycle(self):
         self.pdu_cycle()
-
+    
     def pdu_cycle(self):
         a = apc()
         Status = {}
         Status = a.set_reboot(self.pdu_ip, self.pdu_port)
         print(Status)
+        if self.dual_pdu == True:
+            Status = a.set_reboot(self.pdu_ip_2, self.pdu_port_2)
+            print(Status)
+
+    def dual_pdu_up_down(self,pdu_unit='pdu1',action="up"):
+        a = apc()
+        Status = {}
         
+        if pdu_unit == 'pdu1':
+            pdu_ip = self.pdu_ip
+            pdu_port = self.pdu_port
+        else:
+            pdu_ip = self.pdu_ip_2
+            pdu_port = self.pdu_port_2
+
+        if action == "up":
+            status = a.set_on(pdu_ip,pdu_port)
+        else:
+            status = a.set_off(pdu_ip,pdu_port)
+        print(status)
+         
+
     def ssh_pdu_status(self):
         self.pdu_status()
 
@@ -7997,11 +8018,11 @@ class FortiSwitch_XML(FortiSwitch):
     def ssh_pdu_cycle(self):
         self.pdu_cycle()
 
-    def pdu_cycle(self):
-        a = apc()
-        Status = {}
-        Status = a.set_reboot(self.pdu_ip, self.pdu_port)
-        print(Status)
+    # def pdu_cycle(self):
+    #     a = apc()
+    #     Status = {}
+    #     Status = a.set_reboot(self.pdu_ip, self.pdu_port)
+    #     print(Status)
 
     def config_vlan_interface(self,*args,**kwargs):
         vlan = kwargs["vlan"]
