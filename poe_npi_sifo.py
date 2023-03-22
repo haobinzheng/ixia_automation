@@ -505,6 +505,36 @@ if __name__ == "__main__":
 					break
 
 
+	def scan_get_poe_inline_poe_mode():
+		cmds = f"""
+		config switch global
+		set poe-power-mode first-come-first-served
+		end
+		"""
+		sw.config_cmds_fast(cmds)
+		scan_get_poe_inline()
+
+		cmds = f"""
+		config switch global
+		set poe-power-mode priority
+		end
+		"""
+		sw.config_cmds_fast(cmds)
+		scan_get_poe_inline()
+
+	def scan_get_poe_inline_pdu():
+		sw.dual_pdu_up_down(pdu_unit="pdu1",action="down")
+		scan_get_poe_inline()
+
+		sw.dual_pdu_up_down(pdu_unit="pdu1",action="up")
+		sleep(30)
+		sw.dual_pdu_up_down(pdu_unit="pdu2",action="down")
+		scan_get_poe_inline()
+
+		sw.dual_pdu_up_down(pdu_unit="pdu2",action="up")
+		scan_get_poe_inline()
+
+
 	sys.stdout = Logger(f'Log/poe_bt_testing_{current_date_time().replace(":","-")}.log')
 	
 	env = Environment(loader=FileSystemLoader('yaml_testcase'),extensions=[jinja2.ext.do])
@@ -564,7 +594,6 @@ if __name__ == "__main__":
 	for tester in setup.yaml_obj.Tester_list:
 		pshell_dict[tester.mgmt_ip] = power_shell_tcl(reboot=REBOOT)
 		pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
-	sw.dual_pdu_up_down(pdu_unit="pdu1",action="up")
 	while True:
 		for test in setup.yaml_obj.Test_Case_list:
 			if test.execute == False:
@@ -573,7 +602,11 @@ if __name__ == "__main__":
 			dprint(test.dut_port_list)
 			dprint(test.class_list)
 			dprint(test.poe_port_list)
-			result = globals()[test.python_verify_func]()
+			if test.python_verify_func is list:
+				for python_proc in test.python_verify_func:
+					result = globals()[python_proc]()
+			else:
+				result = globals()[test.python_verify_func]()
 			if REBOOT:
 				pdu_cycle_sifos()
 				# pshell.tcl_psa_reconnect_current()
