@@ -14,6 +14,14 @@
 {% set bt_tcl_execute_list = [True,True,True,True,True] %}
 {% set bt_tcl_proc_list = ["psa_bt_6","psa_bt_4","psa_bt_3","psa_bt_2","psa_bt_1","psa_bt_0"] %}
 
+
+{% set bt_class_max_power_list_reverse = [16.4,16.4,16.4,16.4,34.0,60] %}
+{% set bt_class_deliver_power_list_reverse = [15.3,3.9,6.9,15.3,30,60] %}
+{% set bt_class_test_list_reverse = [0,1,2,3,4,6] %}
+{% set bt_tcl_execute_list = [True,True,True,True,True] %}
+{% set bt_tcl_proc_list_reverse = ["psa_bt_0","psa_bt_1","psa_bt_2","psa_bt_3","psa_bt_4","psa_bt_6"] %}
+
+
 {% set at_class_max_power_list = [34.0,16.4,16.4,16.4,16.4] %}
 {% set at_class_deliver_power_list = [25,15.3,6.9,3.9,15.3] %}
 {% set at_class_test_list = [4,3,2,1,0] %}
@@ -127,10 +135,70 @@ Test_Case_list:
                }
                }
       {% endfor %}
-    - case_name: bt_scan_class_power_traffic
+    - case_name: bt_scan_class_power_reverse
       tester: PSA3000
       sifo_ip: 10.105.241.47
       execute: True
+      poe_tester: PSA3000
+      poe_port_list: {{poe_4pair_port_list}}
+      class_list: {{bt_class_test_list}}
+      deliver_power_list: {{bt_class_deliver_power_list}}
+      dut_port_list: {{dut_4pair_port_list}}
+      python_verify_func: scan_get_poe_inline
+      tcl_global:  puts bt_scan_class_power
+      tcl_procedure_list:
+      {% for tcl_name,class_power,class_name,run,d_power in bt_tcl_proc_list_reverse|jinja_zip(bt_class_max_power_list_reverse,bt_class_test_list_reverse,bt_tcl_execute_list,bt_class_deliver_power_list_reverse) %}
+        - proc_name: {{tcl_name}}
+          poe_class: {{class_name}}
+          max_power: {{class_power}}
+          execute: {{run}}
+          tcl_close: False
+          tcl_command_list:
+            - name: disconnect
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc disconnect {} {
+               set port_list {{poe_4pair_port_list_tcl}}
+               foreach port $port_list {
+                 puts "psa_4pair $port single"
+                 psa_4pair $port single
+                 puts "psa_disconnect $port"
+                 psa_disconnect $port
+                }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_3
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{psl_port_list_tcl}}
+               foreach port $port_list {
+                puts "psl_setup $port single"
+                psl_setup $port single
+                puts "power_pse $port c {{class_name}} p {{d_power}}"
+                power_pse $port c {{class_name}} p {{d_power}}
+               }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{poe_4pair_port_list_tcl}}
+               foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_4pair $port single"
+                psa_4pair $port single
+                puts "psa_auto_port $port BT"
+                psa_auto_port $port BT
+                puts "power_bt $port c {{class_name}} p {{d_power}}  "
+                power_bt $port c {{class_name}} p {{d_power}}
+               }
+               }
+      {% endfor %}
+    - case_name: bt_scan_class_power_traffic
+      tester: PSA3000
+      sifo_ip: 10.105.241.47
+      execute: False
       poe_tester: PSA3000
       poe_port_list: {{poe_4pair_port_list}}
       class_list: {{bt_class_test_list}}
@@ -191,7 +259,7 @@ Test_Case_list:
     - case_name: at_scan_class_power
       tester: PSA3000
       sifo_ip: 10.105.241.47
-      execute: True
+      execute: False
       poe_tester: PSA3000
       poe_port_list: {{poe_2pair_port_list}}
       class_list: {{at_class_test_list}}
@@ -239,7 +307,7 @@ Test_Case_list:
     - case_name: at_lldp_power
       tester: PSA3000
       sifo_ip: 10.105.241.47
-      execute: True
+      execute: False
       poe_tester: PSA3000
       poe_port_list: {{poe_2pair_port_list}}
       class_list: {{at_class_test_list}}
@@ -277,4 +345,128 @@ Test_Case_list:
                  trace_lldp_pwrup $port c 4 pwr 22.2 duration 60
                  }
                }
-        
+    - case_name: negative_test_bt
+      tester: PSA3000
+      sifo_ip: 10.105.241.47
+      execute: False
+      poe_tester: PSA3000
+      poe_port_list: {{poe_4pair_port_list}}
+      class_list: {{bt_class_test_list}}
+      deliver_power_list: {{bt_class_deliver_power_list}}
+      dut_port_list: {{dut_4pair_port_list}}
+      python_verify_func: negative_smbus
+      tcl_global:  puts negative_bt
+      tcl_procedure_list:
+      {% for tcl_name,class_power,class_name,run,d_power in bt_tcl_proc_list|jinja_zip(bt_class_max_power_list,bt_class_test_list,bt_tcl_execute_list,bt_class_deliver_power_list) %}
+        - proc_name: {{tcl_name}}
+          poe_class: {{class_name}}
+          max_power: {{class_power}}
+          execute: {{run}}
+          tcl_close: False
+          tcl_command_list:
+            - name: disconnect
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc disconnect {} {
+               set port_list {{poe_4pair_port_list_tcl}}
+               foreach port $port_list {
+                 puts "psa_4pair $port single"
+                 psa_4pair $port single
+                 puts "psa_disconnect $port"
+                 psa_disconnect $port
+                }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{poe_4pair_port_list_tcl}}
+               foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_4pair $port single"
+                psa_4pair $port single
+                puts "psa_auto_port $port BT"
+                psa_auto_port $port BT
+                puts "power_bt $port c {{class_name}} p {{d_power}}  "
+                power_bt $port c {{class_name}} p {{d_power}}
+               }
+               }
+      {% endfor %}
+    - case_name: negative_test_at
+      tester: PSA3000
+      sifo_ip: 10.105.241.47
+      execute: False
+      poe_tester: PSA3000
+      poe_port_list: {{poe_2pair_port_list}}
+      class_list: {{at_class_test_list}}
+      deliver_power_list: {{at_class_deliver_power_list}}
+      dut_port_list: {{dut_2pair_port_list}}
+      python_verify_func: negative_smbus
+      tcl_global: psa_pse -grant phy -spec at -pol mdix -alt A
+      tcl_procedure_list:
+      {% for tcl_name,class_power,class_name,run,d_power in at_tcl_proc_list|jinja_zip(at_class_max_power_list,at_class_test_list,at_tcl_execute_list,at_class_deliver_power_list) %}
+        - proc_name: {{tcl_name}}
+          poe_class: {{class_name}}
+          max_power: {{class_power}}
+          execute: {{run}}
+          sifo_ip: *psa_ip_1
+          tcl_close: False
+          tcl_command_list:
+            - name: disconnect
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc disconnect {} {
+               set port_list {{poe_2pair_port_list_tcl}}
+               foreach port $port_list {
+                #puts "psa_4pair $port disable"
+                #psa_4pair $port disable
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{poe_2pair_port_list_tcl}}
+               foreach port $port_list {
+                puts "psa_4pair $port disable"
+                psa_4pair $port disable
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_emulate_pd $port start c {{class_name}} p {{d_power}} o 0"
+                psa_emulate_pd $port start c {{class_name}} p {{d_power}} o 0
+                }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{poe_2pair_port_list_tcl}}
+               foreach port $port_list {
+                puts "psa_4pair $port disable"
+                psa_4pair $port disable
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_auto_port $port AT"
+                psa_auto_port $port AT
+                puts "alt $port A"
+                alt $port A
+                puts "power_port $port {{class_name}} p {{d_power}}"
+                power_port $port c {{class_name}} p {{d_power}}
+                }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_3
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{psl_port_list_tcl}}
+               foreach port $port_list {
+                puts "psl_setup $port single"
+                psl_setup $port single
+                puts "power_pse $port c {{class_name}} p {{d_power}}"
+                power_pse $port c {{class_name}} p {{d_power}}
+               }
+               }
+      {% endfor %}

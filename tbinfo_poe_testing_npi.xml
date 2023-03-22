@@ -5,6 +5,7 @@
   <login username="admin" password="Fortinet123!!"> </login>
   <mgmt ip="10.105.241.157" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN_M" ip="10.105.241.95" port="17"> </pdu>
+  <pdu2 model="RARITAN_M" ip="10.105.241.96" port="17"> </pdu2>
   <tftp ip="10.105.19.44" local_ip="10.105.0.122" gateway="10.105.241.254" netmask="255.255.254.0" > </tftp>
   <trafic_rate frame_rate="percent:1" > </trafic_rate>
   <local_route route="10.105.0.0" netmask="255.255.0.0" gateway="10.105.199.254"> </local_route>

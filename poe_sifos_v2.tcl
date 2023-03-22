@@ -136,6 +136,35 @@ PowerShell Command Set (alphabetical): See Reference Manual Section 4 for furthe
  psl_setup p2 single
  power_pse p2 c 6 p 59
 
+proc psa_bt_6 {} {
+set port_list {p1 p2 p3 p4 p5 p6 p7 p8}
+foreach port $port_list {
+puts "psl_setup $port single"
+psl_setup $port single
+puts "power_pse $port c 6 p 60"
+power_pse $port c 6 p 60
+}
+}
+
+############### PSA: How to create negative test to trigger timeout issue ###########
+
+proc psa_bt {} {     
+set port_list {"5,1" "6,1" "7,1" "8,1" "9,1" "10,1" "11,1" "12,1"}
+#set port_list {"7,1"}
+foreach port $port_list {
+    puts "psa_disconnect $port"
+    psa_disconnect $port
+    puts "psa_4pair $port single"
+    psa_4pair $port single
+    # puts "psa_auto_port $port BT"
+    # psa_auto_port $port BT
+    puts "power_bt $port c 6 p 60  "
+    power_bt $port c 6 p 60
+}
+}
+
+
+
 ############### PSA: How do I know the status of the PSA port #######################
 pstatus 1,1 stat
 

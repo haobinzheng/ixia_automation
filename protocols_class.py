@@ -173,7 +173,8 @@ class power_shell_tcl:
         #power_shell = wexpect.spawn('winpty ./powershell_tcl.exe')
         power_shell = wexpect.spawn('./powershell_tcl.exe', maxread=10000,timeout=1200)
         power_shell.sendline('\n')
-        power_shell.expect('PSA-[0-9]+,[0-9]+>')
+        prompts = ['PSA-[0-9]+,[0-9]+>', 'PSA-[0-9]+,[0-9]+\+\+>','PSA-[0-9]+,[0-9]+\+>']
+        power_shell.expect(prompts)
         print(power_shell.before)
         print(power_shell.after)
         # power_shell.sendline(f"psa {self.ip}")
@@ -184,16 +185,17 @@ class power_shell_tcl:
     def tcl_psa_connect(self,ip):
         tprint(f"Connecting to Sifos Chassis {ip} ......")
         result,error = self.tcl_send_cmd_expect_prompt(f"psa {ip}",wait=60)
-        while ">>> Installing the 2-Pair PSE Conformance Test Suite..." not in result:
-            sleep(20)
-            result,error = self.tcl_send_cmd_expect_prompt(f"psa {ip}",wait=60)
+        # while ">>> Installing the 2-Pair PSE Conformance Test Suite..." not in result:
+        #     sleep(20)
+        result,error = self.tcl_send_cmd_expect_prompt(f"psa {ip}",wait=60)
         self.current_psa_ip = ip
 
     def tcl_send_cmd_expect_prompt(self,cmd,wait=30):
         print(f"wait time = {wait}")
         print(f"TCL command: {cmd}")
         self.tcl_send_simple_cmd(cmd)
-        self.power_shell.expect('PSA-[0-9]+,[0-9]+>',timeout=wait)
+        prompts = ['PSA-[0-9]+,[0-9]+>', 'PSA-[0-9]+,[0-9]+\+\+>','PSA-[0-9]+,[0-9]+\+>']
+        self.power_shell.expect(prompts,timeout=wait)
         result = self.power_shell.before
         error = self.power_shell.after
         print(f"Result of command: {cmd}\n{self.power_shell.before}")
@@ -231,7 +233,7 @@ class power_shell_tcl:
             self.current_psa_reboot = False
 
 
-    def tcl_execute(self,tcl,expect=True):
+    def tcl_execute(self,tcl,expect=True,longwait=False):
         for tcl_command in tcl.tcl_command_list:
             if self.current_psa_reboot == True:
                 self.tcl_psa_connect(tcl_command.sifo_ip)
@@ -260,7 +262,8 @@ class power_shell_tcl:
             self.tcl_send_simple_cmd(c)
         if wait == True:
             self.power_shell.expect('PSA-[0-9]+,[0-9]+>',timeout=10)
-            self.tcl_send_cmd_expect_prompt(proc_name,wait=120)
+            # remember to change this back to 120
+            self.tcl_send_cmd_expect_prompt(proc_name,wait= 600)
         else:
             self.tcl_send_simple_cmd(proc_name)
             console_timer(60,msg=f"After running {proc_name}, wait for 60 sec")
@@ -7751,13 +7754,34 @@ class FortiSwitch_XML(FortiSwitch):
 
     def ssh_pdu_cycle(self):
         self.pdu_cycle()
-
+    
     def pdu_cycle(self):
         a = apc()
         Status = {}
         Status = a.set_reboot(self.pdu_ip, self.pdu_port)
         print(Status)
+        if self.dual_pdu == True:
+            Status = a.set_reboot(self.pdu_ip_2, self.pdu_port_2)
+            print(Status)
+
+    def dual_pdu_up_down(self,pdu_unit='pdu1',action="up"):
+        a = apc()
+        Status = {}
         
+        if pdu_unit == 'pdu1':
+            pdu_ip = self.pdu_ip
+            pdu_port = self.pdu_port
+        else:
+            pdu_ip = self.pdu_ip_2
+            pdu_port = self.pdu_port_2
+
+        if action == "up":
+            status = a.set_on(pdu_ip,pdu_port)
+        else:
+            status = a.set_off(pdu_ip,pdu_port)
+        print(status)
+         
+
     def ssh_pdu_status(self):
         self.pdu_status()
 
@@ -7994,11 +8018,11 @@ class FortiSwitch_XML(FortiSwitch):
     def ssh_pdu_cycle(self):
         self.pdu_cycle()
 
-    def pdu_cycle(self):
-        a = apc()
-        Status = {}
-        Status = a.set_reboot(self.pdu_ip, self.pdu_port)
-        print(Status)
+    # def pdu_cycle(self):
+    #     a = apc()
+    #     Status = {}
+    #     Status = a.set_reboot(self.pdu_ip, self.pdu_port)
+    #     print(Status)
 
     def config_vlan_interface(self,*args,**kwargs):
         vlan = kwargs["vlan"]
