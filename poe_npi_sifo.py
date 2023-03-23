@@ -602,7 +602,7 @@ if __name__ == "__main__":
 			dprint(test.dut_port_list)
 			dprint(test.class_list)
 			dprint(test.poe_port_list)
-			if test.python_verify_func is list:
+			if type(test.python_verify_func) == list:
 				for python_proc in test.python_verify_func:
 					result = globals()[python_proc]()
 			else:

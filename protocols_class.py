@@ -7767,6 +7767,7 @@ class FortiSwitch_XML(FortiSwitch):
     def dual_pdu_up_down(self,pdu_unit='pdu1',action="up"):
         a = apc()
         Status = {}
+        print(f"{pdu_unit} is going to power {action}")
         
         if pdu_unit == 'pdu1':
             pdu_ip = self.pdu_ip
