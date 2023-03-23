@@ -5725,6 +5725,15 @@ class FortiSwitch:
                 pass
         return result
 
+    def switch_diag(self):
+        commands = """
+        diag sys fan status
+        diag sys pcb temp
+        diag switch modules eeprom
+        get switch modules summary
+        fnsysctl sh
+        dmesg
+        """
 
     def collect_linux_cmd(self,*args,**kwargs):
         if "cmd" in kwargs:
