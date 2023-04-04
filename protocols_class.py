@@ -7409,6 +7409,14 @@ class FortiSwitch_XML(FortiSwitch):
     #     Info("After login via SSH, wait for 2 seconds....")
     #     sleep(2)
 
+    def enter_shell_6xx(self):
+        cmds = f"""
+        exec telnet 0 12345
+        device 0
+        CLIexit
+        """
+        config_cmds_lines(self.console,cmds)
+
     def ssh_output_process(self,output):
         out_list = output.split('\n')
         encoding = 'utf-8'

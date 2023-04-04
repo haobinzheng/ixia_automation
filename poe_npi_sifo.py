@@ -51,6 +51,42 @@ if __name__ == "__main__":
 				sw.exec_command("execute log filter view-lines 100")
 				output = collect_show_cmd(sw.console,"execute log display")
 
+	def poe_max_power(mode = "auto"):
+		dut_4pair_port_list_scale = ['port3','port4','port5','port6','port7','port8','port9', 'port10', 'port11','port12','port13','port14','port15','port16','port17','port18','port19','port20','port21','port22','port23','port24']
+		for port in dut_4pair_port_list_scale:
+			sw.exec_command(f"execute poe-reset {port}")
+		sleep(10)
+
+		for tcl in test.tcl_procedure_list:
+			try:
+				if tcl.execute == False:
+					continue
+				for tcl_command in tcl.tcl_command_list:  
+					pshell = pshell_dict[tcl_command.sifo_ip] 
+					pshell.tcl_send_commands_direct(tcl_command.commands,tcl_command.name,wait=False)
+			except Exception as e:
+				pass
+
+		if mode == "interactive":
+			while True:
+				output = collect_show_cmd(sw.console,"get switch poe inline")
+				keyin = input("Do you want to continue to show switch poe inline(Y/N)?:")
+				if keyin.upper() == "Y":
+					continue
+				elif keyin.upper() == "N":
+					return
+				else:
+					continue
+		else:
+			timer = 60*5 #15 minutes	
+			start_time = time.time()
+			while True:
+				if time.time() - start_time >  timer:
+					break
+				sleep(10)
+				output = collect_show_cmd(sw.console,"get switch poe inline")
+
+
 	def bg_thread_traffic(exit_event):
 		logging.info("Starting background traffic thread to monitor traffic forwarding during POE power provisioning")
 		apiServerIp = tb.ixia.ixnetwork_server_ip
@@ -292,7 +328,7 @@ if __name__ == "__main__":
 				pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
 				pshell_dict[tester.mgmt_ip].current_psa_reboot = True
 			except Exception:
-				print("This is the initial reboot, no power shell is connected")
+				print("This is the initial reboot, no Sifo TCL Power Shell is connected yet, No need to worry about re-launch TCL shell")
 		sleep(120)
 		 
 	def show_lldp_trace():
@@ -588,6 +624,7 @@ if __name__ == "__main__":
 	#have to reboot first, sometimes PSA is too busy to respond
 	if INIT_REBOOT:
 		pdu_cycle_sifos()
+		#sw.switch_reboot_login()
 
 	tprint(f"Launching Power Shell TCL Command From GIT Bash Shell")
 	pshell_dict = {}
