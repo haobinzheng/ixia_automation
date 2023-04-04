@@ -5,6 +5,8 @@
 {% set poe_2pair_port_list_tcl = "{" + poe_2pair_port_list | join(" ") + "}" %}
 {% set psl_port_list = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'] %}
 {% set psl_port_list_tcl = "{" + psl_port_list | join(" ") + "}" %}
+{% set psl_port_list_scale = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8','p9','p10','p11','p12','p13','p14'] %}
+{% set psl_port_list_tcl_scale = "{" + psl_port_list_scale | join(" ") + "}" %}
 
 {% set dut_4pair_port_list = ['port9', 'port10', 'port11','port12','port13','port14','port15','port16','port17','port18','port19','port20','port21','port22','port23','port24'] %}
 {% set dut_2pair_port_list = ['port2', 'port3','port4','port5','port6','port7','port8'] %}
@@ -13,6 +15,14 @@
 {% set bt_class_test_list = [6,4,3,2,1,0] %}
 {% set bt_tcl_execute_list = [True,True,True,True,True] %}
 {% set bt_tcl_proc_list = ["psa_bt_6","psa_bt_4","psa_bt_3","psa_bt_2","psa_bt_1","psa_bt_0"] %}
+
+{% set dut_4pair_port_list_scale = ['port3','port4','port5','port6','port7','port8','port9', 'port10', 'port11','port12','port13','port14','port15','port16','port17','port18','port19','port20','port21','port22','port23','port24'] %}
+{% set bt_class_max_power_list_scale = [60] %}
+{% set bt_class_deliver_power_list_scale = [60] %}
+{% set bt_class_test_list_scale = [6] %}
+{% set bt_tcl_execute_list_scale = [True] %}
+{% set bt_tcl_proc_list_scale = ["psa_bt_6"] %}
+
 
 
 {% set bt_class_max_power_list_reverse = [16.4,16.4,16.4,16.4,34.0,60] %}
@@ -30,6 +40,9 @@
 
 {% set at_lldp_port_list = ['1,1'] %}
 {% set at_lldp_port_list_tcl = "{" + at_lldp_port_list | join(" ") + "}" %}
+
+
+
 
 DUT_list:
     - hostname: S624FFTV22000027
@@ -78,7 +91,7 @@ Test_Case_list:
     - case_name: bt_scan_class_power
       tester: PSA3000
       sifo_ip: 10.105.241.47
-      execute: True
+      execute: False
       poe_tester: PSA3000
       poe_port_list: {{poe_4pair_port_list}}
       class_list: {{bt_class_test_list}}
@@ -113,6 +126,55 @@ Test_Case_list:
               commands: |
                proc {{tcl_name}} {} {
                set port_list {{psl_port_list_tcl}}
+               foreach port $port_list {
+                puts "psl_setup $port single"
+                psl_setup $port single
+                puts "power_pse $port c {{class_name}} p {{d_power}}"
+                power_pse $port c {{class_name}} p {{d_power}}
+               }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_1
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{poe_4pair_port_list_tcl}}
+               foreach port $port_list {
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                puts "psa_4pair $port single"
+                psa_4pair $port single
+                puts "psa_auto_port $port BT"
+                psa_auto_port $port BT
+                puts "power_bt $port c {{class_name}} p {{d_power}}  "
+                power_bt $port c {{class_name}} p {{d_power}}
+               }
+               }
+      {% endfor %}
+    - case_name: bt_class_power_scale
+      tester: PSA3000
+      sifo_ip: 10.105.241.47
+      execute: True
+      poe_tester: PSA3000
+      poe_port_list: {{poe_4pair_port_list}}
+      class_list: {{bt_class_test_list}}
+      deliver_power_list: {{bt_class_deliver_power_list}}
+      dut_port_list: {{dut_4pair_port_list}}
+      python_verify_func: 
+       - poe_max_power
+      tcl_global:  puts bt_scan_class_power
+      tcl_procedure_list:
+      {% for tcl_name,class_power,class_name,run,d_power in bt_tcl_proc_list_scale|jinja_zip(bt_class_max_power_list_scale,bt_class_test_list_scale,bt_tcl_execute_list_scale,bt_class_deliver_power_list_scale) %}
+        - proc_name: {{tcl_name}}
+          poe_class: {{class_name}}
+          max_power: {{class_power}}
+          execute: {{run}}
+          tcl_close: False
+          tcl_command_list:
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_3
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{psl_port_list_tcl_scale}}
                foreach port $port_list {
                 puts "psl_setup $port single"
                 psl_setup $port single

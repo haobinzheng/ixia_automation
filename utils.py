@@ -713,24 +713,7 @@ def collect_show_cmd(tn,cmd,**kwargs):
 	for o in out_list:
 		o_str = o.decode(encoding).strip(' \r')
 		out_str_list.append(o_str)
-	# tprint(dir(output))
-	# tprint(type(output))
-	#tprint(out_list)
-	# for i in out_str_list:
-	# 	tprint(i)
-	#Will revove these lines after bgp is done
-	if cmd == "get router info6 bgp summary":
-		print (f"return from utiliy.py: collect_show_cmd(): {out_str_list}")
-	# i = 0
-	# i_list = []
-	# for o in out_str_list:
-	# 	if str(original_cmd) in str(o):
-	# 		i_list.append(i)
-	# 	i += 1
-	# index = i_list[-1]
-	# good_out_list = out_str_list[index:]
 	good_out_list = clean_show_output_recursive(out_str_list,original_cmd)
-	debug(good_out_list)
 	print_output_list(good_out_list)
 	return good_out_list
 

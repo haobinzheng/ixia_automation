@@ -58,7 +58,7 @@ Test_Case_list:
   - port22
   - port23
   - port24
-  execute: true
+  execute: false
   poe_port_list:
   - 5,1
   - 6,1
@@ -194,6 +194,74 @@ Test_Case_list:
         \ \"psa_auto_port $port BT\"\n psa_auto_port $port BT\n puts \"power_bt $port\
         \ c 1 p 3.9  \"\n power_bt $port c 1 p 3.9\n}\n}\n"
       name: psa_bt_1
+      sifo_ip: 10.105.241.47
+  tester: PSA3000
+- case_name: bt_class_power_scale
+  class_list:
+  - 6
+  - 4
+  - 3
+  - 2
+  - 1
+  - 0
+  deliver_power_list:
+  - 60
+  - 30
+  - 15.3
+  - 6.9
+  - 3.9
+  - 15.3
+  dut_port_list:
+  - port9
+  - port10
+  - port11
+  - port12
+  - port13
+  - port14
+  - port15
+  - port16
+  - port17
+  - port18
+  - port19
+  - port20
+  - port21
+  - port22
+  - port23
+  - port24
+  execute: true
+  poe_port_list:
+  - 5,1
+  - 6,1
+  - 7,1
+  - 8,1
+  - 9,1
+  - 10,1
+  - 11,1
+  - 12,1
+  poe_tester: PSA3000
+  python_verify_func:
+  - poe_max_power
+  sifo_ip: 10.105.241.47
+  tcl_global: puts bt_scan_class_power
+  tcl_procedure_list:
+  - execute: true
+    max_power: 60
+    poe_class: 6
+    proc_name: psa_bt_6
+    tcl_close: false
+    tcl_command_list:
+    - commands: "proc psa_bt_6 {} {\nset port_list {p1 p2 p3 p4 p5 p6 p7 p8 p9 p10\
+        \ p11 p12 p13 p14}\nforeach port $port_list {\n puts \"psl_setup $port single\"\
+        \n psl_setup $port single\n puts \"power_pse $port c 6 p 60\"\n power_pse\
+        \ $port c 6 p 60\n}\n}\n"
+      name: psa_bt_6
+      sifo_ip: 10.105.241.49
+    - commands: "proc psa_bt_6 {} {\nset port_list {5,1 6,1 7,1 8,1 9,1 10,1 11,1\
+        \ 12,1}\nforeach port $port_list {\n puts \"psa_disconnect $port\"\n psa_disconnect\
+        \ $port\n puts \"psa_4pair $port single\"\n psa_4pair $port single\n puts\
+        \ \"psa_auto_port $port BT\"\n psa_auto_port $port BT\n puts \"power_bt $port\
+        \ c 6 p 60  \"\n power_bt $port c 6 p 60\n}\n}\n"
+      name: psa_bt_6
       sifo_ip: 10.105.241.47
   tester: PSA3000
 - case_name: bt_scan_class_power_reverse
