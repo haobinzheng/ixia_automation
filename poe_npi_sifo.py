@@ -631,7 +631,7 @@ if __name__ == "__main__":
 	for tester in setup.yaml_obj.Tester_list:
 		pshell_dict[tester.mgmt_ip] = power_shell_tcl(reboot=REBOOT)
 		pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
-	while True:
+	for _ in range(1):
 		for test in setup.yaml_obj.Test_Case_list:
 			if test.execute == False:
 				continue
