@@ -159,7 +159,7 @@ proc psl_power_up {} {
     regsub -all {(,")|(",)|"} $port_list " " port_list;
     puts $port_list
     puts $power_list
-    for {set i 0} {$i < 1000} {incr i} {
+    for {set i 0} {$i < 1} {incr i} {
         foreach z $zipped {
             set class [lindex $z 0]
             puts $class
@@ -353,11 +353,21 @@ psa_saveConfig
 
 ******** PSA: How to emulate PD LLDP for 802.3BT? ******************
 
+
+proc psa_bt_lldp {} {
+pd_default_lldp 99,99
+pd_mac_init 99,99 root 00.4a.30.00.0 store Slot,Port 1,1 004A30000011
+pd_mac_init 99,99 root 00.4a.30.00.0 store Slot,Port 1,1 004A30000011
+psa_lan 99,99 connect
+pd_req 99,99 sspwr 60 class 6 period 12 count 0 trig off init
+pd_req 5,1 stat 
+}
 # Program Default LLDP Packet Parameters to ALL Test Ports 
 pd_default_lldp 99,99
 
 # Program Unique MAC Addresses to ALL Test Ports with specified 9-digit ROOT # Store these in non-volatile memory in each test port
 pd_mac_init 99,99 root 00.4a.30.00.0 store Slot,Port 1,1 004A30000011
+
 
 # Connect the LLDP Subsystem on all ports
 psa_lan 99,99 connect
@@ -368,9 +378,10 @@ after 2000
 
 # Program 802.3bt PD Power Request & Message Transmission Parameters to ALL Ports 
 
-pd_req 99,99 sspwr 36.2 class 4 period 12 count 0 trig off init
-pd_req 1,1 sspwr 36.2 class 4 period 12 count 0 trig off init
+pd_req 99,99 sspwr 36.2 class 5 period 12 count 0 trig off init
+pd_req 5,1 sspwr 36.2 class 5 period 12 count 0 trig off init
 
+pd_req 99,99 sspwr 60 class 6 period 12 count 0 trig off init
 
 # Query the PD request configuration on port 2
 pd_req 1,1 stat 
@@ -380,6 +391,7 @@ pd_req 2,2 stat
 pd_req 3,1 stat 
 pd_req 3,2 stat 
 
+proc
 
 **************** How to edumlate LLDP protocol for 802.3AT POE PD? *************
 # Connect the LLDP Subsystem
@@ -421,7 +433,7 @@ power_port 1,1 lldp force 19 timeout 120
 
 
 proc lldp_trace_c3 {} {	 
-set port_list {"1,1"}
+set port_list {"1,2"}
 puts $port_list
 #regsub -all {(,")|(",)|"} $port_list " " port_list;
 foreach port $port_list {
@@ -433,12 +445,12 @@ foreach port $port_list {
 	psa_lan $port connect
 	pse_link_wait $port timeout 30
 	pd_req $port class 3 pwr 11.3
-	psa_lldp_trace $port period 10 duration 1 onSync -e
+	psa_lldp_trace $port period 10 duration 1 onSync 4.4
 }
 }
 
 proc lldp_trace_c2 {} {     
-set port_list {"1,1"}
+set port_list {"1,2"}
 puts $port_list
 #regsub -all {(,")|(",)|"} $port_list " " port_list;
 foreach port $port_list {
