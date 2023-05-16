@@ -2,7 +2,7 @@ DUT_list:
 - console_ip: 10.105.241.145
   hostname: S624FFTV22000027
   line: 2091
-  login: true
+  login: false
   mgmt_gw: 10.105.241.254
   mgmt_ip: 10.105.241.153/23
   model: 624F_FPOE
@@ -25,7 +25,176 @@ DUT_list:
   pdu_2_line: 17
   serial: S624FFTV22000026
   username: admin
+- console_ip: 10.105.241.144
+  hostname: S124EFTQ22007338
+  line: 2046
+  login: true
+  mgmt_gw: 10.105.202.33
+  mgmt_ip: 10.105.202.34/30
+  model: 124E-FPOE
+  password: Fortinet123!
+  pdu_1_ip: 10.105.241.94
+  pdu_1_line: 22
+  serial: S124EFTQ22007338
+  username: admin
 Test_Case_list:
+- case_name: psl_at_scan_class_power
+  class_list:
+  - 4
+  - 3
+  - 2
+  - 1
+  - 0
+  deliver_power_list:
+  - 25
+  - 15.3
+  - 6.9
+  - 3.9
+  - 15.3
+  dut_port_list:
+  - port1
+  - port2
+  - port3
+  - port4
+  - port5
+  - port6
+  - port7
+  - port8
+  - port9
+  - port10
+  execute: true
+  poe_port_list:
+  - p15
+  - p16
+  - p17
+  - p18
+  - p19
+  - p20
+  - p21
+  - p22
+  - p23
+  - p24
+  poe_tester: PSL3000
+  python_verify_func: scan_get_poe_inline
+  sifo_ip: 10.105.241.49
+  tcl_global: None
+  tcl_procedure_list:
+  - execute: true
+    max_power: 30.0
+    poe_class: 4
+    proc_name: psa_at_4
+    sifo_ip: 10.105.241.49
+    tcl_close: false
+    tcl_command_list:
+    - commands: "proc disconnect {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21\
+        \ p22 p23 p24}\nforeach port $port_list {\n #puts \"psa_4pair $port disable\"\
+        \n #psa_4pair $port disable\n puts \"psa_disconnect $port\"\n psa_disconnect\
+        \ $port\n }\n}\n"
+      name: disconnect
+      sifo_ip: 10.105.241.49
+    - commands: "proc psa_at_4 {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21 p22\
+        \ p23 p24}\nforeach port $port_list {\n puts \"psl_setup $port 2pA\"\n psl_setup\
+        \ $port 2pA\n puts \"power_pse $port c 4 p 25\"\n set status [power_pse $port\
+        \ c 4 p 25]\n puts $status\n puts \"pstatus $port\"\n set status [lindex [pstatus\
+        \ $port stat] 3]\n after 10\n puts $status\n #psa_disconnect $port\n puts\
+        \ \"vdcaverage $port stat\"    \n #vdcaverage $port\n set VportMaxR [lindex\
+        \ [vdcaverage $port stat] 3]    \n after 10\n puts $VportMaxR\n st_wait 5\n\
+        \ }\n}\n"
+      name: psa_at_4
+      sifo_ip: 10.105.241.49
+  - execute: true
+    max_power: 16.4
+    poe_class: 3
+    proc_name: psa_at_3
+    sifo_ip: 10.105.241.49
+    tcl_close: false
+    tcl_command_list:
+    - commands: "proc disconnect {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21\
+        \ p22 p23 p24}\nforeach port $port_list {\n #puts \"psa_4pair $port disable\"\
+        \n #psa_4pair $port disable\n puts \"psa_disconnect $port\"\n psa_disconnect\
+        \ $port\n }\n}\n"
+      name: disconnect
+      sifo_ip: 10.105.241.49
+    - commands: "proc psa_at_3 {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21 p22\
+        \ p23 p24}\nforeach port $port_list {\n puts \"psl_setup $port 2pA\"\n psl_setup\
+        \ $port 2pA\n puts \"power_pse $port c 3 p 15.3\"\n set status [power_pse\
+        \ $port c 3 p 15.3]\n puts $status\n puts \"pstatus $port\"\n set status [lindex\
+        \ [pstatus $port stat] 3]\n after 10\n puts $status\n #psa_disconnect $port\n\
+        \ puts \"vdcaverage $port stat\"    \n #vdcaverage $port\n set VportMaxR [lindex\
+        \ [vdcaverage $port stat] 3]    \n after 10\n puts $VportMaxR\n st_wait 5\n\
+        \ }\n}\n"
+      name: psa_at_3
+      sifo_ip: 10.105.241.49
+  - execute: true
+    max_power: 16.4
+    poe_class: 2
+    proc_name: psa_at_2
+    sifo_ip: 10.105.241.49
+    tcl_close: false
+    tcl_command_list:
+    - commands: "proc disconnect {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21\
+        \ p22 p23 p24}\nforeach port $port_list {\n #puts \"psa_4pair $port disable\"\
+        \n #psa_4pair $port disable\n puts \"psa_disconnect $port\"\n psa_disconnect\
+        \ $port\n }\n}\n"
+      name: disconnect
+      sifo_ip: 10.105.241.49
+    - commands: "proc psa_at_2 {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21 p22\
+        \ p23 p24}\nforeach port $port_list {\n puts \"psl_setup $port 2pA\"\n psl_setup\
+        \ $port 2pA\n puts \"power_pse $port c 2 p 6.9\"\n set status [power_pse $port\
+        \ c 2 p 6.9]\n puts $status\n puts \"pstatus $port\"\n set status [lindex\
+        \ [pstatus $port stat] 3]\n after 10\n puts $status\n #psa_disconnect $port\n\
+        \ puts \"vdcaverage $port stat\"    \n #vdcaverage $port\n set VportMaxR [lindex\
+        \ [vdcaverage $port stat] 3]    \n after 10\n puts $VportMaxR\n st_wait 5\n\
+        \ }\n}\n"
+      name: psa_at_2
+      sifo_ip: 10.105.241.49
+  - execute: true
+    max_power: 16.4
+    poe_class: 1
+    proc_name: psa_at_1
+    sifo_ip: 10.105.241.49
+    tcl_close: false
+    tcl_command_list:
+    - commands: "proc disconnect {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21\
+        \ p22 p23 p24}\nforeach port $port_list {\n #puts \"psa_4pair $port disable\"\
+        \n #psa_4pair $port disable\n puts \"psa_disconnect $port\"\n psa_disconnect\
+        \ $port\n }\n}\n"
+      name: disconnect
+      sifo_ip: 10.105.241.49
+    - commands: "proc psa_at_1 {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21 p22\
+        \ p23 p24}\nforeach port $port_list {\n puts \"psl_setup $port 2pA\"\n psl_setup\
+        \ $port 2pA\n puts \"power_pse $port c 1 p 3.9\"\n set status [power_pse $port\
+        \ c 1 p 3.9]\n puts $status\n puts \"pstatus $port\"\n set status [lindex\
+        \ [pstatus $port stat] 3]\n after 10\n puts $status\n #psa_disconnect $port\n\
+        \ puts \"vdcaverage $port stat\"    \n #vdcaverage $port\n set VportMaxR [lindex\
+        \ [vdcaverage $port stat] 3]    \n after 10\n puts $VportMaxR\n st_wait 5\n\
+        \ }\n}\n"
+      name: psa_at_1
+      sifo_ip: 10.105.241.49
+  - execute: true
+    max_power: 16.4
+    poe_class: 0
+    proc_name: psa_at_0
+    sifo_ip: 10.105.241.49
+    tcl_close: false
+    tcl_command_list:
+    - commands: "proc disconnect {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21\
+        \ p22 p23 p24}\nforeach port $port_list {\n #puts \"psa_4pair $port disable\"\
+        \n #psa_4pair $port disable\n puts \"psa_disconnect $port\"\n psa_disconnect\
+        \ $port\n }\n}\n"
+      name: disconnect
+      sifo_ip: 10.105.241.49
+    - commands: "proc psa_at_0 {} {\nset port_list {p15 p16 p17 p18 p19 p20 p21 p22\
+        \ p23 p24}\nforeach port $port_list {\n puts \"psl_setup $port 2pA\"\n psl_setup\
+        \ $port 2pA\n puts \"power_pse $port c 0 p 15.3\"\n set status [power_pse\
+        \ $port c 0 p 15.3]\n puts $status\n puts \"pstatus $port\"\n set status [lindex\
+        \ [pstatus $port stat] 3]\n after 10\n puts $status\n #psa_disconnect $port\n\
+        \ puts \"vdcaverage $port stat\"    \n #vdcaverage $port\n set VportMaxR [lindex\
+        \ [vdcaverage $port stat] 3]    \n after 10\n puts $VportMaxR\n st_wait 5\n\
+        \ }\n}\n"
+      name: psa_at_0
+      sifo_ip: 10.105.241.49
+  tester: PSL3000
 - case_name: bt_scan_class_power
   class_list:
   - 6
@@ -228,7 +397,7 @@ Test_Case_list:
   - port22
   - port23
   - port24
-  execute: true
+  execute: false
   poe_port_list:
   - 5,1
   - 6,1
@@ -637,7 +806,7 @@ Test_Case_list:
   tcl_global: psa_pse -grant phy -spec at -pol mdix -alt A
   tcl_procedure_list:
   - execute: true
-    max_power: 34.0
+    max_power: 30.0
     poe_class: 4
     proc_name: psa_at_4
     sifo_ip: 10.105.241.47
@@ -969,7 +1138,7 @@ Test_Case_list:
   tcl_global: psa_pse -grant phy -spec at -pol mdix -alt A
   tcl_procedure_list:
   - execute: true
-    max_power: 34.0
+    max_power: 30.0
     poe_class: 4
     proc_name: psa_at_4
     sifo_ip: 10.105.241.47
@@ -1135,13 +1304,15 @@ Test_Case_list:
       sifo_ip: 10.105.241.49
   tester: PSA3000
 Tester_list:
-- hostname: PSA3000
+- connect: false
+  hostname: PSA3000
   mgmt_ip: 10.105.241.47
   pdu_ip: 10.105.241.97
   pdu_line: 17
   platform: PSA
   type: POE
-- hostname: PSL3434L_3
+- connect: true
+  hostname: PSL3434L_3
   mgmt_ip: 10.105.241.49
   pdu_ip: 10.105.241.146
   pdu_line: 12

@@ -1,4 +1,8 @@
 #Test Case variables 
+{% set psl_port_list_3at = ['p15', 'p16', 'p17', 'p18', 'p19', 'p20', 'p21', 'p22','p23','p24'] %}
+{% set psl_port_list_tcl_3at = "{" + psl_port_list_3at | join(" ") + "}" %}
+{% set dut_3at_port_list = ['port1', 'port2','port3','port4','port5','port6','port7','port8','port9','port10'] %}
+
 {% set poe_4pair_port_list = ['5,1', '6,1', '7,1','8,1','9,1','10,1','11,1','12,1'] %}
 {% set poe_4pair_port_list_tcl = "{" + poe_4pair_port_list | join(" ") + "}" %}
 {% set poe_2pair_port_list = ['1,2', '2,1','2,2','3,1','3,2','4,1','4,2'] %}
@@ -24,7 +28,6 @@
 {% set bt_tcl_proc_list_scale = ["psa_bt_6"] %}
 
 
-
 {% set bt_class_max_power_list_reverse = [16.4,16.4,16.4,16.4,34.0,60] %}
 {% set bt_class_deliver_power_list_reverse = [15.3,3.9,6.9,15.3,30,60] %}
 {% set bt_class_test_list_reverse = [0,1,2,3,4,6] %}
@@ -32,7 +35,7 @@
 {% set bt_tcl_proc_list_reverse = ["psa_bt_0","psa_bt_1","psa_bt_2","psa_bt_3","psa_bt_4","psa_bt_6"] %}
 
 
-{% set at_class_max_power_list = [34.0,16.4,16.4,16.4,16.4] %}
+{% set at_class_max_power_list = [30.0,16.4,16.4,16.4,16.4] %}
 {% set at_class_deliver_power_list = [25,15.3,6.9,3.9,15.3] %}
 {% set at_class_test_list = [4,3,2,1,0] %}
 {% set at_tcl_execute_list = [True,True,True,True,True] %}
@@ -40,8 +43,6 @@
 
 {% set at_lldp_port_list = ['1,1'] %}
 {% set at_lldp_port_list_tcl = "{" + at_lldp_port_list | join(" ") + "}" %}
-
-
 
 
 DUT_list:
@@ -56,7 +57,7 @@ DUT_list:
       line: 2091
       pdu_1_ip: 10.105.241.95
       pdu_1_line: 17 
-      login: True
+      login: False
     - hostname: S624FFTV22000026
       serial: S624FFTV22000026
       model: 624F_FPOE
@@ -71,6 +72,18 @@ DUT_list:
       pdu_2_ip: 10.105.241.96
       pdu_2_line: 17
       login: False
+    - hostname: S124EFTQ22007338
+      serial: S124EFTQ22007338
+      model: 124E-FPOE
+      mgmt_ip: 10.105.202.34/30
+      mgmt_gw: 10.105.202.33 
+      username: admin
+      password: Fortinet123!
+      console_ip: 10.105.241.144
+      line: 2046
+      pdu_1_ip: 10.105.241.94
+      pdu_1_line: 22
+      login: True
 
 Tester_list:
     - hostname: PSA3000
@@ -79,15 +92,75 @@ Tester_list:
       mgmt_ip: &psa_ip_1 10.105.241.47
       pdu_ip: 10.105.241.97
       pdu_line: 17
+      connect: False
     - hostname: PSL3434L_3
       platform: PSL
       type: POE
       mgmt_ip: &psa_ip_3 10.105.241.49
       pdu_ip: 10.105.241.146
       pdu_line: 12
+      connect: True
 
 
 Test_Case_list:
+    - case_name: psl_at_scan_class_power
+      tester: PSL3000
+      sifo_ip: 10.105.241.49
+      execute: True
+      poe_tester: PSL3000
+      poe_port_list: {{psl_port_list_3at}}
+      class_list: {{at_class_test_list}}
+      deliver_power_list: {{at_class_deliver_power_list}}
+      dut_port_list: {{dut_3at_port_list}}
+      python_verify_func: scan_get_poe_inline
+      tcl_global: None
+      tcl_procedure_list:
+      {% for tcl_name,class_power,class_name,run,d_power in at_tcl_proc_list|jinja_zip(at_class_max_power_list,at_class_test_list,at_tcl_execute_list,at_class_deliver_power_list) %}
+        - proc_name: {{tcl_name}}
+          poe_class: {{class_name}}
+          max_power: {{class_power}}
+          execute: {{run}}
+          sifo_ip: *psa_ip_3
+          tcl_close: False
+          tcl_command_list:
+            - name: disconnect
+              sifo_ip: *psa_ip_3
+              commands: |
+               proc disconnect {} {
+               set port_list {{psl_port_list_tcl_3at}}
+               foreach port $port_list {
+                #puts "psa_4pair $port disable"
+                #psa_4pair $port disable
+                puts "psa_disconnect $port"
+                psa_disconnect $port
+                }
+               }
+            - name: {{tcl_name}}
+              sifo_ip: *psa_ip_3
+              commands: |
+               proc {{tcl_name}} {} {
+               set port_list {{psl_port_list_tcl_3at}}
+               foreach port $port_list {
+                puts "psl_setup $port 2pA"
+                psl_setup $port 2pA
+                puts "power_pse $port c {{class_name}} p {{d_power}}"
+                set status [power_pse $port c {{class_name}} p {{d_power}}]
+                puts $status
+                puts "pstatus $port"
+                set status [lindex [pstatus $port stat] 3]
+                after 10
+                puts $status
+                #psa_disconnect $port
+                puts "vdcaverage $port stat"    
+                #vdcaverage $port
+                set VportMaxR [lindex [vdcaverage $port stat] 3]    
+                after 10
+                puts $VportMaxR
+                st_wait 5
+                }
+               }
+      {% endfor %}
+
     - case_name: bt_scan_class_power
       tester: PSA3000
       sifo_ip: 10.105.241.47
@@ -153,7 +226,7 @@ Test_Case_list:
     - case_name: bt_class_power_scale
       tester: PSA3000
       sifo_ip: 10.105.241.47
-      execute: True
+      execute: False
       poe_tester: PSA3000
       poe_port_list: {{poe_4pair_port_list}}
       class_list: {{bt_class_test_list}}
@@ -368,7 +441,7 @@ Test_Case_list:
                 }
                }
       {% endfor %}
-        
+
     - case_name: at_lldp_power
       tester: PSA3000
       sifo_ip: 10.105.241.47

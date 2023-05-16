@@ -629,8 +629,9 @@ if __name__ == "__main__":
 	tprint(f"Launching Power Shell TCL Command From GIT Bash Shell")
 	pshell_dict = {}
 	for tester in setup.yaml_obj.Tester_list:
-		pshell_dict[tester.mgmt_ip] = power_shell_tcl(reboot=REBOOT)
-		pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
+		if tester.connect == True:
+			pshell_dict[tester.mgmt_ip] = power_shell_tcl(reboot=REBOOT)
+			pshell_dict[tester.mgmt_ip].tcl_psa_connect(tester.mgmt_ip)
 	for _ in range(1):
 		for test in setup.yaml_obj.Test_Case_list:
 			if test.execute == False:
