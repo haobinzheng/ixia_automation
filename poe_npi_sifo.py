@@ -527,11 +527,12 @@ if __name__ == "__main__":
 				print_dict(poe_inline_dict)
 				ports = poe_inline_dict.keys()
 				result = True
-				if set(ports) != set(test.dut_port_list):
+				if set(test.dut_port_list).issubset(set(ports)) == False:
+				#if set(ports) != set(test.dut_port_list):
 					result = False
 					continue
 				for p,p_status in poe_inline_dict.items():
-					if p_status["powered"] == False:
+					if p_status["powered"] == False and p in test.dut_port_list :
 						print(f'{p} poe checking result = {p_status["powered"]}')
 						result = False
 						break
