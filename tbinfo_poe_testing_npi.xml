@@ -2,7 +2,7 @@
 <testbed name="hb-tb">
  <dev1 type="FSW" hostname="S624FFTV22000026" model="S624FFPOE">
   <console ip="10.105.241.145" line="2096"> </console>
-  <login username="admin" password="Fortinet123!!"> </login>
+  <login username="admin" password="Fortinet123!"> </login>
   <mgmt ip="10.105.241.157" netmask="255.255.254.0" gateway="10.105.241.254" port="port24"> </mgmt>
   <pdu model="RARITAN_M" ip="10.105.241.95" port="17"> </pdu>
   <pdu2 model="RARITAN_M" ip="10.105.241.96" port="17"> </pdu2>

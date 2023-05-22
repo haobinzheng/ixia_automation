@@ -649,7 +649,8 @@ if __name__ == "__main__":
 				pdu_cycle_sifos()
 				# pshell.tcl_psa_reconnect_current()
 	for tester in setup.yaml_obj.Tester_list:
-		pshell_dict[tester.mgmt_ip].tcl_close_shell()
+		if tester.connect == True:
+			pshell_dict[tester.mgmt_ip].tcl_close_shell()
 
 
 

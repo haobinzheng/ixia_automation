@@ -50,15 +50,7 @@ Test_Case_list:
   - port14
   - port15
   - port16
-  - port17
-  - port18
-  - port19
-  - port20
-  - port21
-  - port22
-  - port23
-  - port24
-  execute: false
+  execute: true
   poe_port_list:
   - 5,1
   - 6,1
@@ -228,7 +220,7 @@ Test_Case_list:
   - port22
   - port23
   - port24
-  execute: true
+  execute: false
   poe_port_list:
   - 5,1
   - 6,1
