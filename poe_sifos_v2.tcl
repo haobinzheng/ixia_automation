@@ -189,6 +189,49 @@ proc psl_power_up {} {
     }
 }
 
+
+proc psl_power_up_class_4 {} {
+    #set port_list {"1,2","2,2","3,2","4,2","5,2","6,2","7,2","8,2" "9,2","10,2","11,2","12,2","13,2","14,2","15,2","16,2"}
+    #set port_list {"1,1","2,1","3,1","4,1","5,1","6,1","7,1","8,1" "9,1","10,1","11,1","12,1","13,1","14,1","15,1","16,1","17,1","18,1","19,1","20,1","21,1","22,1","23,1","24,1"}
+    set port_list {p15 p16 p17 p18 p19 p20 p21 p22 p23 p24}
+    set power_list {28.7} 
+    set class_list {4}
+    set zipped [lmap a $class_list b $power_list {list $a $b}]
+    puts $zipped
+
+    regsub -all {(,")|(",)|"} $port_list " " port_list;
+    puts $port_list
+    puts $power_list
+    for {set i 0} {$i < 1} {incr i} {
+        foreach z $zipped {
+            set class [lindex $z 0]
+            puts $class
+            set power [lindex $z 1]
+            puts $power
+            foreach port $port_list {
+                # puts $port 
+                # puts $power
+                puts "psl_setup $port 2pA"
+                psl_setup $port 2pA
+                puts "power_pse $port c $class p $power"
+                set status [power_pse $port c $class p $power]
+                puts $status
+                puts "pstatus $port"
+                set status [lindex [pstatus $port stat] 3]
+                after 10
+                puts $status
+                #psa_disconnect $port
+                puts "vdcaverage $port stat"    
+                #vdcaverage $port
+                set VportMaxR [lindex [vdcaverage $port stat] 3]    
+                after 10
+                puts $VportMaxR
+                st_wait 5
+            }
+        }
+    }
+}
+
 ############### PSA: How to create negative test to trigger timeout issue ###########
 
 proc psa_bt {} {     
