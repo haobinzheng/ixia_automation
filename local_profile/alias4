@@ -67,3 +67,6 @@ alias sw_npi_compare='telnet 10.105.241.144 2035'
 alias clear_sw_npi='clear_console -u 10.105.241.145 -p 96'
 alias sifos_vm3='ssh Administrator@10.105.252.23'
 alias sw_rt_124='telnet 10.105.241.144 2046' 
+alias sw_rt_124fp='telnet 10.105.240.144 2082'
+alias sw_rt_148fp='telnet 10.105.240.144 2084'
+

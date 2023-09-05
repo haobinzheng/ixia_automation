@@ -1,0 +1,14 @@
+Test case: Disable Open auth and MAB Success
+
+diagnose switch physical-ports stats clear-local
+
+
+S624FFTV22000026 (port1) # config port-security
+
+S624FFTV22000026 (port-security) # set open-auth enable
+
+S624FFTV22000026 (port-security) # set mac-auth-bypass enable
+
+S624FFTV22000026 (port-security) # end
+
+S624FFTV22000026 (port1) # end
